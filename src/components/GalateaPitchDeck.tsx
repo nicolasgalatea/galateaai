@@ -24,7 +24,7 @@ const slideData = [
   {
     id: 'solution',
     title: 'Nuestra Solución',
-    subtitle: 'Marketplace de Agentes de IA especializados en salud',
+    subtitle: 'Plataforma de Agentes de IA especializados en salud',
     type: 'solution',
     features: [
       {
