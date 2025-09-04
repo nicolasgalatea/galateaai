@@ -1,491 +1,344 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Bot, Heart, Award, FileText, TrendingUp, Zap, Users, MapPin, DollarSign } from 'lucide-react';
-
-const slideData = [
-  {
-    id: 'intro',
-    title: 'GALATEA AI',
-    subtitle: 'La Infraestructura de IA para el Futuro de la Salud',
-    description: 'Creamos, desplegamos y comercializamos agentes de IA especializados que revolucionan la medicina',
-    type: 'hero'
-  },
-  {
-    id: 'problem',
-    title: 'El Sistema de Salud está Bloqueado para Adoptar IA',
-    type: 'stats',
-    stats: [
-      { value: '80%', label: 'de hospitales en LATAM no tienen acceso a IA adaptada a su realidad' },
-      { value: '$2M', label: 'pierde cada hospital al año en ineficiencias administrativas' },
-      { value: '12-18 meses', label: '+ $1M USD para desarrollar IA médica a medida' }
-    ]
-  },
-  {
-    id: 'solution',
-    title: 'Nuestra Solución',
-    subtitle: 'Plataforma de Agentes de IA especializados en salud',
-    type: 'solution',
-    features: [
-      {
-        icon: Bot,
-        title: 'Agentes Especializados',
-        description: 'Oncología, Cardiología, Administración Clínica - listos para implementar'
-      },
-      {
-        icon: TrendingUp,
-        title: 'Infraestructura Completa',
-        description: 'Crear, desplegar y comercializar en una sola plataforma'
-      },
-      {
-        icon: Users,
-        title: 'Ecosistema Conectado',
-        description: 'Hospitales, EPS, IPS, Laboratorios, Farmas conectados'
-      }
-    ]
-  },
-  {
-    id: 'market',
-    title: 'Mercado',
-    type: 'market',
-    markets: [
-      { value: '$350B', label: 'TAM Global', sublabel: 'HealthTech AI' },
-      { value: '$45B', label: 'SAM Latam', sublabel: 'Digital Health' },
-      { value: '$2B', label: 'SOM Colombia', sublabel: 'Healthcare AI' }
-    ]
-  },
-  {
-    id: 'revenue',
-    title: 'Cómo Ganamos Dinero',
-    type: 'pricing',
-    plans: [
-      {
-        name: 'Plan Base',
-        price: '$2,000',
-        period: 'USD/mes por hospital',
-        description: 'Acceso básico a agentes'
-      },
-      {
-        name: 'Enterprise',
-        price: '$50k-$250k',
-        period: 'USD/año',
-        description: 'Agentes ilimitados + integración EHR'
-      },
-      {
-        name: 'Marketplace',
-        price: '10%',
-        period: 'comisión',
-        description: 'por cada agente comprado/vendido'
-      }
-    ]
-  },
-  {
-    id: 'mvp',
-    title: 'MVP en Desarrollo',
-    type: 'mvp',
-    agents: [
-      {
-        icon: Heart,
-        title: 'Agente Cardiólogo',
-        description: 'Análisis automático de estudios cardiovasculares con 95% de precisión'
-      },
-      {
-        icon: Award,
-        title: 'Agente Oncólogo',
-        description: 'Coordinación inteligente de planes de tratamiento oncológico'
-      },
-      {
-        icon: FileText,
-        title: 'Agente Administrativo',
-        description: 'Automatización de citas, autorizaciones y seguimientos'
-      },
-      {
-        icon: Zap,
-        title: 'Agente Investigación',
-        description: 'Gestión optimizada de ensayos clínicos y protocolos'
-      }
-    ]
-  },
-  {
-    id: 'traction',
-    title: 'Tracción Temprana',
-    type: 'traction',
-    milestones: [
-      {
-        icon: MapPin,
-        title: 'Hospital de Houston',
-        description: 'Validación de idea en curso - feedback muy positivo para MVP'
-      },
-      {
-        icon: Zap,
-        title: 'MVP Próxima Semana',
-        description: 'Primera versión funcional lista para pilotos'
-      },
-      {
-        icon: TrendingUp,
-        title: 'Fase Idea',
-        description: 'Equipo técnico ensamblado, roadmap definido'
-      }
-    ]
-  },
-  {
-    id: 'team',
-    title: 'Equipo Fundador',
-    type: 'team',
-    members: [
-      {
-        name: 'Nicolás Pérez Rivera',
-        role: 'CEO',
-        initials: 'NP',
-        color: 'bg-info',
-        experience: [
-          '8+ años experiencia en ventas',
-          '5+ años en salud digital e IA',
-          'Especialista en HealthTech startups'
-        ]
-      },
-      {
-        name: 'Carlos Pérez Rivera',
-        role: 'Chief Medical Officer',
-        initials: 'CP',
-        color: 'bg-success',
-        experience: [
-          'Médico cirujano especialista',
-          '10+ años experiencia clínica',
-          '90+ papers en revistas internacionales'
-        ]
-      },
-      {
-        name: 'Buscamos CTO',
-        role: 'Chief Technology Officer',
-        initials: '?',
-        color: 'bg-destructive',
-        experience: [
-          'Experiencia desplegando modelos IA',
-          'Machine Learning a escala',
-          'Arquitectura sistemas distribuidos'
-        ]
-      }
-    ]
-  },
-  {
-    id: 'roadmap',
-    title: 'Roadmap',
-    type: 'roadmap',
-    milestones: [
-      {
-        quarter: 'Q4 2025',
-        icon: Zap,
-        title: 'MVP Listo',
-        description: 'Primer piloto con Hospital de Houston'
-      },
-      {
-        quarter: 'Q1 2026',
-        icon: TrendingUp,
-        title: 'Expansión Pilotos',
-        description: '3 hospitales + 1 aseguradora en piloto'
-      },
-      {
-        quarter: 'Q2 2026',
-        icon: DollarSign,
-        title: 'Primer Cliente Pago',
-        description: 'Validación de modelo de negocio'
-      },
-      {
-        quarter: 'Q4 2026',
-        icon: MapPin,
-        title: 'Expansión Regional',
-        description: 'Lanzamiento en México y Brasil'
-      }
-    ]
-  },
-  {
-    id: 'why-now',
-    title: 'Por Qué Ahora',
-    type: 'why-now',
-    reasons: [
-      '🌊 Ola global de IA en salud - momento perfecto para capturar mercado',
-      '🏗️ No existe infraestructura multi-agente en este sector',
-      '⚡ Timing perfecto: instituciones buscan soluciones propias, rápidas y seguras',
-      '🎯 Primera ventaja: ser la infraestructura estándar de IA médica'
-    ],
-    cta: {
-      title: 'Buscamos $500k',
-      description: 'Para terminar el MVP, lanzar pilotos y escalar en LATAM.',
-      vision: 'Queremos ser la infraestructura global de la IA médica.'
-    }
-  }
-];
+import { Input } from '@/components/ui/input';
+import { Bot, Heart, Award, FileText, TrendingUp, Zap, Users, MapPin, DollarSign, CheckCircle, ArrowRight, Mail, Phone, Calendar } from 'lucide-react';
 
 export const GalateaPitchDeck = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slideData.length);
+  const handleWaitlistSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Aquí iría la lógica para enviar los datos
+    setSubmitted(true);
   };
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slideData.length) % slideData.length);
-  };
-
-  const renderSlide = (slide: typeof slideData[0]) => {
-    switch (slide.type) {
-      case 'hero':
-        return (
-          <div className="text-center space-y-8 animate-fade-in">
-            <div className="w-24 h-24 mx-auto bg-card rounded-full flex items-center justify-center shadow-glow">
-              <Bot className="w-12 h-12 text-primary" />
-            </div>
-            <div className="space-y-4">
-              <h1 className="text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                {slide.title}
-              </h1>
-              <p className="text-xl text-muted-foreground italic">
-                {slide.subtitle}
-              </p>
-              <p className="text-lg text-foreground max-w-3xl mx-auto">
-                {slide.description}
-              </p>
-            </div>
-          </div>
-        );
-
-      case 'stats':
-        return (
-          <div className="space-y-12 animate-slide-in">
-            <h1 className="text-5xl font-bold text-center">{slide.title}</h1>
-            <div className="grid md:grid-cols-3 gap-8">
-              {slide.stats?.map((stat, index) => (
-                <Card key={index} className="p-8 text-center hover:shadow-glow transition-shadow">
-                  <div className="text-4xl font-bold text-destructive mb-4">
-                    {stat.value}
-                  </div>
-                  <p className="text-muted-foreground">{stat.label}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'solution':
-        return (
-          <div className="space-y-12 animate-slide-in">
-            <div className="text-center space-y-4">
-              <h1 className="text-5xl font-bold">{slide.title}</h1>
-              <p className="text-xl text-muted-foreground italic">{slide.subtitle}</p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {slide.features?.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <Card key={index} className="p-8 text-center hover:shadow-glow transition-shadow">
-                    <Icon className="w-16 h-16 text-primary mx-auto mb-6" />
-                    <h3 className="text-2xl font-semibold mb-4">{feature.title}</h3>
-                    <p className="text-muted-foreground">{feature.description}</p>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        );
-
-      case 'market':
-        return (
-          <div className="space-y-12 animate-slide-in">
-            <h1 className="text-5xl font-bold text-center">{slide.title}</h1>
-            <div className="flex justify-center gap-8">
-              {slide.markets?.map((market, index) => (
-                <div key={index} className="text-center">
-                  <div className="w-48 h-48 rounded-full border-4 border-primary/30 flex flex-col items-center justify-center bg-card hover:shadow-glow transition-shadow">
-                    <div className="text-3xl font-bold text-success mb-2">
-                      {market.value}
-                    </div>
-                    <div className="text-lg font-semibold">{market.label}</div>
-                    <div className="text-sm text-muted-foreground">{market.sublabel}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'pricing':
-        return (
-          <div className="space-y-12 animate-slide-in">
-            <h1 className="text-5xl font-bold text-center">{slide.title}</h1>
-            <div className="grid md:grid-cols-3 gap-8">
-              {slide.plans?.map((plan, index) => (
-                <Card key={index} className={`p-8 text-center hover:shadow-glow transition-shadow ${index === 1 ? 'ring-2 ring-primary' : ''}`}>
-                  <h3 className="text-xl font-semibold mb-4">{plan.name}</h3>
-                  <div className="text-3xl font-bold text-success mb-2">
-                    {plan.price}
-                  </div>
-                  <div className="text-sm text-muted-foreground mb-6">
-                    {plan.period}
-                  </div>
-                  <p className="text-muted-foreground">{plan.description}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'mvp':
-        return (
-          <div className="space-y-12 animate-slide-in">
-            <h1 className="text-5xl font-bold text-center">{slide.title}</h1>
-            <div className="grid md:grid-cols-2 gap-8">
-              {slide.agents?.map((agent, index) => {
-                const Icon = agent.icon;
-                return (
-                  <Card key={index} className="p-8 hover:shadow-glow transition-shadow">
-                    <div className="flex items-start space-x-4">
-                      <div className="p-3 bg-primary/10 rounded-lg">
-                        <Icon className="w-8 h-8 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-semibold mb-2">{agent.title}</h3>
-                        <p className="text-muted-foreground">{agent.description}</p>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        );
-
-      case 'traction':
-        return (
-          <div className="space-y-12 animate-slide-in">
-            <h1 className="text-5xl font-bold text-center">{slide.title}</h1>
-            <div className="grid md:grid-cols-3 gap-8">
-              {slide.milestones?.map((milestone, index) => {
-                const Icon = milestone.icon;
-                return (
-                  <Card key={index} className="p-8 hover:shadow-glow transition-shadow">
-                    <Icon className="w-12 h-12 text-primary mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">{milestone.title}</h3>
-                    <p className="text-muted-foreground">{milestone.description}</p>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        );
-
-      case 'team':
-        return (
-          <div className="space-y-12 animate-slide-in">
-            <h1 className="text-5xl font-bold text-center">{slide.title}</h1>
-            <div className="grid md:grid-cols-3 gap-8">
-              {slide.members?.map((member, index) => (
-                <Card key={index} className="p-8 text-center hover:shadow-glow transition-shadow">
-                  <div className={`w-20 h-20 rounded-full ${member.color} flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4`}>
-                    {member.initials}
-                  </div>
-                  <h3 className="text-xl font-semibold mb-1">{member.name}</h3>
-                  <p className="text-sm text-primary mb-4">{member.role}</p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {member.experience.map((exp, expIndex) => (
-                      <li key={expIndex}>• {exp}</li>
-                    ))}
-                  </ul>
-                </Card>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'roadmap':
-        return (
-          <div className="space-y-12 animate-slide-in">
-            <h1 className="text-5xl font-bold text-center">{slide.title}</h1>
-            <div className="space-y-6">
-              {slide.milestones?.map((milestone, index) => {
-                const Icon = milestone.icon;
-                return (
-                  <Card key={index} className="p-6 hover:shadow-glow transition-shadow">
-                    <div className="flex items-center space-x-6">
-                      <div className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold">
-                        {milestone.quarter}
-                      </div>
-                      <Icon className="w-8 h-8 text-info" />
-                      <div>
-                        <h3 className="text-xl font-semibold text-info">{milestone.title}</h3>
-                        <p className="text-muted-foreground">{milestone.description}</p>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        );
-
-      case 'why-now':
-        return (
-          <div className="space-y-12 animate-slide-in">
-            <h1 className="text-5xl font-bold text-center">{slide.title}</h1>
-            <div className="space-y-6 max-w-4xl mx-auto">
-              {slide.reasons?.map((reason, index) => (
-                <div key={index} className="text-lg text-muted-foreground p-4 bg-card/50 rounded-lg">
-                  {reason}
-                </div>
-              ))}
-            </div>
-            <Card className="bg-destructive text-destructive-foreground p-8 text-center max-w-2xl mx-auto shadow-glow">
-              <h2 className="text-3xl font-bold mb-4">{slide.cta?.title}</h2>
-              <p className="text-lg mb-2">{slide.cta?.description}</p>
-              <p className="text-xl font-semibold">{slide.cta?.vision}</p>
-            </Card>
-          </div>
-        );
-
-      default:
-        return null;
-    }
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Aquí iría la lógica para agendar reunión
+    console.log('Contacto solicitado:', { name, email, company });
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="container mx-auto px-8 py-12">
-        <div className="min-h-[80vh] flex items-center justify-center">
-          {renderSlide(slideData[currentSlide])}
+      {/* Hero Section */}
+      <section className="py-20 px-6">
+        <div className="container mx-auto max-w-7xl">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8 animate-fade-in">
+              <div className="inline-flex items-center space-x-3 bg-primary/10 px-4 py-2 rounded-full">
+                <Bot className="w-5 h-5 text-primary" />
+                <span className="text-primary font-medium">El Futuro de la Salud es Hoy</span>
+              </div>
+              
+              <h1 className="text-5xl lg:text-7xl font-bold">
+                <span className="bg-gradient-primary bg-clip-text text-transparent">GALATEA AI</span>
+              </h1>
+              
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                La primera plataforma de agentes de IA especializados para hospitales, EPS y centros médicos en LATAM. 
+                Revolucionamos la medicina con inteligencia artificial adaptada a tu realidad.
+              </p>
+              
+              <div className="flex flex-wrap gap-4">
+                <Button size="lg" className="bg-primary hover:bg-primary/90">
+                  Únete a la Lista de Espera
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                <Button variant="outline" size="lg">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Agendar Demo
+                </Button>
+              </div>
+            </div>
+            
+            <div className="relative">
+              <div className="w-full max-w-md mx-auto bg-card p-8 rounded-2xl shadow-glow border">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                    <Bot className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-semibold mb-2">Únete al Futuro</h3>
+                  <p className="text-muted-foreground">
+                    Sé de los primeros en acceder a nuestros agentes de IA especializados
+                  </p>
+                </div>
+                
+                {!submitted ? (
+                  <form onSubmit={handleWaitlistSubmit} className="space-y-4">
+                    <Input
+                      type="text"
+                      placeholder="Tu nombre completo"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                    />
+                    <Input
+                      type="email"
+                      placeholder="correo@empresa.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Institución/Hospital"
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      required
+                    />
+                    <Button type="submit" className="w-full">
+                      Unirme a la Lista de Espera
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Al registrarte, aceptas recibir actualizaciones sobre nuestro lanzamiento
+                    </p>
+                  </form>
+                ) : (
+                  <div className="text-center space-y-4">
+                    <CheckCircle className="w-16 h-16 text-success mx-auto" />
+                    <h4 className="text-xl font-semibold text-success">¡Te has registrado exitosamente!</h4>
+                    <p className="text-muted-foreground">
+                      Te notificaremos cuando nuestros agentes de IA estén listos para revolucionar tu institución médica.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <div className="flex justify-center items-center space-x-4 mt-12">
-          <Button
-            variant="secondary"
-            onClick={prevSlide}
-            className="flex items-center space-x-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Anterior</span>
-          </Button>
-          
-          <div className="flex space-x-2">
-            {slideData.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentSlide ? 'bg-primary' : 'bg-muted'
-                }`}
-              />
-            ))}
+      </section>
+
+      {/* Problem Section */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+              El Sistema de Salud Necesita una Revolución
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Los hospitales pierden millones en ineficiencias mientras la IA médica permanece inaccesible
+            </p>
           </div>
           
-          <Button
-            variant="secondary"
-            onClick={nextSlide}
-            className="flex items-center space-x-2"
-          >
-            <span>Siguiente</span>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="p-8 text-center hover:shadow-glow transition-shadow">
+              <div className="text-4xl font-bold text-destructive mb-4">80%</div>
+              <p className="text-muted-foreground">
+                de hospitales en LATAM no tienen acceso a IA adaptada a su realidad
+              </p>
+            </Card>
+            <Card className="p-8 text-center hover:shadow-glow transition-shadow">
+              <div className="text-4xl font-bold text-destructive mb-4">$2M</div>
+              <p className="text-muted-foreground">
+                pierde cada hospital al año en ineficiencias administrativas
+              </p>
+            </Card>
+            <Card className="p-8 text-center hover:shadow-glow transition-shadow">
+              <div className="text-4xl font-bold text-destructive mb-4">12-18</div>
+              <p className="text-muted-foreground">
+                meses + $1M USD para desarrollar IA médica a medida
+              </p>
+            </Card>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Solution Section */}
+      <section className="py-20 px-6">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+              Nuestra Solución: Plataforma de Agentes de IA
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Agentes especializados listos para implementar en tu institución médica
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="p-8 text-center hover:shadow-glow transition-shadow">
+              <Bot className="w-16 h-16 text-primary mx-auto mb-6" />
+              <h3 className="text-2xl font-semibold mb-4">Agentes Especializados</h3>
+              <p className="text-muted-foreground">
+                Oncología, Cardiología, Administración Clínica - listos para implementar
+              </p>
+            </Card>
+            <Card className="p-8 text-center hover:shadow-glow transition-shadow">
+              <TrendingUp className="w-16 h-16 text-primary mx-auto mb-6" />
+              <h3 className="text-2xl font-semibold mb-4">Infraestructura Completa</h3>
+              <p className="text-muted-foreground">
+                Crear, desplegar y comercializar en una sola plataforma
+              </p>
+            </Card>
+            <Card className="p-8 text-center hover:shadow-glow transition-shadow">
+              <Users className="w-16 h-16 text-primary mx-auto mb-6" />
+              <h3 className="text-2xl font-semibold mb-4">Ecosistema Conectado</h3>
+              <p className="text-muted-foreground">
+                Hospitales, EPS, IPS, Laboratorios, Farmas conectados
+              </p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* MVP Section */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+              Nuestros Agentes de IA en Desarrollo
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              MVP próximo a lanzarse con validación en Hospital de Houston
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="p-8 hover:shadow-glow transition-shadow">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Heart className="w-8 h-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Agente Cardiólogo</h3>
+                  <p className="text-muted-foreground">
+                    Análisis automático de estudios cardiovasculares con 95% de precisión
+                  </p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-8 hover:shadow-glow transition-shadow">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Award className="w-8 h-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Agente Oncólogo</h3>
+                  <p className="text-muted-foreground">
+                    Coordinación inteligente de planes de tratamiento oncológico
+                  </p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-8 hover:shadow-glow transition-shadow">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <FileText className="w-8 h-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Agente Administrativo</h3>
+                  <p className="text-muted-foreground">
+                    Automatización de citas, autorizaciones y seguimientos
+                  </p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-8 hover:shadow-glow transition-shadow">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Zap className="w-8 h-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Agente Investigación</h3>
+                  <p className="text-muted-foreground">
+                    Gestión optimizada de ensayos clínicos y protocolos
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-6">
+        <div className="container mx-auto max-w-4xl text-center">
+          <div className="bg-gradient-primary rounded-3xl p-12 text-white">
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+              ¿Listo para Revolucionar tu Institución Médica?
+            </h2>
+            <p className="text-xl mb-8 opacity-90">
+              Agenda una reunión con nuestro equipo y descubre cómo nuestros agentes de IA pueden transformar tu práctica médica
+            </p>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 max-w-md mx-auto">
+              <form onSubmit={handleContactSubmit} className="space-y-4">
+                <Input
+                  type="text"
+                  placeholder="Tu nombre"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
+                  required
+                />
+                <Input
+                  type="email"
+                  placeholder="Tu email corporativo"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
+                  required
+                />
+                <Input
+                  type="text"
+                  placeholder="Tu institución médica"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
+                  required
+                />
+                <Button 
+                  type="submit" 
+                  className="w-full bg-white text-primary hover:bg-white/90"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Agendar Reunión Estratégica
+                </Button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-6 bg-muted/30">
+        <div className="container mx-auto max-w-7xl">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center space-x-3 mb-4 md:mb-0">
+              <Bot className="w-8 h-8 text-primary" />
+              <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                GALATEA AI
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-6 text-muted-foreground text-sm">
+              <div className="flex items-center space-x-2">
+                <Mail className="w-4 h-4" />
+                <span>contacto@galatea.ai</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Phone className="w-4 h-4" />
+                <span>+57 (1) 234-5678</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-4 h-4" />
+                <span>Bogotá, Colombia</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground text-sm">
+            <p>&copy; 2024 Galatea AI. Todos los derechos reservados. Revolucionando la medicina con inteligencia artificial.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
