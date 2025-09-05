@@ -50,21 +50,22 @@ export const GalateaHomepage = () => {
         <div className="container mx-auto max-w-7xl relative z-10">
           <div className="text-center space-y-8 animate-fade-in">
             <div className="inline-flex items-center space-x-3 bg-primary/10 px-6 py-3 rounded-full">
-              <Brain className="w-5 h-5 text-primary" />
-              <span className="text-primary font-medium">La Revolución de la IA Médica en LATAM</span>
+              <Heart className="w-5 h-5 text-primary" />
+              <span className="text-primary font-medium">Avatares Hiperrealistas en Atención Sanitaria</span>
             </div>
             
             <h1 className="text-6xl lg:text-8xl font-bold max-w-5xl mx-auto">
               <span className="bg-gradient-primary bg-clip-text text-transparent">
-                Inteligencia Artificial
+                Galatea AI
               </span>
               <br />
-              <span className="text-foreground">para la Medicina</span>
+              <span className="text-foreground">Revolución en Salud</span>
             </h1>
             
             <p className="text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-              Transformamos hospitales, EPS y centros médicos con agentes de IA especializados 
-              que optimizan diagnósticos, tratamientos y gestión administrativa con precisión médica.
+              Plataforma diseñada para revolucionar la relación entre pacientes y profesionales de la salud. 
+              A través de avatares hiperrealistas impulsados por IA, ofrecemos una experiencia más humana, 
+              cercana y segura en entornos de atención sanitaria.
             </p>
             
             <div className="flex flex-wrap justify-center gap-6 pt-8">
@@ -82,18 +83,71 @@ export const GalateaHomepage = () => {
             
             <div className="flex justify-center items-center space-x-12 pt-12">
               <div className="text-center">
-                <div className="text-4xl font-bold text-primary">95%</div>
-                <div className="text-muted-foreground">Precisión Diagnóstica</div>
+                <div className="text-4xl font-bold text-primary">98%</div>
+                <div className="text-muted-foreground">Satisfacción Pacientes</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold text-primary">50%</div>
-                <div className="text-muted-foreground">Reducción Costos</div>
+                <div className="text-4xl font-bold text-primary">40%</div>
+                <div className="text-muted-foreground">Reducción Tiempo Consulta</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary">24/7</div>
                 <div className="text-muted-foreground">Disponibilidad</div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Key Features Section */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-6">
+              ¿Por qué elegir Galatea AI?
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <Card className="p-8 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="p-3 bg-primary/10 rounded-xl w-fit mx-auto mb-4">
+                <Shield className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Seguridad y Confianza</h3>
+              <p className="text-muted-foreground">
+                Cada avatar es entrenado con protocolos clínicos y validaciones médicas para asegurar interacciones responsables.
+              </p>
+            </Card>
+            
+            <Card className="p-8 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="p-3 bg-primary/10 rounded-xl w-fit mx-auto mb-4">
+                <Heart className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Comunicación Empática</h3>
+              <p className="text-muted-foreground">
+                Los avatares responden en tiempo real con lenguaje claro, cálido y adaptado al paciente.
+              </p>
+            </Card>
+            
+            <Card className="p-8 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="p-3 bg-primary/10 rounded-xl w-fit mx-auto mb-4">
+                <Stethoscope className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Aplicaciones Médicas Reales</h3>
+              <p className="text-muted-foreground">
+                Desde acompañamiento en telemedicina, educación en salud, hasta soporte en procedimientos clínicos.
+              </p>
+            </Card>
+            
+            <Card className="p-8 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="p-3 bg-primary/10 rounded-xl w-fit mx-auto mb-4">
+                <Globe className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Escalabilidad Global</h3>
+              <p className="text-muted-foreground">
+                Permite a hospitales, aseguradoras y startups de salud implementar rápidamente soluciones digitales con calidad médica.
+              </p>
+            </Card>
           </div>
         </div>
       </section>
@@ -106,12 +160,12 @@ export const GalateaHomepage = () => {
               <div>
                 <Badge variant="secondary" className="mb-4">Quiénes Somos</Badge>
                 <h2 className="text-5xl font-bold mb-6">
-                  Pioneros en IA Médica para LATAM
+                  La Plataforma para Crear Avatares Hiperrealistas en Atención Sanitaria
                 </h2>
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                  Galatea AI es la primera plataforma especializada en agentes de inteligencia artificial 
-                  para el sector salud en América Latina. Desarrollamos soluciones que entienden 
-                  la realidad médica, regulatoria y cultural de nuestra región.
+                  Galatea es una plataforma diseñada para revolucionar la relación entre pacientes y 
+                  profesionales de la salud. A través de avatares hiperrealistas impulsados por IA, 
+                  ofrecemos una experiencia más humana, cercana y segura en entornos de atención sanitaria.
                 </p>
               </div>
               
