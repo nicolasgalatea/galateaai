@@ -24,20 +24,20 @@ export const GalateaHomepage = () => {
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#inicio" className="text-muted-foreground hover:text-foreground transition-colors">Inicio</a>
-              <a href="#servicios" className="text-muted-foreground hover:text-foreground transition-colors">Servicios</a>
-              <a href="#tecnologia" className="text-muted-foreground hover:text-foreground transition-colors">Tecnología</a>
-              <a href="#casos" className="text-muted-foreground hover:text-foreground transition-colors">Casos de Uso</a>
-              <a href="#empresa" className="text-muted-foreground hover:text-foreground transition-colors">Empresa</a>
+              <a href="#inicio" className="text-muted-foreground hover:text-foreground transition-colors">Home</a>
+              <a href="#servicios" className="text-muted-foreground hover:text-foreground transition-colors">Services</a>
+              <a href="#tecnologia" className="text-muted-foreground hover:text-foreground transition-colors">Technology</a>
+              <a href="#casos" className="text-muted-foreground hover:text-foreground transition-colors">Use Cases</a>
+              <a href="#empresa" className="text-muted-foreground hover:text-foreground transition-colors">Company</a>
             </div>
             
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">
-                <a href="/waitlist">Lista de Espera</a>
+                <a href="/waitlist">Waiting List</a>
               </Button>
               <Button size="sm">
                 <Calendar className="w-4 h-4 mr-2" />
-                Agendar Demo
+                Schedule Demo
               </Button>
             </div>
           </div>
@@ -70,27 +70,27 @@ export const GalateaHomepage = () => {
               <Button size="lg" className="text-lg px-8 py-4">
                 <a href="/waitlist" className="flex items-center">
                   <Play className="w-5 h-5 mr-2" />
-                  Ver Demo en Vivo
+                  Watch Live Demo
                 </a>
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 py-4">
                 <FileText className="w-5 h-5 mr-2" />
-                Descargar Whitepaper
+                Download Whitepaper
               </Button>
             </div>
             
             <div className="flex justify-center items-center space-x-12 pt-12">
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary">98%</div>
-                <div className="text-muted-foreground">Satisfacción Pacientes</div>
+                <div className="text-muted-foreground">Patient Satisfaction</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary">40%</div>
-                <div className="text-muted-foreground">Reducción Tiempo Consulta</div>
+                <div className="text-muted-foreground">Consultation Time Reduction</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-primary">24/7</div>
-                <div className="text-muted-foreground">Disponibilidad</div>
+                <div className="text-muted-foreground">Availability</div>
               </div>
             </div>
           </div>
@@ -171,9 +171,9 @@ export const GalateaHomepage = () => {
                     <Target className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">Misión</h3>
+                    <h3 className="text-xl font-semibold mb-2">Mission</h3>
                     <p className="text-muted-foreground">
-                      Democratizar el acceso a IA médica avanzada para todas las instituciones de salud en LATAM.
+                      Democratize access to advanced medical AI for all healthcare institutions in LATAM.
                     </p>
                   </div>
                 </div>
@@ -183,9 +183,9 @@ export const GalateaHomepage = () => {
                     <Lightbulb className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">Visión</h3>
+                    <h3 className="text-xl font-semibold mb-2">Vision</h3>
                     <p className="text-muted-foreground">
-                      Ser la plataforma líder de IA médica que transforme la atención sanitaria en América Latina.
+                      Be the leading medical AI platform transforming healthcare in Latin America.
                     </p>
                   </div>
                 </div>
@@ -196,22 +196,22 @@ export const GalateaHomepage = () => {
               <Card className="p-6 text-center hover:shadow-glow transition-shadow">
                 <Building2 className="w-12 h-12 text-primary mx-auto mb-4" />
                 <div className="text-3xl font-bold text-primary mb-2">500+</div>
-                <div className="text-muted-foreground">Hospitales Objetivo</div>
+                <div className="text-muted-foreground">Target Hospitals</div>
               </Card>
               <Card className="p-6 text-center hover:shadow-glow transition-shadow">
                 <Users className="w-12 h-12 text-primary mx-auto mb-4" />
                 <div className="text-3xl font-bold text-primary mb-2">15M+</div>
-                <div className="text-muted-foreground">Pacientes Impactados</div>
+                <div className="text-muted-foreground">Patients Impacted</div>
               </Card>
               <Card className="p-6 text-center hover:shadow-glow transition-shadow">
                 <Globe className="w-12 h-12 text-primary mx-auto mb-4" />
                 <div className="text-3xl font-bold text-primary mb-2">12</div>
-                <div className="text-muted-foreground">Países LATAM</div>
+                <div className="text-muted-foreground">LATAM Countries</div>
               </Card>
               <Card className="p-6 text-center hover:shadow-glow transition-shadow">
                 <Star className="w-12 h-12 text-primary mx-auto mb-4" />
                 <div className="text-3xl font-bold text-primary mb-2">98%</div>
-                <div className="text-muted-foreground">Satisfacción Cliente</div>
+                <div className="text-muted-foreground">Customer Satisfaction</div>
               </Card>
             </div>
           </div>
@@ -222,13 +222,13 @@ export const GalateaHomepage = () => {
       <section id="servicios" className="py-20 px-6">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4">Nuestros Servicios</Badge>
+            <Badge variant="secondary" className="mb-4">Our Services</Badge>
             <h2 className="text-5xl font-bold mb-6">
-              Agentes de IA Especializados por Área Médica
+              AI Agents Specialized by Medical Area
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-              Cada agente está entrenado con conocimiento médico específico, protocolos clínicos 
-              y regulaciones locales para brindar asistencia experta las 24 horas.
+              Each agent is trained with specific medical knowledge, clinical protocols, 
+              and local regulations to provide expert assistance 24/7.
             </p>
           </div>
           
@@ -239,26 +239,26 @@ export const GalateaHomepage = () => {
                   <Heart className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-semibold">Cardiología</h3>
-                  <Badge variant="outline" className="mt-1">En Desarrollo</Badge>
+                  <h3 className="text-2xl font-semibold">Cardiology</h3>
+                  <Badge variant="outline" className="mt-1">In Development</Badge>
                 </div>
               </div>
               <p className="text-muted-foreground mb-6">
-                Análisis avanzado de ECG, ecocardiogramas y estudios hemodinámicos con interpretación 
-                automática y recomendaciones terapéuticas.
+                Advanced analysis of ECG, echocardiograms and hemodynamic studies with automatic 
+                interpretation and therapeutic recommendations.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Interpretación de ECG en tiempo real</span>
+                  <span>Real-time ECG interpretation</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Análisis de riesgo cardiovascular</span>
+                  <span>Cardiovascular risk analysis</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Protocolos de emergencia</span>
+                  <span>Emergency protocols</span>
                 </li>
               </ul>
             </Card>
@@ -269,26 +269,26 @@ export const GalateaHomepage = () => {
                   <Microscope className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-semibold">Oncología</h3>
-                  <Badge variant="outline" className="mt-1">En Desarrollo</Badge>
+                  <h3 className="text-2xl font-semibold">Oncology</h3>
+                  <Badge variant="outline" className="mt-1">In Development</Badge>
                 </div>
               </div>
               <p className="text-muted-foreground mb-6">
-                Asistente especializado en planes de tratamiento oncológico, seguimiento de pacientes 
-                y coordinación multidisciplinaria.
+                Specialized assistant in oncological treatment plans, patient monitoring 
+                and multidisciplinary coordination.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Planes de tratamiento personalizados</span>
+                  <span>Personalized treatment plans</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Seguimiento de efectos adversos</span>
+                  <span>Adverse effects monitoring</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Coordinación de juntas médicas</span>
+                  <span>Medical board coordination</span>
                 </li>
               </ul>
             </Card>
@@ -299,26 +299,26 @@ export const GalateaHomepage = () => {
                   <FileText className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-semibold">Administración</h3>
-                  <Badge className="mt-1 bg-success/10 text-success">Disponible</Badge>
+                  <h3 className="text-2xl font-semibold">Administration</h3>
+                  <Badge className="mt-1 bg-success/10 text-success">Available</Badge>
                 </div>
               </div>
               <p className="text-muted-foreground mb-6">
-                Automatización inteligente de procesos administrativos, gestión de citas, 
-                autorizaciones y facturación médica.
+                Intelligent automation of administrative processes, appointment management, 
+                authorizations and medical billing.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Gestión automática de citas</span>
+                  <span>Automatic appointment management</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Procesamiento de autorizaciones</span>
+                  <span>Authorization processing</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Optimización de recursos</span>
+                  <span>Resource optimization</span>
                 </li>
               </ul>
             </Card>
@@ -329,26 +329,26 @@ export const GalateaHomepage = () => {
                   <Brain className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-semibold">Radiología</h3>
-                  <Badge variant="outline" className="mt-1">Próximamente</Badge>
+                  <h3 className="text-2xl font-semibold">Radiology</h3>
+                  <Badge variant="outline" className="mt-1">Coming Soon</Badge>
                 </div>
               </div>
               <p className="text-muted-foreground mb-6">
-                Análisis avanzado de imágenes médicas con detección automática de anomalías 
-                y generación de reportes estructurados.
+                Advanced medical image analysis with automatic anomaly detection 
+                and structured report generation.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Detección automática de lesiones</span>
+                  <span>Automatic lesion detection</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Reportes estructurados DICOM</span>
+                  <span>Structured DICOM reports</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Priorización por urgencia</span>
+                  <span>Prioritization by urgency</span>
                 </li>
               </ul>
             </Card>
@@ -359,26 +359,26 @@ export const GalateaHomepage = () => {
                   <Zap className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-semibold">Investigación</h3>
+                  <h3 className="text-2xl font-semibold">Research</h3>
                   <Badge variant="outline" className="mt-1">Beta</Badge>
                 </div>
               </div>
               <p className="text-muted-foreground mb-6">
-                Optimización de ensayos clínicos, gestión de protocolos de investigación 
-                y análisis de datos médicos complejos.
+                Clinical trial optimization, research protocol management 
+                and complex medical data analysis.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Gestión de ensayos clínicos</span>
+                  <span>Clinical trial management</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Análisis estadístico avanzado</span>
+                  <span>Advanced statistical analysis</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Cumplimiento regulatorio</span>
+                  <span>Regulatory compliance</span>
                 </li>
               </ul>
             </Card>
@@ -389,26 +389,26 @@ export const GalateaHomepage = () => {
                   <Stethoscope className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-semibold">Medicina General</h3>
-                  <Badge variant="outline" className="mt-1">Próximamente</Badge>
+                  <h3 className="text-2xl font-semibold">General Medicine</h3>
+                  <Badge variant="outline" className="mt-1">Coming Soon</Badge>
                 </div>
               </div>
               <p className="text-muted-foreground mb-6">
-                Asistente para consulta general, triaje inteligente y apoyo en decisiones 
-                clínicas para atención primaria.
+                Assistant for general consultation, intelligent triage and support in clinical 
+                decisions for primary care.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Triaje automático de pacientes</span>
+                  <span>Automatic patient triage</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Apoyo en diagnóstico diferencial</span>
+                  <span>Differential diagnosis support</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-primary" />
-                  <span>Recomendaciones de derivación</span>
+                  <span>Referral recommendations</span>
                 </li>
               </ul>
             </Card>
@@ -420,13 +420,13 @@ export const GalateaHomepage = () => {
       <section id="tecnologia" className="py-20 px-6 bg-muted/30">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4">Tecnología Avanzada</Badge>
+            <Badge variant="secondary" className="mb-4">Advanced Technology</Badge>
             <h2 className="text-5xl font-bold mb-6">
-              Infraestructura de IA de Clase Mundial
+              World-Class AI Infrastructure
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-              Nuestra plataforma combina los últimos avances en IA, procesamiento de lenguaje natural 
-              y computing en la nube para ofrecer soluciones médicas de precisión.
+              Our platform combines the latest advances in AI, natural language processing 
+              and cloud computing to deliver precision medical solutions.
             </p>
           </div>
           
@@ -435,7 +435,7 @@ export const GalateaHomepage = () => {
               <Cpu className="w-12 h-12 text-primary mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Large Language Models</h3>
               <p className="text-muted-foreground text-sm">
-                Modelos especializados entrenados con literatura médica y protocolos clínicos
+                Specialized models trained with medical literature and clinical protocols
               </p>
             </Card>
             
@@ -443,23 +443,23 @@ export const GalateaHomepage = () => {
               <Cloud className="w-12 h-12 text-primary mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Cloud Native</h3>
               <p className="text-muted-foreground text-sm">
-                Arquitectura escalable y segura en la nube con disponibilidad 99.9%
+                Scalable and secure cloud architecture with 99.9% availability
               </p>
             </Card>
             
             <Card className="p-6 text-center hover:shadow-glow transition-shadow">
               <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Seguridad Médica</h3>
+              <h3 className="text-xl font-semibold mb-2">Medical Security</h3>
               <p className="text-muted-foreground text-sm">
-                Cumplimiento HIPAA, GDPR y regulaciones locales de protección de datos
+                HIPAA, GDPR compliance and local data protection regulations
               </p>
             </Card>
             
             <Card className="p-6 text-center hover:shadow-glow transition-shadow">
               <Database className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Integración HIS</h3>
+              <h3 className="text-xl font-semibold mb-2">HIS Integration</h3>
               <p className="text-muted-foreground text-sm">
-                Conectividad nativa con sistemas hospitalarios y bases de datos médicas
+                Native connectivity with hospital systems and medical databases
               </p>
             </Card>
           </div>
@@ -467,7 +467,7 @@ export const GalateaHomepage = () => {
           <div className="bg-card rounded-3xl p-12 shadow-glow">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
-                <h3 className="text-3xl font-bold">Diferenciadores Tecnológicos</h3>
+                <h3 className="text-3xl font-bold">Technology Differentiators</h3>
                 
                 <div className="space-y-4">
                   <div className="flex items-start space-x-4">
@@ -475,10 +475,10 @@ export const GalateaHomepage = () => {
                       <Code className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-semibold mb-1">Conocimiento Médico Especializado</h4>
+                      <h4 className="font-semibold mb-1">Specialized Medical Knowledge</h4>
                       <p className="text-muted-foreground text-sm">
-                        Entrenamiento específico con guías clínicas, protocolos hospitalarios y 
-                        literatura médica en español y portugués.
+                        Specific training with clinical guidelines, hospital protocols and 
+                        medical literature in Spanish and Portuguese.
                       </p>
                     </div>
                   </div>
@@ -488,10 +488,10 @@ export const GalateaHomepage = () => {
                       <Activity className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-semibold mb-1">Aprendizaje Continuo</h4>
+                      <h4 className="font-semibold mb-1">Continuous Learning</h4>
                       <p className="text-muted-foreground text-sm">
-                        Los agentes mejoran constantemente con cada interacción, adaptándose 
-                        a las particularidades de cada institución.
+                        Agents constantly improve with each interaction, adapting 
+                        to the particularities of each institution.
                       </p>
                     </div>
                   </div>
@@ -501,10 +501,10 @@ export const GalateaHomepage = () => {
                       <Shield className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-semibold mb-1">Privacidad por Diseño</h4>
+                      <h4 className="font-semibold mb-1">Privacy by Design</h4>
                       <p className="text-muted-foreground text-sm">
-                        Procesamiento local de datos sensibles con encriptación end-to-end 
-                        y anonimización automática.
+                        Local processing of sensitive data with end-to-end encryption 
+                        and automatic anonymization.
                       </p>
                     </div>
                   </div>
@@ -512,24 +512,24 @@ export const GalateaHomepage = () => {
               </div>
               
               <div className="bg-gradient-primary rounded-2xl p-8 text-white">
-                <h4 className="text-2xl font-bold mb-6">Métricas de Rendimiento</h4>
+                <h4 className="text-2xl font-bold mb-6">Performance Metrics</h4>
                 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="text-center">
                     <div className="text-4xl font-bold mb-2">95%</div>
-                    <div className="text-white/80 text-sm">Precisión Diagnóstica</div>
+                    <div className="text-white/80 text-sm">Diagnostic Accuracy</div>
                   </div>
                   <div className="text-center">
                     <div className="text-4xl font-bold mb-2">&lt;2s</div>
-                    <div className="text-white/80 text-sm">Tiempo de Respuesta</div>
+                    <div className="text-white/80 text-sm">Response Time</div>
                   </div>
                   <div className="text-center">
                     <div className="text-4xl font-bold mb-2">99.9%</div>
-                    <div className="text-white/80 text-sm">Disponibilidad</div>
+                    <div className="text-white/80 text-sm">Availability</div>
                   </div>
                   <div className="text-center">
                     <div className="text-4xl font-bold mb-2">24/7</div>
-                    <div className="text-white/80 text-sm">Soporte Activo</div>
+                    <div className="text-white/80 text-sm">Active Support</div>
                   </div>
                 </div>
               </div>
@@ -542,13 +542,13 @@ export const GalateaHomepage = () => {
       <section id="casos" className="py-20 px-6">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4">Casos de Uso</Badge>
+            <Badge variant="secondary" className="mb-4">Use Cases</Badge>
             <h2 className="text-5xl font-bold mb-6">
-              Transformando la Atención Médica en Tiempo Real
+              Transforming Medical Care in Real Time
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-              Nuestros agentes de IA están revolucionando la práctica médica en hospitales 
-              y centros de salud líderes en América Latina.
+              Our AI agents are revolutionizing medical practice in leading hospitals 
+              and health centers across Latin America.
             </p>
           </div>
           
@@ -559,25 +559,25 @@ export const GalateaHomepage = () => {
                   <Building2 className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-semibold mb-2">Hospital Universitario San Ignacio</h3>
-                <Badge variant="outline" className="mb-4">Caso de Estudio</Badge>
+                <Badge variant="outline" className="mb-4">Case Study</Badge>
               </div>
               
               <p className="text-muted-foreground mb-6">
-                Implementación del Agente Administrativo para optimizar la gestión de citas 
-                y reducir tiempos de espera en 60%.
+                Implementation of the Administrative Agent to optimize appointment management 
+                and reduce waiting times by 60%.
               </p>
               
               <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Reducción tiempo espera</span>
+                  <span className="text-muted-foreground">Waiting time reduction</span>
                   <span className="font-semibold text-primary">60%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Eficiencia administrativa</span>
+                  <span className="text-muted-foreground">Administrative efficiency</span>
                   <span className="font-semibold text-primary">45%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Satisfacción pacientes</span>
+                  <span className="text-muted-foreground">Patient satisfaction</span>
                   <span className="font-semibold text-primary">85%</span>
                 </div>
               </div>
@@ -589,25 +589,25 @@ export const GalateaHomepage = () => {
                   <Heart className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-semibold mb-2">Clínica Cardiovascular Santa María</h3>
-                <Badge variant="outline" className="mb-4">Piloto Activo</Badge>
+                <Badge variant="outline" className="mb-4">Active Pilot</Badge>
               </div>
               
               <p className="text-muted-foreground mb-6">
-                Agente Cardiólogo asistiendo en interpretación de ECG y análisis de riesgo 
-                cardiovascular con precisión del 95%.
+                Cardiology Agent assisting in ECG interpretation and cardiovascular risk analysis 
+                with 95% accuracy.
               </p>
               
               <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Precisión diagnóstica</span>
+                  <span className="text-muted-foreground">Diagnostic accuracy</span>
                   <span className="font-semibold text-primary">95%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Tiempo análisis ECG</span>
+                  <span className="text-muted-foreground">ECG analysis time</span>
                   <span className="font-semibold text-primary">-80%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Detección temprana</span>
+                  <span className="text-muted-foreground">Early detection</span>
                   <span className="font-semibold text-primary">92%</span>
                 </div>
               </div>
@@ -619,25 +619,25 @@ export const GalateaHomepage = () => {
                   <Microscope className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-semibold mb-2">Instituto Nacional de Cancerología</h3>
-                <Badge variant="outline" className="mb-4">En Implementación</Badge>
+                <Badge variant="outline" className="mb-4">In Implementation</Badge>
               </div>
               
               <p className="text-muted-foreground mb-6">
-                Agente Oncólogo coordinando planes de tratamiento multidisciplinarios 
-                y optimizando protocolos de quimioterapia.
+                Oncology Agent coordinating multidisciplinary treatment plans 
+                and optimizing chemotherapy protocols.
               </p>
               
               <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Coordinación tratamientos</span>
+                  <span className="text-muted-foreground">Treatment coordination</span>
                   <span className="font-semibold text-primary">70%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Adherencia protocolos</span>
+                  <span className="text-muted-foreground">Protocol adherence</span>
                   <span className="font-semibold text-primary">98%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Seguimiento pacientes</span>
+                  <span className="text-muted-foreground">Patient monitoring</span>
                   <span className="font-semibold text-primary">24/7</span>
                 </div>
               </div>
@@ -650,32 +650,32 @@ export const GalateaHomepage = () => {
       <section className="py-20 px-6 bg-gradient-primary text-white">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-5xl font-bold mb-6">
-            ¿Listo para Transformar tu Institución Médica?
+            Ready to Transform Your Medical Institution?
           </h2>
           <p className="text-xl mb-12 opacity-90">
-            Únete a los hospitales líderes que ya están revolucionando la atención médica 
-            con nuestros agentes de IA especializados.
+            Join the leading hospitals that are already revolutionizing medical care 
+            with our specialized AI agents.
           </p>
           
           <div className="flex flex-wrap justify-center gap-6">
             <Button size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-4">
               <a href="/waitlist" className="flex items-center">
                 <Calendar className="w-5 h-5 mr-2" />
-                Agendar Demo Personalizada
+                Schedule Personalized Demo
               </a>
             </Button>
             <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary text-lg px-8 py-4">
               <a href="/waitlist" className="flex items-center">
                 <Mail className="w-5 h-5 mr-2" />
-                Unirse a Lista de Espera
+                Join Waiting List
               </a>
             </Button>
           </div>
           
           <div className="mt-12 text-center opacity-80">
             <p className="text-sm">
-              Implementación gratuita para las primeras 10 instituciones • 
-              Soporte dedicado 24/7 • ROI garantizado en 6 meses
+              Free implementation for the first 10 institutions • 
+              24/7 dedicated support • ROI guaranteed in 6 months
             </p>
           </div>
         </div>
@@ -693,8 +693,8 @@ export const GalateaHomepage = () => {
                 </span>
               </div>
               <p className="text-muted-foreground">
-                Revolucionando la medicina en LATAM con agentes de inteligencia artificial 
-                especializados para hospitales y centros médicos.
+                Revolutionizing medicine in LATAM with specialized artificial intelligence 
+                agents for hospitals and medical centers.
               </p>
               <div className="flex space-x-4">
                 <Button variant="outline" size="icon">
@@ -710,31 +710,31 @@ export const GalateaHomepage = () => {
             </div>
             
             <div>
-              <h4 className="text-lg font-semibold mb-4">Productos</h4>
+              <h4 className="text-lg font-semibold mb-4">Products</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li><a href="#servicios" className="hover:text-foreground transition-colors">Agentes de IA</a></li>
-                <li><a href="#tecnologia" className="hover:text-foreground transition-colors">Plataforma</a></li>
-                <li><a href="#casos" className="hover:text-foreground transition-colors">Casos de Uso</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">API & Integraciones</a></li>
+                <li><a href="#servicios" className="hover:text-foreground transition-colors">AI Agents</a></li>
+                <li><a href="#tecnologia" className="hover:text-foreground transition-colors">Platform</a></li>
+                <li><a href="#casos" className="hover:text-foreground transition-colors">Use Cases</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">API & Integrations</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="text-lg font-semibold mb-4">Empresa</h4>
+              <h4 className="text-lg font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li><a href="#empresa" className="hover:text-foreground transition-colors">Acerca de</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Carreras</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Noticias</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Inversionistas</a></li>
+                <li><a href="#empresa" className="hover:text-foreground transition-colors">About</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">News</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Investors</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="text-lg font-semibold mb-4">Contacto</h4>
+              <h4 className="text-lg font-semibold mb-4">Contact</h4>
               <div className="space-y-3 text-muted-foreground">
                 <div className="flex items-center space-x-2">
                   <Mail className="w-4 h-4" />
-                  <span>contacto@galatea.ai</span>
+                  <span>contact@galatea.ai</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Phone className="w-4 h-4" />
@@ -751,12 +751,12 @@ export const GalateaHomepage = () => {
           <div className="border-t border-border pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
               <p className="text-muted-foreground text-sm">
-                &copy; 2024 Galatea AI. Todos los derechos reservados.
+                &copy; 2024 Galatea AI. All rights reserved.
               </p>
               <div className="flex space-x-6 text-sm text-muted-foreground">
-                <a href="#" className="hover:text-foreground transition-colors">Privacidad</a>
-                <a href="#" className="hover:text-foreground transition-colors">Términos</a>
-                <a href="#" className="hover:text-foreground transition-colors">Seguridad</a>
+                <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
+                <a href="#" className="hover:text-foreground transition-colors">Terms</a>
+                <a href="#" className="hover:text-foreground transition-colors">Security</a>
                 <a href="#" className="hover:text-foreground transition-colors">Cookies</a>
               </div>
             </div>
