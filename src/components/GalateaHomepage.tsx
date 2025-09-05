@@ -63,7 +63,7 @@ export const GalateaHomepage = () => {
             </h1>
             
             <p className="text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-              Galatea AI is the platform that empowers every healthcare stakeholder to design, coordinate, deploy, and commercialize AI-powered hyperrealistic avatars. From pharmaceutical companies, hospitals, clinics, insurers (EPS/IPS), and medical professionals to students, researchers, and even patients themselves—Galatea provides the tools to bring digital healthcare to life. We are both B2B and B2C, enabling large-scale deployments for institutions and personalized use for individuals.
+              The platform that empowers every healthcare stakeholder to design, deploy, and commercialize AI-powered hyperrealistic avatars. B2B and B2C solutions for institutions and individuals.
             </p>
             
             <div className="flex flex-wrap justify-center gap-6 pt-8">
@@ -161,7 +161,7 @@ export const GalateaHomepage = () => {
                   The Platform for Hyperrealistic Healthcare Avatars
                 </h2>
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                  Galatea AI is the platform that empowers every healthcare stakeholder to design, coordinate, deploy, and commercialize AI-powered hyperrealistic avatars. From pharmaceutical companies, hospitals, clinics, insurers to medical professionals, students, researchers, and patients—we provide the tools to bring digital healthcare to life.
+                  We empower healthcare stakeholders to create and deploy AI-powered hyperrealistic avatars. Serving everyone from pharmaceutical companies and hospitals to medical professionals and patients.
                 </p>
               </div>
               
