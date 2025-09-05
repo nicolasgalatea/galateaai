@@ -51,7 +51,7 @@ export const GalateaHomepage = () => {
           <div className="text-center space-y-8 animate-fade-in">
             <div className="inline-flex items-center space-x-3 bg-primary/10 px-6 py-3 rounded-full">
               <Heart className="w-5 h-5 text-primary" />
-              <span className="text-primary font-medium">Avatares Hiperrealistas en Atención Sanitaria</span>
+              <span className="text-primary font-medium">The Platform for Hyperrealistic Healthcare Avatars</span>
             </div>
             
             <h1 className="text-6xl lg:text-8xl font-bold max-w-5xl mx-auto">
@@ -59,13 +59,11 @@ export const GalateaHomepage = () => {
                 Galatea AI
               </span>
               <br />
-              <span className="text-foreground">Revolución en Salud</span>
+              <span className="text-foreground">Healthcare Revolution</span>
             </h1>
             
             <p className="text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-              Plataforma diseñada para revolucionar la relación entre pacientes y profesionales de la salud. 
-              A través de avatares hiperrealistas impulsados por IA, ofrecemos una experiencia más humana, 
-              cercana y segura en entornos de atención sanitaria.
+              Galatea AI is the platform that empowers every healthcare stakeholder to design, coordinate, deploy, and commercialize AI-powered hyperrealistic avatars. From pharmaceutical companies, hospitals, clinics, insurers (EPS/IPS), and medical professionals to students, researchers, and even patients themselves—Galatea provides the tools to bring digital healthcare to life. We are both B2B and B2C, enabling large-scale deployments for institutions and personalized use for individuals.
             </p>
             
             <div className="flex flex-wrap justify-center gap-6 pt-8">
@@ -104,28 +102,28 @@ export const GalateaHomepage = () => {
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-6">
-              ¿Por qué elegir Galatea AI?
+              Why Galatea?
             </h2>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="p-8 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="p-3 bg-primary/10 rounded-xl w-fit mx-auto mb-4">
-                <Shield className="w-8 h-8 text-primary" />
+                <Code className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Seguridad y Confianza</h3>
+              <h3 className="text-xl font-semibold mb-4">End-to-end Platform</h3>
               <p className="text-muted-foreground">
-                Cada avatar es entrenado con protocolos clínicos y validaciones médicas para asegurar interacciones responsables.
+                Build, train, and launch avatars from a single hub with comprehensive tools and workflows.
               </p>
             </Card>
             
             <Card className="p-8 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="p-3 bg-primary/10 rounded-xl w-fit mx-auto mb-4">
-                <Heart className="w-8 h-8 text-primary" />
+                <Shield className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Comunicación Empática</h3>
+              <h3 className="text-xl font-semibold mb-4">Hyperrealism + Trust</h3>
               <p className="text-muted-foreground">
-                Los avatares responden en tiempo real con lenguaje claro, cálido y adaptado al paciente.
+                Avatars that look, sound, and behave like real humans, validated for medical use.
               </p>
             </Card>
             
@@ -133,9 +131,9 @@ export const GalateaHomepage = () => {
               <div className="p-3 bg-primary/10 rounded-xl w-fit mx-auto mb-4">
                 <Stethoscope className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Aplicaciones Médicas Reales</h3>
+              <h3 className="text-xl font-semibold mb-4">Healthcare-Native</h3>
               <p className="text-muted-foreground">
-                Desde acompañamiento en telemedicina, educación en salud, hasta soporte en procedimientos clínicos.
+                Designed specifically for the needs of life sciences and medical workflows.
               </p>
             </Card>
             
@@ -143,9 +141,9 @@ export const GalateaHomepage = () => {
               <div className="p-3 bg-primary/10 rounded-xl w-fit mx-auto mb-4">
                 <Globe className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Escalabilidad Global</h3>
+              <h3 className="text-xl font-semibold mb-4">Scalable and Global</h3>
               <p className="text-muted-foreground">
-                Permite a hospitales, aseguradoras y startups de salud implementar rápidamente soluciones digitales con calidad médica.
+                Deploy across geographies, languages, and specialties with ease.
               </p>
             </Card>
           </div>
@@ -158,14 +156,12 @@ export const GalateaHomepage = () => {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
               <div>
-                <Badge variant="secondary" className="mb-4">Quiénes Somos</Badge>
+                <Badge variant="secondary" className="mb-4">Who We Are</Badge>
                 <h2 className="text-5xl font-bold mb-6">
-                  La Plataforma para Crear Avatares Hiperrealistas en Atención Sanitaria
+                  The Platform for Hyperrealistic Healthcare Avatars
                 </h2>
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                  Galatea es una plataforma diseñada para revolucionar la relación entre pacientes y 
-                  profesionales de la salud. A través de avatares hiperrealistas impulsados por IA, 
-                  ofrecemos una experiencia más humana, cercana y segura en entornos de atención sanitaria.
+                  Galatea AI is the platform that empowers every healthcare stakeholder to design, coordinate, deploy, and commercialize AI-powered hyperrealistic avatars. From pharmaceutical companies, hospitals, clinics, insurers to medical professionals, students, researchers, and patients—we provide the tools to bring digital healthcare to life.
                 </p>
               </div>
               
