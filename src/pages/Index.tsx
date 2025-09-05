@@ -1,7 +1,7 @@
-import { GalateaPitchDeck } from '@/components/GalateaPitchDeck';
+import { GalateaHomepage } from '@/components/GalateaHomepage';
 
 const Index = () => {
-  return <GalateaPitchDeck />;
+  return <GalateaHomepage />;
 };
 
 export default Index;

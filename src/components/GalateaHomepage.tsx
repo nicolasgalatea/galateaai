@@ -33,7 +33,7 @@ export const GalateaHomepage = () => {
             
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">
-                <a href="/">Lista de Espera</a>
+                <a href="/waitlist">Lista de Espera</a>
               </Button>
               <Button size="sm">
                 <Calendar className="w-4 h-4 mr-2" />
@@ -69,8 +69,10 @@ export const GalateaHomepage = () => {
             
             <div className="flex flex-wrap justify-center gap-6 pt-8">
               <Button size="lg" className="text-lg px-8 py-4">
-                <Play className="w-5 h-5 mr-2" />
-                Ver Demo en Vivo
+                <a href="/waitlist" className="flex items-center">
+                  <Play className="w-5 h-5 mr-2" />
+                  Ver Demo en Vivo
+                </a>
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 py-4">
                 <FileText className="w-5 h-5 mr-2" />
@@ -607,11 +609,13 @@ export const GalateaHomepage = () => {
           
           <div className="flex flex-wrap justify-center gap-6">
             <Button size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-4">
-              <Calendar className="w-5 h-5 mr-2" />
-              Agendar Demo Personalizada
+              <a href="/waitlist" className="flex items-center">
+                <Calendar className="w-5 h-5 mr-2" />
+                Agendar Demo Personalizada
+              </a>
             </Button>
             <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary text-lg px-8 py-4">
-              <a href="/" className="flex items-center">
+              <a href="/waitlist" className="flex items-center">
                 <Mail className="w-5 h-5 mr-2" />
                 Unirse a Lista de Espera
               </a>
