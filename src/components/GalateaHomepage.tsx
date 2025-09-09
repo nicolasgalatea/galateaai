@@ -28,7 +28,7 @@ export const GalateaHomepage = () => {
   const avatarSteps = [
     { 
       id: 1, 
-      title: "Hello! I'm Dr. Sofia", 
+      title: "Hello! I'm Dr. Pitagoras", 
       subtitle: "Your AI Healthcare Assistant",
       description: "I'm a hyper-realistic avatar powered by Galatea AI. I can help you create, manage, and deploy healthcare AI agents across your organization."
     },
@@ -191,8 +191,8 @@ export const GalateaHomepage = () => {
                     <div className="absolute inset-0 bg-gradient-primary rounded-full opacity-20 animate-pulse" />
                     <div className="relative w-full h-full bg-gradient-to-br from-primary/30 to-secondary/30 rounded-full flex items-center justify-center border-4 border-primary/20">
                       <Avatar className="w-48 h-48">
-                        <AvatarImage src="/api/placeholder/192/192" alt="Dr. Sofia - AI Avatar" />
-                        <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">DS</AvatarFallback>
+                        <AvatarImage src="/api/placeholder/192/192" alt="Dr. Pitagoras - AI Avatar" />
+                        <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">DP</AvatarFallback>
                       </Avatar>
                       
                       {/* Voice Indicator */}
@@ -231,7 +231,7 @@ export const GalateaHomepage = () => {
                       onClick={() => setActiveStep(activeStep === 3 ? 1 : activeStep + 1)}
                     >
                       <MessageSquare className="w-4 h-4 mr-2" />
-                      Chat with Dr. Sofia
+                      Chat with Dr. Pitagoras
                     </Button>
                     <Button 
                       variant="outline" 
@@ -961,7 +961,7 @@ export const GalateaHomepage = () => {
               </Button>
               <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary">
                 <Calendar className="w-5 h-5 mr-2" />
-                Schedule Demo with Dr. Sofia
+                Schedule Demo with Dr. Pitagoras
               </Button>
             </div>
             
