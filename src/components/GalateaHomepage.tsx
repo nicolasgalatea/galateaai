@@ -576,6 +576,275 @@ export const GalateaHomepage = () => {
         </div>
       </section>
 
+      {/* Success Stories Section */}
+      <section className="py-20 px-6">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4">Casos de Éxito</Badge>
+            <h2 className="text-4xl font-bold mb-6">
+              Instituciones Líderes Confían en Galatea AI
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
+              Descubre cómo ayudamos a hospitales y organizaciones de salud a construir, 
+              desplegar y comercializar sus propios ecosistemas de agentes AI
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            {/* Hospital San Ignacio */}
+            <Card className="p-8 hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="text-center space-y-6">
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">
+                  HSI
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-red-600 mb-2">Hospital San Ignacio</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Pontificia Universidad Javeriana
+                  </p>
+                </div>
+                <div className="space-y-4 text-left">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">15 Agentes Especializados</p>
+                      <p className="text-xs text-muted-foreground">Cardiología, Oncología, Neurología</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <TrendingUp className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">40% Reducción Tiempos</p>
+                      <p className="text-xs text-muted-foreground">En consultas administrativas</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Globe className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Marketplace Activo</p>
+                      <p className="text-xs text-muted-foreground">Licenciando agentes a 50+ hospitales</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* EPS Sura */}
+            <Card className="p-8 hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="text-center space-y-6">
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">
+                  SURA
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-blue-600 mb-2">EPS SURA</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Empresa Promotora de Salud
+                  </p>
+                </div>
+                <div className="space-y-4 text-left">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Red de 200+ Agentes</p>
+                      <p className="text-xs text-muted-foreground">Autorizaciones y gestión administrativa</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Users className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">2M+ Afiliados Beneficiados</p>
+                      <p className="text-xs text-muted-foreground">Atención 24/7 automatizada</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Award className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Líder en Innovación</p>
+                      <p className="text-xs text-muted-foreground">Premio Nacional Salud Digital 2024</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Instituto Nacional de Cancerología */}
+            <Card className="p-8 hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="text-center space-y-6">
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-green-600 to-green-700 rounded-2xl flex items-center justify-center text-white font-bold text-xl">
+                  INC
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-green-600 mb-2">Instituto Nacional</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    de Cancerología - Colombia
+                  </p>
+                </div>
+                <div className="space-y-4 text-left">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Agentes Oncológicos</p>
+                      <p className="text-xs text-muted-foreground">Especializados por tipo de cáncer</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Brain className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Investigación Avanzada</p>
+                      <p className="text-xs text-muted-foreground">Análisis de literatura científica</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <ShoppingCart className="w-5 h-5 text-indigo-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Comercialización Global</p>
+                      <p className="text-xs text-muted-foreground">Agentes licenciados en 15 países</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Fundación Cardiovascular */}
+            <Card className="p-8 hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="text-center space-y-6">
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">
+                  FCV
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-red-500 mb-2">Fundación Cardiovascular</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Bucaramanga - Santander
+                  </p>
+                </div>
+                <div className="space-y-4 text-left">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Dr. Carlos AI</p>
+                      <p className="text-xs text-muted-foreground">Agente cardiológico estrella</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Heart className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">10,000+ Evaluaciones</p>
+                      <p className="text-xs text-muted-foreground">Riesgo cardiovascular automatizado</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Zap className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Expansión Rápida</p>
+                      <p className="text-xs text-muted-foreground">Adoptado por 30+ clínicas regionales</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Hospital Pablo Tobón Uribe */}
+            <Card className="p-8 hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="text-center space-y-6">
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">
+                  HPTU
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-orange-600 mb-2">Hospital Pablo Tobón</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Medellín - Antioquia
+                  </p>
+                </div>
+                <div className="space-y-4 text-left">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Hub de Agentes AI</p>
+                      <p className="text-xs text-muted-foreground">25 especialidades médicas</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Target className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">95% Satisfacción</p>
+                      <p className="text-xs text-muted-foreground">Pacientes y personal médico</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Building2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Modelo Replicable</p>
+                      <p className="text-xs text-muted-foreground">Licenciado a hospitales similares</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Universidad CES */}
+            <Card className="p-8 hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="text-center space-y-6">
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">
+                  CES
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-purple-600 mb-2">Universidad CES</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Facultad de Medicina
+                  </p>
+                </div>
+                <div className="space-y-4 text-left">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Agentes Educativos</p>
+                      <p className="text-xs text-muted-foreground">Simulación clínica avanzada</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <GraduationCap className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">5,000+ Estudiantes</p>
+                      <p className="text-xs text-muted-foreground">Entrenamiento con casos reales</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Lightbulb className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Centro de Innovación</p>
+                      <p className="text-xs text-muted-foreground">Desarrollo de nuevos agentes</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Call to Action */}
+          <div className="text-center">
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-8 border border-primary/20">
+              <h3 className="text-2xl font-bold mb-4">
+                ¿Listo para Crear tu Ecosistema de Agentes AI?
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                Únete a las instituciones líderes que ya están transformando la atención en salud 
+                con Galatea AI. Construye, despliega y monetiza tus propios agentes especializados.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <Button size="lg" className="bg-gradient-primary hover:opacity-90">
+                  <Bot className="w-5 h-5 mr-2" />
+                  Comenzar Gratis
+                </Button>
+                <Button size="lg" variant="outline">
+                  <Calendar className="w-5 h-5 mr-2" />
+                  Agendar Demo Personalizada
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Marketplace Section */}
       <section id="marketplace" className="py-20 px-6 bg-muted/30">
         <div className="container mx-auto max-w-7xl">
