@@ -11,6 +11,12 @@ import {
   Upload, TestTube, Eye, Headphones, Lock, Globe2, Languages
 } from 'lucide-react';
 
+// Import hyper-realistic avatar images
+import miraAvatar from '@/assets/mira-avatar.jpg';
+import aydaAvatar from '@/assets/ayda-avatar.jpg';
+import erinAvatar from '@/assets/erin-avatar.jpg';
+import mireyaAvatar from '@/assets/mireya-avatar.jpg';
+
 export const GalateaHomepage = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [showAvatar, setShowAvatar] = useState(false);
@@ -375,7 +381,7 @@ export const GalateaHomepage = () => {
               <div className="relative">
                 <div className="aspect-square bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
                   <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                    <AvatarImage src="/api/placeholder/150/150" alt="Mira - Remote Patient Monitoring" />
+                    <AvatarImage src={miraAvatar} alt="Mira - Remote Patient Monitoring" />
                     <AvatarFallback className="bg-blue-500 text-white text-2xl font-bold">MI</AvatarFallback>
                   </Avatar>
                 </div>
@@ -409,7 +415,7 @@ export const GalateaHomepage = () => {
               <div className="relative">
                 <div className="aspect-square bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center">
                   <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                    <AvatarImage src="/api/placeholder/150/150" alt="Ayda - Prolia Injection Specialist" />
+                    <AvatarImage src={aydaAvatar} alt="Ayda - Prolia Injection Specialist" />
                     <AvatarFallback className="bg-purple-500 text-white text-2xl font-bold">AY</AvatarFallback>
                   </Avatar>
                 </div>
@@ -445,7 +451,7 @@ export const GalateaHomepage = () => {
               <div className="relative">
                 <div className="aspect-square bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center">
                   <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                    <AvatarImage src="/api/placeholder/150/150" alt="Erin - Transitions of Care Specialist" />
+                    <AvatarImage src={erinAvatar} alt="Erin - Transitions of Care Specialist" />
                     <AvatarFallback className="bg-teal-500 text-white text-2xl font-bold">ER</AvatarFallback>
                   </Avatar>
                 </div>
@@ -478,7 +484,7 @@ export const GalateaHomepage = () => {
               <div className="relative">
                 <div className="aspect-square bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
                   <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                    <AvatarImage src="/api/placeholder/150/150" alt="Mireya - Gout Specialist" />
+                    <AvatarImage src={mireyaAvatar} alt="Mireya - Gout Specialist" />
                     <AvatarFallback className="bg-orange-500 text-white text-2xl font-bold">MR</AvatarFallback>
                   </Avatar>
                 </div>
