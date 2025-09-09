@@ -383,10 +383,10 @@ export const GalateaHomepage = () => {
             {/* Dr. Carlos - Cardiovascular Assistant */}
             <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="relative">
-                <div className="aspect-[4/5] bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
-                  <Avatar className="w-40 h-40 border-4 border-white shadow-lg">
-                    <AvatarImage src={carlosCardioAvatar} alt="Dr. Carlos - Cardiovascular Specialist" />
-                    <AvatarFallback className="bg-red-500 text-white text-3xl font-bold">CA</AvatarFallback>
+                <div className="aspect-[4/5] bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-2">
+                  <Avatar className="w-56 h-56 border-6 border-white shadow-2xl">
+                    <AvatarImage src={carlosCardioAvatar} alt="Dr. Carlos - Cardiovascular Specialist" className="object-cover" />
+                    <AvatarFallback className="bg-red-500 text-white text-4xl font-bold">CA</AvatarFallback>
                   </Avatar>
                 </div>
                 <Badge className="absolute top-4 right-4 bg-red-500 text-white">Specialist</Badge>
@@ -422,10 +422,10 @@ export const GalateaHomepage = () => {
             {/* Dr. Elena - Oncology Specialist */}
             <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="relative">
-                <div className="aspect-[4/5] bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center p-4">
-                  <Avatar className="w-40 h-40 border-4 border-white shadow-lg">
-                    <AvatarImage src={elenaOncoAvatar} alt="Dr. Elena - Oncology Specialist" />
-                    <AvatarFallback className="bg-purple-500 text-white text-3xl font-bold">EL</AvatarFallback>
+                <div className="aspect-[4/5] bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center p-2">
+                  <Avatar className="w-56 h-56 border-6 border-white shadow-2xl">
+                    <AvatarImage src={elenaOncoAvatar} alt="Dr. Elena - Oncology Specialist" className="object-cover" />
+                    <AvatarFallback className="bg-purple-500 text-white text-4xl font-bold">EL</AvatarFallback>
                   </Avatar>
                 </div>
                 <Badge className="absolute top-4 right-4 bg-purple-500 text-white">Expert</Badge>
@@ -461,10 +461,10 @@ export const GalateaHomepage = () => {
             {/* Dr. Amara - Pediatric Specialist */}
             <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="relative">
-                <div className="aspect-[4/5] bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
-                  <Avatar className="w-40 h-40 border-4 border-white shadow-lg">
-                    <AvatarImage src={amaraPediatricAvatar} alt="Dr. Amara - Pediatric Specialist" />
-                    <AvatarFallback className="bg-green-500 text-white text-3xl font-bold">AM</AvatarFallback>
+                <div className="aspect-[4/5] bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-2">
+                  <Avatar className="w-56 h-56 border-6 border-white shadow-2xl">
+                    <AvatarImage src={amaraPediatricAvatar} alt="Dr. Amara - Pediatric Specialist" className="object-cover" />
+                    <AvatarFallback className="bg-green-500 text-white text-4xl font-bold">AM</AvatarFallback>
                   </Avatar>
                 </div>
                 <Badge className="absolute top-4 right-4 bg-green-500 text-white">Pediatric</Badge>
@@ -500,10 +500,10 @@ export const GalateaHomepage = () => {
             {/* Dr. Raj - Orthopedic Surgeon */}
             <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="relative">
-                <div className="aspect-[4/5] bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
-                  <Avatar className="w-40 h-40 border-4 border-white shadow-lg">
-                    <AvatarImage src={rajOrthoAvatar} alt="Dr. Raj - Orthopedic Surgeon" />
-                    <AvatarFallback className="bg-blue-500 text-white text-3xl font-bold">RA</AvatarFallback>
+                <div className="aspect-[4/5] bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-2">
+                  <Avatar className="w-56 h-56 border-6 border-white shadow-2xl">
+                    <AvatarImage src={rajOrthoAvatar} alt="Dr. Raj - Orthopedic Surgeon" className="object-cover" />
+                    <AvatarFallback className="bg-blue-500 text-white text-4xl font-bold">RA</AvatarFallback>
                   </Avatar>
                 </div>
                 <Badge className="absolute top-4 right-4 bg-blue-500 text-white">Surgeon</Badge>
