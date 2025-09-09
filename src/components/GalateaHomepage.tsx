@@ -16,6 +16,10 @@ import miraAvatar from '@/assets/mira-avatar.jpg';
 import aydaAvatar from '@/assets/ayda-avatar.jpg';
 import erinAvatar from '@/assets/erin-avatar.jpg';
 import mireyaAvatar from '@/assets/mireya-avatar.jpg';
+import carlosCardioAvatar from '@/assets/carlos-cardio-avatar.jpg';
+import elenaOncoAvatar from '@/assets/elena-onco-avatar.jpg';
+import amaraPediatricAvatar from '@/assets/amara-pediatric-avatar.jpg';
+import rajOrthoAvatar from '@/assets/raj-ortho-avatar.jpg';
 
 export const GalateaHomepage = () => {
   const [activeStep, setActiveStep] = useState(1);
@@ -376,140 +380,157 @@ export const GalateaHomepage = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-            {/* Mira - Remote Patient Monitoring */}
+            {/* Dr. Carlos - Cardiovascular Assistant */}
             <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="relative">
-                <div className="aspect-square bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
-                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                    <AvatarImage src={miraAvatar} alt="Mira - Remote Patient Monitoring" />
-                    <AvatarFallback className="bg-blue-500 text-white text-2xl font-bold">MI</AvatarFallback>
+                <div className="aspect-[4/5] bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
+                  <Avatar className="w-40 h-40 border-4 border-white shadow-lg">
+                    <AvatarImage src={carlosCardioAvatar} alt="Dr. Carlos - Cardiovascular Specialist" />
+                    <AvatarFallback className="bg-red-500 text-white text-3xl font-bold">CA</AvatarFallback>
                   </Avatar>
                 </div>
-                <Badge className="absolute top-4 right-4 bg-green-500 text-white">New</Badge>
+                <Badge className="absolute top-4 right-4 bg-red-500 text-white">Specialist</Badge>
                 <Badge className="absolute top-4 left-4 bg-primary/90 text-white">
                   <Bot className="w-3 h-3 mr-1" />
                   AI
                 </Badge>
               </div>
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2">Mira</h3>
-                <p className="text-green-600 font-medium mb-4">Remote Patient Monitoring</p>
+                <h3 className="text-xl font-bold mb-2">Dr. Carlos</h3>
+                <p className="text-red-600 font-medium mb-4">Cardiovascular Care Assistant</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Specialized in cardiac monitoring, hypertension management, post-cardiac surgery care, 
+                  and cardiovascular risk assessment protocols.
+                </p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge variant="outline" className="text-xs">General</Badge>
-                  <Badge variant="outline" className="text-xs">Check-In</Badge>
+                  <Badge variant="outline" className="text-xs">Cardiology</Badge>
+                  <Badge variant="outline" className="text-xs">ICU Care</Badge>
+                  <Badge variant="outline" className="text-xs">Heart Surgery</Badge>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <Avatar className="w-6 h-6">
-                    <AvatarFallback className="text-xs bg-primary/10">HC</AvatarFallback>
+                    <AvatarFallback className="text-xs bg-red-500/10">GA</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">Corporate Creator:</p>
-                    <p className="text-primary">Hippocratic AI</p>
+                    <p className="font-medium">Created by:</p>
+                    <p className="text-primary">Galatea AI Medical Team</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Ayda - Prolia Injection */}
+            {/* Dr. Elena - Oncology Specialist */}
             <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="relative">
-                <div className="aspect-square bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center">
-                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                    <AvatarImage src={aydaAvatar} alt="Ayda - Prolia Injection Specialist" />
-                    <AvatarFallback className="bg-purple-500 text-white text-2xl font-bold">AY</AvatarFallback>
+                <div className="aspect-[4/5] bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center p-4">
+                  <Avatar className="w-40 h-40 border-4 border-white shadow-lg">
+                    <AvatarImage src={elenaOncoAvatar} alt="Dr. Elena - Oncology Specialist" />
+                    <AvatarFallback className="bg-purple-500 text-white text-3xl font-bold">EL</AvatarFallback>
                   </Avatar>
                 </div>
-                <Badge className="absolute top-4 right-4 bg-green-500 text-white">New</Badge>
+                <Badge className="absolute top-4 right-4 bg-purple-500 text-white">Expert</Badge>
                 <Badge className="absolute top-4 left-4 bg-primary/90 text-white">
                   <Bot className="w-3 h-3 mr-1" />
                   AI
                 </Badge>
               </div>
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2">Ayda</h3>
-                <p className="text-green-600 font-medium mb-4">Prolia Injection Appointment Prep</p>
+                <h3 className="text-xl font-bold mb-2">Dr. Elena</h3>
+                <p className="text-purple-600 font-medium mb-4">Oncology Treatment Assistant</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Expert in chemotherapy protocols, radiation therapy support, cancer patient education, 
+                  and palliative care coordination.
+                </p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge variant="outline" className="text-xs">Post-Discharge</Badge>
-                  <Badge variant="outline" className="text-xs">Transition of Care</Badge>
+                  <Badge variant="outline" className="text-xs">Oncology</Badge>
+                  <Badge variant="outline" className="text-xs">Chemotherapy</Badge>
+                  <Badge variant="outline" className="text-xs">Patient Support</Badge>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <Avatar className="w-6 h-6">
-                    <AvatarFallback className="text-xs bg-blue-500/10">JG</AvatarFallback>
+                    <AvatarFallback className="text-xs bg-purple-500/10">GA</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">Individual Creator:</p>
-                    <p className="text-primary">Jacob García</p>
-                    <p className="text-xs">Specialty: Acute Care/Surgical</p>
-                    <p className="text-xs">Subspecialty: IV Therapy, Cath lab</p>
+                    <p className="font-medium">Created by:</p>
+                    <p className="text-primary">Galatea AI Medical Team</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Erin - Transitions of Care */}
+            {/* Dr. Amara - Pediatric Specialist */}
             <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="relative">
-                <div className="aspect-square bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center">
-                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                    <AvatarImage src={erinAvatar} alt="Erin - Transitions of Care Specialist" />
-                    <AvatarFallback className="bg-teal-500 text-white text-2xl font-bold">ER</AvatarFallback>
+                <div className="aspect-[4/5] bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
+                  <Avatar className="w-40 h-40 border-4 border-white shadow-lg">
+                    <AvatarImage src={amaraPediatricAvatar} alt="Dr. Amara - Pediatric Specialist" />
+                    <AvatarFallback className="bg-green-500 text-white text-3xl font-bold">AM</AvatarFallback>
                   </Avatar>
                 </div>
+                <Badge className="absolute top-4 right-4 bg-green-500 text-white">Pediatric</Badge>
                 <Badge className="absolute top-4 left-4 bg-primary/90 text-white">
                   <Bot className="w-3 h-3 mr-1" />
                   AI
                 </Badge>
               </div>
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2">Erin</h3>
-                <p className="text-green-600 font-medium mb-4">Transitions of Care Check-In</p>
+                <h3 className="text-xl font-bold mb-2">Dr. Amara</h3>
+                <p className="text-green-600 font-medium mb-4">Pediatric Care Assistant</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Specialized in child development tracking, vaccination schedules, pediatric emergencies, 
+                  and family education for childhood illnesses.
+                </p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge variant="outline" className="text-xs">General</Badge>
-                  <Badge variant="outline" className="text-xs">Check-In</Badge>
+                  <Badge variant="outline" className="text-xs">Pediatrics</Badge>
+                  <Badge variant="outline" className="text-xs">Child Development</Badge>
+                  <Badge variant="outline" className="text-xs">Family Care</Badge>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <Avatar className="w-6 h-6">
-                    <AvatarFallback className="text-xs bg-primary/10">HC</AvatarFallback>
+                    <AvatarFallback className="text-xs bg-green-500/10">GA</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">Corporate Creator:</p>
-                    <p className="text-primary">Hippocratic AI</p>
+                    <p className="font-medium">Created by:</p>
+                    <p className="text-primary">Galatea AI Medical Team</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Mireya - Gout Flare-Up */}
+            {/* Dr. Raj - Orthopedic Surgeon */}
             <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="relative">
-                <div className="aspect-square bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
-                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                    <AvatarImage src={mireyaAvatar} alt="Mireya - Gout Specialist" />
-                    <AvatarFallback className="bg-orange-500 text-white text-2xl font-bold">MR</AvatarFallback>
+                <div className="aspect-[4/5] bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+                  <Avatar className="w-40 h-40 border-4 border-white shadow-lg">
+                    <AvatarImage src={rajOrthoAvatar} alt="Dr. Raj - Orthopedic Surgeon" />
+                    <AvatarFallback className="bg-blue-500 text-white text-3xl font-bold">RA</AvatarFallback>
                   </Avatar>
                 </div>
-                <Badge className="absolute top-4 right-4 bg-green-500 text-white">New</Badge>
+                <Badge className="absolute top-4 right-4 bg-blue-500 text-white">Surgeon</Badge>
                 <Badge className="absolute top-4 left-4 bg-primary/90 text-white">
                   <Bot className="w-3 h-3 mr-1" />
                   AI
                 </Badge>
               </div>
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2">Mireya</h3>
-                <p className="text-green-600 font-medium mb-4">Gout Flare-Up Follow-Up</p>
+                <h3 className="text-xl font-bold mb-2">Dr. Raj</h3>
+                <p className="text-blue-600 font-medium mb-4">Orthopedic Surgery Assistant</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Expert in joint replacement protocols, fracture management, sports medicine, 
+                  and post-operative rehabilitation planning.
+                </p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge variant="outline" className="text-xs">Post-Discharge</Badge>
-                  <Badge variant="outline" className="text-xs">Transition of Care</Badge>
+                  <Badge variant="outline" className="text-xs">Orthopedics</Badge>
+                  <Badge variant="outline" className="text-xs">Joint Surgery</Badge>
+                  <Badge variant="outline" className="text-xs">Sports Medicine</Badge>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <Avatar className="w-6 h-6">
-                    <AvatarFallback className="text-xs bg-purple-500/10">IH</AvatarFallback>
+                    <AvatarFallback className="text-xs bg-blue-500/10">GA</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">Individual Creator:</p>
-                    <p className="text-primary">Isabel Hartig MSN, APRN</p>
-                    <p className="text-xs">Specialty: Rheumatology</p>
-                    <p className="text-xs">Subspecialty: Cardiovascular ICU</p>
+                    <p className="font-medium">Created by:</p>
+                    <p className="text-primary">Galatea AI Medical Team</p>
                   </div>
                 </div>
               </CardContent>
