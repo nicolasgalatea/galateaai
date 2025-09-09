@@ -536,6 +536,191 @@ export const GalateaHomepage = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 px-6">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4">Pricing Plans</Badge>
+            <h2 className="text-4xl font-bold mb-6">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Choose the plan that fits your healthcare practice. All plans include 14-day free trial.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {/* Starter Plan */}
+            <Card className="relative border-2 border-border hover:shadow-glow transition-all duration-300">
+              <CardHeader className="text-center pb-8">
+                <CardTitle className="text-2xl font-bold">Starter</CardTitle>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">$29</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <p className="text-muted-foreground mt-2">Perfect for individual practitioners</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ul className="space-y-3">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>1 AI Agent</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>1,000 monthly conversations</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>Basic avatar customization</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>Email support</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>HIPAA compliant</span>
+                  </li>
+                </ul>
+              </CardContent>
+              <CardContent className="pt-0">
+                <Button className="w-full" variant="outline">
+                  Start Free Trial
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Professional Plan */}
+            <Card className="relative border-2 border-primary scale-105 shadow-glow">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-primary text-white">
+                  Most Popular
+                </Badge>
+              </div>
+              <CardHeader className="text-center pb-8">
+                <CardTitle className="text-2xl font-bold">Professional</CardTitle>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">$99</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <p className="text-muted-foreground mt-2">For growing medical practices</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ul className="space-y-3">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>5 AI Agents</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>10,000 monthly conversations</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>Advanced avatar features</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>Multi-agent coordination</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>Priority support</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>EHR integrations</span>
+                  </li>
+                </ul>
+              </CardContent>
+              <CardContent className="pt-0">
+                <Button className="w-full bg-gradient-primary hover:opacity-90">
+                  Get Started
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Enterprise Plan */}
+            <Card className="relative border-2 border-border hover:shadow-glow transition-all duration-300">
+              <CardHeader className="text-center pb-8">
+                <CardTitle className="text-2xl font-bold">Enterprise</CardTitle>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">Custom</span>
+                </div>
+                <p className="text-muted-foreground mt-2">For hospitals and large organizations</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ul className="space-y-3">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>Unlimited AI Agents</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>Unlimited conversations</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>Custom avatar development</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>Advanced analytics</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>24/7 dedicated support</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                    <span>On-premise deployment</span>
+                  </li>
+                </ul>
+              </CardContent>
+              <CardContent className="pt-0">
+                <Button className="w-full" variant="outline">
+                  Contact Sales
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center">
+            <div className="bg-muted/30 rounded-2xl p-8 mb-8">
+              <p className="text-muted-foreground mb-6">
+                All plans include 14-day free trial • No setup fees • Cancel anytime
+              </p>
+              <div className="flex justify-center items-center space-x-8 text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  <Shield className="w-4 h-4 text-green-500 mr-2" />
+                  <span>HIPAA Compliant</span>
+                </div>
+                <div className="flex items-center">
+                  <Award className="w-4 h-4 text-green-500 mr-2" />
+                  <span>SOC 2 Certified</span>
+                </div>
+                <div className="flex items-center">
+                  <Globe className="w-4 h-4 text-green-500 mr-2" />
+                  <span>GDPR Ready</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold">Need a custom solution?</h3>
+              <p className="text-muted-foreground">
+                Contact our team to discuss enterprise pricing and custom integrations
+              </p>
+              <Button size="lg" variant="outline">
+                <Mail className="w-5 h-5 mr-2" />
+                Schedule Consultation
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-6 bg-gradient-primary text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black/20" />
