@@ -356,6 +356,199 @@ export const GalateaHomepage = () => {
         </div>
       </section>
 
+      {/* Hyper-Realistic AI Agents Section */}
+      <section className="py-20 px-6 bg-muted/10">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4">Meet Our AI Agents</Badge>
+            <h2 className="text-4xl font-bold mb-6">
+              Hyper-Realistic Healthcare Avatars
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
+              Experience natural conversations with AI agents that look, sound, and act like real healthcare professionals
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            {/* Mira - Remote Patient Monitoring */}
+            <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="relative">
+                <div className="aspect-square bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
+                    <AvatarImage src="/api/placeholder/150/150" alt="Mira - Remote Patient Monitoring" />
+                    <AvatarFallback className="bg-blue-500 text-white text-2xl font-bold">MI</AvatarFallback>
+                  </Avatar>
+                </div>
+                <Badge className="absolute top-4 right-4 bg-green-500 text-white">New</Badge>
+                <Badge className="absolute top-4 left-4 bg-primary/90 text-white">
+                  <Bot className="w-3 h-3 mr-1" />
+                  AI
+                </Badge>
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold mb-2">Mira</h3>
+                <p className="text-green-600 font-medium mb-4">Remote Patient Monitoring</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Badge variant="outline" className="text-xs">General</Badge>
+                  <Badge variant="outline" className="text-xs">Check-In</Badge>
+                </div>
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Avatar className="w-6 h-6">
+                    <AvatarFallback className="text-xs bg-primary/10">HC</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">Corporate Creator:</p>
+                    <p className="text-primary">Hippocratic AI</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ayda - Prolia Injection */}
+            <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="relative">
+                <div className="aspect-square bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center">
+                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
+                    <AvatarImage src="/api/placeholder/150/150" alt="Ayda - Prolia Injection Specialist" />
+                    <AvatarFallback className="bg-purple-500 text-white text-2xl font-bold">AY</AvatarFallback>
+                  </Avatar>
+                </div>
+                <Badge className="absolute top-4 right-4 bg-green-500 text-white">New</Badge>
+                <Badge className="absolute top-4 left-4 bg-primary/90 text-white">
+                  <Bot className="w-3 h-3 mr-1" />
+                  AI
+                </Badge>
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold mb-2">Ayda</h3>
+                <p className="text-green-600 font-medium mb-4">Prolia Injection Appointment Prep</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Badge variant="outline" className="text-xs">Post-Discharge</Badge>
+                  <Badge variant="outline" className="text-xs">Transition of Care</Badge>
+                </div>
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Avatar className="w-6 h-6">
+                    <AvatarFallback className="text-xs bg-blue-500/10">JG</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">Individual Creator:</p>
+                    <p className="text-primary">Jacob García</p>
+                    <p className="text-xs">Specialty: Acute Care/Surgical</p>
+                    <p className="text-xs">Subspecialty: IV Therapy, Cath lab</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Erin - Transitions of Care */}
+            <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="relative">
+                <div className="aspect-square bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center">
+                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
+                    <AvatarImage src="/api/placeholder/150/150" alt="Erin - Transitions of Care Specialist" />
+                    <AvatarFallback className="bg-teal-500 text-white text-2xl font-bold">ER</AvatarFallback>
+                  </Avatar>
+                </div>
+                <Badge className="absolute top-4 left-4 bg-primary/90 text-white">
+                  <Bot className="w-3 h-3 mr-1" />
+                  AI
+                </Badge>
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold mb-2">Erin</h3>
+                <p className="text-green-600 font-medium mb-4">Transitions of Care Check-In</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Badge variant="outline" className="text-xs">General</Badge>
+                  <Badge variant="outline" className="text-xs">Check-In</Badge>
+                </div>
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Avatar className="w-6 h-6">
+                    <AvatarFallback className="text-xs bg-primary/10">HC</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">Corporate Creator:</p>
+                    <p className="text-primary">Hippocratic AI</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Mireya - Gout Flare-Up */}
+            <Card className="overflow-hidden hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="relative">
+                <div className="aspect-square bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
+                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
+                    <AvatarImage src="/api/placeholder/150/150" alt="Mireya - Gout Specialist" />
+                    <AvatarFallback className="bg-orange-500 text-white text-2xl font-bold">MR</AvatarFallback>
+                  </Avatar>
+                </div>
+                <Badge className="absolute top-4 right-4 bg-green-500 text-white">New</Badge>
+                <Badge className="absolute top-4 left-4 bg-primary/90 text-white">
+                  <Bot className="w-3 h-3 mr-1" />
+                  AI
+                </Badge>
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold mb-2">Mireya</h3>
+                <p className="text-green-600 font-medium mb-4">Gout Flare-Up Follow-Up</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Badge variant="outline" className="text-xs">Post-Discharge</Badge>
+                  <Badge variant="outline" className="text-xs">Transition of Care</Badge>
+                </div>
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Avatar className="w-6 h-6">
+                    <AvatarFallback className="text-xs bg-purple-500/10">IH</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">Individual Creator:</p>
+                    <p className="text-primary">Isabel Hartig MSN, APRN</p>
+                    <p className="text-xs">Specialty: Rheumatology</p>
+                    <p className="text-xs">Subspecialty: Cardiovascular ICU</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Interactive Demo Section */}
+          <div className="text-center">
+            <Card className="p-8 bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/20 max-w-4xl mx-auto">
+              <div className="flex items-center justify-center space-x-8">
+                <div className="text-left">
+                  <h3 className="text-2xl font-bold mb-4">Experience Natural Conversations</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Our hyper-realistic avatars use advanced AI to provide natural, empathetic interactions. 
+                    Each agent is specialized for specific medical scenarios and can communicate through text and voice.
+                  </p>
+                  <div className="flex space-x-4">
+                    <Button className="bg-gradient-primary hover:opacity-90">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Try Text Demo
+                    </Button>
+                    <Button variant="outline">
+                      <Mic className="w-4 h-4 mr-2" />
+                      Try Voice Demo
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="hidden lg:block">
+                  <div className="relative">
+                    <Avatar className="w-32 h-32 border-4 border-primary/20">
+                      <AvatarImage src="/api/placeholder/150/150" alt="Demo Avatar" />
+                      <AvatarFallback className="bg-gradient-primary text-white text-2xl font-bold">AI</AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-2 -right-2 bg-green-500 text-white p-2 rounded-full">
+                      <Activity className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Marketplace Section */}
       <section id="marketplace" className="py-20 px-6 bg-muted/30">
         <div className="container mx-auto max-w-7xl">
