@@ -552,13 +552,17 @@ export const GalateaHomepage = () => {
                     Each agent is specialized for specific medical scenarios and can communicate through text and voice.
                   </p>
                   <div className="flex space-x-4">
-                    <Button className="bg-gradient-primary hover:opacity-90">
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Try Text Demo
+                    <Button asChild className="bg-gradient-primary hover:opacity-90">
+                      <a href="/demo">
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Ver Demo Completo
+                      </a>
                     </Button>
-                    <Button variant="outline">
-                      <Mic className="w-4 h-4 mr-2" />
-                      Try Voice Demo
+                    <Button asChild variant="outline">
+                      <a href="/demo">
+                        <Mic className="w-4 h-4 mr-2" />
+                        Demo Interactivo
+                      </a>
                     </Button>
                   </div>
                 </div>
@@ -835,14 +839,16 @@ export const GalateaHomepage = () => {
                 con Galatea AI. Construye, despliega y monetiza tus propios agentes especializados.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
-                <Button size="lg" className="bg-gradient-primary hover:opacity-90">
-                  <Bot className="w-5 h-5 mr-2" />
-                  Comenzar Gratis
-                </Button>
-                <Button size="lg" variant="outline">
+              <Button size="lg" className="bg-gradient-primary hover:opacity-90">
+                <Bot className="w-5 h-5 mr-2" />
+                Comenzar Gratis
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <a href="/demo">
                   <Calendar className="w-5 h-5 mr-2" />
-                  Agendar Demo Personalizada
-                </Button>
+                  Ver Demo Interactivo
+                </a>
+              </Button>
               </div>
             </div>
           </div>
@@ -1232,9 +1238,11 @@ export const GalateaHomepage = () => {
                 <Bot className="w-5 h-5 mr-2" />
                 Create Your First Agent Free
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary">
-                <Calendar className="w-5 h-5 mr-2" />
-                Schedule Demo with Dr. Pitagoras
+              <Button asChild size="lg" variant="outline" className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary">
+                <a href="/demo">
+                  <Calendar className="w-5 h-5 mr-2" />
+                  Ver Demo Interactivo
+                </a>
               </Button>
             </div>
             
