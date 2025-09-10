@@ -278,7 +278,7 @@ export const GalateaHomepage = () => {
           <div className="bg-red-500/20 text-red-600 px-6 py-3 rounded-full border-2 border-red-500/30 animate-bounce">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="font-bold text-lg">DEMO EN VIVO DISPONIBLE</span>
+              <span className="font-bold text-lg">Demo en vivo disponible</span>
             </div>
           </div>
         </div>
