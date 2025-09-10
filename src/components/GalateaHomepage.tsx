@@ -29,9 +29,9 @@ export const GalateaHomepage = () => {
   const avatarSteps = [
     { 
       id: 1, 
-      title: "Hello! I'm Dr. Pitagoras", 
+      title: "Hello! I'm Dr. Sofia", 
       subtitle: "Your AI Healthcare Assistant",
-      description: "I'm a hyper-realistic avatar powered by Galatea AI. I can help you create, manage, and deploy healthcare AI agents across your organization."
+      description: "I'm a hyper-realistic avatar powered by Galatea AI. I specialize in aortic diagnosis and cardiovascular complications to help you with precise medical assessments."
     },
     { 
       id: 2, 
@@ -235,7 +235,7 @@ export const GalateaHomepage = () => {
                       onClick={() => setActiveStep(activeStep === 3 ? 1 : activeStep + 1)}
                     >
                       <MessageSquare className="w-4 h-4 mr-2" />
-                      Chat with Dr. Pitagoras
+                      Chat with Dr. Sofia
                     </Button>
                     <Button 
                       variant="outline" 
