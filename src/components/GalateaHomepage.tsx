@@ -106,7 +106,7 @@ export const GalateaHomepage = () => {
                 <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">GA</AvatarFallback>
               </Avatar>
               <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                GALATEA AI
+                Galatea AI
               </span>
             </div>
             
@@ -287,7 +287,7 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <div className="inline-flex items-center space-x-3 bg-primary/15 px-8 py-4 rounded-full mb-8 border border-primary/20">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="text-primary font-bold text-lg">DEMO EN VIVO</span>
+              <span className="text-primary font-bold text-lg">Demo en vivo</span>
             </div>
             
             <h2 className="text-6xl lg:text-7xl font-bold mb-6">
@@ -295,7 +295,7 @@ export const GalateaHomepage = () => {
                 Galatea AI
               </span>
               <br />
-              <span className="text-foreground">En Acción Real</span>
+              <span className="text-foreground">en acción real</span>
             </h2>
             
             <p className="text-2xl text-muted-foreground max-w-5xl mx-auto leading-relaxed font-light">
@@ -323,7 +323,7 @@ export const GalateaHomepage = () => {
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline" className="bg-green-500/20 text-green-600 border-green-500/30">
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                    Transmisión en Vivo
+                    Transmisión en vivo
                   </Badge>
                 </div>
               </div>
@@ -486,7 +486,7 @@ export const GalateaHomepage = () => {
                 Experiencia Completa
               </span>
               <br />
-              <span className="text-foreground">Galatea AI en Acción</span>
+              <span className="text-foreground">Galatea AI en acción</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
               Observe cómo un agente cardiovascular especializado analiza un caso real en tiempo real, 
@@ -506,7 +506,7 @@ export const GalateaHomepage = () => {
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                     </div>
                     <Badge variant="outline" className="bg-primary/10 text-primary">
-                      Demo en Vivo
+                      Demo en vivo
                     </Badge>
                   </div>
                   
