@@ -148,9 +148,9 @@ export const GalateaHomepage = () => {
                   Create & deploy
                 </span>
                 <br />
-                <span className="text-foreground">Hyperrealistic</span>
+                <span className="text-foreground">hyperrealistic</span>
                 <br />
-                <span className="text-foreground">Healthcare avatars</span>
+                <span className="text-foreground">healthcare avatars</span>
               </h1>
               
               <p className="text-xl text-muted-foreground leading-relaxed">
