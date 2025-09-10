@@ -268,14 +268,208 @@ export const GalateaHomepage = () => {
         </div>
       </section>
 
+      {/* Video Demo Section - Prominente */}
+      <section className="py-24 px-6 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/80" />
+        
+        <div className="container mx-auto max-w-7xl relative z-10">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center space-x-3 bg-primary/15 px-8 py-4 rounded-full mb-8 border border-primary/20">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-primary font-bold text-lg">DEMO EN VIVO</span>
+            </div>
+            
+            <h2 className="text-6xl lg:text-7xl font-bold mb-6">
+              <span className="bg-gradient-primary bg-clip-text text-transparent">
+                Galatea AI
+              </span>
+              <br />
+              <span className="text-foreground">En Acción Real</span>
+            </h2>
+            
+            <p className="text-2xl text-muted-foreground max-w-5xl mx-auto leading-relaxed font-light">
+              Vea cómo nuestro agente cardiovascular analiza un caso complejo en tiempo real, 
+              desde la interpretación de estudios hasta recomendaciones clínicas precisas.
+            </p>
+          </div>
+
+          {/* Video Demo Container */}
+          <div className="relative max-w-6xl mx-auto">
+            {/* Browser Window Frame */}
+            <div className="bg-card/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-primary/20 overflow-hidden">
+              {/* Browser Header */}
+              <div className="flex items-center justify-between px-6 py-4 bg-muted/30 border-b border-border">
+                <div className="flex items-center space-x-3">
+                  <div className="flex space-x-2">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  </div>
+                  <div className="text-sm text-muted-foreground font-mono bg-background/50 px-3 py-1 rounded">
+                    galatea.ai/demo-cardiovascular
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className="bg-green-500/20 text-green-600 border-green-500/30">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                    Transmisión en Vivo
+                  </Badge>
+                </div>
+              </div>
+              
+              {/* Video Content Area */}
+              <div className="relative bg-gradient-to-br from-background/50 to-muted/30 aspect-video">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {/* Main Video Demo Interface */}
+                  <div className="w-full max-w-4xl p-8">
+                    <div className="grid lg:grid-cols-2 gap-8 items-center">
+                      {/* Left: Avatar & Analysis */}
+                      <div className="space-y-6">
+                        <div className="flex items-center space-x-4 mb-6">
+                          <div className="relative">
+                            <Avatar className="w-20 h-20 ring-4 ring-primary/30">
+                              <AvatarImage src={galateaAvatar} alt="Dr. Cardiovascular AI" />
+                              <AvatarFallback className="bg-primary text-white text-2xl">DC</AvatarFallback>
+                            </Avatar>
+                            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-background flex items-center justify-center">
+                              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                            </div>
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-bold text-primary">Dr. Cardiovascular AI</h3>
+                            <p className="text-muted-foreground">Especialista en Patología Aórtica</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                              <span className="text-sm text-green-600 font-medium">Analizando en tiempo real...</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <Card className="p-6 bg-primary/10 border-primary/30">
+                          <div className="space-y-4">
+                            <div className="flex items-center space-x-2 mb-3">
+                              <Stethoscope className="w-5 h-5 text-primary" />
+                              <span className="font-semibold text-primary">Análisis Diagnóstico:</span>
+                            </div>
+                            <div className="text-foreground">
+                              <p className="font-medium mb-2">
+                                "He identificado un <span className="text-red-600 font-bold">aneurisma de aorta ascendente de 5.2 cm</span>."
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Recomendación: Seguimiento cada 6 meses. Valoración quirúrgica si excede 5.5 cm.
+                              </p>
+                            </div>
+                          </div>
+                        </Card>
+                      </div>
+                      
+                      {/* Right: Metrics & Data */}
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <Card className="p-4 bg-red-50/50 border-red-200/50">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <AlertTriangle className="w-4 h-4 text-red-500" />
+                              <span className="text-sm font-bold text-red-700">Hallazgo Crítico</span>
+                            </div>
+                            <p className="text-2xl font-bold text-red-600">5.2 cm</p>
+                            <p className="text-xs text-red-500">Diámetro aórtico</p>
+                          </Card>
+                          
+                          <Card className="p-4 bg-blue-50/50 border-blue-200/50">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Target className="w-4 h-4 text-blue-500" />
+                              <span className="text-sm font-bold text-blue-700">Precisión</span>
+                            </div>
+                            <p className="text-2xl font-bold text-blue-600">97.8%</p>
+                            <p className="text-xs text-blue-500">Confianza diagnóstica</p>
+                          </Card>
+                          
+                          <Card className="p-4 bg-green-50/50 border-green-200/50">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Zap className="w-4 h-4 text-green-500" />
+                              <span className="text-sm font-bold text-green-700">Velocidad</span>
+                            </div>
+                            <p className="text-2xl font-bold text-green-600">2.3s</p>
+                            <p className="text-xs text-green-500">Tiempo de análisis</p>
+                          </Card>
+                          
+                          <Card className="p-4 bg-purple-50/50 border-purple-200/50">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Brain className="w-4 h-4 text-purple-500" />
+                              <span className="text-sm font-bold text-purple-700">IA Avanzada</span>
+                            </div>
+                            <p className="text-2xl font-bold text-purple-600">GPT-4</p>
+                            <p className="text-xs text-purple-500">Modelo médico</p>
+                          </Card>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Demo Progress Bar */}
+                    <div className="mt-8">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-muted-foreground">Progreso del Demo</span>
+                        <span className="text-sm font-bold text-primary">67%</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div className="bg-gradient-primary h-2 rounded-full" style={{ width: '67%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Play Button Overlay */}
+                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer">
+                  <Button size="lg" className="text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30">
+                    <Play className="w-8 h-8 mr-3" />
+                    Ver Demo Completo
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Demo Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-12">
+              <Button size="lg" className="text-xl px-10 py-6 bg-gradient-primary hover:opacity-90 shadow-lg">
+                <Play className="w-6 h-6 mr-3" />
+                Iniciar Demo Interactivo
+              </Button>
+              <Button variant="outline" size="lg" className="text-xl px-10 py-6 border-2 border-primary/30 hover:border-primary/50">
+                <Eye className="w-6 h-6 mr-3" />
+                Ver Más Casos Clínicos
+              </Button>
+            </div>
+            
+            {/* Demo Features */}
+            <div className="grid md:grid-cols-4 gap-6 mt-16">
+              {[
+                { icon: Upload, title: "Carga de Archivos", description: "PDFs, imágenes DICOM, historias clínicas" },
+                { icon: Brain, title: "Análisis IA", description: "Procesamiento en tiempo real con GPT-4 médico" },
+                { icon: Stethoscope, title: "Diagnóstico", description: "Recomendaciones clínicas precisas" },
+                { icon: FileText, title: "Reporte Final", description: "Documentación completa y detallada" }
+              ].map((feature, index) => (
+                <Card key={index} className="p-6 text-center bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary/40 transition-all duration-300">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <feature.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h4 className="font-bold text-foreground mb-2">{feature.title}</h4>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Professional Video Demo Section */}
-      <section id="demo" className="py-32 px-6 bg-gradient-to-br from-background via-muted/20 to-background relative overflow-hidden">
+      <section id="demo-detailed" className="py-32 px-6 bg-gradient-to-br from-background via-muted/20 to-background relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
         <div className="container mx-auto max-w-7xl relative z-10">
           <div className="text-center mb-20">
             <div className="inline-flex items-center space-x-3 bg-primary/10 px-6 py-3 rounded-full mb-6">
               <Play className="w-5 h-5 text-primary animate-pulse" />
-              <span className="text-primary font-semibold">Demo Profesional</span>
+              <span className="text-primary font-semibold">Demo Profesional Detallado</span>
             </div>
             <h2 className="text-5xl lg:text-6xl font-bold mb-8">
               <span className="bg-gradient-primary bg-clip-text text-transparent">
