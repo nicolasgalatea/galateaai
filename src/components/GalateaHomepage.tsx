@@ -195,8 +195,8 @@ export const GalateaHomepage = () => {
                     <div className="absolute inset-0 bg-gradient-primary rounded-full opacity-20 animate-pulse" />
                     <div className="relative w-full h-full bg-gradient-to-br from-primary/30 to-secondary/30 rounded-full flex items-center justify-center border-4 border-primary/20">
                       <Avatar className="w-48 h-48">
-                        <AvatarImage src="/api/placeholder/192/192" alt="Dr. Pitagoras - AI Avatar" />
-                        <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">DP</AvatarFallback>
+                        <AvatarImage src={galateaAvatar} alt="Dr. Galatea - AI Avatar" />
+                        <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">GA</AvatarFallback>
                       </Avatar>
                       
                       {/* Voice Indicator */}
