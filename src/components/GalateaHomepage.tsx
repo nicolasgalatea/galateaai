@@ -295,7 +295,7 @@ export const GalateaHomepage = () => {
                 Galatea AI
               </span>
               <br />
-              <span className="text-foreground">In Real Action</span>
+              <span className="text-foreground">In real action</span>
             </h2>
             
             <p className="text-2xl text-muted-foreground max-w-5xl mx-auto leading-relaxed font-light">
@@ -922,7 +922,7 @@ export const GalateaHomepage = () => {
             <Card className="p-8 bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/20 max-w-4xl mx-auto">
               <div className="flex items-center justify-center space-x-8">
                 <div className="text-left">
-                  <h3 className="text-2xl font-bold mb-4">Experience Natural Conversations</h3>
+                  <h3 className="text-2xl font-bold mb-4">Experience natural conversations</h3>
                   <p className="text-muted-foreground mb-6">
                     Our hyper-realistic avatars use advanced AI to provide natural, empathetic interactions. 
                     Each agent is specialized for specific medical scenarios and can communicate through text and voice.
@@ -1208,7 +1208,7 @@ export const GalateaHomepage = () => {
           <div className="text-center">
             <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-8 border border-primary/20">
               <h3 className="text-2xl font-bold mb-4">
-                Ready to Create Your AI Agent Ecosystem?
+                Ready to create your AI agent ecosystem?
               </h3>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
                 Join the leading institutions that are already transforming healthcare 
@@ -1237,7 +1237,7 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <Badge variant="secondary" className="mb-4">Agent Marketplace</Badge>
             <h2 className="text-4xl font-bold mb-6">
-              Explore & License Ready-Made AI Agents
+              Explore & license ready-made AI agents
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
               Discover specialized agents created by healthcare professionals worldwide, 
@@ -1345,7 +1345,7 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <Badge variant="secondary" className="mb-4">Security & Compliance</Badge>
             <h2 className="text-4xl font-bold mb-6">
-              Enterprise-Grade Security for Healthcare
+              Enterprise-grade security for healthcare
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
               Built from the ground up with healthcare compliance in mind. Your data and patients' privacy are our top priority.
@@ -1397,7 +1397,7 @@ export const GalateaHomepage = () => {
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-8">
             <div className="text-center">
               <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-4">Trusted by Healthcare Leaders</h3>
+              <h3 className="text-2xl font-bold mb-4">Trusted by healthcare leaders</h3>
               <p className="text-muted-foreground mb-6">
                 Our platform meets the highest standards for medical data security and regulatory compliance, 
                 trusted by hospitals and healthcare systems across Latin America.
