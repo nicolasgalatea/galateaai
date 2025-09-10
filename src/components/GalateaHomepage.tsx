@@ -742,216 +742,21 @@ export const GalateaHomepage = () => {
               </p>
               <Badge className="bg-orange-500/10 text-orange-600">Coming Soon</Badge>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Educational Health Institutions Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-teal-500/5 via-blue-500/5 to-purple-500/5">
-        <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4 bg-teal-500/10 text-teal-600">Educational Solutions</Badge>
-            <h2 className="text-4xl font-bold mb-6">
-              Educational health institutions
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-              Universities, institutions, and all health education centers to educate students, professors, tutors, conduct research, reduce student workload, and empower healthcare personnel
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            
             <Card className="p-6 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="p-4 bg-teal-500/10 rounded-xl w-fit mx-auto mb-4">
                 <GraduationCap className="w-8 h-8 text-teal-500" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Student Support</h3>
+              <h3 className="text-xl font-semibold mb-3">Educational Agents</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                AI tutors for medical students, case study analysis, and personalized learning paths
+                Specialized support for universities, institutions, students, professors, and healthcare personnel training
               </p>
               <Badge className="bg-teal-500/10 text-teal-600">Most Requested</Badge>
             </Card>
-            
-            <Card className="p-6 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
-              <div className="p-4 bg-blue-500/10 rounded-xl w-fit mx-auto mb-4">
-                <Users className="w-8 h-8 text-blue-500" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Faculty Assistance</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Support for professors and tutors in curriculum development and student assessment
-              </p>
-              <Badge className="bg-blue-500/10 text-blue-600">Available Now</Badge>
-            </Card>
-            
-            <Card className="p-6 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
-              <div className="p-4 bg-purple-500/10 rounded-xl w-fit mx-auto mb-4">
-                <Microscope className="w-8 h-8 text-purple-500" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Research Support</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Advanced research assistance, data analysis, and academic paper writing support
-              </p>
-              <Badge className="bg-purple-500/10 text-purple-600">Beta</Badge>
-            </Card>
-            
-            <Card className="p-6 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
-              <div className="p-4 bg-indigo-500/10 rounded-xl w-fit mx-auto mb-4">
-                <Target className="w-8 h-8 text-indigo-500" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Staff Training</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Continuous education and training programs for healthcare personnel empowerment
-              </p>
-              <Badge className="bg-indigo-500/10 text-indigo-600">Coming Soon</Badge>
-            </Card>
-          </div>
-
-          {/* Key Benefits for Educational Institutions */}
-          <div className="mt-16 bg-card/50 backdrop-blur-sm rounded-2xl p-8 border border-border">
-            <div className="grid lg:grid-cols-3 gap-8">
-              <div className="text-center space-y-4">
-                <div className="p-4 bg-green-500/10 rounded-xl w-fit mx-auto">
-                  <TrendingUp className="w-8 h-8 text-green-500" />
-                </div>
-                <h3 className="text-xl font-semibold">Reduce Student Workload</h3>
-                <p className="text-muted-foreground">
-                  AI assistants help students focus on learning by automating repetitive tasks and providing instant feedback
-                </p>
-              </div>
-              
-              <div className="text-center space-y-4">
-                <div className="p-4 bg-blue-500/10 rounded-xl w-fit mx-auto">
-                  <Lightbulb className="w-8 h-8 text-blue-500" />
-                </div>
-                <h3 className="text-xl font-semibold">Enhanced Learning</h3>
-                <p className="text-muted-foreground">
-                  Personalized AI tutors adapt to each student's learning style and pace for optimal education outcomes
-                </p>
-              </div>
-              
-              <div className="text-center space-y-4">
-                <div className="p-4 bg-purple-500/10 rounded-xl w-fit mx-auto">
-                  <Award className="w-8 h-8 text-purple-500" />
-                </div>
-                <h3 className="text-xl font-semibold">Faculty Empowerment</h3>
-                <p className="text-muted-foreground">
-                  Professors and tutors get AI-powered tools to create better content and track student progress effectively
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Student Retention Problem Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-red-500/5 via-orange-500/5 to-yellow-500/5 border-y border-red-500/10">
-        <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center space-x-3 bg-red-500/10 px-6 py-3 rounded-full mb-6">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
-              <span className="text-red-600 font-medium">Critical Challenge</span>
-            </div>
-            
-            <h2 className="text-4xl font-bold mb-6">
-              <span className="text-red-600">Student dropout crisis</span>
-              <br />
-              <span className="text-foreground">in health institutions</span>
-            </h2>
-            
-            <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-              Despite high enrollment in health education programs, institutions face alarming dropout rates. 
-              This phenomenon is called <strong className="text-red-600">"Academic Attrition"</strong> or 
-              <strong className="text-red-600">"Student Retention Crisis"</strong> - and it's devastating the healthcare workforce pipeline.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {/* Problem Statistics */}
-            <Card className="p-8 hover:shadow-glow transition-all duration-300 border-red-500/20">
-              <div className="text-center space-y-6">
-                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center text-white">
-                  <TrendingUp className="w-10 h-10" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-bold text-red-600 mb-2">45%</h3>
-                  <p className="text-lg font-semibold text-foreground mb-2">Dropout Rate</p>
-                  <p className="text-sm text-muted-foreground">
-                    Average attrition in health sciences programs across Latin America
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* Main Causes */}
-            <Card className="p-8 hover:shadow-glow transition-all duration-300 border-orange-500/20">
-              <div className="text-center space-y-6">
-                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center text-white">
-                  <AlertTriangle className="w-10 h-10" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-orange-600 mb-4">Main Causes</h3>
-                  <div className="space-y-2 text-left text-sm">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span>Academic overload</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span>Lack of personalized support</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span>Complex clinical concepts</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <span>Limited faculty availability</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Economic Impact */}
-            <Card className="p-8 hover:shadow-glow transition-all duration-300 border-yellow-500/20">
-              <div className="text-center space-y-6">
-                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center text-white">
-                  <Building2 className="w-10 h-10" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-bold text-yellow-600 mb-2">$2.3M</h3>
-                  <p className="text-lg font-semibold text-foreground mb-2">Annual Loss</p>
-                  <p className="text-sm text-muted-foreground">
-                    Average financial impact per institution due to student attrition
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Solution Preview */}
-          <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-8 border border-primary/20">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold mb-4">
-                <span className="text-primary">Galatea AI Solution:</span> Reduce dropout rates by 60%
-              </h3>
-              <p className="text-muted-foreground mb-6 max-w-3xl mx-auto">
-                Our AI agents provide 24/7 personalized support, intelligent tutoring, and early risk detection 
-                to help students succeed and institutions retain their talent pipeline.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <Button size="lg" className="bg-gradient-primary hover:opacity-90">
-                  <Bot className="w-5 h-5 mr-2" />
-                  Deploy Student Retention AI
-                </Button>
-                <Button size="lg" variant="outline">
-                  <FileText className="w-5 h-5 mr-2" />
-                  Download Case Study
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Hyper-Realistic AI Agents Section */}
       <section className="py-20 px-6 bg-muted/10">
