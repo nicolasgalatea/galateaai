@@ -640,38 +640,97 @@ export const GalateaHomepageES = () => {
               </Button>
             </div>
 
-            <Card className="p-8">
-              <h3 className="text-2xl font-bold mb-6 text-center">Agentes más populares</h3>
-              <div className="space-y-4">
-                {[
-                  { name: "Cardiólogo Experto", specialty: "Cardiología", price: "$299", rating: 4.9 },
-                  { name: "Oncólogo Especializado", specialty: "Oncología", price: "$349", rating: 4.8 },
-                  { name: "Pediatra Integral", specialty: "Pediatría", price: "$249", rating: 4.9 },
-                  { name: "Asistente Administrativo", specialty: "Administración", price: "$99", rating: 4.7 }
-                ].map((agent, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-12 h-12">
-                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                          {agent.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{agent.name}</p>
-                        <p className="text-sm text-muted-foreground">{agent.specialty}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-primary">{agent.price}</p>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm text-muted-foreground">{agent.rating}</span>
-                      </div>
-                    </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            {/* Tarjetas de Agentes Destacados */}
+            <Card className="p-6 hover:shadow-glow transition-all duration-300">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="w-20 h-20 ring-2 ring-primary/20">
+                    <AvatarImage src={carlosCardioAvatar} alt="Dr. Martinez" />
+                    <AvatarFallback className="text-xl">DM</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold">Especialista en Cardiología</h3>
+                    <p className="text-sm text-muted-foreground">por Dr. Martinez</p>
                   </div>
-                ))}
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                  <span className="text-sm">4.9</span>
+                </div>
+              </div>
+              <p className="text-muted-foreground text-sm mb-4">
+                Interpretación avanzada de ECG y evaluación de riesgo cardiovascular con monitoreo en tiempo real
+              </p>
+              <div className="flex items-center justify-between">
+                <Badge className="bg-green-500/10 text-green-600">Licenciado 450+</Badge>
+                <span className="font-semibold">$299/mes</span>
               </div>
             </Card>
+            
+            <Card className="p-6 hover:shadow-glow transition-all duration-300">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="w-20 h-20 ring-2 ring-primary/20">
+                    <AvatarImage src={aydaAvatar} alt="Hospital Central" />
+                    <AvatarFallback className="text-xl">HC</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold">Administrativo EPS</h3>
+                    <p className="text-sm text-muted-foreground">por Hospital Central</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                  <span className="text-sm">4.8</span>
+                </div>
+              </div>
+              <p className="text-muted-foreground text-sm mb-4">
+                Automatización administrativa completa para flujos de trabajo EPS, autorizaciones y facturación
+              </p>
+              <div className="flex items-center justify-between">
+                <Badge className="bg-blue-500/10 text-blue-600">Licenciado 120+</Badge>
+                <span className="font-semibold">$199/mes</span>
+              </div>
+            </Card>
+            
+            <Card className="p-6 hover:shadow-glow transition-all duration-300">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="w-20 h-20 ring-2 ring-primary/20">
+                    <AvatarImage src={elenaOncoAvatar} alt="Instituto de Investigación" />
+                    <AvatarFallback className="text-xl">RI</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold">Investigación Oncológica</h3>
+                    <p className="text-sm text-muted-foreground">por Instituto de Investigación</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                  <span className="text-sm">5.0</span>
+                </div>
+              </div>
+              <p className="text-muted-foreground text-sm mb-4">
+                Especializado en protocolos de investigación del cáncer, análisis de literatura y optimización de tratamientos
+              </p>
+              <div className="flex items-center justify-between">
+                <Badge className="bg-purple-500/10 text-purple-600">Licenciado 80+</Badge>
+                <span className="font-semibold">$399/mes</span>
+              </div>
+            </Card>
+          </div>
+
+          <div className="text-center">
+            <Button size="lg" variant="outline" className="mr-4">
+              <Search className="w-5 h-5 mr-2" />
+              Explorar Todos los Agentes
+            </Button>
+            <Button size="lg" className="bg-gradient-primary hover:opacity-90">
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              Crear Agente IA
+            </Button>
+          </div>
           </div>
         </div>
       </section>
