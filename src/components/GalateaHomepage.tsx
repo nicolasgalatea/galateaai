@@ -20,6 +20,7 @@ import carlosCardioAvatar from '@/assets/carlos-cardio-avatar.jpg';
 import elenaOncoAvatar from '@/assets/elena-onco-avatar.jpg';
 import amaraPediatricAvatar from '@/assets/amara-pediatric-avatar.jpg';
 import rajOrthoAvatar from '@/assets/raj-ortho-avatar.jpg';
+import galateaAvatar from '@/assets/galatea-avatar.jpg';
 
 export const GalateaHomepage = () => {
   const [activeStep, setActiveStep] = useState(1);
@@ -100,7 +101,10 @@ export const GalateaHomepage = () => {
         <div className="container mx-auto max-w-7xl px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Bot className="w-8 h-8 text-primary" />
+              <Avatar className="w-12 h-12">
+                <AvatarImage src={galateaAvatar} alt="Dr. Galatea - Fundadora de Galatea AI" />
+                <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">GA</AvatarFallback>
+              </Avatar>
               <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 GALATEA AI
               </span>
@@ -1259,9 +1263,15 @@ export const GalateaHomepage = () => {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Bot className="w-8 h-8 text-primary" />
-                <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  GALATEA AI
-                </span>
+                <div className="flex items-center space-x-3 justify-center">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={galateaAvatar} alt="Dr. Galatea - Fundadora de Galatea AI" />
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">GA</AvatarFallback>
+                  </Avatar>
+                  <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                    GALATEA AI
+                  </span>
+                </div>
               </div>
               <p className="text-muted-foreground">
                 The infrastructure for creating and coordinating medical AI agents with hyperrealistic avatars.
