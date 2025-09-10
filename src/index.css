@@ -42,7 +42,9 @@ All colors MUST be HSL.
     
     --gradient-primary: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--primary)));
     --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted) / 0.3));
     --shadow-glow: 0 10px 40px -10px hsl(var(--primary) / 0.3);
+    --shadow-elegant: 0 20px 60px -15px hsl(var(--primary) / 0.4);
 
     --radius: 0.75rem;
 

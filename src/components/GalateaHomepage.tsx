@@ -8,7 +8,7 @@ import {
   Building2, GraduationCap, MessageSquare, Mic, Shield, Sparkles, Bot, FileText, 
   Search, TrendingUp, Calendar, Mail, Heart, Award, Database, Cloud, Microscope, 
   Activity, Phone, Target, Lightbulb, Code, Cpu, UserPlus, Settings, ShoppingCart,
-  Upload, TestTube, Eye, Headphones, Lock, Globe2, Languages
+  Upload, TestTube, Eye, Headphones, Lock, Globe2, Languages, AlertTriangle
 } from 'lucide-react';
 
 // Import hyper-realistic avatar images
@@ -263,6 +263,178 @@ export const GalateaHomepage = () => {
                   </div>
                 </div>
               </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Professional Video Demo Section */}
+      <section id="demo" className="py-32 px-6 bg-gradient-to-br from-background via-muted/20 to-background relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+        <div className="container mx-auto max-w-7xl relative z-10">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center space-x-3 bg-primary/10 px-6 py-3 rounded-full mb-6">
+              <Play className="w-5 h-5 text-primary animate-pulse" />
+              <span className="text-primary font-semibold">Demo Profesional</span>
+            </div>
+            <h2 className="text-5xl lg:text-6xl font-bold mb-8">
+              <span className="bg-gradient-primary bg-clip-text text-transparent">
+                Experiencia Completa
+              </span>
+              <br />
+              <span className="text-foreground">Galatea AI en Acción</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+              Observe cómo un agente cardiovascular especializado analiza un caso real en tiempo real, 
+              desde la carga de archivos hasta el diagnóstico final con recomendaciones clínicas precisas.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left Side - Demo Video Interface */}
+            <div className="relative">
+              <Card className="p-8 bg-card/80 backdrop-blur-xl border-2 border-primary/20 shadow-2xl">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    </div>
+                    <Badge variant="outline" className="bg-primary/10 text-primary">
+                      Demo en Vivo
+                    </Badge>
+                  </div>
+                  
+                  <div className="relative bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl p-6 min-h-[400px]">
+                    <div className="flex items-center space-x-4 mb-6">
+                      <Avatar className="w-16 h-16 ring-2 ring-primary/30">
+                        <AvatarImage src={galateaAvatar} alt="Dr. Cardio AI" />
+                        <AvatarFallback>DC</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h4 className="text-xl font-semibold text-primary">Dr. Cardio AI</h4>
+                        <p className="text-muted-foreground">Especialista en Aorta</p>
+                      </div>
+                      <div className="ml-auto flex items-center space-x-2 bg-green-500/20 text-green-600 px-3 py-1 rounded-full">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium">En línea</span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="bg-primary/10 p-4 rounded-lg border-l-4 border-primary">
+                        <p className="text-sm font-medium text-primary mb-2">Dr. Cardio AI dice:</p>
+                        <p className="text-foreground">
+                          "He identificado un <strong>aneurisma de aorta ascendente de 5.2 cm</strong>. 
+                          Se recomienda seguimiento con imágenes cada 6 meses y valoración quirúrgica 
+                          si supera los 5.5 cm."
+                        </p>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <Card className="p-4 bg-red-50/50 border-red-200/50">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <AlertTriangle className="w-4 h-4 text-red-500" />
+                            <span className="text-sm font-semibold text-red-700">Hallazgo Crítico</span>
+                          </div>
+                          <p className="text-sm text-red-600">Diámetro: 5.2 cm</p>
+                        </Card>
+                        
+                        <Card className="p-4 bg-blue-50/50 border-blue-200/50">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Activity className="w-4 h-4 text-blue-500" />
+                            <span className="text-sm font-semibold text-blue-700">Precisión</span>
+                          </div>
+                          <p className="text-sm text-blue-600">97.3% confianza</p>
+                        </Card>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-center">
+                    <Button size="lg" className="bg-gradient-primary hover:opacity-90 text-lg px-8">
+                      <Play className="w-5 h-5 mr-2" />
+                      Ver Demo Completo
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+              
+              {/* Floating elements */}
+              <div className="absolute -top-6 -right-6 bg-primary/20 backdrop-blur-sm p-4 rounded-xl border border-primary/30">
+                <div className="flex items-center space-x-2 text-primary">
+                  <Brain className="w-5 h-5" />
+                  <span className="text-sm font-semibold">IA Procesando</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side - Key Features */}
+            <div className="space-y-8">
+              <div className="space-y-6">
+                <h3 className="text-3xl font-bold">
+                  Capacidades Avanzadas del Demo
+                </h3>
+                <p className="text-lg text-muted-foreground">
+                  Cada agente está equipado con tecnología de vanguardia para ofrecer 
+                  diagnósticos precisos y recomendaciones clínicas confiables.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <Card className="p-6 border-l-4 border-green-500 hover:shadow-glow transition-all">
+                  <div className="flex items-start space-x-4">
+                    <div className="p-3 bg-green-500/10 rounded-lg">
+                      <Microscope className="w-6 h-6 text-green-500" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold mb-2">Análisis de Imágenes Médicas</h4>
+                      <p className="text-muted-foreground">
+                        Procesamiento avanzado de ecocardiogramas, tomografías y resonancias 
+                        con precisión clínica validada.
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+                
+                <Card className="p-6 border-l-4 border-blue-500 hover:shadow-glow transition-all">
+                  <div className="flex items-start space-x-4">
+                    <div className="p-3 bg-blue-500/10 rounded-lg">
+                      <Target className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold mb-2">Diagnóstico Diferencial</h4>
+                      <p className="text-muted-foreground">
+                        Evaluación sistemática de múltiples posibilidades diagnósticas 
+                        basada en evidencia médica actualizada.
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+                
+                <Card className="p-6 border-l-4 border-purple-500 hover:shadow-glow transition-all">
+                  <div className="flex items-start space-x-4">
+                    <div className="p-3 bg-purple-500/10 rounded-lg">
+                      <Calendar className="w-6 h-6 text-purple-500" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold mb-2">Seguimiento Personalizado</h4>
+                      <p className="text-muted-foreground">
+                        Recomendaciones de seguimiento adaptadas al perfil específico 
+                        de cada paciente y su condición clínica.
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+              
+              <div className="pt-6">
+                <Button variant="outline" size="lg" className="w-full">
+                  <Code className="w-5 h-5 mr-2" />
+                  Explorar Todas las Funcionalidades
+                </Button>
+              </div>
             </div>
           </div>
         </div>
