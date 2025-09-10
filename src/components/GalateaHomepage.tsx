@@ -268,10 +268,20 @@ export const GalateaHomepage = () => {
         </div>
       </section>
 
-      {/* Video Demo Section - Prominente */}
-      <section className="py-24 px-6 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/80" />
+      {/* DEMO EN VIVO - SECCIÓN PRINCIPAL */}
+      <section id="demo-video" className="py-32 px-6 bg-gradient-to-br from-red-500/10 via-primary/5 to-secondary/10 relative overflow-hidden border-y-4 border-primary/20">
+        <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:50px_50px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-background/90" />
+        
+        {/* Floating Alert Badge */}
+        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="bg-red-500/20 text-red-600 px-6 py-3 rounded-full border-2 border-red-500/30 animate-bounce">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="font-bold text-lg">DEMO EN VIVO DISPONIBLE</span>
+            </div>
+          </div>
+        </div>
         
         <div className="container mx-auto max-w-7xl relative z-10">
           <div className="text-center mb-16">
