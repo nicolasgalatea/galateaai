@@ -145,12 +145,12 @@ export const GalateaHomepage = () => {
               
               <h1 className="text-5xl lg:text-7xl font-bold">
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
-                  Create & Deploy
+                  Create & deploy
                 </span>
                 <br />
                 <span className="text-foreground">Hyperrealistic</span>
                 <br />
-                <span className="text-foreground">Healthcare Avatars</span>
+                <span className="text-foreground">Healthcare avatars</span>
               </h1>
               
               <p className="text-xl text-muted-foreground leading-relaxed">
@@ -483,10 +483,10 @@ export const GalateaHomepage = () => {
             </div>
             <h2 className="text-5xl lg:text-6xl font-bold mb-8">
               <span className="bg-gradient-primary bg-clip-text text-transparent">
-                Complete Experience
+                Complete experience
               </span>
               <br />
-              <span className="text-foreground">Galatea AI In Action</span>
+              <span className="text-foreground">Galatea AI in action</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
               Watch how a specialized cardiovascular agent analyzes a real case in real time, 
@@ -578,7 +578,7 @@ export const GalateaHomepage = () => {
             <div className="space-y-8">
               <div className="space-y-6">
                 <h3 className="text-3xl font-bold">
-                  Advanced Demo Capabilities
+                  Advanced demo capabilities
                 </h3>
                 <p className="text-lg text-muted-foreground">
                   Each agent is equipped with cutting-edge technology to deliver 
@@ -593,7 +593,7 @@ export const GalateaHomepage = () => {
                       <Microscope className="w-6 h-6 text-green-500" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-semibold mb-2">Medical Image Analysis</h4>
+                      <h4 className="text-lg font-semibold mb-2">Medical image analysis</h4>
                       <p className="text-muted-foreground">
                         Advanced processing of echocardiograms, CT scans and MRIs 
                         with validated clinical precision.
@@ -608,7 +608,7 @@ export const GalateaHomepage = () => {
                       <Target className="w-6 h-6 text-blue-500" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-semibold mb-2">Differential Diagnosis</h4>
+                      <h4 className="text-lg font-semibold mb-2">Differential diagnosis</h4>
                       <p className="text-muted-foreground">
                         Systematic evaluation of multiple diagnostic possibilities 
                         based on updated medical evidence.
@@ -623,7 +623,7 @@ export const GalateaHomepage = () => {
                       <Calendar className="w-6 h-6 text-purple-500" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-semibold mb-2">Personalized Follow-up</h4>
+                      <h4 className="text-lg font-semibold mb-2">Personalized follow-up</h4>
                       <p className="text-muted-foreground">
                         Follow-up recommendations adapted to the specific profile 
                         of each patient and their clinical condition.
@@ -650,7 +650,7 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <Badge variant="secondary" className="mb-4">How It Works</Badge>
             <h2 className="text-4xl font-bold mb-6">
-              Create Your Healthcare AI Agent in 6 Steps
+              Create your healthcare AI agent in 6 steps
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Our intuitive platform guides you through the entire process, from concept to deployment
@@ -691,7 +691,7 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <Badge variant="secondary" className="mb-4">Agent Types</Badge>
             <h2 className="text-4xl font-bold mb-6">
-              Specialized AI Agents for Every Healthcare Need
+              Specialized AI agents for every healthcare need
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
               Choose from our pre-configured agent types or create custom solutions tailored to your specific requirements
@@ -752,7 +752,7 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <Badge variant="secondary" className="mb-4">Meet Our AI Agents</Badge>
             <h2 className="text-4xl font-bold mb-6">
-              Hyper-Realistic Healthcare Avatars
+              Hyper-realistic healthcare avatars
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
               Experience natural conversations with AI agents that look, sound, and act like real healthcare professionals
@@ -966,7 +966,7 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <Badge variant="secondary" className="mb-4">Success Stories</Badge>
             <h2 className="text-4xl font-bold mb-6">
-              Leading Institutions Trust Galatea AI
+              Leading institutions trust Galatea AI
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
               Discover how we help hospitals and health organizations build, 
@@ -1417,7 +1417,7 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <Badge variant="secondary" className="mb-4">Pricing Plans</Badge>
             <h2 className="text-4xl font-bold mb-6">
-              Simple, Transparent Pricing
+              Simple, transparent pricing
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Choose the plan that fits your healthcare practice. All plans include 14-day free trial.
@@ -1602,7 +1602,7 @@ export const GalateaHomepage = () => {
         <div className="container mx-auto max-w-7xl relative z-10 text-center">
           <div className="space-y-8">
             <h2 className="text-5xl font-bold">
-              Ready to Transform Healthcare with AI?
+              Ready to transform healthcare with AI?
             </h2>
             <p className="text-xl text-white/80 max-w-3xl mx-auto">
               Join thousands of healthcare professionals already using Galatea AI to create, 
