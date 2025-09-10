@@ -745,28 +745,6 @@ export const GalateaHomepage = () => {
               </p>
               <Badge className="bg-orange-500/10 text-orange-600">Coming Soon</Badge>
             </Card>
-            
-            <Card className="p-6 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
-              <div className="p-4 bg-teal-500/10 rounded-xl w-fit mx-auto mb-4">
-                <GraduationCap className="w-8 h-8 text-teal-500" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Educational Agents</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Specialized support for universities, institutions, students, professors, and healthcare personnel training
-              </p>
-              <Badge className="bg-teal-500/10 text-teal-600">Most Requested</Badge>
-            </Card>
-            
-            <Card className="p-6 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
-              <div className="p-4 bg-teal-500/10 rounded-xl w-fit mx-auto mb-4">
-                <GraduationCap className="w-8 h-8 text-teal-500" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Agentes Educativos</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Soporte especializado para universidades, instituciones, estudiantes, profesores y entrenamiento de personal de salud
-              </p>
-              <Badge className="bg-teal-500/10 text-teal-600">Más Solicitado</Badge>
-            </Card>
           </div>
         </div>
       </section>
