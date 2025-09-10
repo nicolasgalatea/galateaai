@@ -278,7 +278,7 @@ export const GalateaHomepage = () => {
             <div className="bg-red-500/20 text-red-600 px-6 py-3 rounded-full border-2 border-red-500/30 animate-bounce">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="font-bold text-lg">Live demo available</span>
+              <span className="font-bold text-lg">Live Demo Available</span>
             </div>
           </div>
         </div>
@@ -287,7 +287,7 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <div className="inline-flex items-center space-x-3 bg-primary/15 px-8 py-4 rounded-full mb-8 border border-primary/20">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="text-primary font-bold text-lg">Live demo</span>
+              <span className="text-primary font-bold text-lg">Live Demo</span>
             </div>
             
             <h2 className="text-6xl lg:text-7xl font-bold mb-6">
@@ -295,7 +295,7 @@ export const GalateaHomepage = () => {
                 Galatea AI
               </span>
               <br />
-              <span className="text-foreground">in real action</span>
+              <span className="text-foreground">In Real Action</span>
             </h2>
             
             <p className="text-2xl text-muted-foreground max-w-5xl mx-auto leading-relaxed font-light">
@@ -323,7 +323,7 @@ export const GalateaHomepage = () => {
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline" className="bg-green-500/20 text-green-600 border-green-500/30">
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                    Live streaming
+                    Live Streaming
                   </Badge>
                 </div>
               </div>
@@ -486,7 +486,7 @@ export const GalateaHomepage = () => {
                 Complete Experience
               </span>
               <br />
-              <span className="text-foreground">Galatea AI in action</span>
+              <span className="text-foreground">Galatea AI In Action</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
               Watch how a specialized cardiovascular agent analyzes a real case in real time, 
@@ -506,7 +506,7 @@ export const GalateaHomepage = () => {
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                     </div>
                     <Badge variant="outline" className="bg-primary/10 text-primary">
-                      Live demo
+                      Live Demo
                     </Badge>
                   </div>
                   
@@ -931,13 +931,13 @@ export const GalateaHomepage = () => {
                     <Button asChild className="bg-gradient-primary hover:opacity-90">
                       <a href="/demo">
                         <MessageSquare className="w-4 h-4 mr-2" />
-                        Ver Demo Completo
+                        View Complete Demo
                       </a>
                     </Button>
                     <Button asChild variant="outline">
                       <a href="/demo">
                         <Mic className="w-4 h-4 mr-2" />
-                        Demo Interactivo
+                        Interactive Demo
                       </a>
                     </Button>
                   </div>
@@ -964,13 +964,13 @@ export const GalateaHomepage = () => {
       <section className="py-20 px-6">
         <div className="container mx-auto max-w-7xl">
           <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4">Casos de Éxito</Badge>
+            <Badge variant="secondary" className="mb-4">Success Stories</Badge>
             <h2 className="text-4xl font-bold mb-6">
-              Instituciones Líderes Confían en Galatea AI
+              Leading Institutions Trust Galatea AI
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-              Descubre cómo ayudamos a hospitales y organizaciones de salud a construir, 
-              desplegar y comercializar sus propios ecosistemas de agentes AI
+              Discover how we help hospitals and health organizations build, 
+              deploy and commercialize their own AI agent ecosystems
             </p>
           </div>
 
@@ -1005,7 +1005,7 @@ export const GalateaHomepage = () => {
                   <div className="flex items-start space-x-3">
                     <Globe className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">Marketplace Activo</p>
+                      <p className="font-medium text-sm">Active Marketplace</p>
                       <p className="text-xs text-muted-foreground">Licensing agents to 50+ hospitals</p>
                     </div>
                   </div>
@@ -1112,15 +1112,15 @@ export const GalateaHomepage = () => {
                   <div className="flex items-start space-x-3">
                     <Heart className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">10,000+ Evaluaciones</p>
+                      <p className="font-medium text-sm">10,000+ Evaluations</p>
                       <p className="text-xs text-muted-foreground">Automated cardiovascular risk</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Zap className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">Expansión Rápida</p>
-                      <p className="text-xs text-muted-foreground">Adoptado por 30+ clínicas regionales</p>
+                      <p className="font-medium text-sm">Rapid Expansion</p>
+                      <p className="text-xs text-muted-foreground">Adopted by 30+ regional clinics</p>
                     </div>
                   </div>
                 </div>
@@ -1208,21 +1208,21 @@ export const GalateaHomepage = () => {
           <div className="text-center">
             <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-8 border border-primary/20">
               <h3 className="text-2xl font-bold mb-4">
-                ¿Listo para Crear tu Ecosistema de Agentes AI?
+                Ready to Create Your AI Agent Ecosystem?
               </h3>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Únete a las instituciones líderes que ya están transformando la atención en salud 
-                con Galatea AI. Construye, despliega y monetiza tus propios agentes especializados.
+                Join the leading institutions that are already transforming healthcare 
+                with Galatea AI. Build, deploy and monetize your own specialized agents.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" className="bg-gradient-primary hover:opacity-90">
                 <Bot className="w-5 h-5 mr-2" />
-                Comenzar Gratis
+                Get Started Free
               </Button>
               <Button asChild size="lg" variant="outline">
                 <a href="/demo">
                   <Calendar className="w-5 h-5 mr-2" />
-                  Ver Demo Interactivo
+                  View Interactive Demo
                 </a>
               </Button>
               </div>
