@@ -119,6 +119,9 @@ export const GalateaHomepage = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              <Button variant="outline" size="sm" asChild>
+                <a href="/es">🇪🇸 Español</a>
+              </Button>
               <Button variant="outline" size="sm">
                 Sign In
               </Button>
