@@ -275,10 +275,10 @@ export const GalateaHomepage = () => {
         
         {/* Floating Alert Badge */}
         <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-20">
-          <div className="bg-red-500/20 text-red-600 px-6 py-3 rounded-full border-2 border-red-500/30 animate-bounce">
+            <div className="bg-red-500/20 text-red-600 px-6 py-3 rounded-full border-2 border-red-500/30 animate-bounce">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="font-bold text-lg">Demo en vivo disponible</span>
+              <span className="font-bold text-lg">Live demo available</span>
             </div>
           </div>
         </div>
@@ -287,7 +287,7 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <div className="inline-flex items-center space-x-3 bg-primary/15 px-8 py-4 rounded-full mb-8 border border-primary/20">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="text-primary font-bold text-lg">Demo en vivo</span>
+              <span className="text-primary font-bold text-lg">Live demo</span>
             </div>
             
             <h2 className="text-6xl lg:text-7xl font-bold mb-6">
@@ -295,12 +295,12 @@ export const GalateaHomepage = () => {
                 Galatea AI
               </span>
               <br />
-              <span className="text-foreground">en acción real</span>
+              <span className="text-foreground">in real action</span>
             </h2>
             
             <p className="text-2xl text-muted-foreground max-w-5xl mx-auto leading-relaxed font-light">
-              Vea cómo nuestro agente cardiovascular analiza un caso complejo en tiempo real, 
-              desde la interpretación de estudios hasta recomendaciones clínicas precisas.
+              See how our cardiovascular agent analyzes a complex case in real time, 
+              from study interpretation to precise clinical recommendations.
             </p>
           </div>
 
@@ -323,7 +323,7 @@ export const GalateaHomepage = () => {
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline" className="bg-green-500/20 text-green-600 border-green-500/30">
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                    Transmisión en vivo
+                    Live streaming
                   </Badge>
                 </div>
               </div>
@@ -348,10 +348,10 @@ export const GalateaHomepage = () => {
                           </div>
                           <div>
                             <h3 className="text-2xl font-bold text-primary">Dr. Cardiovascular AI</h3>
-                            <p className="text-muted-foreground">Especialista en Patología Aórtica</p>
+                            <p className="text-muted-foreground">Aortic Pathology Specialist</p>
                             <div className="flex items-center space-x-2 mt-1">
                               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                              <span className="text-sm text-green-600 font-medium">Analizando en tiempo real...</span>
+                              <span className="text-sm text-green-600 font-medium">Analyzing in real time...</span>
                             </div>
                           </div>
                         </div>
@@ -360,14 +360,14 @@ export const GalateaHomepage = () => {
                           <div className="space-y-4">
                             <div className="flex items-center space-x-2 mb-3">
                               <Stethoscope className="w-5 h-5 text-primary" />
-                              <span className="font-semibold text-primary">Análisis Diagnóstico:</span>
+                              <span className="font-semibold text-primary">Diagnostic Analysis:</span>
                             </div>
                             <div className="text-foreground">
                               <p className="font-medium mb-2">
-                                "He identificado un <span className="text-red-600 font-bold">aneurisma de aorta ascendente de 5.2 cm</span>."
+                                "I have identified an <span className="text-red-600 font-bold">ascending aortic aneurysm of 5.2 cm</span>."
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                Recomendación: Seguimiento cada 6 meses. Valoración quirúrgica si excede 5.5 cm.
+                                Recommendation: Follow-up every 6 months. Surgical evaluation if it exceeds 5.5 cm.
                               </p>
                             </div>
                           </div>
@@ -377,40 +377,40 @@ export const GalateaHomepage = () => {
                       {/* Right: Metrics & Data */}
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                          <Card className="p-4 bg-red-50/50 border-red-200/50">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <AlertTriangle className="w-4 h-4 text-red-500" />
-                              <span className="text-sm font-bold text-red-700">Hallazgo Crítico</span>
-                            </div>
-                            <p className="text-2xl font-bold text-red-600">5.2 cm</p>
-                            <p className="text-xs text-red-500">Diámetro aórtico</p>
-                          </Card>
+                            <Card className="p-4 bg-red-50/50 border-red-200/50">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <AlertTriangle className="w-4 h-4 text-red-500" />
+                                <span className="text-sm font-bold text-red-700">Critical Finding</span>
+                              </div>
+                              <p className="text-2xl font-bold text-red-600">5.2 cm</p>
+                              <p className="text-xs text-red-500">Aortic diameter</p>
+                            </Card>
                           
                           <Card className="p-4 bg-blue-50/50 border-blue-200/50">
                             <div className="flex items-center space-x-2 mb-2">
                               <Target className="w-4 h-4 text-blue-500" />
-                              <span className="text-sm font-bold text-blue-700">Precisión</span>
+                              <span className="text-sm font-bold text-blue-700">Precision</span>
                             </div>
                             <p className="text-2xl font-bold text-blue-600">97.8%</p>
-                            <p className="text-xs text-blue-500">Confianza diagnóstica</p>
+                            <p className="text-xs text-blue-500">Diagnostic confidence</p>
                           </Card>
                           
                           <Card className="p-4 bg-green-50/50 border-green-200/50">
                             <div className="flex items-center space-x-2 mb-2">
                               <Zap className="w-4 h-4 text-green-500" />
-                              <span className="text-sm font-bold text-green-700">Velocidad</span>
+                              <span className="text-sm font-bold text-green-700">Speed</span>
                             </div>
                             <p className="text-2xl font-bold text-green-600">2.3s</p>
-                            <p className="text-xs text-green-500">Tiempo de análisis</p>
+                            <p className="text-xs text-green-500">Analysis time</p>
                           </Card>
                           
                           <Card className="p-4 bg-purple-50/50 border-purple-200/50">
                             <div className="flex items-center space-x-2 mb-2">
                               <Brain className="w-4 h-4 text-purple-500" />
-                              <span className="text-sm font-bold text-purple-700">IA Avanzada</span>
+                              <span className="text-sm font-bold text-purple-700">Advanced AI</span>
                             </div>
                             <p className="text-2xl font-bold text-purple-600">GPT-4</p>
-                            <p className="text-xs text-purple-500">Modelo médico</p>
+                            <p className="text-xs text-purple-500">Medical model</p>
                           </Card>
                         </div>
                       </div>
@@ -419,7 +419,7 @@ export const GalateaHomepage = () => {
                     {/* Demo Progress Bar */}
                     <div className="mt-8">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-muted-foreground">Progreso del Demo</span>
+                        <span className="text-sm font-medium text-muted-foreground">Demo Progress</span>
                         <span className="text-sm font-bold text-primary">67%</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
@@ -433,7 +433,7 @@ export const GalateaHomepage = () => {
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer">
                   <Button size="lg" className="text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30">
                     <Play className="w-8 h-8 mr-3" />
-                    Ver Demo Completo
+                    Watch Full Demo
                   </Button>
                 </div>
               </div>
@@ -443,21 +443,21 @@ export const GalateaHomepage = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-12">
               <Button size="lg" className="text-xl px-10 py-6 bg-gradient-primary hover:opacity-90 shadow-lg">
                 <Play className="w-6 h-6 mr-3" />
-                Iniciar Demo Interactivo
+                Start Interactive Demo
               </Button>
               <Button variant="outline" size="lg" className="text-xl px-10 py-6 border-2 border-primary/30 hover:border-primary/50">
                 <Eye className="w-6 h-6 mr-3" />
-                Ver Más Casos Clínicos
+                View More Clinical Cases
               </Button>
             </div>
             
             {/* Demo Features */}
             <div className="grid md:grid-cols-4 gap-6 mt-16">
               {[
-                { icon: Upload, title: "Carga de Archivos", description: "PDFs, imágenes DICOM, historias clínicas" },
-                { icon: Brain, title: "Análisis IA", description: "Procesamiento en tiempo real con GPT-4 médico" },
-                { icon: Stethoscope, title: "Diagnóstico", description: "Recomendaciones clínicas precisas" },
-                { icon: FileText, title: "Reporte Final", description: "Documentación completa y detallada" }
+                { icon: Upload, title: "File Upload", description: "PDFs, DICOM images, clinical histories" },
+                { icon: Brain, title: "AI Analysis", description: "Real-time processing with medical GPT-4" },
+                { icon: Stethoscope, title: "Diagnosis", description: "Precise clinical recommendations" },
+                { icon: FileText, title: "Final Report", description: "Complete and detailed documentation" }
               ].map((feature, index) => (
                 <Card key={index} className="p-6 text-center bg-card/50 backdrop-blur-sm border-primary/20 hover:border-primary/40 transition-all duration-300">
                   <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -479,18 +479,18 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-20">
             <div className="inline-flex items-center space-x-3 bg-primary/10 px-6 py-3 rounded-full mb-6">
               <Play className="w-5 h-5 text-primary animate-pulse" />
-              <span className="text-primary font-semibold">Demo Profesional Detallado</span>
+              <span className="text-primary font-semibold">Detailed Professional Demo</span>
             </div>
             <h2 className="text-5xl lg:text-6xl font-bold mb-8">
               <span className="bg-gradient-primary bg-clip-text text-transparent">
-                Experiencia Completa
+                Complete Experience
               </span>
               <br />
-              <span className="text-foreground">Galatea AI en acción</span>
+              <span className="text-foreground">Galatea AI in action</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-              Observe cómo un agente cardiovascular especializado analiza un caso real en tiempo real, 
-              desde la carga de archivos hasta el diagnóstico final con recomendaciones clínicas precisas.
+              Watch how a specialized cardiovascular agent analyzes a real case in real time, 
+              from file upload to final diagnosis with precise clinical recommendations.
             </p>
           </div>
 
@@ -506,7 +506,7 @@ export const GalateaHomepage = () => {
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                     </div>
                     <Badge variant="outline" className="bg-primary/10 text-primary">
-                      Demo en vivo
+                      Live demo
                     </Badge>
                   </div>
                   
@@ -518,39 +518,39 @@ export const GalateaHomepage = () => {
                       </Avatar>
                       <div>
                         <h4 className="text-xl font-semibold text-primary">Dr. Cardio AI</h4>
-                        <p className="text-muted-foreground">Especialista en Aorta</p>
+                        <p className="text-muted-foreground">Aorta Specialist</p>
                       </div>
                       <div className="ml-auto flex items-center space-x-2 bg-green-500/20 text-green-600 px-3 py-1 rounded-full">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm font-medium">En línea</span>
+                        <span className="text-sm font-medium">Online</span>
                       </div>
                     </div>
                     
                     <div className="space-y-4">
                       <div className="bg-primary/10 p-4 rounded-lg border-l-4 border-primary">
-                        <p className="text-sm font-medium text-primary mb-2">Dr. Cardio AI dice:</p>
+                        <p className="text-sm font-medium text-primary mb-2">Dr. Cardio AI says:</p>
                         <p className="text-foreground">
-                          "He identificado un <strong>aneurisma de aorta ascendente de 5.2 cm</strong>. 
-                          Se recomienda seguimiento con imágenes cada 6 meses y valoración quirúrgica 
-                          si supera los 5.5 cm."
+                          "I have identified an <strong>ascending aortic aneurysm of 5.2 cm</strong>. 
+                          Follow-up imaging is recommended every 6 months and surgical evaluation 
+                          if it exceeds 5.5 cm."
                         </p>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-4">
-                        <Card className="p-4 bg-red-50/50 border-red-200/50">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <AlertTriangle className="w-4 h-4 text-red-500" />
-                            <span className="text-sm font-semibold text-red-700">Hallazgo Crítico</span>
-                          </div>
-                          <p className="text-sm text-red-600">Diámetro: 5.2 cm</p>
-                        </Card>
+                          <Card className="p-4 bg-red-50/50 border-red-200/50">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <AlertTriangle className="w-4 h-4 text-red-500" />
+                              <span className="text-sm font-semibold text-red-700">Critical Finding</span>
+                            </div>
+                            <p className="text-sm text-red-600">Diameter: 5.2 cm</p>
+                          </Card>
                         
                         <Card className="p-4 bg-blue-50/50 border-blue-200/50">
                           <div className="flex items-center space-x-2 mb-2">
                             <Activity className="w-4 h-4 text-blue-500" />
-                            <span className="text-sm font-semibold text-blue-700">Precisión</span>
+                            <span className="text-sm font-semibold text-blue-700">Precision</span>
                           </div>
-                          <p className="text-sm text-blue-600">97.3% confianza</p>
+                          <p className="text-sm text-blue-600">97.3% confidence</p>
                         </Card>
                       </div>
                     </div>
@@ -559,7 +559,7 @@ export const GalateaHomepage = () => {
                   <div className="flex justify-center">
                     <Button size="lg" className="bg-gradient-primary hover:opacity-90 text-lg px-8">
                       <Play className="w-5 h-5 mr-2" />
-                      Ver Demo Completo
+                      Watch Full Demo
                     </Button>
                   </div>
                 </div>
@@ -569,7 +569,7 @@ export const GalateaHomepage = () => {
               <div className="absolute -top-6 -right-6 bg-primary/20 backdrop-blur-sm p-4 rounded-xl border border-primary/30">
                 <div className="flex items-center space-x-2 text-primary">
                   <Brain className="w-5 h-5" />
-                  <span className="text-sm font-semibold">IA Procesando</span>
+                  <span className="text-sm font-semibold">AI Processing</span>
                 </div>
               </div>
             </div>
@@ -578,11 +578,11 @@ export const GalateaHomepage = () => {
             <div className="space-y-8">
               <div className="space-y-6">
                 <h3 className="text-3xl font-bold">
-                  Capacidades Avanzadas del Demo
+                  Advanced Demo Capabilities
                 </h3>
                 <p className="text-lg text-muted-foreground">
-                  Cada agente está equipado con tecnología de vanguardia para ofrecer 
-                  diagnósticos precisos y recomendaciones clínicas confiables.
+                  Each agent is equipped with cutting-edge technology to deliver 
+                  precise diagnoses and reliable clinical recommendations.
                 </p>
               </div>
               
@@ -593,10 +593,10 @@ export const GalateaHomepage = () => {
                       <Microscope className="w-6 h-6 text-green-500" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-semibold mb-2">Análisis de Imágenes Médicas</h4>
+                      <h4 className="text-lg font-semibold mb-2">Medical Image Analysis</h4>
                       <p className="text-muted-foreground">
-                        Procesamiento avanzado de ecocardiogramas, tomografías y resonancias 
-                        con precisión clínica validada.
+                        Advanced processing of echocardiograms, CT scans and MRIs 
+                        with validated clinical precision.
                       </p>
                     </div>
                   </div>
@@ -608,10 +608,10 @@ export const GalateaHomepage = () => {
                       <Target className="w-6 h-6 text-blue-500" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-semibold mb-2">Diagnóstico Diferencial</h4>
+                      <h4 className="text-lg font-semibold mb-2">Differential Diagnosis</h4>
                       <p className="text-muted-foreground">
-                        Evaluación sistemática de múltiples posibilidades diagnósticas 
-                        basada en evidencia médica actualizada.
+                        Systematic evaluation of multiple diagnostic possibilities 
+                        based on updated medical evidence.
                       </p>
                     </div>
                   </div>
@@ -623,10 +623,10 @@ export const GalateaHomepage = () => {
                       <Calendar className="w-6 h-6 text-purple-500" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-semibold mb-2">Seguimiento Personalizado</h4>
+                      <h4 className="text-lg font-semibold mb-2">Personalized Follow-up</h4>
                       <p className="text-muted-foreground">
-                        Recomendaciones de seguimiento adaptadas al perfil específico 
-                        de cada paciente y su condición clínica.
+                        Follow-up recommendations adapted to the specific profile 
+                        of each patient and their clinical condition.
                       </p>
                     </div>
                   </div>
@@ -636,7 +636,7 @@ export const GalateaHomepage = () => {
               <div className="pt-6">
                 <Button variant="outline" size="lg" className="w-full">
                   <Code className="w-5 h-5 mr-2" />
-                  Explorar Todas las Funcionalidades
+                  Explore All Features
                 </Button>
               </div>
             </div>
@@ -984,7 +984,7 @@ export const GalateaHomepage = () => {
                 <div>
                   <h3 className="text-xl font-bold text-red-600 mb-2">Hospital San Ignacio</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Pontificia Universidad Javeriana
+                    Pontificia Javeriana University
                   </p>
                 </div>
                 <div className="space-y-4 text-left">
@@ -992,21 +992,21 @@ export const GalateaHomepage = () => {
                     <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium text-sm">15 Agentes Especializados</p>
-                      <p className="text-xs text-muted-foreground">Cardiología, Oncología, Neurología</p>
+                      <p className="text-xs text-muted-foreground">Cardiology, Oncology, Neurology</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <TrendingUp className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">40% Reducción Tiempos</p>
-                      <p className="text-xs text-muted-foreground">En consultas administrativas</p>
+                      <p className="font-medium text-sm">40% Time Reduction</p>
+                      <p className="text-xs text-muted-foreground">In administrative consultations</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Globe className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium text-sm">Marketplace Activo</p>
-                      <p className="text-xs text-muted-foreground">Licenciando agentes a 50+ hospitales</p>
+                      <p className="text-xs text-muted-foreground">Licensing agents to 50+ hospitals</p>
                     </div>
                   </div>
                 </div>
@@ -1029,22 +1029,22 @@ export const GalateaHomepage = () => {
                   <div className="flex items-start space-x-3">
                     <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">Red de 200+ Agentes</p>
-                      <p className="text-xs text-muted-foreground">Autorizaciones y gestión administrativa</p>
+                      <p className="font-medium text-sm">Network of 200+ Agents</p>
+                      <p className="text-xs text-muted-foreground">Authorizations and administrative management</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Users className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">2M+ Afiliados Beneficiados</p>
-                      <p className="text-xs text-muted-foreground">Atención 24/7 automatizada</p>
+                      <p className="font-medium text-sm">2M+ Benefited Members</p>
+                      <p className="text-xs text-muted-foreground">24/7 automated attention</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Award className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">Líder en Innovación</p>
-                      <p className="text-xs text-muted-foreground">Premio Nacional Salud Digital 2024</p>
+                      <p className="font-medium text-sm">Innovation Leader</p>
+                      <p className="text-xs text-muted-foreground">National Digital Health Award 2024</p>
                     </div>
                   </div>
                 </div>
@@ -1067,36 +1067,36 @@ export const GalateaHomepage = () => {
                   <div className="flex items-start space-x-3">
                     <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">Agentes Oncológicos</p>
-                      <p className="text-xs text-muted-foreground">Especializados por tipo de cáncer</p>
+                      <p className="font-medium text-sm">Oncology Agents</p>
+                      <p className="text-xs text-muted-foreground">Specialized by cancer type</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Brain className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">Investigación Avanzada</p>
-                      <p className="text-xs text-muted-foreground">Análisis de literatura científica</p>
+                      <p className="font-medium text-sm">Advanced Research</p>
+                      <p className="text-xs text-muted-foreground">Scientific literature analysis</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <ShoppingCart className="w-5 h-5 text-indigo-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">Comercialización Global</p>
-                      <p className="text-xs text-muted-foreground">Agentes licenciados en 15 países</p>
+                      <p className="font-medium text-sm">Global Commercialization</p>
+                      <p className="text-xs text-muted-foreground">Licensed agents in 15 countries</p>
                     </div>
                   </div>
                 </div>
               </div>
             </Card>
 
-            {/* Fundación Cardiovascular */}
+            {/* Cardiovascular Foundation */}
             <Card className="p-8 hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="text-center space-y-6">
                 <div className="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">
                   FCV
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-red-500 mb-2">Fundación Cardiovascular</h3>
+                  <h3 className="text-xl font-bold text-red-500 mb-2">Cardiovascular Foundation</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     Bucaramanga - Santander
                   </p>
@@ -1106,14 +1106,14 @@ export const GalateaHomepage = () => {
                     <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium text-sm">Dr. Carlos AI</p>
-                      <p className="text-xs text-muted-foreground">Agente cardiológico estrella</p>
+                      <p className="text-xs text-muted-foreground">Star cardiological agent</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Heart className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium text-sm">10,000+ Evaluaciones</p>
-                      <p className="text-xs text-muted-foreground">Riesgo cardiovascular automatizado</p>
+                      <p className="text-xs text-muted-foreground">Automated cardiovascular risk</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
@@ -1144,35 +1144,35 @@ export const GalateaHomepage = () => {
                     <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="font-medium text-sm">Hub de Agentes AI</p>
-                      <p className="text-xs text-muted-foreground">25 especialidades médicas</p>
+                      <p className="font-medium text-sm">25 medical specialties</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Target className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">95% Satisfacción</p>
-                      <p className="text-xs text-muted-foreground">Pacientes y personal médico</p>
+                      <p className="font-medium text-sm">95% Satisfaction</p>
+                      <p className="text-xs text-muted-foreground">Patients and medical staff</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
                     <Building2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-sm">Modelo Replicable</p>
-                      <p className="text-xs text-muted-foreground">Licenciado a hospitales similares</p>
+                      <p className="font-medium text-sm">Replicable Model</p>
+                      <p className="text-xs text-muted-foreground">Licensed to similar hospitals</p>
                     </div>
                   </div>
                 </div>
               </div>
             </Card>
 
-            {/* Universidad CES */}
+            {/* CES University */}
             <Card className="p-8 hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
               <div className="text-center space-y-6">
                 <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">
                   CES
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-purple-600 mb-2">Universidad CES</h3>
+                  <h3 className="text-xl font-bold text-purple-600 mb-2">CES University</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     Facultad de Medicina
                   </p>
