@@ -746,6 +746,102 @@ export const GalateaHomepage = () => {
         </div>
       </section>
 
+      {/* Educational Health Institutions Section */}
+      <section className="py-20 px-6 bg-gradient-to-br from-teal-500/5 via-blue-500/5 to-purple-500/5">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4 bg-teal-500/10 text-teal-600">Educational Solutions</Badge>
+            <h2 className="text-4xl font-bold mb-6">
+              Educational health institutions
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
+              Universities, institutions, and all health education centers to educate students, professors, tutors, conduct research, reduce student workload, and empower healthcare personnel
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <Card className="p-6 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="p-4 bg-teal-500/10 rounded-xl w-fit mx-auto mb-4">
+                <GraduationCap className="w-8 h-8 text-teal-500" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Student Support</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                AI tutors for medical students, case study analysis, and personalized learning paths
+              </p>
+              <Badge className="bg-teal-500/10 text-teal-600">Most Requested</Badge>
+            </Card>
+            
+            <Card className="p-6 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="p-4 bg-blue-500/10 rounded-xl w-fit mx-auto mb-4">
+                <Users className="w-8 h-8 text-blue-500" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Faculty Assistance</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Support for professors and tutors in curriculum development and student assessment
+              </p>
+              <Badge className="bg-blue-500/10 text-blue-600">Available Now</Badge>
+            </Card>
+            
+            <Card className="p-6 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="p-4 bg-purple-500/10 rounded-xl w-fit mx-auto mb-4">
+                <Microscope className="w-8 h-8 text-purple-500" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Research Support</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Advanced research assistance, data analysis, and academic paper writing support
+              </p>
+              <Badge className="bg-purple-500/10 text-purple-600">Beta</Badge>
+            </Card>
+            
+            <Card className="p-6 text-center hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
+              <div className="p-4 bg-indigo-500/10 rounded-xl w-fit mx-auto mb-4">
+                <Target className="w-8 h-8 text-indigo-500" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Staff Training</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Continuous education and training programs for healthcare personnel empowerment
+              </p>
+              <Badge className="bg-indigo-500/10 text-indigo-600">Coming Soon</Badge>
+            </Card>
+          </div>
+
+          {/* Key Benefits for Educational Institutions */}
+          <div className="mt-16 bg-card/50 backdrop-blur-sm rounded-2xl p-8 border border-border">
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="text-center space-y-4">
+                <div className="p-4 bg-green-500/10 rounded-xl w-fit mx-auto">
+                  <TrendingUp className="w-8 h-8 text-green-500" />
+                </div>
+                <h3 className="text-xl font-semibold">Reduce Student Workload</h3>
+                <p className="text-muted-foreground">
+                  AI assistants help students focus on learning by automating repetitive tasks and providing instant feedback
+                </p>
+              </div>
+              
+              <div className="text-center space-y-4">
+                <div className="p-4 bg-blue-500/10 rounded-xl w-fit mx-auto">
+                  <Lightbulb className="w-8 h-8 text-blue-500" />
+                </div>
+                <h3 className="text-xl font-semibold">Enhanced Learning</h3>
+                <p className="text-muted-foreground">
+                  Personalized AI tutors adapt to each student's learning style and pace for optimal education outcomes
+                </p>
+              </div>
+              
+              <div className="text-center space-y-4">
+                <div className="p-4 bg-purple-500/10 rounded-xl w-fit mx-auto">
+                  <Award className="w-8 h-8 text-purple-500" />
+                </div>
+                <h3 className="text-xl font-semibold">Faculty Empowerment</h3>
+                <p className="text-muted-foreground">
+                  Professors and tutors get AI-powered tools to create better content and track student progress effectively
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Hyper-Realistic AI Agents Section */}
       <section className="py-20 px-6 bg-muted/10">
         <div className="container mx-auto max-w-7xl">
