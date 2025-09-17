@@ -122,12 +122,14 @@ export const GalateaHomepage = () => {
               <Button variant="outline" size="sm" asChild>
                 <a href="/es">🇪🇸 Español</a>
               </Button>
-              <Button variant="outline" size="sm">
-                Sign In
+              <Button variant="outline" size="sm" asChild>
+                <a href="/auth">Iniciar Sesión</a>
               </Button>
-              <Button size="sm" className="bg-gradient-primary hover:opacity-90">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Create AI Agent
+              <Button size="sm" className="bg-gradient-primary hover:opacity-90" asChild>
+                <a href="/auth">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Crear Agente AI
+                </a>
               </Button>
             </div>
           </div>
