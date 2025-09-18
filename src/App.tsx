@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import WaitingList from "./pages/WaitingList";
 import Demo from "./pages/Demo";
+import ChatSofia from "./pages/ChatSofia";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,14 @@ const App = () => (
             />
             <Route path="/waitlist" element={<WaitingList />} />
             <Route path="/demo" element={<Demo />} />
+            <Route 
+              path="/chat-sofia" 
+              element={
+                <ProtectedRoute>
+                  <ChatSofia />
+                </ProtectedRoute>
+              } 
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
