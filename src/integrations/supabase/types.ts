@@ -635,7 +635,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_medical_professional: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "medico" | "hospital" | "eps" | "investigador" | "paciente"
