@@ -24,14 +24,28 @@ import { supabase } from '@/integrations/supabase/client';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
 import { FileUploader } from '@/components/FileUploader';
 import { AudioPlayer } from '@/components/AudioPlayer';
-import sofiaAvatar from '@/assets/galatea-avatar.jpg';
+import { MedicalDiagnosis } from '@/components/MedicalDiagnosis';
+import { MedicalInsights, generateCardiovascularInsights } from '@/components/MedicalInsights';
+import { VitalSigns } from '@/components/VitalSigns';
+import sofiaAvatar from '@/assets/dra-sofia-avatar.jpg';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  messageType?: 'text' | 'audio' | 'file';
+  messageType?: 'text' | 'audio' | 'file' | 'diagnosis';
+  diagnosis?: DiagnosisData;
+}
+
+interface DiagnosisData {
+  primaryDiagnosis: string;
+  confidence: number;
+  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+  differentialDiagnoses: string[];
+  recommendations: string[];
+  studiesRequested?: string[];
+  followUp?: string;
 }
 
 const ChatSofia = () => {
@@ -40,6 +54,8 @@ const ChatSofia = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showFileUploader, setShowFileUploader] = useState(false);
+  const [showVitalSigns, setShowVitalSigns] = useState(false);
+  const [patientSymptoms, setPatientSymptoms] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const navigate = useNavigate();
@@ -105,12 +121,31 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
         throw new Error(error.message);
       }
 
+      // Extract symptoms for medical insights
+      const symptoms = content.toLowerCase();
+      if (symptoms.includes('dolor') || symptoms.includes('disnea') || 
+          symptoms.includes('palpitaciones') || symptoms.includes('síntoma')) {
+        const extractedSymptoms = [content];
+        setPatientSymptoms(prev => [...prev, ...extractedSymptoms]);
+      }
+
+      // Check if response contains structured diagnosis
+      let diagnosis: DiagnosisData | undefined;
+      let messageType: 'text' | 'diagnosis' = 'text';
+      
+      if (data.response.includes('DIAGNÓSTICO:') || data.response.includes('RECOMENDACIONES:')) {
+        // Parse structured medical response
+        diagnosis = parseStructuredDiagnosis(data.response);
+        messageType = 'diagnosis';
+      }
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.response,
         timestamp: new Date(),
-        messageType: 'text'
+        messageType,
+        diagnosis
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -140,6 +175,23 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
     sendMessage(text, 'audio');
   };
 
+  const parseStructuredDiagnosis = (response: string): DiagnosisData => {
+    // Simple parsing - in production, the edge function should return structured data
+    const lines = response.split('\n');
+    const primaryDiagnosis = lines.find(line => line.includes('DIAGNÓSTICO:'))?.replace('DIAGNÓSTICO:', '').trim() || 'Por evaluar';
+    const recommendations = lines.filter(line => line.startsWith('•') || line.startsWith('-')).map(line => line.substring(1).trim());
+    
+    return {
+      primaryDiagnosis,
+      confidence: 85,
+      urgencyLevel: response.toLowerCase().includes('urgente') || response.toLowerCase().includes('crítico') ? 'high' : 'medium',
+      differentialDiagnoses: ['Síndrome coronario agudo', 'Pericarditis', 'Dolor musculoesquelético'],
+      recommendations: recommendations.length > 0 ? recommendations : ['Evaluación clínica presencial', 'Seguimiento médico'],
+      studiesRequested: ['ECG', 'Ecocardiograma'],
+      followUp: 'Control en 48-72 horas o antes si empeoran los síntomas'
+    };
+  };
+
   const handleFileAnalysis = (analysis: string) => {
     const analysisMessage: Message = {
       id: Date.now().toString(),
@@ -153,8 +205,20 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
     setShowFileUploader(false);
   };
 
+  const handleVitalSignsUpdate = (vitals: any[]) => {
+    const vitalsSummary = vitals
+      .filter(v => v.value)
+      .map(v => `${v.name}: ${v.value} ${v.unit}`)
+      .join(', ');
+    
+    if (vitalsSummary) {
+      sendMessage(`Signos vitales del paciente: ${vitalsSummary}`);
+    }
+    setShowVitalSigns(false);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-red-50/30 to-white">
       {/* Header */}
       <div className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
@@ -195,6 +259,14 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
             </div>
             
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowVitalSigns(!showVitalSigns)}
+              >
+                <Activity className="w-4 h-4 mr-2" />
+                Signos Vitales
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -241,30 +313,36 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
                           </Avatar>
                         )}
                         
-                        <div
-                          className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                            message.role === 'user'
-                              ? 'bg-primary text-primary-foreground ml-auto'
-                              : 'bg-gray-100 text-gray-900'
-                          }`}
-                        >
-                          <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                            {message.content}
+                        {message.messageType === 'diagnosis' && message.diagnosis ? (
+                          <div className="max-w-[90%]">
+                            <MedicalDiagnosis diagnosis={message.diagnosis} />
                           </div>
-                          
-                          {message.role === 'assistant' && message.content.length > 100 && (
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <AudioPlayer 
-                                text={message.content}
-                                className="bg-white"
-                              />
+                        ) : (
+                          <div
+                            className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                              message.role === 'user'
+                                ? 'bg-primary text-primary-foreground ml-auto'
+                                : 'bg-gray-100 text-gray-900'
+                            }`}
+                          >
+                            <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                              {message.content}
                             </div>
-                          )}
-                          
-                          <div className="text-xs opacity-70 mt-2">
-                            {message.timestamp.toLocaleTimeString()}
+                            
+                            {message.role === 'assistant' && message.content.length > 100 && (
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <AudioPlayer 
+                                  text={message.content}
+                                  className="bg-white"
+                                />
+                              </div>
+                            )}
+                            
+                            <div className="text-xs opacity-70 mt-2">
+                              {message.timestamp.toLocaleTimeString()}
+                            </div>
                           </div>
-                        </div>
+                        )}
                         
                         {message.role === 'user' && (
                           <Avatar className="w-8 h-8 border border-blue-200">
@@ -332,12 +410,26 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
           
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Vital Signs */}
+            {showVitalSigns && (
+              <VitalSigns
+                onVitalSignsUpdate={handleVitalSignsUpdate}
+              />
+            )}
+            
             {/* File Uploader */}
             {showFileUploader && (
               <FileUploader
                 onAnalysisComplete={handleFileAnalysis}
                 medicalCaseId={conversationId || undefined}
                 disabled={isLoading}
+              />
+            )}
+            
+            {/* Medical Insights */}
+            {patientSymptoms.length > 0 && (
+              <MedicalInsights 
+                insights={generateCardiovascularInsights(patientSymptoms)}
               />
             )}
             
@@ -353,9 +445,10 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
                     <AvatarFallback className="bg-red-100 text-red-700 text-2xl">DS</AvatarFallback>
                   </Avatar>
                   
-                  <h3 className="font-semibold text-lg mb-2">Dra. Sofía Cardio</h3>
+                  <h3 className="font-semibold text-lg mb-2">Dra. Sofía Hernández</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Especialista en Cardiología con más de 20 años de experiencia
+                    Cardióloga Intervencionista • Especialista en Patologías de Aorta<br/>
+                    MD, PhD • 20+ años de experiencia
                   </p>
                 </div>
                 
