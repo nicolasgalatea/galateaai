@@ -302,6 +302,33 @@ export type Database = {
         }
         Relationships: []
       }
+      conversations: {
+        Row: {
+          agent_type: string
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type?: string
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       dashboard_metrics: {
         Row: {
           id: string
@@ -376,6 +403,148 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      medical_cases: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          current_medications: string | null
+          id: string
+          medical_history: string | null
+          patient_age: number | null
+          patient_gender: string | null
+          study_files: string[] | null
+          symptoms: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          current_medications?: string | null
+          id?: string
+          medical_history?: string | null
+          patient_age?: number | null
+          patient_gender?: string | null
+          study_files?: string[] | null
+          symptoms?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          current_medications?: string | null
+          id?: string
+          medical_history?: string | null
+          patient_age?: number | null
+          patient_gender?: string | null
+          study_files?: string[] | null
+          symptoms?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_cases_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_diagnoses: {
+        Row: {
+          ai_analysis: Json | null
+          confidence_score: number | null
+          conversation_id: string
+          created_at: string
+          differential_diagnoses: string[] | null
+          id: string
+          medical_case_id: string
+          primary_diagnosis: string
+          recommendations: string | null
+          urgency_level: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          confidence_score?: number | null
+          conversation_id: string
+          created_at?: string
+          differential_diagnoses?: string[] | null
+          id?: string
+          medical_case_id: string
+          primary_diagnosis: string
+          recommendations?: string | null
+          urgency_level?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          confidence_score?: number | null
+          conversation_id?: string
+          created_at?: string
+          differential_diagnoses?: string[] | null
+          id?: string
+          medical_case_id?: string
+          primary_diagnosis?: string
+          recommendations?: string | null
+          urgency_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_diagnoses_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_diagnoses_medical_case_id_fkey"
+            columns: ["medical_case_id"]
+            isOneToOne: false
+            referencedRelation: "medical_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          message_type: string | null
+          metadata: Json | null
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          message_type?: string | null
+          metadata?: Json | null
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message_type?: string | null
+          metadata?: Json | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
