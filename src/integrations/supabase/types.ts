@@ -599,6 +599,7 @@ export type Database = {
           recibo_url: string | null
           tipo_transaccion: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           categoria: string
@@ -613,6 +614,7 @@ export type Database = {
           recibo_url?: string | null
           tipo_transaccion: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           categoria?: string
@@ -627,6 +629,7 @@ export type Database = {
           recibo_url?: string | null
           tipo_transaccion?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -635,6 +638,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_financial_data: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_medical_professional: {
         Args: Record<PropertyKey, never>
         Returns: boolean
