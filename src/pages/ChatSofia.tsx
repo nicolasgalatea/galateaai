@@ -15,18 +15,21 @@ import {
   Volume2,
   Upload,
   ArrowLeft,
-  Activity
+  Activity,
+  Wifi,
+  WifiOff,
+  RefreshCw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
 import { FileUploader } from '@/components/FileUploader';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { MedicalDiagnosis } from '@/components/MedicalDiagnosis';
 import { MedicalInsights, generateCardiovascularInsights } from '@/components/MedicalInsights';
 import { VitalSigns } from '@/components/VitalSigns';
+import { useRealtimeChat } from '@/hooks/useRealtimeChat';
 import sofiaAvatar from '@/assets/dra-sofia-avatar.jpg';
 
 interface Message {
@@ -49,10 +52,7 @@ interface DiagnosisData {
 }
 
 const ChatSofia = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [showFileUploader, setShowFileUploader] = useState(false);
   const [showVitalSigns, setShowVitalSigns] = useState(false);
   const [patientSymptoms, setPatientSymptoms] = useState<string[]>([]);
@@ -61,28 +61,19 @@ const ChatSofia = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  
+  // Use the new realtime chat hook
+  const { 
+    messages, 
+    isConnected, 
+    isLoading, 
+    sendMessage, 
+    isTyping, 
+    conversationId,
+    reconnect 
+  } = useRealtimeChat();
 
-  useEffect(() => {
-    // Add welcome message
-    const welcomeMessage: Message = {
-      id: 'welcome',
-      role: 'assistant',
-      content: `¡Hola ${profile?.full_name || 'Doctor/a'}! Soy la Dra. Sofía, especialista en cardiología con más de 20 años de experiencia. Estoy aquí para ayudarle con consultas cardiovasculares, análisis de estudios y diagnósticos especializados en patologías de la aorta.
-
-¿En qué puedo asistirle hoy? Puede:
-• Describirme síntomas de un paciente
-• Subir estudios médicos para análisis
-• Hacer consultas sobre patologías cardiovasculares
-• Solicitar interpretación de ecocardiogramas
-
-Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica presencial.`,
-      timestamp: new Date(),
-      messageType: 'text'
-    };
-    
-    setMessages([welcomeMessage]);
-    scrollToBottom();
-  }, [profile]);
+  // Auto-scroll to bottom when new messages arrive
 
   useEffect(() => {
     scrollToBottom();
@@ -92,83 +83,24 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const sendMessage = async (content: string, messageType: 'text' | 'audio' = 'text') => {
-    if (!content.trim() || !user) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content,
-      timestamp: new Date(),
-      messageType
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('chat-sofia', {
-        body: {
-          message: content,
-          conversationId: conversationId,
-          userId: user.id,
-          medicalContext: null
-        }
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Extract symptoms for medical insights
-      const symptoms = content.toLowerCase();
+  // Extract symptoms for medical insights when new messages arrive
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'user') {
+      const symptoms = lastMessage.content.toLowerCase();
       if (symptoms.includes('dolor') || symptoms.includes('disnea') || 
           symptoms.includes('palpitaciones') || symptoms.includes('síntoma')) {
-        const extractedSymptoms = [content];
-        setPatientSymptoms(prev => [...prev, ...extractedSymptoms]);
+        setPatientSymptoms(prev => [...prev, lastMessage.content]);
       }
-
-      // Check if response contains structured diagnosis
-      let diagnosis: DiagnosisData | undefined;
-      let messageType: 'text' | 'diagnosis' = 'text';
-      
-      if (data.response.includes('DIAGNÓSTICO:') || data.response.includes('RECOMENDACIONES:')) {
-        // Parse structured medical response
-        diagnosis = parseStructuredDiagnosis(data.response);
-        messageType = 'diagnosis';
-      }
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date(),
-        messageType,
-        diagnosis
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-      
-      if (!conversationId && data.conversationId) {
-        setConversationId(data.conversationId);
-      }
-
-    } catch (error) {
-      console.error('Chat error:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo enviar el mensaje. Intente nuevamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [messages]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    sendMessage(inputMessage);
+    if (inputMessage.trim()) {
+      sendMessage(inputMessage);
+      setInputMessage('');
+    }
   };
 
   const handleVoiceTranscription = (text: string) => {
@@ -193,15 +125,9 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
   };
 
   const handleFileAnalysis = (analysis: string) => {
-    const analysisMessage: Message = {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: `**ANÁLISIS DE ESTUDIO MÉDICO:**\n\n${analysis}`,
-      timestamp: new Date(),
-      messageType: 'text'
-    };
-    
-    setMessages(prev => [...prev, analysisMessage]);
+    // Add the analysis as a new message using the realtime system
+    const analysisContent = `**ANÁLISIS DE ESTUDIO MÉDICO:**\n\n${analysis}`;
+    sendMessage(analysisContent);
     setShowFileUploader(false);
   };
 
@@ -259,13 +185,36 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
             </div>
             
             <div className="flex items-center gap-2">
+              {/* Connection Status */}
+              <div className="flex items-center gap-2 text-sm">
+                {isConnected ? (
+                  <div className="flex items-center gap-2 text-green-600">
+                    <Wifi className="w-4 h-4" />
+                    <span className="hidden sm:inline">Conectado</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-red-600">
+                    <WifiOff className="w-4 h-4" />
+                    <span className="hidden sm:inline">Desconectado</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={reconnect}
+                      className="p-1 h-6 w-6"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowVitalSigns(!showVitalSigns)}
               >
                 <Activity className="w-4 h-4 mr-2" />
-                Signos Vitales
+                <span className="hidden sm:inline">Signos Vitales</span>
               </Button>
               <Button
                 variant="outline"
@@ -273,7 +222,7 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
                 onClick={() => setShowFileUploader(!showFileUploader)}
               >
                 <Upload className="w-4 h-4 mr-2" />
-                Subir Estudio
+                <span className="hidden sm:inline">Subir Estudio</span>
               </Button>
             </div>
           </div>
@@ -289,8 +238,22 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Consulta Médica</CardTitle>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Activity className="w-4 h-4 text-green-500" />
-                    En línea
+                    {isTyping ? (
+                      <>
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                        <span>Escribiendo...</span>
+                      </>
+                    ) : isConnected ? (
+                      <>
+                        <Activity className="w-4 h-4 text-green-500" />
+                        En línea
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-2 h-2 bg-red-500 rounded-full" />
+                        Desconectado
+                      </>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -354,7 +317,7 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
                       </div>
                     ))}
                     
-                    {isLoading && (
+                    {(isLoading || isTyping) && (
                       <div className="flex gap-3 justify-start">
                         <Avatar className="w-8 h-8 border border-red-200">
                           <AvatarImage src={sofiaAvatar} alt="Dra. Sofía" />
@@ -366,7 +329,7 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
                             <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
                             <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
                             <span className="text-sm text-gray-600 ml-2">
-                              Dra. Sofía está analizando...
+                              {isTyping ? 'Dra. Sofía está escribiendo...' : 'Dra. Sofía está analizando...'}
                             </span>
                           </div>
                         </div>
@@ -385,19 +348,19 @@ Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica 
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         placeholder="Describa los síntomas del paciente o haga su consulta..."
-                        disabled={isLoading}
+                        disabled={isLoading || !isConnected}
                         className="flex-1"
                       />
                       
                       <VoiceRecorder
-                        onTranscription={handleVoiceTranscription}
-                        disabled={isLoading}
+                        onTranscription={(text) => sendMessage(text, 'audio')}
+                        disabled={isLoading || !isConnected}
                       />
                     </div>
                     
                     <Button 
                       type="submit" 
-                      disabled={!inputMessage.trim() || isLoading}
+                      disabled={!inputMessage.trim() || isLoading || !isConnected}
                       size="icon"
                     >
                       <Send className="w-4 h-4" />
