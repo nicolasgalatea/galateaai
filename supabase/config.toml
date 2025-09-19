@@ -74,3 +74,6 @@ verify_jwt = true
 
 [functions.upload-medical-study]
 verify_jwt = true
+
+[functions.realtime-chat]
+verify_jwt = false
