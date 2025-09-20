@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import WaitingList from "./pages/WaitingList";
 import Demo from "./pages/Demo";
 import ChatSofia from "./pages/ChatSofia";
+import CreatorStudio from "./pages/CreatorStudio";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ChatSofia />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/creator-studio" 
+              element={
+                <ProtectedRoute>
+                  <CreatorStudio />
                 </ProtectedRoute>
               } 
             />
