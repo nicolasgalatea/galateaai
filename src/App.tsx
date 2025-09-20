@@ -13,6 +13,7 @@ import WaitingList from "./pages/WaitingList";
 import Demo from "./pages/Demo";
 import ChatSofia from "./pages/ChatSofia";
 import CreatorStudio from "./pages/CreatorStudio";
+import AdvancedCreator from "./pages/AdvancedCreator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CreatorStudio />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/advanced-creator" 
+              element={
+                <ProtectedRoute>
+                  <AdvancedCreator />
                 </ProtectedRoute>
               } 
             />
