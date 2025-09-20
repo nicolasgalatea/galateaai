@@ -19,6 +19,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AvatarGenerationSettings {
   gender: string;
@@ -37,7 +39,9 @@ const AdvancedCreatorStudio = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   
   const [avatarSettings, setAvatarSettings] = useState<AvatarGenerationSettings>({
     gender: 'female',
@@ -64,13 +68,41 @@ const AdvancedCreatorStudio = () => {
 
   const generateAvatar = async () => {
     setIsGenerating(true);
+    setGeneratedImage(null);
+    setGeneratedPrompt(null);
     
-    // Simular generación de avatar con IA
-    setTimeout(() => {
-      // En una implementación real, aquí iría la llamada a la API de generación de imágenes
-      setGeneratedImage('/api/placeholder/400/400');
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-avatar', {
+        body: {
+          settings: {
+            ...avatarSettings,
+            age: avatarSettings.age[0]
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setGeneratedImage(`data:image/png;base64,${data.image}`);
+        setGeneratedPrompt(data.prompt);
+        toast({
+          title: "Avatar generado exitosamente",
+          description: "Tu avatar hiperrealista ha sido creado.",
+        });
+      } else {
+        throw new Error(data.error || 'Error desconocido');
+      }
+    } catch (error) {
+      console.error('Error generating avatar:', error);
+      toast({
+        title: "Error al generar avatar",
+        description: "No se pudo generar el avatar. Verifica tu configuración e intenta de nuevo.",
+        variant: "destructive"
+      });
+    } finally {
       setIsGenerating(false);
-    }, 3000);
+    }
   };
 
   const updateSetting = (key: keyof AvatarGenerationSettings, value: any) => {
