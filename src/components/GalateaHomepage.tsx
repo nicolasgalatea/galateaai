@@ -338,8 +338,8 @@ export const GalateaHomepage = () => {
                     </div>
                   </div>
 
-                  {/* Action Button */}
-                  <div className="pt-6">
+                  {/* Action Buttons */}
+                  <div className="pt-6 space-y-4">
                     <Button 
                       size="lg" 
                       className="text-xl px-12 py-6 bg-gradient-primary hover:opacity-90 w-full lg:w-auto"
@@ -351,6 +351,21 @@ export const GalateaHomepage = () => {
                         <ArrowRight className="w-6 h-6 ml-3" />
                       </a>
                     </Button>
+                    
+                    <div className="lg:ml-4">
+                      <Button 
+                        size="lg" 
+                        variant="outline"
+                        className="text-lg px-10 py-5 border-2 border-primary/40 hover:bg-primary/5 w-full lg:w-auto"
+                        asChild
+                      >
+                        <a href="/advanced-creator">
+                          <Sparkles className="w-5 h-5 mr-3" />
+                          Plataforma Avanzada
+                          <ArrowRight className="w-5 h-5 ml-3" />
+                        </a>
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
