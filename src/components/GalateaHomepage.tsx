@@ -113,6 +113,7 @@ export const GalateaHomepage = () => {
             <div className="hidden md:flex items-center space-x-8">
               <a href="#platform" className="text-muted-foreground hover:text-foreground transition-colors">Platform</a>
               <a href="#agents" className="text-muted-foreground hover:text-foreground transition-colors">AI Agents</a>
+              <a href="#laboratorio" className="text-muted-foreground hover:text-foreground transition-colors">Laboratorio</a>
               <a href="#marketplace" className="text-muted-foreground hover:text-foreground transition-colors">Marketplace</a>
               <a href="#security" className="text-muted-foreground hover:text-foreground transition-colors">Security</a>
               <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
@@ -268,6 +269,175 @@ export const GalateaHomepage = () => {
                   </div>
                 </div>
               </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* LABORATORIO SECTION */}
+      <section id="laboratorio" className="py-32 px-6 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/80" />
+        
+        <div className="container mx-auto max-w-7xl relative z-10">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center space-x-3 bg-primary/15 px-8 py-4 rounded-full mb-8 border border-primary/20">
+              <TestTube className="w-6 h-6 text-primary" />
+              <span className="text-primary font-bold text-lg">Agent Creation Lab</span>
+            </div>
+            
+            <h2 className="text-6xl lg:text-7xl font-bold mb-6">
+              <span className="bg-gradient-primary bg-clip-text text-transparent">
+                Laboratorio
+              </span>
+              <br />
+              <span className="text-foreground">de Avatares Hiperrealistas</span>
+            </h2>
+            
+            <p className="text-2xl text-muted-foreground max-w-5xl mx-auto leading-relaxed font-light mb-12">
+              Crea agentes de IA médicos con avatares fotorrealistas en minutos. 
+              Personaliza apariencia, voz, especialización y conocimiento médico.
+            </p>
+          </div>
+
+          {/* Main Lab Card */}
+          <div className="max-w-5xl mx-auto">
+            <Card className="p-12 bg-gradient-to-br from-card to-card/50 backdrop-blur-xl border-2 border-primary/20 hover:border-primary/40 transition-all duration-500 shadow-2xl">
+              <div className="grid lg:grid-cols-2 gap-12 items-center">
+                {/* Left Side - Features */}
+                <div className="space-y-8">
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="p-3 bg-primary/20 rounded-full">
+                        <Eye className="w-8 h-8 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold">Avatares Fotorrealistas</h3>
+                        <p className="text-muted-foreground">Crea apariencias únicas con IA generativa</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="p-3 bg-secondary/20 rounded-full">
+                        <Headphones className="w-8 h-8 text-secondary" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold">Síntesis de Voz</h3>
+                        <p className="text-muted-foreground">Voces naturales con ElevenLabs</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="p-3 bg-accent/20 rounded-full">
+                        <Brain className="w-8 h-8 text-accent" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold">IA Especializada</h3>
+                        <p className="text-muted-foreground">Entrenamiento con protocolos médicos</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="pt-6">
+                    <Button 
+                      size="lg" 
+                      className="text-xl px-12 py-6 bg-gradient-primary hover:opacity-90 w-full lg:w-auto"
+                      asChild
+                    >
+                      <a href="/creator-studio">
+                        <TestTube className="w-6 h-6 mr-3" />
+                        Entrar al Laboratorio
+                        <ArrowRight className="w-6 h-6 ml-3" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Right Side - Visual Preview */}
+                <div className="relative">
+                  <div className="relative w-full h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl overflow-hidden border-2 border-primary/30">
+                    {/* Avatar Grid Preview */}
+                    <div className="absolute inset-0 p-6">
+                      <div className="grid grid-cols-2 gap-4 h-full">
+                        <div className="space-y-4">
+                          <div className="relative group">
+                            <Avatar className="w-full h-24 rounded-xl ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all">
+                              <AvatarImage src={galateaAvatar} alt="Dr. Galatea" />
+                              <AvatarFallback>GA</AvatarFallback>
+                            </Avatar>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="absolute bottom-2 left-2 text-white text-xs font-bold">Dr. Galatea</div>
+                            </div>
+                          </div>
+                          <div className="relative group">
+                            <Avatar className="w-full h-24 rounded-xl ring-2 ring-secondary/30 group-hover:ring-secondary/60 transition-all">
+                              <AvatarImage src={carlosCardioAvatar} alt="Dr. Carlos" />
+                              <AvatarFallback>CC</AvatarFallback>
+                            </Avatar>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="absolute bottom-2 left-2 text-white text-xs font-bold">Dr. Carlos</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="relative group">
+                            <Avatar className="w-full h-24 rounded-xl ring-2 ring-accent/30 group-hover:ring-accent/60 transition-all">
+                              <AvatarImage src={elenaOncoAvatar} alt="Dra. Elena" />
+                              <AvatarFallback>EO</AvatarFallback>
+                            </Avatar>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="absolute bottom-2 left-2 text-white text-xs font-bold">Dra. Elena</div>
+                            </div>
+                          </div>
+                          <div className="relative group">
+                            <Avatar className="w-full h-24 rounded-xl ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all">
+                              <AvatarImage src={amaraPediatricAvatar} alt="Dra. Amara" />
+                              <AvatarFallback>AP</AvatarFallback>
+                            </Avatar>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="absolute bottom-2 left-2 text-white text-xs font-bold">Dra. Amara</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Floating Elements */}
+                    <div className="absolute top-4 right-4 bg-primary/90 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      4+ Especialidades
+                    </div>
+                    <div className="absolute bottom-4 left-4 bg-secondary/90 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center">
+                      <Sparkles className="w-4 h-4 mr-1" />
+                      IA Generativa
+                    </div>
+                  </div>
+
+                  {/* Floating Action Indicators */}
+                  <div className="absolute -top-6 -right-6 bg-accent text-white p-4 rounded-full shadow-lg animate-bounce">
+                    <Code className="w-6 h-6" />
+                  </div>
+                  <div className="absolute -bottom-6 -left-6 bg-primary text-white p-4 rounded-full shadow-lg animate-pulse">
+                    <Cpu className="w-6 h-6" />
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="mt-20 grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="text-center space-y-4">
+              <div className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">5min</div>
+              <p className="text-muted-foreground">Tiempo promedio de creación</p>
+            </div>
+            <div className="text-center space-y-4">
+              <div className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">100+</div>
+              <p className="text-muted-foreground">Voces disponibles</p>
+            </div>
+            <div className="text-center space-y-4">
+              <div className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">24/7</div>
+              <p className="text-muted-foreground">Disponibilidad del agente</p>
             </div>
           </div>
         </div>
