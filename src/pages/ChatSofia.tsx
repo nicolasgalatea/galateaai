@@ -20,7 +20,8 @@ import {
   WifiOff,
   RefreshCw,
   VolumeX,
-  Headphones
+  Headphones,
+  CheckCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -235,70 +236,71 @@ const ChatSofia = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50/30">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-white/90 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10 shadow-elegant">
+        <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => navigate('/')}
+                className="text-muted-foreground hover:text-foreground"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Home
               </Button>
               
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <div className="relative">
-                  <Avatar className="w-16 h-16 border-3 border-blue-200 shadow-lg">
+                  <Avatar className="w-20 h-20 border-4 border-primary/20 shadow-glow">
                     <AvatarImage src={sofiaAvatar} alt="Dr. Sofia" className="object-cover" />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-100 to-red-100 text-blue-700 text-xl font-bold">DS</AvatarFallback>
+                    <AvatarFallback className="bg-gradient-primary text-primary-foreground text-2xl font-bold">DS</AvatarFallback>
                   </Avatar>
                   
                   {/* Voice Indicator */}
                   {(isSpeaking || isPlayingAudio) && (
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-3 border-white flex items-center justify-center animate-pulse">
-                      <Headphones className="w-3 h-3 text-white" />
+                    <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-full border-4 border-background flex items-center justify-center animate-pulse">
+                      <Headphones className="w-4 h-4 text-primary-foreground" />
                     </div>
                   )}
                   
                   {/* Online Status */}
                   {!isSpeaking && !isPlayingAudio && (
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-3 border-white animate-pulse" />
+                    <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-success rounded-full border-4 border-background animate-pulse" />
                   )}
                 </div>
                 
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Dr. Sofia Rodriguez, MD, PhD</h1>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge className="bg-red-100 text-red-800 border-red-200 text-sm">
-                      <Heart className="w-4 h-4 mr-1" />
+                  <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">Dr. Sofia Rodriguez, MD, PhD</h1>
+                  <div className="flex items-center gap-3 mt-2">
+                    <Badge className="bg-primary/10 text-primary border-primary/20 text-sm px-3 py-1">
+                      <Heart className="w-4 h-4 mr-2" />
                       Interventional Cardiologist
                     </Badge>
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-sm">
-                      <Stethoscope className="w-4 h-4 mr-1" />
+                    <Badge className="bg-secondary/10 text-secondary border-secondary/20 text-sm px-3 py-1">
+                      <Stethoscope className="w-4 h-4 mr-2" />
                       Aortic Specialist
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-muted-foreground mt-2 text-base">
                     Specializing in aortic diseases, valve disorders, and cardiovascular interventions
                   </p>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {/* Voice Controls */}
-              <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
+              <div className="flex items-center gap-2 bg-muted/50 rounded-xl p-3 border border-border">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={toggleVolume}
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-muted-foreground hover:text-foreground"
                 >
-                  {audioVolume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  {audioVolume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                 </Button>
                 
                 {isPlayingAudio && (
@@ -306,7 +308,7 @@ const ChatSofia = () => {
                     variant="ghost"
                     size="sm"
                     onClick={stopAudio}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-destructive hover:text-destructive/80"
                   >
                     Stop Audio
                   </Button>
@@ -314,16 +316,16 @@ const ChatSofia = () => {
               </div>
               
               {/* Connection Status */}
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2">
                 {isConnected ? (
-                  <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                  <div className="flex items-center gap-2 text-success bg-success/10 px-4 py-2 rounded-xl border border-success/20">
                     <Wifi className="w-4 h-4" />
-                    <span className="font-medium">Connected</span>
+                    <span className="font-medium text-sm">Connected</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                  <div className="flex items-center gap-2 text-destructive bg-destructive/10 px-4 py-2 rounded-xl border border-destructive/20">
                     <WifiOff className="w-4 h-4" />
-                    <span className="font-medium">Disconnected</span>
+                    <span className="font-medium text-sm">Disconnected</span>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -341,7 +343,7 @@ const ChatSofia = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowVitalSigns(!showVitalSigns)}
-                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                className="text-primary border-primary/20 hover:bg-primary/5 px-4 py-2"
               >
                 <Activity className="w-4 h-4 mr-2" />
                 Vital Signs
@@ -351,7 +353,7 @@ const ChatSofia = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFileUploader(!showFileUploader)}
-                className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                className="text-secondary border-secondary/20 hover:bg-secondary/5 px-4 py-2"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Study
@@ -362,63 +364,66 @@ const ChatSofia = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Chat Area */}
           <div className="lg:col-span-2">
-            <Card className="h-[600px] flex flex-col shadow-lg">
-              <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-red-50">
+            <Card className="h-[700px] flex flex-col shadow-elegant border-primary/10">
+              <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                    <Stethoscope className="w-5 h-5 mr-2 text-blue-600" />
+                  <CardTitle className="text-xl font-bold text-foreground flex items-center">
+                    <Stethoscope className="w-6 h-6 mr-3 text-primary" />
                     Aortic Consultation with Dr. Sofia
                   </CardTitle>
                   {conversationId && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs bg-muted text-muted-foreground">
                       Session: {conversationId.slice(0, 8)}...
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-base">
                   Specialist consultation for aortic conditions, valve diseases, and cardiovascular health
                 </p>
               </CardHeader>
 
               {/* Messages Area */}
               <CardContent className="flex-1 p-0">
-                <ScrollArea className="h-full px-4 py-3">
+                <ScrollArea className="h-full px-6 py-4">
                   {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                      <Avatar className="w-20 h-20 mb-4">
-                        <AvatarImage src={sofiaAvatar} alt="Dr. Sofia" />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-100 to-red-100 text-blue-700 text-2xl font-bold">DS</AvatarFallback>
-                      </Avatar>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Hello! I'm Dr. Sofia</h3>
-                      <p className="text-muted-foreground max-w-sm mb-4">
+                    <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                      <div className="relative mb-6">
+                        <div className="absolute inset-0 bg-gradient-primary rounded-full opacity-20 animate-pulse" />
+                        <Avatar className="w-24 h-24 relative">
+                          <AvatarImage src={sofiaAvatar} alt="Dr. Sofia" />
+                          <AvatarFallback className="bg-gradient-primary text-primary-foreground text-3xl font-bold">DS</AvatarFallback>
+                        </Avatar>
+                      </div>
+                      <h3 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-3">Hello! I'm Dr. Sofia</h3>
+                      <p className="text-muted-foreground max-w-md mb-8 text-lg">
                         I'm a specialized AI cardiologist focused on aortic diseases and valve disorders. How can I assist you with your cardiovascular health today?
                       </p>
-                      <div className="flex flex-wrap gap-2 justify-center">
+                      <div className="flex flex-wrap gap-3 justify-center">
                         <Button
                           variant="outline"
-                          size="sm"
+                          size="default"
                           onClick={() => sendMessage("I have chest pain and shortness of breath")}
-                          className="text-sm"
+                          className="text-primary border-primary/20 hover:bg-primary/5"
                         >
                           Chest symptoms
                         </Button>
                         <Button
                           variant="outline"
-                          size="sm"
+                          size="default"
                           onClick={() => sendMessage("Can you explain aortic stenosis?")}
-                          className="text-sm"
+                          className="text-secondary border-secondary/20 hover:bg-secondary/5"
                         >
                           Aortic conditions
                         </Button>
                         <Button
                           variant="outline"
-                          size="sm"
+                          size="default"
                           onClick={() => sendMessage("I need a cardiovascular risk assessment")}
-                          className="text-sm"
+                          className="text-accent border-accent/20 hover:bg-accent/5"
                         >
                           Risk assessment
                         </Button>
@@ -434,18 +439,18 @@ const ChatSofia = () => {
                           }`}
                         >
                           {message.role === 'assistant' && (
-                            <Avatar className="w-8 h-8 flex-shrink-0">
+                            <Avatar className="w-10 h-10 flex-shrink-0">
                               <AvatarImage src={sofiaAvatar} alt="Dr. Sofia" />
-                              <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">DS</AvatarFallback>
+                              <AvatarFallback className="bg-gradient-primary text-primary-foreground text-sm font-bold">DS</AvatarFallback>
                             </Avatar>
                           )}
                           
-                          <div className={`max-w-[70%] ${message.role === 'user' ? 'order-first' : ''}`}>
+                          <div className={`max-w-[75%] ${message.role === 'user' ? 'order-first' : ''}`}>
                             <div
-                              className={`rounded-lg px-4 py-3 ${
+                              className={`rounded-2xl px-6 py-4 ${
                                 message.role === 'user'
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-gray-100 text-gray-900 border border-gray-200'
+                                  ? 'bg-gradient-primary text-primary-foreground shadow-lg'
+                                  : 'bg-card text-card-foreground border border-border shadow-sm'
                               }`}
                             >
                               <div className="text-sm whitespace-pre-wrap">
@@ -497,31 +502,51 @@ const ChatSofia = () => {
                 </ScrollArea>
               </CardContent>
 
-              {/* Input Area */}
-              <div className="border-t bg-gray-50 p-4">
-                <form onSubmit={handleSubmit} className="flex items-center space-x-3">
-                  <Input
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Ask Dr. Sofia about aortic conditions, symptoms, or treatments..."
-                    className="flex-1 bg-white"
-                    disabled={!isConnected || isLoading}
-                  />
-                  
-                  <VoiceRecorder
-                    onTranscription={handleVoiceTranscription}
-                    disabled={!isConnected}
-                  />
-                  
-                  <Button
-                    type="submit"
-                    size="sm"
+              {/* Chat Input */}
+              <div className="p-6 border-t border-border bg-gradient-to-r from-muted/20 to-muted/10">
+                <form onSubmit={handleSubmit} className="flex space-x-4">
+                  <div className="flex-1 relative">
+                    <Input
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      placeholder="Ask Dr. Sofia about aortic conditions, symptoms, or treatments..."
+                      className="pr-16 h-12 bg-background border-border focus:border-primary text-base rounded-xl"
+                      disabled={!isConnected || isLoading}
+                    />
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                      <VoiceRecorder onTranscription={handleVoiceTranscription} />
+                    </div>
+                  </div>
+                  <Button 
+                    type="submit" 
+                    size="lg" 
                     disabled={!inputMessage.trim() || !isConnected || isLoading}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-gradient-primary hover:opacity-90 text-primary-foreground px-8 h-12 rounded-xl shadow-lg"
                   >
-                    <Send className="w-4 h-4" />
+                    {isLoading ? (
+                      <>
+                        <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5 mr-2" />
+                        Send
+                      </>
+                    )}
                   </Button>
                 </form>
+                
+                {isTyping && (
+                  <div className="flex items-center space-x-3 text-muted-foreground mt-4">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                    </div>
+                    <span className="text-base">Dr. Sofia is typing...</span>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
@@ -529,36 +554,72 @@ const ChatSofia = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Dr. Sofia Info */}
-            <Card className="shadow-lg">
-              <CardHeader className="pb-3 bg-gradient-to-r from-red-50 to-blue-50">
-                <CardTitle className="text-lg flex items-center">
-                  <Heart className="w-5 h-5 mr-2 text-red-600" />
+            <Card className="shadow-elegant border-primary/10 bg-gradient-to-br from-card to-card/50">
+              <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 border-b border-border">
+                <CardTitle className="text-xl font-bold text-foreground flex items-center">
+                  <Heart className="w-6 h-6 mr-3 text-primary" />
                   Dr. Sofia Rodriguez
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-4">
-                <div className="space-y-4">
+              <CardContent className="pt-6">
+                <div className="space-y-6">
                   <div>
-                    <h4 className="font-semibold text-sm text-gray-900 mb-2">Specializations</h4>
-                    <div className="space-y-1 text-sm text-muted-foreground">
-                      <div>• Aortic Valve Diseases</div>
-                      <div>• Aortic Stenosis & Regurgitation</div>
-                      <div>• Aortic Root Disorders</div>
-                      <div>• Cardiovascular Interventions</div>
-                      <div>• Cardiac Risk Assessment</div>
+                    <h4 className="font-bold text-foreground mb-4 flex items-center text-lg">
+                      <Heart className="w-5 h-5 mr-3 text-primary" />
+                      Specializations
+                    </h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <div className="w-3 h-3 bg-primary rounded-full mr-3" />
+                        Aortic Valve Diseases
+                      </div>
+                      <div className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <div className="w-3 h-3 bg-secondary rounded-full mr-3" />
+                        Aortic Stenosis & Regurgitation
+                      </div>
+                      <div className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <div className="w-3 h-3 bg-accent rounded-full mr-3" />
+                        Aortic Root Disorders
+                      </div>
+                      <div className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <div className="w-3 h-3 bg-success rounded-full mr-3" />
+                        Cardiovascular Interventions
+                      </div>
+                      <div className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <div className="w-3 h-3 bg-warning rounded-full mr-3" />
+                        Cardiac Risk Assessment
+                      </div>
                     </div>
                   </div>
                   
                   <Separator />
                   
                   <div>
-                    <h4 className="font-semibold text-sm text-gray-900 mb-2">Capabilities</h4>
-                    <div className="space-y-1 text-sm text-muted-foreground">
-                      <div>• Real-time voice consultation</div>
-                      <div>• Medical image analysis</div>
-                      <div>• Risk stratification</div>
-                      <div>• Treatment recommendations</div>
-                      <div>• Follow-up planning</div>
+                    <h4 className="font-bold text-foreground mb-4 flex items-center text-lg">
+                      <Stethoscope className="w-5 h-5 mr-3 text-secondary" />
+                      Capabilities
+                    </h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <CheckCircle className="w-4 h-4 mr-3 text-success" />
+                        Real-time voice consultation
+                      </div>
+                      <div className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <CheckCircle className="w-4 h-4 mr-3 text-success" />
+                        Medical image analysis
+                      </div>
+                      <div className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <CheckCircle className="w-4 h-4 mr-3 text-success" />
+                        Risk stratification
+                      </div>
+                      <div className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <CheckCircle className="w-4 h-4 mr-3 text-success" />
+                        Treatment recommendations
+                      </div>
+                      <div className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <CheckCircle className="w-4 h-4 mr-3 text-success" />
+                        Follow-up planning
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -567,10 +628,10 @@ const ChatSofia = () => {
 
             {/* File Uploader */}
             {showFileUploader && (
-              <Card className="shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center">
-                    <FileText className="w-5 h-5 mr-2 text-purple-600" />
+              <Card className="shadow-elegant border-accent/10 bg-gradient-to-br from-card to-card/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-bold text-foreground flex items-center">
+                    <FileText className="w-6 h-6 mr-3 text-accent" />
                     Upload Medical Study
                   </CardTitle>
                 </CardHeader>
@@ -585,10 +646,10 @@ const ChatSofia = () => {
 
             {/* Vital Signs */}
             {showVitalSigns && (
-              <Card className="shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center">
-                    <Activity className="w-5 h-5 mr-2 text-blue-600" />
+              <Card className="shadow-elegant border-primary/10 bg-gradient-to-br from-card to-card/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-bold text-foreground flex items-center">
+                    <Activity className="w-6 h-6 mr-3 text-primary" />
                     Vital Signs
                   </CardTitle>
                 </CardHeader>
@@ -602,10 +663,10 @@ const ChatSofia = () => {
 
             {/* Medical Insights */}
             {patientSymptoms.length > 0 && (
-              <Card className="shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center">
-                    <Activity className="w-5 h-5 mr-2 text-green-600" />
+              <Card className="shadow-elegant border-success/10 bg-gradient-to-br from-card to-card/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-bold text-foreground flex items-center">
+                    <Activity className="w-6 h-6 mr-3 text-success" />
                     Cardiovascular Insights
                   </CardTitle>
                 </CardHeader>
