@@ -18,7 +18,9 @@ import {
   Activity,
   Wifi,
   WifiOff,
-  RefreshCw
+  RefreshCw,
+  VolumeX,
+  Headphones
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +32,7 @@ import { MedicalDiagnosis } from '@/components/MedicalDiagnosis';
 import { MedicalInsights, generateCardiovascularInsights } from '@/components/MedicalInsights';
 import { VitalSigns } from '@/components/VitalSigns';
 import { useRealtimeChat } from '@/hooks/useRealtimeChat';
+import { supabase } from '@/integrations/supabase/client';
 import sofiaAvatar from '@/assets/galatea-avatar.jpg';
 
 interface Message {
@@ -56,6 +59,10 @@ const ChatSofia = () => {
   const [showFileUploader, setShowFileUploader] = useState(false);
   const [showVitalSigns, setShowVitalSigns] = useState(false);
   const [patientSymptoms, setPatientSymptoms] = useState<string[]>([]);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioVolume, setAudioVolume] = useState(1);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const navigate = useNavigate();
@@ -74,7 +81,6 @@ const ChatSofia = () => {
   } = useRealtimeChat();
 
   // Auto-scroll to bottom when new messages arrive
-
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -88,8 +94,10 @@ const ChatSofia = () => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role === 'user') {
       const symptoms = lastMessage.content.toLowerCase();
-      if (symptoms.includes('dolor') || symptoms.includes('disnea') || 
-          symptoms.includes('palpitaciones') || symptoms.includes('síntoma')) {
+      if (symptoms.includes('pain') || symptoms.includes('chest') || 
+          symptoms.includes('shortness') || symptoms.includes('breath') ||
+          symptoms.includes('palpitations') || symptoms.includes('dizziness') ||
+          symptoms.includes('aorta') || symptoms.includes('heart')) {
         setPatientSymptoms(prev => [...prev, lastMessage.content]);
       }
     }
@@ -107,26 +115,109 @@ const ChatSofia = () => {
     sendMessage(text, 'audio');
   };
 
+  // Play AI response using ElevenLabs
+  const playAIResponse = async (text: string) => {
+    try {
+      setIsSpeaking(true);
+      
+      const { data, error } = await supabase.functions.invoke('elevenlabs-speech', {
+        body: { 
+          text: text,
+          voice_id: "9BWtsMINqrJLrRacOk9x" // Aria voice - professional female voice
+        }
+      });
+
+      if (error) throw error;
+
+      // Stop current audio if playing
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+
+      // Create and play new audio
+      const audio = new Audio(`data:audio/mpeg;base64,${data.audioContent}`);
+      audio.volume = audioVolume;
+      
+      audio.onended = () => {
+        setIsSpeaking(false);
+        setIsPlayingAudio(false);
+      };
+      
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        setIsPlayingAudio(false);
+        toast({
+          title: "Audio Error",
+          description: "Could not play AI response audio",
+          variant: "destructive"
+        });
+      };
+
+      setCurrentAudio(audio);
+      setIsPlayingAudio(true);
+      await audio.play();
+      
+    } catch (error) {
+      console.error('Error playing AI response:', error);
+      setIsSpeaking(false);
+      setIsPlayingAudio(false);
+      toast({
+        title: "Voice Error", 
+        description: "Could not generate AI voice response",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const stopAudio = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setIsPlayingAudio(false);
+      setIsSpeaking(false);
+    }
+  };
+
+  const toggleVolume = () => {
+    if (audioVolume === 0) {
+      setAudioVolume(1);
+      if (currentAudio) currentAudio.volume = 1;
+    } else {
+      setAudioVolume(0);
+      if (currentAudio) currentAudio.volume = 0;
+    }
+  };
+
+  // Auto-play AI responses
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && lastMessage.content) {
+      // Only play if it's a recent message and not already playing
+      if (!isPlayingAudio && lastMessage.content.length > 10) {
+        playAIResponse(lastMessage.content);
+      }
+    }
+  }, [messages]);
+
   const parseStructuredDiagnosis = (response: string): DiagnosisData => {
-    // Simple parsing - in production, the edge function should return structured data
     const lines = response.split('\n');
-    const primaryDiagnosis = lines.find(line => line.includes('DIAGNÓSTICO:'))?.replace('DIAGNÓSTICO:', '').trim() || 'Por evaluar';
+    const primaryDiagnosis = lines.find(line => line.includes('DIAGNOSIS:') || line.includes('Primary:'))?.replace(/DIAGNOSIS:|Primary:/g, '').trim() || 'Under evaluation';
     const recommendations = lines.filter(line => line.startsWith('•') || line.startsWith('-')).map(line => line.substring(1).trim());
     
     return {
       primaryDiagnosis,
       confidence: 85,
-      urgencyLevel: response.toLowerCase().includes('urgente') || response.toLowerCase().includes('crítico') ? 'high' : 'medium',
-      differentialDiagnoses: ['Síndrome coronario agudo', 'Pericarditis', 'Dolor musculoesquelético'],
-      recommendations: recommendations.length > 0 ? recommendations : ['Evaluación clínica presencial', 'Seguimiento médico'],
-      studiesRequested: ['ECG', 'Ecocardiograma'],
-      followUp: 'Control en 48-72 horas o antes si empeoran los síntomas'
+      urgencyLevel: response.toLowerCase().includes('urgent') || response.toLowerCase().includes('critical') || response.toLowerCase().includes('emergency') ? 'high' : 'medium',
+      differentialDiagnoses: ['Acute Coronary Syndrome', 'Aortic Stenosis', 'Aortic Regurgitation', 'Aortic Dissection', 'Pericarditis'],
+      recommendations: recommendations.length > 0 ? recommendations : ['Clinical evaluation required', 'Follow-up with cardiologist'],
+      studiesRequested: ['ECG', 'Echocardiogram', 'CT Angiography', 'Cardiac Biomarkers'],
+      followUp: 'Follow-up in 24-48 hours or sooner if symptoms worsen'
     };
   };
 
   const handleFileAnalysis = (analysis: string) => {
-    // Add the analysis as a new message using the realtime system
-    const analysisContent = `**ANÁLISIS DE ESTUDIO MÉDICO:**\n\n${analysis}`;
+    const analysisContent = `**MEDICAL STUDY ANALYSIS:**\n\n${analysis}`;
     sendMessage(analysisContent);
     setShowFileUploader(false);
   };
@@ -138,317 +229,393 @@ const ChatSofia = () => {
       .join(', ');
     
     if (vitalsSummary) {
-      sendMessage(`Signos vitales del paciente: ${vitalsSummary}`);
+      sendMessage(`Patient vital signs: ${vitalsSummary}`);
     }
     setShowVitalSigns(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-red-50/30 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50/30">
       {/* Header */}
-      <div className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b bg-white/90 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/')}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver
+                Back to Home
               </Button>
               
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <Avatar className="w-12 h-12 border-2 border-red-200">
-                    <AvatarImage src={sofiaAvatar} alt="Dra. Sofía" />
-                    <AvatarFallback className="bg-red-100 text-red-700">DS</AvatarFallback>
+                  <Avatar className="w-16 h-16 border-3 border-blue-200 shadow-lg">
+                    <AvatarImage src={sofiaAvatar} alt="Dr. Sofia" className="object-cover" />
+                    <AvatarFallback className="bg-gradient-to-br from-blue-100 to-red-100 text-blue-700 text-xl font-bold">DS</AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse" />
+                  
+                  {/* Voice Indicator */}
+                  {(isSpeaking || isPlayingAudio) && (
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-3 border-white flex items-center justify-center animate-pulse">
+                      <Headphones className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                  
+                  {/* Online Status */}
+                  {!isSpeaking && !isPlayingAudio && (
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-3 border-white animate-pulse" />
+                  )}
                 </div>
                 
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">Dr. Sofia MD, PhD</h1>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
-                      <Heart className="w-3 h-3 mr-1" />
+                  <h1 className="text-2xl font-bold text-gray-900">Dr. Sofia Rodriguez, MD, PhD</h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge className="bg-red-100 text-red-800 border-red-200 text-sm">
+                      <Heart className="w-4 h-4 mr-1" />
                       Interventional Cardiologist
                     </Badge>
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
-                      <Stethoscope className="w-3 h-3 mr-1" />
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-sm">
+                      <Stethoscope className="w-4 h-4 mr-1" />
                       Aortic Specialist
                     </Badge>
                   </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Specializing in aortic diseases, valve disorders, and cardiovascular interventions
+                  </p>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {/* Voice Controls */}
+              <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleVolume}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  {audioVolume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </Button>
+                
+                {isPlayingAudio && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={stopAudio}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    Stop Audio
+                  </Button>
+                )}
+              </div>
+              
               {/* Connection Status */}
               <div className="flex items-center gap-2 text-sm">
                 {isConnected ? (
-                  <div className="flex items-center gap-2 text-green-600">
+                  <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-2 rounded-lg">
                     <Wifi className="w-4 h-4" />
-                    <span className="hidden sm:inline">Connected</span>
+                    <span className="font-medium">Connected</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-red-600">
+                  <div className="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-2 rounded-lg">
                     <WifiOff className="w-4 h-4" />
-                    <span className="hidden sm:inline">Disconnected</span>
+                    <span className="font-medium">Disconnected</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={reconnect}
-                      className="p-1 h-6 w-6"
+                      className="ml-2"
                     >
-                      <RefreshCw className="w-3 h-3" />
+                      <RefreshCw className="w-4 h-4" />
                     </Button>
                   </div>
                 )}
               </div>
               
+              {/* Action Buttons */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowVitalSigns(!showVitalSigns)}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
               >
                 <Activity className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Vital Signs</span>
+                Vital Signs
               </Button>
+              
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFileUploader(!showFileUploader)}
+                className="text-purple-600 border-purple-200 hover:bg-purple-50"
               >
                 <Upload className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Upload Study</span>
+                Upload Study
               </Button>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Chat Area */}
           <div className="lg:col-span-2">
-            <Card className="h-[600px] flex flex-col">
-              <CardHeader className="pb-3">
+            <Card className="h-[600px] flex flex-col shadow-lg">
+              <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-red-50">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Consulta Médica</CardTitle>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {isTyping ? (
-                      <>
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                        <span>Escribiendo...</span>
-                      </>
-                    ) : isConnected ? (
-                      <>
-                        <Activity className="w-4 h-4 text-green-500" />
-                        En línea
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-2 h-2 bg-red-500 rounded-full" />
-                        Desconectado
-                      </>
-                    )}
-                  </div>
+                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+                    <Stethoscope className="w-5 h-5 mr-2 text-blue-600" />
+                    Aortic Consultation with Dr. Sofia
+                  </CardTitle>
+                  {conversationId && (
+                    <Badge variant="secondary" className="text-xs">
+                      Session: {conversationId.slice(0, 8)}...
+                    </Badge>
+                  )}
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  Specialist consultation for aortic conditions, valve diseases, and cardiovascular health
+                </p>
               </CardHeader>
-              
-              <CardContent className="flex-1 flex flex-col p-0">
-                {/* Messages */}
-                <ScrollArea className="flex-1 px-4">
-                  <div className="space-y-4 pb-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex gap-3 ${
-                          message.role === 'user' ? 'justify-end' : 'justify-start'
-                        }`}
-                      >
-                        {message.role === 'assistant' && (
-                          <Avatar className="w-8 h-8 border border-red-200">
-                            <AvatarImage src={sofiaAvatar} alt="Dra. Sofía" />
-                            <AvatarFallback className="bg-red-100 text-red-700 text-xs">DS</AvatarFallback>
-                          </Avatar>
-                        )}
-                        
-                        {message.messageType === 'diagnosis' && message.diagnosis ? (
-                          <div className="max-w-[90%]">
-                            <MedicalDiagnosis diagnosis={message.diagnosis} />
-                          </div>
-                        ) : (
-                          <div
-                            className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                              message.role === 'user'
-                                ? 'bg-primary text-primary-foreground ml-auto'
-                                : 'bg-gray-100 text-gray-900'
-                            }`}
-                          >
-                            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                              {message.content}
+
+              {/* Messages Area */}
+              <CardContent className="flex-1 p-0">
+                <ScrollArea className="h-full px-4 py-3">
+                  {messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                      <Avatar className="w-20 h-20 mb-4">
+                        <AvatarImage src={sofiaAvatar} alt="Dr. Sofia" />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-100 to-red-100 text-blue-700 text-2xl font-bold">DS</AvatarFallback>
+                      </Avatar>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Hello! I'm Dr. Sofia</h3>
+                      <p className="text-muted-foreground max-w-sm mb-4">
+                        I'm a specialized AI cardiologist focused on aortic diseases and valve disorders. How can I assist you with your cardiovascular health today?
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => sendMessage("I have chest pain and shortness of breath")}
+                          className="text-sm"
+                        >
+                          Chest symptoms
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => sendMessage("Can you explain aortic stenosis?")}
+                          className="text-sm"
+                        >
+                          Aortic conditions
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => sendMessage("I need a cardiovascular risk assessment")}
+                          className="text-sm"
+                        >
+                          Risk assessment
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {messages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex items-start space-x-3 ${
+                            message.role === 'user' ? 'justify-end' : 'justify-start'
+                          }`}
+                        >
+                          {message.role === 'assistant' && (
+                            <Avatar className="w-8 h-8 flex-shrink-0">
+                              <AvatarImage src={sofiaAvatar} alt="Dr. Sofia" />
+                              <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">DS</AvatarFallback>
+                            </Avatar>
+                          )}
+                          
+                          <div className={`max-w-[70%] ${message.role === 'user' ? 'order-first' : ''}`}>
+                            <div
+                              className={`rounded-lg px-4 py-3 ${
+                                message.role === 'user'
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-gray-100 text-gray-900 border border-gray-200'
+                              }`}
+                            >
+                              <div className="text-sm whitespace-pre-wrap">
+                                {message.content}
+                              </div>
                             </div>
                             
-                            {message.role === 'assistant' && message.content.length > 100 && (
-                              <div className="mt-3 pt-3 border-t border-gray-200">
-                                <AudioPlayer 
-                                  text={message.content}
-                                  className="bg-white"
-                                />
+                            {message.messageType === 'audio' && (
+                              <div className="flex items-center mt-2 text-xs text-muted-foreground">
+                                <Mic className="w-3 h-3 mr-1" />
+                                Voice message
                               </div>
                             )}
                             
-                            <div className="text-xs opacity-70 mt-2">
-                              {message.timestamp.toLocaleTimeString()}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
-                        )}
-                        
-                        {message.role === 'user' && (
-                          <Avatar className="w-8 h-8 border border-blue-200">
-                            <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
-                              {profile?.full_name?.charAt(0) || 'U'}
-                            </AvatarFallback>
+                          
+                          {message.role === 'user' && (
+                            <Avatar className="w-8 h-8 flex-shrink-0">
+                              <AvatarFallback className="bg-blue-600 text-white text-xs">
+                                {user?.email?.[0]?.toUpperCase() || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                        </div>
+                      ))}
+                      
+                      {isTyping && (
+                        <div className="flex items-start space-x-3">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={sofiaAvatar} alt="Dr. Sofia" />
+                            <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">DS</AvatarFallback>
                           </Avatar>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {(isLoading || isTyping) && (
-                      <div className="flex gap-3 justify-start">
-                        <Avatar className="w-8 h-8 border border-red-200">
-                          <AvatarImage src={sofiaAvatar} alt="Dra. Sofía" />
-                          <AvatarFallback className="bg-red-100 text-red-700 text-xs">DS</AvatarFallback>
-                        </Avatar>
-                        <div className="bg-gray-100 rounded-lg px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
-                            <span className="text-sm text-gray-600 ml-2">
-                              {isTyping ? 'Dra. Sofía está escribiendo...' : 'Dra. Sofía está analizando...'}
-                            </span>
+                          <div className="bg-gray-100 rounded-lg px-4 py-3">
+                            <div className="flex space-x-1">
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                    
-                    <div ref={messagesEndRef} />
-                  </div>
-                </ScrollArea>
-                
-                {/* Input Area */}
-                <div className="border-t bg-gray-50 p-4">
-                  <form onSubmit={handleSubmit} className="flex gap-2">
-                    <div className="flex-1 flex gap-2">
-                      <Input
-                        value={inputMessage}
-                        onChange={(e) => setInputMessage(e.target.value)}
-                        placeholder="Describa los síntomas del paciente o haga su consulta..."
-                        disabled={isLoading || !isConnected}
-                        className="flex-1"
-                      />
+                      )}
                       
-                      <VoiceRecorder
-                        onTranscription={(text) => sendMessage(text, 'audio')}
-                        disabled={isLoading || !isConnected}
-                      />
+                      <div ref={messagesEndRef} />
                     </div>
-                    
-                    <Button 
-                      type="submit" 
-                      disabled={!inputMessage.trim() || isLoading || !isConnected}
-                      size="icon"
-                    >
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  </form>
-                </div>
+                  )}
+                </ScrollArea>
               </CardContent>
+
+              {/* Input Area */}
+              <div className="border-t bg-gray-50 p-4">
+                <form onSubmit={handleSubmit} className="flex items-center space-x-3">
+                  <Input
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Ask Dr. Sofia about aortic conditions, symptoms, or treatments..."
+                    className="flex-1 bg-white"
+                    disabled={!isConnected || isLoading}
+                  />
+                  
+                  <VoiceRecorder
+                    onTranscription={handleVoiceTranscription}
+                    disabled={!isConnected}
+                  />
+                  
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!inputMessage.trim() || !isConnected || isLoading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </form>
+              </div>
             </Card>
           </div>
-          
+
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Vital Signs */}
-            {showVitalSigns && (
-              <VitalSigns
-                onVitalSignsUpdate={handleVitalSignsUpdate}
-              />
-            )}
-            
-            {/* File Uploader */}
-            {showFileUploader && (
-              <FileUploader
-                onAnalysisComplete={handleFileAnalysis}
-                medicalCaseId={conversationId || undefined}
-                disabled={isLoading}
-              />
-            )}
-            
-            {/* Medical Insights */}
-            {patientSymptoms.length > 0 && (
-              <MedicalInsights 
-                insights={generateCardiovascularInsights(patientSymptoms)}
-              />
-            )}
-            
             {/* Dr. Sofia Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Sobre la Dra. Sofía</CardTitle>
+            <Card className="shadow-lg">
+              <CardHeader className="pb-3 bg-gradient-to-r from-red-50 to-blue-50">
+                <CardTitle className="text-lg flex items-center">
+                  <Heart className="w-5 h-5 mr-2 text-red-600" />
+                  Dr. Sofia Rodriguez
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-red-200">
-                    <AvatarImage src={sofiaAvatar} alt="Dra. Sofía" />
-                    <AvatarFallback className="bg-red-100 text-red-700 text-2xl">DS</AvatarFallback>
-                  </Avatar>
-                  
-                  <h3 className="font-semibold text-lg mb-2">Dr. Sofia Hernández, MD, PhD</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Interventional Cardiologist • Aortic Pathology Specialist<br/>
-                    MD, PhD • 20+ years experience
-                  </p>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-3">
-                  <h4 className="font-medium text-sm">Specialties</h4>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="text-xs">
-                      Aortic Pathologies
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      Echocardiography
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      Differential Diagnosis
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      Imágenes Cardíacas
-                    </Badge>
+              <CardContent className="pt-4">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-sm text-gray-900 mb-2">Specializations</h4>
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <div>• Aortic Valve Diseases</div>
+                      <div>• Aortic Stenosis & Regurgitation</div>
+                      <div>• Aortic Root Disorders</div>
+                      <div>• Cardiovascular Interventions</div>
+                      <div>• Cardiac Risk Assessment</div>
+                    </div>
                   </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Capacidades</h4>
-                  <ul className="text-xs text-muted-foreground space-y-1">
-                    <li>• Análisis de ecocardiogramas</li>
-                    <li>• Interpretación de ECG</li>
-                    <li>• Diagnósticos diferenciales</li>
-                    <li>• Evaluación de riesgo</li>
-                    <li>• Recomendaciones terapéuticas</li>
-                  </ul>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <h4 className="font-semibold text-sm text-gray-900 mb-2">Capabilities</h4>
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <div>• Real-time voice consultation</div>
+                      <div>• Medical image analysis</div>
+                      <div>• Risk stratification</div>
+                      <div>• Treatment recommendations</div>
+                      <div>• Follow-up planning</div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* File Uploader */}
+            {showFileUploader && (
+              <Card className="shadow-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <FileText className="w-5 h-5 mr-2 text-purple-600" />
+                    Upload Medical Study
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FileUploader
+                    onAnalysisComplete={handleFileAnalysis}
+                    disabled={!isConnected}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Vital Signs */}
+            {showVitalSigns && (
+              <Card className="shadow-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <Activity className="w-5 h-5 mr-2 text-blue-600" />
+                    Vital Signs
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <VitalSigns
+                    onVitalSignsUpdate={handleVitalSignsUpdate}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Medical Insights */}
+            {patientSymptoms.length > 0 && (
+              <Card className="shadow-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <Activity className="w-5 h-5 mr-2 text-green-600" />
+                    Cardiovascular Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <MedicalInsights
+                    insights={generateCardiovascularInsights(patientSymptoms)}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
