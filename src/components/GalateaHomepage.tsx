@@ -113,7 +113,7 @@ export const GalateaHomepage = () => {
             <div className="hidden md:flex items-center space-x-8">
               <a href="#platform" className="text-muted-foreground hover:text-foreground transition-colors">Platform</a>
               <a href="#agents" className="text-muted-foreground hover:text-foreground transition-colors">AI Agents</a>
-              <a href="#laboratorio" className="text-muted-foreground hover:text-foreground transition-colors">Laboratorio</a>
+              <a href="#lab" className="text-muted-foreground hover:text-foreground transition-colors">AI Lab</a>
               <a href="#marketplace" className="text-muted-foreground hover:text-foreground transition-colors">Marketplace</a>
               <a href="#security" className="text-muted-foreground hover:text-foreground transition-colors">Security</a>
               <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
@@ -121,15 +121,18 @@ export const GalateaHomepage = () => {
             
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm" asChild>
-                <a href="/es">🇪🇸 Español</a>
+                <a href="/chat-sofia">
+                  <Stethoscope className="w-4 h-4 mr-2" />
+                  Chat with Dr. Sofia
+                </a>
               </Button>
               <Button variant="outline" size="sm" asChild>
-                <a href="/auth">Iniciar Sesión</a>
+                <a href="/auth">Sign In</a>
               </Button>
               <Button size="sm" className="bg-gradient-primary hover:opacity-90" asChild>
                 <a href="/auth">
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Crear Agente AI
+                  Create AI Agent
                 </a>
               </Button>
             </div>
@@ -166,13 +169,17 @@ export const GalateaHomepage = () => {
               </p>
               
               <div className="flex flex-wrap gap-6">
-                <Button size="lg" className="text-lg px-8 py-4 bg-gradient-primary hover:opacity-90">
-                  <Play className="w-5 h-5 mr-2" />
-                  Create My First Agent
+                <Button size="lg" className="text-lg px-8 py-4 bg-gradient-primary hover:opacity-90" asChild>
+                  <a href="/chat-sofia">
+                    <Stethoscope className="w-5 h-5 mr-2" />
+                    Chat with Dr. Sofia Now
+                  </a>
                 </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4">
-                  <Eye className="w-5 h-5 mr-2" />
-                  Explore Marketplace
+                <Button variant="outline" size="lg" className="text-lg px-8 py-4" asChild>
+                  <a href="/creator-studio">
+                    <TestTube className="w-5 h-5 mr-2" />
+                    Create AI Agent
+                  </a>
                 </Button>
               </div>
 
@@ -235,14 +242,16 @@ export const GalateaHomepage = () => {
                     >
                       Previous
                     </Button>
-                    <Button 
-                      size="sm" 
-                      className="bg-primary/90 hover:bg-primary"
-                      onClick={() => setActiveStep(activeStep === 3 ? 1 : activeStep + 1)}
-                    >
+                  <Button 
+                    size="sm" 
+                    className="bg-primary/90 hover:bg-primary"
+                    asChild
+                  >
+                    <a href="/chat-sofia">
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Chat with Dr. Sofia
-                    </Button>
+                    </a>
+                  </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -274,8 +283,8 @@ export const GalateaHomepage = () => {
         </div>
       </section>
 
-      {/* LABORATORIO SECTION */}
-      <section id="laboratorio" className="py-32 px-6 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 relative overflow-hidden">
+      {/* AI LAB SECTION */}
+      <section id="lab" className="py-32 px-6 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/80" />
         
@@ -283,20 +292,20 @@ export const GalateaHomepage = () => {
           <div className="text-center mb-16">
             <div className="inline-flex items-center space-x-3 bg-primary/15 px-8 py-4 rounded-full mb-8 border border-primary/20">
               <TestTube className="w-6 h-6 text-primary" />
-              <span className="text-primary font-bold text-lg">Agent Creation Lab</span>
+              <span className="text-primary font-bold text-lg">Advanced AI Lab</span>
             </div>
             
             <h2 className="text-6xl lg:text-7xl font-bold mb-6">
               <span className="bg-gradient-primary bg-clip-text text-transparent">
-                Laboratorio
+                AI Laboratory
               </span>
               <br />
-              <span className="text-foreground">de Avatares Hiperrealistas</span>
+              <span className="text-foreground">Hyperrealistic Avatars</span>
             </h2>
             
             <p className="text-2xl text-muted-foreground max-w-5xl mx-auto leading-relaxed font-light mb-12">
-              Crea agentes de IA médicos con avatares fotorrealistas en minutos. 
-              Personaliza apariencia, voz, especialización y conocimiento médico.
+              Create medical AI agents with photorealistic avatars in minutes. 
+              Customize appearance, voice, specialization and medical knowledge.
             </p>
           </div>
 
@@ -306,14 +315,14 @@ export const GalateaHomepage = () => {
               <div className="grid lg:grid-cols-2 gap-12 items-center">
                 {/* Left Side - Features */}
                 <div className="space-y-8">
-                  <div className="space-y-6">
+                    <div className="space-y-6">
                     <div className="flex items-center space-x-4">
                       <div className="p-3 bg-primary/20 rounded-full">
                         <Eye className="w-8 h-8 text-primary" />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold">Avatares Fotorrealistas</h3>
-                        <p className="text-muted-foreground">Crea apariencias únicas con IA generativa</p>
+                        <h3 className="text-2xl font-bold">Photorealistic Avatars</h3>
+                        <p className="text-muted-foreground">Create unique appearances with generative AI</p>
                       </div>
                     </div>
                     
@@ -322,8 +331,8 @@ export const GalateaHomepage = () => {
                         <Headphones className="w-8 h-8 text-secondary" />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold">Síntesis de Voz</h3>
-                        <p className="text-muted-foreground">Voces naturales con ElevenLabs</p>
+                        <h3 className="text-2xl font-bold">Voice Synthesis</h3>
+                        <p className="text-muted-foreground">Natural voices with ElevenLabs</p>
                       </div>
                     </div>
                     
@@ -332,8 +341,8 @@ export const GalateaHomepage = () => {
                         <Brain className="w-8 h-8 text-accent" />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold">IA Especializada</h3>
-                        <p className="text-muted-foreground">Entrenamiento con protocolos médicos</p>
+                        <h3 className="text-2xl font-bold">Specialized AI</h3>
+                        <p className="text-muted-foreground">Training with medical protocols</p>
                       </div>
                     </div>
                   </div>
@@ -347,7 +356,7 @@ export const GalateaHomepage = () => {
                     >
                       <a href="/creator-studio">
                         <TestTube className="w-6 h-6 mr-3" />
-                        Entrar al Laboratorio
+                        Enter Laboratory
                         <ArrowRight className="w-6 h-6 ml-3" />
                       </a>
                     </Button>
@@ -361,7 +370,7 @@ export const GalateaHomepage = () => {
                       >
                         <a href="/advanced-creator">
                           <Sparkles className="w-5 h-5 mr-3" />
-                          Plataforma Avanzada
+                          Advanced Platform
                           <ArrowRight className="w-5 h-5 ml-3" />
                         </a>
                       </Button>
