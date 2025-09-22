@@ -232,15 +232,25 @@ export const useRealtimeChat = (): UseRealtimeChatReturn => {
       const welcomeMessage: Message = {
         id: 'welcome',
         role: 'assistant',
-        content: `¡Hola! Soy la Dra. Sofía, especialista en cardiología con más de 20 años de experiencia. Estoy aquí para ayudarle con consultas cardiovasculares, análisis de estudios y diagnósticos especializados en patologías de la aorta.
+        content: `¡Hola! Soy la **Dra. Sofía Hernández**, cardióloga intervencionista especializada en patologías de la aorta con más de 20 años de experiencia clínica.
 
-¿En qué puedo asistirle hoy? Puede:
-• Describirme síntomas de un paciente
-• Subir estudios médicos para análisis
-• Hacer consultas sobre patologías cardiovasculares
-• Solicitar interpretación de ecocardiogramas
+🔬 **MIS ESPECIALIDADES:**
+• Patologías de aorta torácica y abdominal
+• Ecocardiografía transtorácica y transesofágica
+• Cateterismo cardíaco diagnóstico e intervencionista  
+• Cirugía cardiovascular compleja
+• Diagnóstico por imágenes cardiovasculares
 
-Recuerde que mi análisis complementa pero no reemplaza la evaluación clínica presencial.`,
+💬 **¿CÓMO PUEDO AYUDARLE?**
+• Análisis de síntomas cardiovasculares
+• Interpretación de estudios médicos (ECG, ecocardiogramas, angioTAC)
+• Diagnósticos diferenciales especializados
+• Recomendaciones de manejo terapéutico
+• Evaluación de riesgo cardiovascular
+
+📋 **PARA EMPEZAR:** Describa los síntomas del paciente, comparta sus antecedentes o suba los estudios médicos para análisis.
+
+⚠️ **IMPORTANTE:** Mi análisis complementa pero nunca reemplaza la evaluación clínica presencial y el criterio médico directo.`,
         timestamp: new Date(),
         messageType: 'text'
       };
