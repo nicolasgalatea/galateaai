@@ -454,6 +454,39 @@ export type Database = {
           },
         ]
       }
+      medical_data_audit: {
+        Row: {
+          accessed_at: string
+          action: string
+          id: string
+          ip_address: unknown | null
+          session_id: string | null
+          table_name: string
+          user_id: string
+          user_role: string | null
+        }
+        Insert: {
+          accessed_at?: string
+          action: string
+          id?: string
+          ip_address?: unknown | null
+          session_id?: string | null
+          table_name: string
+          user_id: string
+          user_role?: string | null
+        }
+        Update: {
+          accessed_at?: string
+          action?: string
+          id?: string
+          ip_address?: unknown | null
+          session_id?: string | null
+          table_name?: string
+          user_id?: string
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       medical_diagnoses: {
         Row: {
           ai_analysis: Json | null
@@ -645,6 +678,14 @@ export type Database = {
       is_medical_professional: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      is_verified_medical_professional: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      log_medical_data_access: {
+        Args: { p_action: string; p_table_name: string }
+        Returns: undefined
       }
     }
     Enums: {
