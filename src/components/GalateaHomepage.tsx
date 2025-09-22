@@ -321,7 +321,7 @@ export const GalateaHomepage = () => {
                         <Eye className="w-8 h-8 text-primary" />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold">Photorealistic Avatars</h3>
+                        <h3 className="text-2xl font-bold">Agents Hyperrealistic</h3>
                         <p className="text-muted-foreground">Create unique appearances with generative AI</p>
                       </div>
                     </div>
@@ -381,48 +381,15 @@ export const GalateaHomepage = () => {
                 {/* Right Side - Visual Preview */}
                 <div className="relative">
                   <div className="relative w-full h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl overflow-hidden border-2 border-primary/30">
-                    {/* Avatar Grid Preview */}
-                    <div className="absolute inset-0 p-6">
-                      <div className="grid grid-cols-2 gap-4 h-full">
-                        <div className="space-y-4">
-                          <div className="relative group">
-                            <Avatar className="w-full h-24 rounded-xl ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all">
-                              <AvatarImage src={galateaAvatar} alt="Dr. Galatea" />
-                              <AvatarFallback>GA</AvatarFallback>
-                            </Avatar>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                              <div className="absolute bottom-2 left-2 text-white text-xs font-bold">Dr. Galatea</div>
-                            </div>
-                          </div>
-                          <div className="relative group">
-                            <Avatar className="w-full h-24 rounded-xl ring-2 ring-secondary/30 group-hover:ring-secondary/60 transition-all">
-                              <AvatarImage src={carlosCardioAvatar} alt="Dr. Carlos" />
-                              <AvatarFallback>CC</AvatarFallback>
-                            </Avatar>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                              <div className="absolute bottom-2 left-2 text-white text-xs font-bold">Dr. Carlos</div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="relative group">
-                            <Avatar className="w-full h-24 rounded-xl ring-2 ring-accent/30 group-hover:ring-accent/60 transition-all">
-                              <AvatarImage src={elenaOncoAvatar} alt="Dra. Elena" />
-                              <AvatarFallback>EO</AvatarFallback>
-                            </Avatar>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                              <div className="absolute bottom-2 left-2 text-white text-xs font-bold">Dra. Elena</div>
-                            </div>
-                          </div>
-                          <div className="relative group">
-                            <Avatar className="w-full h-24 rounded-xl ring-2 ring-primary/30 group-hover:ring-primary/60 transition-all">
-                              <AvatarImage src={amaraPediatricAvatar} alt="Dra. Amara" />
-                              <AvatarFallback>AP</AvatarFallback>
-                            </Avatar>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                              <div className="absolute bottom-2 left-2 text-white text-xs font-bold">Dra. Amara</div>
-                            </div>
-                          </div>
+                    {/* Single Avatar Preview */}
+                    <div className="absolute inset-0 p-6 flex items-center justify-center">
+                      <div className="relative group">
+                        <Avatar className="w-48 h-48 rounded-xl ring-4 ring-primary/30 group-hover:ring-primary/60 transition-all">
+                          <AvatarImage src={amaraPediatricAvatar} alt="Dra. Amara" />
+                          <AvatarFallback>AP</AvatarFallback>
+                        </Avatar>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="absolute bottom-4 left-4 text-white text-sm font-bold">Dra. Amara</div>
                         </div>
                       </div>
                     </div>
