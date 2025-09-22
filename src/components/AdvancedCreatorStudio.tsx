@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
+import { 
+  initializeAIModels, 
+  analyzeImageContent, 
+  removeBackgroundAdvanced, 
+  enhanceImageQuality,
+  checkWebGPUSupport 
+} from '@/utils/aiImageProcessing';
 import { 
   Sparkles, 
   Download, 
@@ -31,7 +38,10 @@ import {
   CheckCircle,
   Loader2,
   Heart,
-  Stethoscope
+  Stethoscope,
+  Eye,
+  Cpu,
+  Layers
 } from 'lucide-react';
 
 interface AvatarSettings {
@@ -68,8 +78,44 @@ const AdvancedCreatorStudio: React.FC = () => {
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [aiModelsReady, setAiModelsReady] = useState(false);
+  const [webGPUSupported, setWebGPUSupported] = useState(false);
+  const [imageAnalysis, setImageAnalysis] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Initialize AI models on component mount
+  useEffect(() => {
+    const initAI = async () => {
+      try {
+        const webGPUAvailable = await checkWebGPUSupport();
+        setWebGPUSupported(webGPUAvailable);
+        
+        if (webGPUAvailable) {
+          const modelsInitialized = await initializeAIModels();
+          setAiModelsReady(modelsInitialized);
+          
+          if (modelsInitialized) {
+            toast({
+              title: "AI Models Ready!",
+              description: "WebGPU acceleration enabled for advanced image processing",
+            });
+          }
+        } else {
+          toast({
+            title: "WebGPU Not Available",
+            description: "Using CPU fallback for image processing",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('AI initialization error:', error);
+      }
+    };
+
+    initAI();
+  }, [toast]);
 
   const generateAvatar = async () => {
     setIsGenerating(true);
@@ -137,8 +183,22 @@ const AdvancedCreatorStudio: React.FC = () => {
       // Load image element
       const imageElement = await loadImage(blob);
       
-      // Remove background
-      const processedBlob = await removeBackground(imageElement);
+      let processedBlob: Blob;
+      
+      // Use advanced AI segmentation if available, otherwise fallback to basic
+      if (aiModelsReady && webGPUSupported) {
+        toast({
+          title: "Using AI Enhancement",
+          description: "Processing with WebGPU-accelerated AI models",
+        });
+        processedBlob = await removeBackgroundAdvanced(imageElement);
+      } else {
+        toast({
+          title: "Using Standard Processing",
+          description: "AI models not available, using fallback method",
+        });
+        processedBlob = await removeBackground(imageElement);
+      }
       
       // Convert back to base64 for display
       const reader = new FileReader();
@@ -149,7 +209,7 @@ const AdvancedCreatorStudio: React.FC = () => {
       
       toast({
         title: "Background Removed!",
-        description: "Successfully removed background using AI segmentation",
+        description: aiModelsReady ? "AI-enhanced segmentation completed" : "Basic background removal completed",
       });
     } catch (error) {
       console.error('Background removal error:', error);
@@ -381,12 +441,50 @@ const AdvancedCreatorStudio: React.FC = () => {
                   </CardContent>
                 </Card>
 
+                {/* AI Status Panel */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Brain className="w-5 h-5" />
+                      AI Engine Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Cpu className="w-4 h-4" />
+                        <span className="text-sm">WebGPU Acceleration</span>
+                      </div>
+                      <Badge variant={webGPUSupported ? "default" : "secondary"}>
+                        {webGPUSupported ? "Enabled" : "Disabled"}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Layers className="w-4 h-4" />
+                        <span className="text-sm">AI Models</span>
+                      </div>
+                      <Badge variant={aiModelsReady ? "default" : "secondary"}>
+                        {aiModelsReady ? "Ready" : "Loading"}
+                      </Badge>
+                    </div>
+
+                    <div className="text-xs text-gray-500 mt-2">
+                      {aiModelsReady 
+                        ? "Advanced AI processing available" 
+                        : "Basic processing mode active"
+                      }
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Image Processing Tools */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Scissors className="w-5 h-5" />
-                      Image Processing
+                      AI Image Processing
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -398,13 +496,19 @@ const AdvancedCreatorStudio: React.FC = () => {
                         <div className="space-y-3">
                           <img src={uploadedImage} alt="Uploaded" className="w-20 h-20 rounded-lg mx-auto object-cover" />
                           <p className="text-sm text-gray-600">Click to change image</p>
+                          {isAnalyzing && (
+                            <div className="flex items-center justify-center gap-2">
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <span className="text-xs">Analyzing...</span>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="space-y-3">
                           <Upload className="w-10 h-10 text-gray-400 mx-auto" />
                           <div>
                             <p className="font-medium">Upload Image</p>
-                            <p className="text-sm text-gray-500">For background removal</p>
+                            <p className="text-sm text-gray-500">AI-powered analysis & processing</p>
                           </div>
                         </div>
                       )}
@@ -417,6 +521,23 @@ const AdvancedCreatorStudio: React.FC = () => {
                       onChange={handleImageUpload}
                       className="hidden"
                     />
+
+                    {imageAnalysis && (
+                      <div className="p-3 bg-blue-50 rounded-lg space-y-2">
+                        <h4 className="text-sm font-semibold flex items-center gap-2">
+                          <Eye className="w-4 h-4" />
+                          AI Analysis
+                        </h4>
+                        <p className="text-xs text-gray-700">{imageAnalysis.description}</p>
+                        <div className="flex flex-wrap gap-1">
+                          {imageAnalysis.labels?.slice(0, 3).map((label: any, idx: number) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {label.label} ({Math.round(label.score * 100)}%)
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {uploadedImage && (
                       <Button 
@@ -433,7 +554,7 @@ const AdvancedCreatorStudio: React.FC = () => {
                         ) : (
                           <>
                             <Scissors className="w-4 h-4 mr-2" />
-                            Remove Background
+                            {aiModelsReady ? "AI Background Removal" : "Remove Background"}
                           </>
                         )}
                       </Button>
@@ -530,7 +651,17 @@ const AdvancedCreatorStudio: React.FC = () => {
                           <img 
                             src={processedImage} 
                             alt="Processed" 
-                            className="w-full max-w-md mx-auto rounded-xl shadow-lg bg-checkered"
+                            className="w-full max-w-md mx-auto rounded-xl shadow-lg"
+                            style={{
+                              background: `
+                                linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+                                linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+                                linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+                                linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
+                              `,
+                              backgroundSize: '20px 20px',
+                              backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+                            }}
                           />
                           <Badge className="absolute top-4 right-4 bg-blue-100 text-blue-800">
                             <Scissors className="w-3 h-3 mr-1" />
