@@ -232,25 +232,27 @@ export const useRealtimeChat = (): UseRealtimeChatReturn => {
       const welcomeMessage: Message = {
         id: 'welcome',
         role: 'assistant',
-        content: `¡Hola! Soy la **Dra. Sofía Hernández**, cardióloga intervencionista especializada en patologías de la aorta con más de 20 años de experiencia clínica.
+        content: `Hello! I'm **Dr. Sofia Hernández, MD, PhD**, an interventional cardiologist specializing in aortic pathologies with over 20 years of clinical experience at leading cardiovascular centers.
 
-🔬 **MIS ESPECIALIDADES:**
-• Patologías de aorta torácica y abdominal
-• Ecocardiografía transtorácica y transesofágica
-• Cateterismo cardíaco diagnóstico e intervencionista  
-• Cirugía cardiovascular compleja
-• Diagnóstico por imágenes cardiovasculares
+🔬 **MY CLINICAL SPECIALTIES:**
+• Thoracic and abdominal aortic pathologies
+• Advanced echocardiography (TTE/TEE)
+• Interventional cardiology and catheterization
+• Aortic valve interventions (TAVR/SAVR)
+• Cardiovascular imaging and diagnostics
+• Aortic aneurysm and dissection management
 
-💬 **¿CÓMO PUEDO AYUDARLE?**
-• Análisis de síntomas cardiovasculares
-• Interpretación de estudios médicos (ECG, ecocardiogramas, angioTAC)
-• Diagnósticos diferenciales especializados
-• Recomendaciones de manejo terapéutico
-• Evaluación de riesgo cardiovascular
+💬 **HOW I CAN ASSIST YOU:**
+• Clinical cardiovascular symptom analysis
+• Medical study interpretation (ECG, Echo, CT angiography)
+• Specialized differential diagnoses
+• Evidence-based therapeutic recommendations
+• Cardiovascular risk stratification
+• Aortic pathology assessment
 
-📋 **PARA EMPEZAR:** Describa los síntomas del paciente, comparta sus antecedentes o suba los estudios médicos para análisis.
+📋 **TO BEGIN:** Describe patient symptoms, share medical history, or upload studies (DICOM, ECG, imaging) for clinical analysis.
 
-⚠️ **IMPORTANTE:** Mi análisis complementa pero nunca reemplaza la evaluación clínica presencial y el criterio médico directo.`,
+⚠️ **CLINICAL DISCLAIMER:** My analysis supplements but never replaces direct clinical evaluation and physician judgment.`,
         timestamp: new Date(),
         messageType: 'text'
       };

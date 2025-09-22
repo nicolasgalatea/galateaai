@@ -169,15 +169,15 @@ const ChatSofia = () => {
                 </div>
                 
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">Dra. Sofía</h1>
+                  <h1 className="text-xl font-bold text-gray-900">Dr. Sofia MD, PhD</h1>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
                       <Heart className="w-3 h-3 mr-1" />
-                      Cardióloga
+                      Interventional Cardiologist
                     </Badge>
                     <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
                       <Stethoscope className="w-3 h-3 mr-1" />
-                      Especialista en Aorta
+                      Aortic Specialist
                     </Badge>
                   </div>
                 </div>
@@ -190,12 +190,12 @@ const ChatSofia = () => {
                 {isConnected ? (
                   <div className="flex items-center gap-2 text-green-600">
                     <Wifi className="w-4 h-4" />
-                    <span className="hidden sm:inline">Conectado</span>
+                    <span className="hidden sm:inline">Connected</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-red-600">
                     <WifiOff className="w-4 h-4" />
-                    <span className="hidden sm:inline">Desconectado</span>
+                    <span className="hidden sm:inline">Disconnected</span>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -214,7 +214,7 @@ const ChatSofia = () => {
                 onClick={() => setShowVitalSigns(!showVitalSigns)}
               >
                 <Activity className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Signos Vitales</span>
+                <span className="hidden sm:inline">Vital Signs</span>
               </Button>
               <Button
                 variant="outline"
@@ -222,7 +222,7 @@ const ChatSofia = () => {
                 onClick={() => setShowFileUploader(!showFileUploader)}
               >
                 <Upload className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Subir Estudio</span>
+                <span className="hidden sm:inline">Upload Study</span>
               </Button>
             </div>
           </div>
@@ -408,26 +408,26 @@ const ChatSofia = () => {
                     <AvatarFallback className="bg-red-100 text-red-700 text-2xl">DS</AvatarFallback>
                   </Avatar>
                   
-                  <h3 className="font-semibold text-lg mb-2">Dra. Sofía Hernández</h3>
+                  <h3 className="font-semibold text-lg mb-2">Dr. Sofia Hernández, MD, PhD</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Cardióloga Intervencionista • Especialista en Patologías de Aorta<br/>
-                    MD, PhD • 20+ años de experiencia
+                    Interventional Cardiologist • Aortic Pathology Specialist<br/>
+                    MD, PhD • 20+ years experience
                   </p>
                 </div>
                 
                 <Separator />
                 
                 <div className="space-y-3">
-                  <h4 className="font-medium text-sm">Especialidades</h4>
+                  <h4 className="font-medium text-sm">Specialties</h4>
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary" className="text-xs">
-                      Patologías de Aorta
+                      Aortic Pathologies
                     </Badge>
                     <Badge variant="secondary" className="text-xs">
-                      Ecocardiografía
+                      Echocardiography
                     </Badge>
                     <Badge variant="secondary" className="text-xs">
-                      Diagnóstico Diferencial
+                      Differential Diagnosis
                     </Badge>
                     <Badge variant="secondary" className="text-xs">
                       Imágenes Cardíacas
