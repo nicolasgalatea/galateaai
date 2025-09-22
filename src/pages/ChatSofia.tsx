@@ -30,7 +30,7 @@ import { MedicalDiagnosis } from '@/components/MedicalDiagnosis';
 import { MedicalInsights, generateCardiovascularInsights } from '@/components/MedicalInsights';
 import { VitalSigns } from '@/components/VitalSigns';
 import { useRealtimeChat } from '@/hooks/useRealtimeChat';
-import sofiaAvatar from '@/assets/dra-sofia-avatar.jpg';
+import sofiaAvatar from '@/assets/galatea-avatar.jpg';
 
 interface Message {
   id: string;
