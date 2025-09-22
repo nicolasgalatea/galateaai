@@ -11,6 +11,12 @@ const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+console.log('Environment check:', {
+  hasOpenAI: !!OPENAI_API_KEY,
+  hasSupabaseUrl: !!SUPABASE_URL,
+  hasSupabaseKey: !!SUPABASE_SERVICE_ROLE_KEY
+});
+
 serve(async (req) => {
   const { headers } = req;
   const upgradeHeader = headers.get("upgrade") || "";
@@ -52,10 +58,22 @@ serve(async (req) => {
           break;
 
         case 'chat_message':
+          console.log('Processing chat message from user:', userId);
+          
           if (!userId) {
+            console.error('No user ID provided for chat message');
             socket.send(JSON.stringify({ 
               type: 'error', 
-              message: 'No autenticado' 
+              message: 'Authentication required - please refresh and try again' 
+            }));
+            return;
+          }
+
+          if (!OPENAI_API_KEY) {
+            console.error('OpenAI API key not configured');
+            socket.send(JSON.stringify({ 
+              type: 'error', 
+              message: 'AI service temporarily unavailable' 
             }));
             return;
           }
@@ -63,8 +81,10 @@ serve(async (req) => {
           // Send typing indicator
           socket.send(JSON.stringify({ 
             type: 'typing', 
-            message: 'Dra. Sofía está escribiendo...' 
+            message: 'Dr. Sofia is analyzing your case...' 
           }));
+
+          console.log('Creating or getting conversation for user:', userId);
 
           // Create or get conversation
           if (!conversationId) {
@@ -79,12 +99,14 @@ serve(async (req) => {
               .single();
 
             if (convError) {
+              console.error('Error creating conversation:', convError);
               socket.send(JSON.stringify({ 
                 type: 'error', 
-                message: 'Error al crear conversación' 
+                message: 'Failed to initialize conversation - please try again' 
               }));
               return;
             }
+            console.log('Created new conversation:', conversation.id);
             conversationId = conversation.id;
           }
 
@@ -102,7 +124,6 @@ serve(async (req) => {
             console.error('Error saving user message:', userMsgError);
           }
 
-          // Call OpenAI API
           const systemPrompt = `You are Dr. Sofia Hernández, MD, PhD, a world-renowned interventional cardiologist with over 20 years of experience in cardiovascular diagnostics, specializing in aortic pathologies.
 
 CLINICAL BACKGROUND:
@@ -172,6 +193,8 @@ MEDICAL CONTEXT: Standard cardiovascular consultation
 
 Respond in English as Dr. Sofia Hernández, MD, PhD, with the clinical precision of a specialist and the empathy of a physician committed to patient care.`;
 
+          console.log('Calling OpenAI API for medical consultation...');
+          
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -191,9 +214,11 @@ Respond in English as Dr. Sofia Hernández, MD, PhD, with the clinical precision
           });
 
           if (!response.ok) {
+            const errorData = await response.text();
+            console.error('OpenAI API error:', response.status, errorData);
             socket.send(JSON.stringify({ 
               type: 'error', 
-              message: 'Error en la consulta médica' 
+              message: 'AI consultation temporarily unavailable - please try again in a moment' 
             }));
             return;
           }
@@ -205,8 +230,10 @@ Respond in English as Dr. Sofia Hernández, MD, PhD, with the clinical precision
 
           socket.send(JSON.stringify({ 
             type: 'response_start', 
-            message: 'Dra. Sofía está respondiendo...' 
+            message: 'Dr. Sofia is providing her medical analysis...' 
           }));
+
+          console.log('Streaming OpenAI response...');
 
           while (reader) {
             const { done, value } = await reader.read();
@@ -240,6 +267,7 @@ Respond in English as Dr. Sofia Hernández, MD, PhD, with the clinical precision
 
           // Save assistant message
           if (fullResponse) {
+            console.log('Saving assistant response to database...');
             const { error: assistantMsgError } = await supabase
               .from('messages')
               .insert({
@@ -251,13 +279,16 @@ Respond in English as Dr. Sofia Hernández, MD, PhD, with the clinical precision
 
             if (assistantMsgError) {
               console.error('Error saving assistant message:', assistantMsgError);
+            } else {
+              console.log('Assistant message saved successfully');
             }
           }
 
+          console.log('Medical consultation completed successfully');
           socket.send(JSON.stringify({ 
             type: 'response_complete',
             conversationId: conversationId,
-            message: 'Respuesta completada'
+            message: 'Medical analysis completed - Dr. Sofia is ready for your next question'
           }));
           break;
 
