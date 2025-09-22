@@ -37,23 +37,41 @@ export const useRealtimeChat = (): UseRealtimeChatReturn => {
   const maxReconnectAttempts = 5;
 
   const connect = useCallback(() => {
-    if (!user) return;
+    if (!user) {
+      console.error('No user authenticated, cannot connect to chat');
+      toast({
+        title: "Autenticación requerida",
+        description: "Por favor inicia sesión para usar el chat con Dra. Sofía",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('Connecting to Dr. Sofia chat with user:', user.id);
 
     try {
       const wsUrl = `wss://jytsldbqgvntrqfjnkhz.supabase.co/functions/v1/realtime-chat`;
+      console.log('Connecting to WebSocket:', wsUrl);
       socketRef.current = new WebSocket(wsUrl);
 
       socketRef.current.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected successfully');
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
         
         // Authenticate
-        socketRef.current?.send(JSON.stringify({
+        const authMessage = {
           type: 'auth',
           userId: user.id,
           conversationId: conversationId
-        }));
+        };
+        console.log('Sending authentication:', authMessage);
+        socketRef.current?.send(JSON.stringify(authMessage));
+        
+        toast({
+          title: "Conectado",
+          description: "Conectado con Dra. Sofía - ¡Ya puedes conversar!",
+        });
       };
 
       socketRef.current.onmessage = (event) => {
@@ -147,9 +165,10 @@ export const useRealtimeChat = (): UseRealtimeChatReturn => {
 
       socketRef.current.onerror = (error) => {
         console.error('WebSocket error:', error);
+        setIsConnected(false);
         toast({
-          title: "Conexión perdida",
-          description: "Intentando reconectar...",
+          title: "Error de conexión",
+          description: "Se perdió la conexión con Dra. Sofía. Intentando reconectar...",
           variant: "destructive",
         });
       };

@@ -39,7 +39,14 @@ const App = () => (
             />
             <Route path="/waitlist" element={<WaitingList />} />
             <Route path="/demo" element={<Demo />} />
-            <Route path="/chat-sofia" element={<ChatSofia />} />
+            <Route 
+              path="/chat-sofia" 
+              element={
+                <ProtectedRoute>
+                  <ChatSofia />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/creator-studio" 
               element={
