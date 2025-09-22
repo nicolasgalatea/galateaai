@@ -420,15 +420,15 @@ export const GalateaHomepage = () => {
           <div className="mt-20 grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center space-y-4">
               <div className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">5min</div>
-              <p className="text-muted-foreground">Tiempo promedio de creación</p>
+              <p className="text-muted-foreground">Average creation time</p>
             </div>
             <div className="text-center space-y-4">
               <div className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">100+</div>
-              <p className="text-muted-foreground">Voces disponibles</p>
+              <p className="text-muted-foreground">Available voices</p>
             </div>
             <div className="text-center space-y-4">
               <div className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">24/7</div>
-              <p className="text-muted-foreground">Disponibilidad del agente</p>
+              <p className="text-muted-foreground">Agent availability</p>
             </div>
           </div>
         </div>
