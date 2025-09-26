@@ -297,10 +297,10 @@ export const GalateaHomepage = () => {
             
             <h2 className="text-6xl lg:text-7xl font-bold mb-6">
               <span className="bg-gradient-primary bg-clip-text text-transparent">
-                AI Laboratory
+                ai laboratory
               </span>
               <br />
-              <span className="text-foreground">Hyperrealistic Avatars</span>
+              <span className="text-foreground">hyperrealistic avatars</span>
             </h2>
             
             <p className="text-2xl text-muted-foreground max-w-5xl mx-auto leading-relaxed font-light mb-12">
