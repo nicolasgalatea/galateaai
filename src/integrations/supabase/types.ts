@@ -585,36 +585,57 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          license_expires_at: string | null
+          license_verification_notes: string | null
+          license_verified: boolean
+          license_verified_at: string | null
+          medical_license_country: string | null
+          medical_license_number: string | null
           organization: string | null
           phone: string | null
           specialty: string | null
           updated_at: string
           user_id: string
           user_role: Database["public"]["Enums"]["app_role"]
+          verification_source: string | null
         }
         Insert: {
           created_at?: string
           email: string
           full_name?: string | null
           id?: string
+          license_expires_at?: string | null
+          license_verification_notes?: string | null
+          license_verified?: boolean
+          license_verified_at?: string | null
+          medical_license_country?: string | null
+          medical_license_number?: string | null
           organization?: string | null
           phone?: string | null
           specialty?: string | null
           updated_at?: string
           user_id: string
           user_role?: Database["public"]["Enums"]["app_role"]
+          verification_source?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
+          license_expires_at?: string | null
+          license_verification_notes?: string | null
+          license_verified?: boolean
+          license_verified_at?: string | null
+          medical_license_country?: string | null
+          medical_license_number?: string | null
           organization?: string | null
           phone?: string | null
           specialty?: string | null
           updated_at?: string
           user_id?: string
           user_role?: Database["public"]["Enums"]["app_role"]
+          verification_source?: string | null
         }
         Relationships: []
       }
@@ -668,9 +689,58 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      pending_license_verifications: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          medical_license_country: string | null
+          medical_license_number: string | null
+          organization: string | null
+          specialty: string | null
+          user_id: string | null
+          user_role: Database["public"]["Enums"]["app_role"] | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          medical_license_country?: string | null
+          medical_license_number?: string | null
+          organization?: string | null
+          specialty?: string | null
+          user_id?: string | null
+          user_role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          medical_license_country?: string | null
+          medical_license_number?: string | null
+          organization?: string | null
+          specialty?: string | null
+          user_id?: string | null
+          user_role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      admin_verify_medical_license: {
+        Args: {
+          p_expires_at: string
+          p_license_country: string
+          p_license_number: string
+          p_notes?: string
+          p_user_id: string
+          p_verification_source: string
+        }
+        Returns: undefined
+      }
       can_manage_financial_data: {
         Args: Record<PropertyKey, never>
         Returns: boolean
