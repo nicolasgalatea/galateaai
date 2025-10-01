@@ -579,6 +579,45 @@ export type Database = {
           },
         ]
       }
+      pending_license_verifications: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          medical_license_country: string | null
+          medical_license_number: string | null
+          organization: string | null
+          specialty: string | null
+          user_id: string
+          user_role: Database["public"]["Enums"]["app_role"] | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          medical_license_country?: string | null
+          medical_license_number?: string | null
+          organization?: string | null
+          specialty?: string | null
+          user_id: string
+          user_role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          medical_license_country?: string | null
+          medical_license_number?: string | null
+          organization?: string | null
+          specialty?: string | null
+          user_id?: string
+          user_role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -689,45 +728,7 @@ export type Database = {
       }
     }
     Views: {
-      pending_license_verifications: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          full_name: string | null
-          id: string | null
-          medical_license_country: string | null
-          medical_license_number: string | null
-          organization: string | null
-          specialty: string | null
-          user_id: string | null
-          user_role: Database["public"]["Enums"]["app_role"] | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string | null
-          medical_license_country?: string | null
-          medical_license_number?: string | null
-          organization?: string | null
-          specialty?: string | null
-          user_id?: string | null
-          user_role?: Database["public"]["Enums"]["app_role"] | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string | null
-          medical_license_country?: string | null
-          medical_license_number?: string | null
-          organization?: string | null
-          specialty?: string | null
-          user_id?: string | null
-          user_role?: Database["public"]["Enums"]["app_role"] | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       admin_verify_medical_license: {
@@ -742,6 +743,10 @@ export type Database = {
         Returns: undefined
       }
       can_manage_financial_data: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_license_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
