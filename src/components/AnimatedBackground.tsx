@@ -1,3 +1,5 @@
+import React from 'react';
+
 export const AnimatedBackground = () => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
