@@ -2,17 +2,21 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { Target, Eye, Users } from 'lucide-react';
 
 export default function About() {
   const { t } = useLanguage();
+  useScrollReveal();
 
   return (
     <div className="min-h-screen">
       <Header />
 
-      <main className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-4xl">
+      <main className="relative pt-32 pb-20 px-4 overflow-hidden">
+        <AnimatedBackground />
+        <div className="container mx-auto max-w-4xl relative z-10">
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               {t('about.title')}
@@ -20,7 +24,7 @@ export default function About() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-            <Card className="hover-lift">
+            <Card className="hover-lift scroll-reveal">
               <CardContent className="p-8">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                   <Target className="w-6 h-6 text-primary" />
@@ -32,7 +36,7 @@ export default function About() {
               </CardContent>
             </Card>
 
-            <Card className="hover-lift">
+            <Card className="hover-lift scroll-reveal" style={{ animationDelay: '0.1s' }}>
               <CardContent className="p-8">
                 <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
                   <Eye className="w-6 h-6 text-accent" />
@@ -45,7 +49,7 @@ export default function About() {
             </Card>
           </div>
 
-          <Card>
+          <Card className="scroll-reveal" style={{ animationDelay: '0.2s' }}>
             <CardContent className="p-8">
               <div className="flex items-center space-x-4 mb-6">
                 <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center">

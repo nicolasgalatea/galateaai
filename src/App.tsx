@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import NewHome from "./pages/NewHome";
 import Agents from "./pages/Agents";
+import AgentAorta from "./pages/AgentAorta";
+import AgentOjos from "./pages/AgentOjos";
+import CustomAgent from "./pages/CustomAgent";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -22,6 +25,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<NewHome />} />
             <Route path="/agents" element={<Agents />} />
+            <Route path="/agent/aorta" element={<AgentAorta />} />
+            <Route path="/agent/ojos" element={<AgentOjos />} />
+            <Route path="/custom-agent" element={<CustomAgent />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />

@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 11% 15%;
 
-    --primary: 186 100% 45%;
+    --primary: 186 100% 33%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 11% 96%;
@@ -24,7 +24,7 @@
     --muted: 210 11% 96%;
     --muted-foreground: 210 11% 45%;
 
-    --accent: 186 80% 50%;
+    --accent: 186 100% 33%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -38,11 +38,12 @@
     --warning: 45 93% 47%;
     --info: 199 95% 74%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(186 100% 45%), hsl(186 80% 60%));
-    --gradient-hero: linear-gradient(135deg, hsl(186 100% 45% / 0.1), hsl(186 80% 60% / 0.05));
+    --gradient-primary: linear-gradient(135deg, hsl(186 100% 33%), hsl(186 80% 45%));
+    --gradient-hero: linear-gradient(135deg, hsl(186 100% 33% / 0.1), hsl(186 80% 45% / 0.05));
+    --gradient-animated: linear-gradient(270deg, hsl(186 100% 33%), hsl(186 80% 45%), hsl(186 100% 33%));
     --shadow-subtle: 0 2px 8px hsl(210 11% 15% / 0.04);
     --shadow-medium: 0 4px 16px hsl(210 11% 15% / 0.08);
-    --shadow-glow: 0 0 40px hsl(186 100% 45% / 0.2);
+    --shadow-glow: 0 0 40px hsl(186 100% 33% / 0.2);
 
     --radius: 0.5rem;
   }
@@ -57,7 +58,7 @@
     --popover: 210 11% 10%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 186 100% 45%;
+    --primary: 186 100% 33%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 11% 15%;
@@ -66,7 +67,7 @@
     --muted: 210 11% 15%;
     --muted-foreground: 210 11% 60%;
 
-    --accent: 186 80% 50%;
+    --accent: 186 100% 33%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
@@ -115,5 +116,36 @@
   
   .hover-lift:hover {
     box-shadow: var(--shadow-medium);
+  }
+
+  .animated-gradient {
+    background: var(--gradient-animated);
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .float-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .scroll-reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
