@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Globe } from 'lucide-react';
+import { Globe, User } from 'lucide-react';
+import { AuthModal } from './AuthModal';
 
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -42,12 +45,22 @@ export const Header = () => {
               <Globe className="w-4 h-4" />
               {language.toUpperCase()}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAuthModalOpen(true)}
+              className="gap-2"
+            >
+              <User className="w-4 h-4" />
+              {t('auth.loginSignup')}
+            </Button>
             <Button variant="default" size="sm" asChild>
               <Link to="/contact">{t('hero.cta.demo')}</Link>
             </Button>
           </div>
         </nav>
       </div>
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </header>
   );
 };

@@ -3,17 +3,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { Link } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import agentAortaImg from '@/assets/agent-aorta.jpg';
 import agentOjosImg from '@/assets/agent-ojos.jpg';
+import customAgentImg from '@/assets/custom-agent.jpg';
 
 const agents = [
   {
     key: 'aorta',
     image: agentAortaImg,
+    link: '/agent/aorta',
   },
   {
     key: 'ojos',
     image: agentOjosImg,
+    link: '/agent/ojos',
   },
 ];
 
@@ -37,30 +42,56 @@ export default function Agents() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {agents.map((agent) => (
-              <Card key={agent.key} className="hover-lift overflow-hidden">
+              <Link key={agent.key} to={agent.link}>
+                <Card className="hover-lift overflow-hidden cursor-pointer transition-all">
+                  <div className="aspect-square overflow-hidden">
+                    <img
+                      src={agent.image}
+                      alt={t(`agents.${agent.key}.name`)}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
+                  </div>
+                  <CardHeader>
+                    <CardTitle>{t(`agents.${agent.key}.name`)}</CardTitle>
+                    <CardDescription>
+                      <Badge variant="secondary">{t(`agents.${agent.key}.specialty`)}</Badge>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      {t(`agents.${agent.key}.desc`)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+
+            {/* Custom Agent Card */}
+            <Link to="/custom-agent">
+              <Card className="hover-lift overflow-hidden cursor-pointer bg-gradient-hero border-primary/20 transition-all">
                 <div className="aspect-square overflow-hidden">
                   <img
-                    src={agent.image}
-                    alt={t(`agents.${agent.key}.name`)}
-                    className="w-full h-full object-cover"
+                    src={customAgentImg}
+                    alt="Build your own agent"
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                   />
                 </div>
                 <CardHeader>
-                  <CardTitle>{t(`agents.${agent.key}.name`)}</CardTitle>
-                  <CardDescription>
-                    <Badge variant="secondary">{t(`agents.${agent.key}.specialty`)}</Badge>
-                  </CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    {t('agents.custom.title')}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    {t(`agents.${agent.key}.desc`)}
+                    {t('agents.custom.desc')}
                   </p>
                 </CardContent>
               </Card>
-            ))}
+            </Link>
 
             {/* Coming Soon Placeholders */}
-            {[1, 2, 3].map((i) => (
+            {[1, 2].map((i) => (
               <Card key={`coming-${i}`} className="hover-lift border-dashed">
                 <CardContent className="flex items-center justify-center h-full min-h-[300px]">
                   <div className="text-center space-y-2">

@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { UserPlus, Bot, Palette, Database, TestTube, Rocket, ArrowRight } from 'lucide-react';
 import heroImage from '@/assets/hero-medical-ai.jpg';
 
@@ -18,14 +20,16 @@ const processSteps = [
 
 export default function NewHome() {
   const { t } = useLanguage();
+  useScrollReveal();
 
   return (
     <div className="min-h-screen">
       <Header />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 bg-gradient-hero">
-        <div className="container mx-auto">
+      <section className="relative pt-32 pb-20 px-4 bg-gradient-hero overflow-hidden">
+        <AnimatedBackground />
+        <div className="container mx-auto relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6 animate-fade-in-up">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
@@ -59,7 +63,7 @@ export default function NewHome() {
       {/* Process Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 scroll-reveal">
             {t('process.title')}
           </h2>
 
@@ -67,7 +71,7 @@ export default function NewHome() {
             {processSteps.map((step, index) => {
               const Icon = step.icon;
               return (
-                <Card key={index} className="hover-lift">
+                <Card key={index} className="hover-lift scroll-reveal" style={{ animationDelay: `${index * 0.1}s` }}>
                   <CardContent className="p-6">
                     <div className="flex items-start space-x-4">
                       <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
