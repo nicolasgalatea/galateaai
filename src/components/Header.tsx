@@ -30,6 +30,9 @@ export const Header = () => {
             <Link to="/about" className="text-foreground hover:text-primary transition-colors">
               {t('nav.about')}
             </Link>
+            <Link to="/pricing" className="text-foreground hover:text-primary transition-colors">
+              {t('nav.pricing')}
+            </Link>
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
               {t('nav.contact')}
             </Link>

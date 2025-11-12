@@ -90,21 +90,6 @@ export default function Agents() {
               </Card>
             </Link>
 
-            {/* Coming Soon Placeholders */}
-            {[1, 2].map((i) => (
-              <Card key={`coming-${i}`} className="hover-lift border-dashed">
-                <CardContent className="flex items-center justify-center h-full min-h-[300px]">
-                  <div className="text-center space-y-2">
-                    <div className="w-16 h-16 bg-muted rounded-full mx-auto flex items-center justify-center">
-                      <span className="text-3xl">🤖</span>
-                    </div>
-                    <p className="font-semibold text-muted-foreground">
-                      {t('agents.coming')}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         </div>
       </main>
