@@ -44,7 +44,7 @@ export default function Pricing() {
     {
       name: t('pricing.enterprise.name'),
       price: t('pricing.enterprise.price'),
-      period: t('pricing.enterprise.period'),
+      period: '',
       desc: t('pricing.enterprise.desc'),
       features: [
         t('pricing.enterprise.feature1'),
