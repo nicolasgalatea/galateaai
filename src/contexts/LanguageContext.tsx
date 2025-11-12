@@ -45,7 +45,7 @@ const translations = {
     'agents.aorta.name': 'Agent Aorta',
     'agents.aorta.specialty': 'Cardiology',
     'agents.aorta.desc': 'Supports cardiovascular research and diagnosis, especially in aortic pathologies.',
-    'agents.ojos.name': 'Agent Ojos',
+    'agents.ojos.name': 'Eyes Agent',
     'agents.ojos.specialty': 'Ophthalmology',
     'agents.ojos.desc': 'Assists in ophthalmologic research, image interpretation, and patient support.',
     'agents.coming': 'Coming Soon',
