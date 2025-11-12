@@ -10,6 +10,7 @@ import AgentAorta from "./pages/AgentAorta";
 import AgentOjos from "./pages/AgentOjos";
 import CustomAgent from "./pages/CustomAgent";
 import About from "./pages/About";
+import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/agent/ojos" element={<AgentOjos />} />
             <Route path="/custom-agent" element={<CustomAgent />} />
             <Route path="/about" element={<About />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

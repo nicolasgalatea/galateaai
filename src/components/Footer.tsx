@@ -65,6 +65,11 @@ export const Footer = () => {
                   {t('nav.about')}
                 </Link>
               </li>
+              <li>
+                <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
+                  {t('nav.pricing')}
+                </Link>
+              </li>
             </ul>
           </div>
 
