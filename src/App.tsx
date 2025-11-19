@@ -8,6 +8,18 @@ import NewHome from "./pages/NewHome";
 import Agents from "./pages/Agents";
 import AgentAorta from "./pages/AgentAorta";
 import AgentOjos from "./pages/AgentOjos";
+import AgentClinicalDictation from "./pages/AgentClinicalDictation";
+import AgentCompliance from "./pages/AgentCompliance";
+import AgentSurgicalNotes from "./pages/AgentSurgicalNotes";
+import AgentResearch from "./pages/AgentResearch";
+import AgentCoding from "./pages/AgentCoding";
+import AgentAdministration from "./pages/AgentAdministration";
+import AgentConsent from "./pages/AgentConsent";
+import AgentSummary from "./pages/AgentSummary";
+import AgentLegalReview from "./pages/AgentLegalReview";
+import AgentProtocolReview from "./pages/AgentProtocolReview";
+import AgentSurgicalProtocols from "./pages/AgentSurgicalProtocols";
+import AgentLogbook from "./pages/AgentLogbook";
 import CustomAgent from "./pages/CustomAgent";
 import About from "./pages/About";
 import Pricing from "./pages/Pricing";
@@ -28,6 +40,18 @@ const App = () => (
             <Route path="/agents" element={<Agents />} />
             <Route path="/agent/aorta" element={<AgentAorta />} />
             <Route path="/agent/ojos" element={<AgentOjos />} />
+            <Route path="/agent/clinical-dictation" element={<AgentClinicalDictation />} />
+            <Route path="/agent/compliance" element={<AgentCompliance />} />
+            <Route path="/agent/surgical-notes" element={<AgentSurgicalNotes />} />
+            <Route path="/agent/research" element={<AgentResearch />} />
+            <Route path="/agent/coding" element={<AgentCoding />} />
+            <Route path="/agent/administration" element={<AgentAdministration />} />
+            <Route path="/agent/consent" element={<AgentConsent />} />
+            <Route path="/agent/summary" element={<AgentSummary />} />
+            <Route path="/agent/legal-review" element={<AgentLegalReview />} />
+            <Route path="/agent/protocol-review" element={<AgentProtocolReview />} />
+            <Route path="/agent/surgical-protocols" element={<AgentSurgicalProtocols />} />
+            <Route path="/agent/logbook" element={<AgentLogbook />} />
             <Route path="/custom-agent" element={<CustomAgent />} />
             <Route path="/about" element={<About />} />
             <Route path="/pricing" element={<Pricing />} />
