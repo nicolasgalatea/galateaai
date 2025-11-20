@@ -53,6 +53,7 @@ const translations = {
     'agents.categories.legal': 'Legal',
     'agents.categories.research': 'Research',
     'agents.categories.coding': 'Coding',
+    'agents.categories.billing': 'Billing',
     'agents.aorta.name': 'Agent Aorta',
     'agents.aorta.specialty': 'Cardiology',
     'agents.aorta.desc': 'Supports cardiovascular research and diagnosis, especially in aortic pathologies.',
@@ -95,6 +96,9 @@ const translations = {
     'agents.logbook.name': 'Surgical Logbook Manager',
     'agents.logbook.specialty': 'Surgical Documentation',
     'agents.logbook.desc': 'Organizes procedure logs, dates, techniques, complications, and surgeon cases.',
+    'agents.billing.name': 'Medical Order Billing Orchestrator',
+    'agents.billing.specialty': 'Billing / Administrative Automation',
+    'agents.billing.desc': 'Receives medical orders in image or PDF format, extracts information using OCR, renames files, classifies them into automated folder structures, logs to database, and triggers alerts when required data is missing.',
     'agents.coming': 'Coming Soon',
     
     // About
@@ -316,6 +320,7 @@ const translations = {
     'agents.categories.legal': 'Legal',
     'agents.categories.research': 'Investigación',
     'agents.categories.coding': 'Codificación',
+    'agents.categories.billing': 'Facturación',
     'agents.aorta.name': 'Agente Aorta',
     'agents.aorta.specialty': 'Cardiología',
     'agents.aorta.desc': 'Apoya la investigación y diagnóstico cardiovascular, especialmente en patologías aórticas.',
@@ -358,6 +363,9 @@ const translations = {
     'agents.logbook.name': 'Gestor de Bitácora Quirúrgica',
     'agents.logbook.specialty': 'Documentación Quirúrgica',
     'agents.logbook.desc': 'Organiza registros de procedimientos, fechas, técnicas, complicaciones y casos por cirujano.',
+    'agents.billing.name': 'Orquestador de Facturación de Órdenes Médicas',
+    'agents.billing.specialty': 'Facturación / Automatización Administrativa',
+    'agents.billing.desc': 'Recibe órdenes médicas en formato imagen o PDF, extrae información mediante OCR, renombra archivos, los clasifica en estructura de carpetas automatizada, registra en base de datos y dispara alertas cuando faltan datos requeridos.',
     'agents.coming': 'Próximamente',
     
     // About
