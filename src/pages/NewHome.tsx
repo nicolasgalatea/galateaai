@@ -7,7 +7,7 @@ import { Footer } from '@/components/Footer';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { UserPlus, Bot, Palette, Database, TestTube, Rocket, ArrowRight } from 'lucide-react';
-import heroImage from '@/assets/hero-medical-ai.jpg';
+import heroImage from '@/assets/hero-medical-team.jpg';
 
 const processSteps = [
   { icon: UserPlus, key: 'step1' },
