@@ -6,30 +6,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, Loader2, CheckCircle, Receipt } from 'lucide-react';
-
 export default function AgentBilling() {
-  const { t } = useLanguage();
+  const {
+    t
+  } = useLanguage();
   const [inputData, setInputData] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<any>(null);
-
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
     setResults({
       diagnosis: 'Medical order processed and classified',
       confidence: 98,
-      recommendations: [
-        'File renamed: ORDER_JOHNDOE_2024_CARDIOLOGY.pdf',
-        'Classified into: /Billing/Cardiology/2024/Q1',
-        'Logged to database with ID: #45823',
-      ],
+      recommendations: ['File renamed: ORDER_JOHNDOE_2024_CARDIOLOGY.pdf', 'Classified into: /Billing/Cardiology/2024/Q1', 'Logged to database with ID: #45823']
     });
     setIsAnalyzing(false);
   };
-
-  return (
-    <div className="min-h-screen">
+  return <div className="min-h-screen">
       <Header />
 
       <main className="pt-32 pb-20 px-4">
@@ -48,9 +42,7 @@ export default function AgentBilling() {
               <p className="text-lg text-muted-foreground mb-6">
                 {t('agents.billing.desc')}
               </p>
-              <p className="text-muted-foreground">
-                Receives medical orders in image or PDF format, extracts information using OCR, renames files based on extracted data, classifies them into an automated folder structure, logs information into the general database, and triggers alerts when required data is missing.
-              </p>
+              
             </div>
           </div>
 
@@ -60,39 +52,24 @@ export default function AgentBilling() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Textarea
-                  placeholder={t('agent.upload.placeholder')}
-                  value={inputData}
-                  onChange={(e) => setInputData(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
+                <Textarea placeholder={t('agent.upload.placeholder')} value={inputData} onChange={e => setInputData(e.target.value)} rows={8} className="font-mono text-sm" />
               </div>
               <div className="flex items-center justify-between">
                 <Button variant="outline" className="gap-2">
                   <Upload className="w-4 h-4" />
                   {t('agent.upload.file')}
                 </Button>
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={!inputData || isAnalyzing}
-                  className="gap-2"
-                >
-                  {isAnalyzing ? (
-                    <>
+                <Button onClick={handleAnalyze} disabled={!inputData || isAnalyzing} className="gap-2">
+                  {isAnalyzing ? <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       {t('agent.analyzing')}
-                    </>
-                  ) : (
-                    t('agent.analyze')
-                  )}
+                    </> : t('agent.analyze')}
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {results && (
-            <Card className="animate-fade-in-up">
+          {results && <Card className="animate-fade-in-up">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-500" />
@@ -112,10 +89,9 @@ export default function AgentBilling() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${results.confidence}%` }}
-                      />
+                      <div className="bg-primary h-2 rounded-full transition-all" style={{
+                    width: `${results.confidence}%`
+                  }} />
                     </div>
                     <span className="text-lg font-medium">{results.confidence}%</span>
                   </div>
@@ -125,21 +101,17 @@ export default function AgentBilling() {
                     {t('agent.results.recommendations')}
                   </div>
                   <ul className="space-y-2">
-                    {results.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
+                    {results.recommendations.map((rec: string, idx: number) => <li key={idx} className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                         <span>{rec}</span>
-                      </li>
-                    ))}
+                      </li>)}
                   </ul>
                 </div>
               </CardContent>
-            </Card>
-          )}
+            </Card>}
         </div>
       </main>
 
       <Footer />
-    </div>
-  );
+    </div>;
 }
