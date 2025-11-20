@@ -6,21 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Link } from 'react-router-dom';
-import { Sparkles, Search, Mic, Shield, Scissors, FlaskConical, Code, FileText, FileSignature, FileStack, Scale, FileSearch, ClipboardCheck, BookOpen } from 'lucide-react';
-import agentAortaImg from '@/assets/agent-aorta.jpg';
-import agentOjosImg from '@/assets/agent-ojos.jpg';
-import customAgentImg from '@/assets/custom-agent.jpg';
+import { Sparkles, Search, Mic, Shield, Scissors, FlaskConical, Code, FileText, FileSignature, FileStack, Scale, FileSearch, ClipboardCheck, BookOpen, Heart, Eye, Receipt } from 'lucide-react';
 const agents = [{
   key: 'aorta',
-  image: agentAortaImg,
+  icon: Heart,
   link: '/agent/aorta',
-  icon: null,
   category: 'Clinical'
 }, {
   key: 'ojos',
-  image: agentOjosImg,
+  icon: Eye,
   link: '/agent/ojos',
-  icon: null,
   category: 'Clinical'
 }, {
   key: 'clinicalDictation',
@@ -82,8 +77,13 @@ const agents = [{
   icon: BookOpen,
   link: '/agent/logbook',
   category: 'Surgery'
+}, {
+  key: 'billing',
+  icon: Receipt,
+  link: '/agent/billing',
+  category: 'Billing'
 }];
-const categories = ['All', 'Clinical', 'Documentation', 'Surgery', 'Administration', 'Legal', 'Research', 'Coding'];
+const categories = ['All', 'Clinical', 'Documentation', 'Surgery', 'Administration', 'Legal', 'Research', 'Coding', 'Billing'];
 export default function Agents() {
   const {
     t
@@ -126,22 +126,22 @@ export default function Agents() {
             </div>
           </div>
 
-          {/* Create Your Own Agent CTA - Prominent */}
+          {/* Create Your Own Agent CTA - Reduced Size */}
           <Link to="/custom-agent" className="block mb-12">
-            <Card className="hover-lift cursor-pointer bg-gradient-hero border-primary/20 transition-all overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-1 aspect-square md:aspect-auto overflow-hidden">
-                  <img src={customAgentImg} alt="Build your own agent" className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+            <Card className="hover-lift cursor-pointer bg-gradient-hero border-primary/20 transition-all overflow-hidden max-w-4xl mx-auto">
+              <div className="p-8 flex items-center gap-6">
+                <div className="flex-shrink-0">
+                  <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-primary" />
+                  </div>
                 </div>
-                <div className="md:col-span-2 p-6 flex flex-col justify-center">
-                  <CardTitle className="flex items-center gap-2 text-2xl mb-4">
-                    <Sparkles className="w-6 h-6 text-primary" />
+                <div className="flex-1">
+                  <CardTitle className="text-xl mb-2">
                     {t('agents.custom.title')}
                   </CardTitle>
-                  <p className="text-muted-foreground text-lg mb-4">
+                  <p className="text-muted-foreground">
                     {t('agents.custom.desc')}
                   </p>
-                  
                 </div>
               </div>
             </Card>
@@ -151,11 +151,9 @@ export default function Agents() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredAgents.map(agent => <Link key={agent.key} to={agent.link}>
                 <Card className="hover-lift overflow-hidden cursor-pointer transition-all h-full">
-                  {agent.image ? <div className="aspect-square overflow-hidden">
-                      <img src={agent.image} alt={t(`agents.${agent.key}.name`)} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
-                    </div> : <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                      {agent.icon && <agent.icon className="w-24 h-24 text-primary" />}
-                    </div>}
+                  <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    {agent.icon && <agent.icon className="w-20 h-20 text-primary" strokeWidth={1.5} />}
+                  </div>
                   <CardHeader>
                     <CardTitle className="text-lg">{t(`agents.${agent.key}.name`)}</CardTitle>
                     <CardDescription>
