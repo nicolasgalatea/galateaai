@@ -51,7 +51,7 @@ export default function AgentBilling() {
       formData.append('file', selectedImage);
 
       const response = await fetch(
-        'https://newtest1234567.app.n8n.cloud/webhook-test/4da35d0c-4ede-452f-914f-28c2ee489169',
+        'https://newtest1234567.app.n8n.cloud/webhook/4da35d0c-4ede-452f-914f-28c2ee489169',
         {
           method: 'POST',
           body: formData,
