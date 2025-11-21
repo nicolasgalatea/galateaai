@@ -1,27 +1,95 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, Loader2, CheckCircle, Receipt } from 'lucide-react';
+import { Upload, Loader2, CheckCircle, Receipt, Image as ImageIcon } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
 export default function AgentBilling() {
-  const {
-    t
-  } = useLanguage();
-  const [inputData, setInputData] = useState('');
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please select an image file',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSelectedImage(file);
+    setResults(null);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAnalyze = async () => {
+    if (!selectedImage) return;
+
     setIsAnalyzing(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setResults({
-      diagnosis: 'Medical order processed and classified',
-      confidence: 98,
-      recommendations: ['File renamed: ORDER_JOHNDOE_2024_CARDIOLOGY.pdf', 'Classified into: /Billing/Cardiology/2024/Q1', 'Logged to database with ID: #45823']
-    });
-    setIsAnalyzing(false);
+    setResults(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedImage);
+
+      const response = await fetch(
+        'https://newtest1234567.app.n8n.cloud/webhook-test/4da35d0c-4ede-452f-914f-28c2ee489169',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const jsonData = await response.json();
+      
+      // Extract and clean text content from JSON response
+      const cleanText = JSON.stringify(jsonData, null, 2)
+        .replace(/[{}"[\],]/g, '')
+        .replace(/^\s+|\s+$/gm, '')
+        .split('\n')
+        .filter(line => line.trim())
+        .map(line => line.replace(/^[\w_]+:\s*/, '').trim())
+        .filter(line => line)
+        .join('\n');
+
+      setResults(cleanText || JSON.stringify(jsonData));
+      
+      toast({
+        title: 'Analysis complete',
+        description: 'Medical order processed successfully',
+      });
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      toast({
+        title: 'Analysis failed',
+        description: 'Failed to process the image. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
   return <div className="min-h-screen">
       <Header />
@@ -48,67 +116,86 @@ export default function AgentBilling() {
 
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>{t('agent.upload.title')}</CardTitle>
+              <CardTitle>Upload Medical Order Image</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Textarea placeholder={t('agent.upload.placeholder')} value={inputData} onChange={e => setInputData(e.target.value)} rows={8} className="font-mono text-sm" />
-              </div>
-              <div className="flex items-center justify-between">
-                <Button variant="outline" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  {t('agent.upload.file')}
-                </Button>
-                <Button onClick={handleAnalyze} disabled={!inputData || isAnalyzing} className="gap-2">
-                  {isAnalyzing ? <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('agent.analyzing')}
-                    </> : t('agent.analyze')}
-                </Button>
-              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              
+              {imagePreview ? (
+                <div className="space-y-4">
+                  <div className="relative rounded-lg border border-border overflow-hidden bg-muted">
+                    <img
+                      src={imagePreview}
+                      alt="Selected medical order"
+                      className="w-full h-auto max-h-96 object-contain"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="gap-2"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Change Image
+                    </Button>
+                    <Button
+                      onClick={handleAnalyze}
+                      disabled={!selectedImage || isAnalyzing}
+                      className="gap-2"
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Analyze Order
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-border rounded-lg p-12 text-center cursor-pointer hover:border-primary hover:bg-accent/50 transition-colors"
+                >
+                  <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-lg font-medium mb-2">Upload Medical Order Image</p>
+                  <p className="text-sm text-muted-foreground">
+                    Click to select an image file (JPG, PNG, etc.)
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {results && <Card className="animate-fade-in-up">
+          {results && (
+            <Card className="animate-fade-in-up">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t('agent.results.title')}
+                  Analysis Results
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.diagnosis')}
-                  </div>
-                  <div className="text-lg font-medium">{results.diagnosis}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.confidence')}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div className="bg-primary h-2 rounded-full transition-all" style={{
-                    width: `${results.confidence}%`
-                  }} />
-                    </div>
-                    <span className="text-lg font-medium">{results.confidence}%</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.recommendations')}
-                  </div>
-                  <ul className="space-y-2">
-                    {results.recommendations.map((rec: string, idx: number) => <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{rec}</span>
-                      </li>)}
-                  </ul>
+              <CardContent>
+                <div className="bg-muted rounded-lg p-6">
+                  <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">
+                    {results}
+                  </pre>
                 </div>
               </CardContent>
-            </Card>}
+            </Card>
+          )}
         </div>
       </main>
 
