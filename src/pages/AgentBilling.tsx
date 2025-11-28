@@ -51,40 +51,38 @@ export default function AgentBilling() {
       formData.append('file', selectedImage);
 
       const response = await fetch(
-        'https://newtest1234567.app.n8n.cloud/webhook/4da35d0c-4ede-452f-914f-28c2ee489169',
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-to-drive`,
         {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
           body: formData,
         }
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const jsonData = await response.json();
+      const data = await response.json();
       
-      // Extract and clean text content from JSON response
-      const cleanText = JSON.stringify(jsonData, null, 2)
-        .replace(/[{}"[\],]/g, '')
-        .replace(/^\s+|\s+$/gm, '')
-        .split('\n')
-        .filter(line => line.trim())
-        .map(line => line.replace(/^[\w_]+:\s*/, '').trim())
-        .filter(line => line)
-        .join('\n');
-
-      setResults(cleanText || JSON.stringify(jsonData));
-      
-      toast({
-        title: 'Analysis complete',
-        description: 'Medical order processed successfully',
-      });
+      if (data.success) {
+        setResults('File analyzed and safely stored!');
+        
+        toast({
+          title: 'Success!',
+          description: 'File analyzed and safely stored in Google Drive',
+        });
+      } else {
+        throw new Error(data.error || 'Upload failed');
+      }
     } catch (error) {
       console.error('Error analyzing image:', error);
       toast({
         title: 'Analysis failed',
-        description: 'Failed to process the image. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to process the image. Please try again.',
         variant: 'destructive',
       });
     } finally {
