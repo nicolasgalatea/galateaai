@@ -1,10 +1,17 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Helper to convert Uint8Array to base64 without stack overflow
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  return base64Encode(bytes);
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -49,8 +56,14 @@ serve(async (req) => {
 
     // Encode JWT
     const encoder = new TextEncoder();
-    const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-    const encodedPayload = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    const encodedHeader = base64Encode(encoder.encode(JSON.stringify(header)))
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+    const encodedPayload = base64Encode(encoder.encode(JSON.stringify(payload)))
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
     const unsignedToken = `${encodedHeader}.${encodedPayload}`;
 
     // Import private key
@@ -61,11 +74,12 @@ serve(async (req) => {
       .replace(pemFooter, '')
       .replace(/\s/g, '');
     
-    const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+    const binaryDer = base64Encode(pemContents);
+    const binaryDerDecoded = Uint8Array.from(atob(binaryDer), c => c.charCodeAt(0));
     
     const key = await crypto.subtle.importKey(
       'pkcs8',
-      binaryDer,
+      binaryDerDecoded,
       {
         name: 'RSASSA-PKCS1-v1_5',
         hash: 'SHA-256',
@@ -81,8 +95,7 @@ serve(async (req) => {
       encoder.encode(unsignedToken)
     );
 
-    const signatureArray = new Uint8Array(signature);
-    const encodedSignature = btoa(String.fromCharCode(...signatureArray))
+    const encodedSignature = base64Encode(new Uint8Array(signature))
       .replace(/=/g, '')
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
@@ -122,13 +135,15 @@ serve(async (req) => {
     const delimiter = `\r\n--${boundary}\r\n`;
     const closeDelimiter = `\r\n--${boundary}--`;
 
+    const base64Data = arrayBufferToBase64(fileBuffer);
+
     const multipartBody = delimiter +
       'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
       JSON.stringify(metadata) +
       delimiter +
       'Content-Type: ' + file.type + '\r\n' +
       'Content-Transfer-Encoding: base64\r\n\r\n' +
-      btoa(String.fromCharCode(...new Uint8Array(fileBuffer))) +
+      base64Data +
       closeDelimiter;
 
     const uploadResponse = await fetch(
