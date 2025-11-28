@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { encode as base64Encode } from "https://deno.land/std@0.224.0/encoding/base64.ts";
+import * as base64 from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,7 +10,7 @@ const corsHeaders = {
 // Helper to convert Uint8Array to base64 without stack overflow
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
-  return base64Encode(bytes);
+  return base64.encode(bytes);
 }
 
 serve(async (req) => {
@@ -56,11 +56,11 @@ serve(async (req) => {
 
     // Encode JWT
     const encoder = new TextEncoder();
-    const encodedHeader = base64Encode(encoder.encode(JSON.stringify(header)))
+    const encodedHeader = base64.encode(encoder.encode(JSON.stringify(header)))
       .replace(/=/g, '')
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
-    const encodedPayload = base64Encode(encoder.encode(JSON.stringify(payload)))
+    const encodedPayload = base64.encode(encoder.encode(JSON.stringify(payload)))
       .replace(/=/g, '')
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
@@ -74,12 +74,15 @@ serve(async (req) => {
       .replace(pemFooter, '')
       .replace(/\s/g, '');
     
-    const binaryDer = base64Encode(pemContents);
-    const binaryDerDecoded = Uint8Array.from(atob(binaryDer), c => c.charCodeAt(0));
+    const binaryDerString = atob(pemContents);
+    const binaryDer = new Uint8Array(binaryDerString.length);
+    for (let i = 0; i < binaryDerString.length; i++) {
+      binaryDer[i] = binaryDerString.charCodeAt(i);
+    }
     
     const key = await crypto.subtle.importKey(
       'pkcs8',
-      binaryDerDecoded,
+      binaryDer,
       {
         name: 'RSASSA-PKCS1-v1_5',
         hash: 'SHA-256',
@@ -95,7 +98,7 @@ serve(async (req) => {
       encoder.encode(unsignedToken)
     );
 
-    const encodedSignature = base64Encode(new Uint8Array(signature))
+    const encodedSignature = base64.encode(new Uint8Array(signature))
       .replace(/=/g, '')
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
