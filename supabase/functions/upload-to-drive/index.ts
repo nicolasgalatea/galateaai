@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import * as base64 from "https://deno.land/std@0.224.0/encoding/base64.ts";
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,7 +10,7 @@ const corsHeaders = {
 // Helper to convert Uint8Array to base64 without stack overflow
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
-  return base64.encode(bytes);
+  return encodeBase64(bytes);
 }
 
 serve(async (req) => {
@@ -56,11 +56,11 @@ serve(async (req) => {
 
     // Encode JWT
     const encoder = new TextEncoder();
-    const encodedHeader = base64.encode(encoder.encode(JSON.stringify(header)))
+    const encodedHeader = encodeBase64(encoder.encode(JSON.stringify(header)))
       .replace(/=/g, '')
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
-    const encodedPayload = base64.encode(encoder.encode(JSON.stringify(payload)))
+    const encodedPayload = encodeBase64(encoder.encode(JSON.stringify(payload)))
       .replace(/=/g, '')
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
@@ -98,7 +98,7 @@ serve(async (req) => {
       encoder.encode(unsignedToken)
     );
 
-    const encodedSignature = base64.encode(new Uint8Array(signature))
+    const encodedSignature = encodeBase64(new Uint8Array(signature))
       .replace(/=/g, '')
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
