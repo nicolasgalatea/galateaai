@@ -69,13 +69,13 @@ export function HowItWorks() {
                   className="group relative bg-card hover:bg-card/80 p-8 rounded-2xl border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                 >
                   {/* Step Number */}
-                  <div className="absolute top-5 right-5 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground">
+                  <div className="absolute top-5 right-5 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-primary-foreground">
                     {index + 1}
                   </div>
 
                   {/* Icon */}
-                  <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mb-6">
-                    <Icon className="w-10 h-10 text-foreground" />
+                  <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mb-6">
+                    <Icon className="w-10 h-10 text-primary-foreground" />
                   </div>
 
                   {/* Title */}
