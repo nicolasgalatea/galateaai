@@ -263,7 +263,7 @@ const translations = {
     'about.roadmap.phase4.goal': 'Goal: Become the global reference in hyper-realistic AI-powered medical agent infrastructure.',
     
     // How It Works - Enterprise Process
-    'howItWorks.title': 'Our Methodology: From Friction to Automation',
+    'howItWorks.title': 'How It Works',
     'howItWorks.subtitle': 'Health-Ops infrastructure designed to integrate Artificial Intelligence into real workflow, without disrupting your operation.',
     'howItWorks.step1.title': '1. Bottleneck Diagnosis',
     'howItWorks.step1.desc': 'Our architects analyze your Back-Office processes (Billing, Portfolio, Accounting) to identify where manual operation is draining resources and slowing cash flow.',
@@ -526,7 +526,7 @@ const translations = {
     'about.roadmap.phase4.goal': 'Objetivo: Convertirse en la referencia global en infraestructura de agentes médicos hiperrealistas impulsados por IA.',
     
     // How It Works - Enterprise Process
-    'howItWorks.title': 'Nuestra Metodología: De la Fricción a la Automatización',
+    'howItWorks.title': 'Cómo Funciona',
     'howItWorks.subtitle': 'Infraestructura de Health-Ops diseñada para integrar Inteligencia Artificial en el flujo de trabajo real, sin interrumpir su operación.',
     'howItWorks.step1.title': '1. Diagnóstico de Cuellos de Botella',
     'howItWorks.step1.desc': 'Nuestros arquitectos analizan sus procesos de Back-Office (Facturación, Cartera, Contabilidad) para identificar dónde la operación manual está drenando recursos y frenando el flujo de caja.',
