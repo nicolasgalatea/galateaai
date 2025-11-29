@@ -1,23 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
-import { HowItWorks } from '@/components/HowItWorks';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-import { UserPlus, Bot, Palette, Database, TestTube, Rocket, ArrowRight } from 'lucide-react';
 import heroImage from '@/assets/hero-medical-team.jpg';
-
-const processSteps = [
-  { icon: UserPlus, key: 'step1' },
-  { icon: Bot, key: 'step2' },
-  { icon: Palette, key: 'step3' },
-  { icon: Database, key: 'step4' },
-  { icon: TestTube, key: 'step5' },
-  { icon: Rocket, key: 'step6' },
-];
 
 export default function NewHome() {
   const { t } = useLanguage();
@@ -57,52 +45,6 @@ export default function NewHome() {
                 className="relative rounded-2xl shadow-glow w-full h-auto"
               />
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <HowItWorks />
-
-      {/* Process Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 scroll-reveal">
-            {t('process.title')}
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {processSteps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <Card key={index} className="hover-lift scroll-reveal" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold mb-2">
-                          {t(`process.${step.key}.title`)}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {t(`process.${step.key}.desc`)}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          <div className="text-center">
-            <Button size="lg" asChild>
-              <Link to="/contact">
-                {t('process.cta')}
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
           </div>
         </div>
       </section>
