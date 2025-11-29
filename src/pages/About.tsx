@@ -273,7 +273,7 @@ export default function About() {
                     <img 
                       src={ceoAvatar} 
                       alt="Nicolás - CEO" 
-                      className="w-24 h-24 rounded-xl object-cover shadow-lg flex-shrink-0"
+                      className="w-32 h-32 rounded-xl object-cover shadow-lg flex-shrink-0"
                     />
                     <div className="flex-1">
                       <h3 className="text-xl font-bold mb-2">{t('about.team.nicolas.name')}</h3>
@@ -305,7 +305,7 @@ export default function About() {
                     <img 
                       src={cmoAvatar} 
                       alt="Carlos - CMO" 
-                      className="w-24 h-24 rounded-xl object-cover shadow-lg flex-shrink-0"
+                      className="w-32 h-32 rounded-xl object-cover shadow-lg flex-shrink-0"
                     />
                     <div className="flex-1">
                       <h3 className="text-xl font-bold mb-2">{t('about.team.carlos.name')}</h3>
@@ -338,7 +338,7 @@ export default function About() {
                   <img 
                     src={ctoAvatar} 
                     alt="CTO" 
-                    className="w-24 h-24 rounded-xl object-cover shadow-lg flex-shrink-0"
+                    className="w-32 h-32 rounded-xl object-cover object-top shadow-lg flex-shrink-0"
                   />
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2">{t('about.team.cto.name')}</h3>
