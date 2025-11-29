@@ -2,26 +2,92 @@ import { Link } from 'react-router-dom';
 import { 
   Bot, ArrowLeft, ArrowRight, CheckCircle,
   Activity, Zap, Clock, TrendingUp, Building2, FileText,
-  AlertTriangle, Settings
+  AlertTriangle, Settings, Code, Shield, Mic, Receipt, Scissors, Heart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const agents = [
-  { name: 'Audit-Bot-01', role: 'Revenue Cycle', status: 'active', tasks: 1247 },
-  { name: 'RIPS-Agent', role: 'Compliance', status: 'active', tasks: 892 },
-  { name: 'Doc-Parser', role: 'Clinical Notes', status: 'active', tasks: 2103 },
-  { name: 'Auth-Bot', role: 'Prior Auth', status: 'paused', tasks: 456 },
+// Real agents from the repository
+const workspaceAgents = [
+  { 
+    key: 'coding',
+    name: 'Codificación Médica', 
+    role: 'CIE-10 & CUPS', 
+    status: 'active', 
+    tasks: 2847,
+    icon: Code,
+    color: 'amber',
+    link: '/agent/coding'
+  },
+  { 
+    key: 'compliance',
+    name: 'Cumplimiento RIPS', 
+    role: 'Auditoría', 
+    status: 'active', 
+    tasks: 1592,
+    icon: Shield,
+    color: 'emerald',
+    link: '/agent/compliance'
+  },
+  { 
+    key: 'clinicalDictation',
+    name: 'Dictado Clínico', 
+    role: 'Transcripción', 
+    status: 'active', 
+    tasks: 3241,
+    icon: Mic,
+    color: 'cyan',
+    link: '/agent/clinical-dictation'
+  },
+  { 
+    key: 'billing',
+    name: 'Facturación', 
+    role: 'Revenue Cycle', 
+    status: 'active', 
+    tasks: 1876,
+    icon: Receipt,
+    color: 'blue',
+    link: '/agent/billing'
+  },
+  { 
+    key: 'surgicalNotes',
+    name: 'Notas Quirúrgicas', 
+    role: 'Documentación', 
+    status: 'active', 
+    tasks: 892,
+    icon: Scissors,
+    color: 'red',
+    link: '/agent/surgical-notes'
+  },
+  { 
+    key: 'aorta',
+    name: 'Cardiología AORTA', 
+    role: 'Especialidad', 
+    status: 'active', 
+    tasks: 634,
+    icon: Heart,
+    color: 'rose',
+    link: '/agent/aorta'
+  },
 ];
 
 const logs = [
-  { time: '14:32:01', status: 'success', agent: 'Audit-Bot-01', text: 'Invoice #489 validated → RIPS compliant ✓' },
-  { time: '14:32:03', status: 'success', agent: 'RIPS-Agent', text: 'CIE-10 code mapped: J18.9 → Approved' },
-  { time: '14:32:05', status: 'warning', agent: 'Doc-Parser', text: 'Note #1205 → Missing signature → Flagged' },
-  { time: '14:32:08', status: 'success', agent: 'Audit-Bot-01', text: 'Invoice #490 validated → RIPS compliant ✓' },
-  { time: '14:32:10', status: 'processing', agent: 'RIPS-Agent', text: 'Processing batch #47... Extracting codes...' },
+  { time: '14:32:01', status: 'success', agent: 'Codificación', text: 'Invoice #489 validated → RIPS compliant ✓' },
+  { time: '14:32:03', status: 'success', agent: 'Cumplimiento', text: 'CIE-10 code mapped: J18.9 → Approved' },
+  { time: '14:32:05', status: 'warning', agent: 'Dictado', text: 'Note #1205 → Missing signature → Flagged' },
+  { time: '14:32:08', status: 'success', agent: 'Facturación', text: 'Invoice #490 validated → RIPS compliant ✓' },
+  { time: '14:32:10', status: 'processing', agent: 'Notas Qx', text: 'Processing batch #47... Extracting codes...' },
 ];
+
+const colorClasses: Record<string, { bg: string; border: string; text: string }> = {
+  amber: { bg: 'bg-amber-500/20', border: 'border-amber-500/30', text: 'text-amber-600' },
+  emerald: { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', text: 'text-emerald-600' },
+  cyan: { bg: 'bg-cyan-500/20', border: 'border-cyan-500/30', text: 'text-cyan-600' },
+  blue: { bg: 'bg-blue-500/20', border: 'border-blue-500/30', text: 'text-blue-600' },
+  red: { bg: 'bg-red-500/20', border: 'border-red-500/30', text: 'text-red-600' },
+  rose: { bg: 'bg-rose-500/20', border: 'border-rose-500/30', text: 'text-rose-600' },
+};
 
 export default function MethodologyDeployment() {
   const { t } = useLanguage();
@@ -69,61 +135,79 @@ export default function MethodologyDeployment() {
               <p className="text-sm text-muted-foreground">{t('methodology.deployment.stat2.label')}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-green-400">{t('methodology.deployment.stat3.value')}</p>
+              <p className="text-3xl font-bold text-green-500">{t('methodology.deployment.stat3.value')}</p>
               <p className="text-sm text-muted-foreground">{t('methodology.deployment.stat3.label')}</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Agent Console */}
+      {/* Agentic Workspace */}
       <section className="py-16 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold mb-8 text-foreground">{t('methodology.deployment.console')}</h2>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Agentic Workspace</h2>
+              <p className="text-muted-foreground text-sm mt-1">Agentes especializados trabajando en tiempo real</p>
+            </div>
+            <Link to="/agents">
+              <Button variant="outline" size="sm" className="gap-2">
+                Ver todos los agentes
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
           
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Agent List */}
-            <div className="space-y-4">
-              {agents.map((agent, i) => (
-                <div 
-                  key={i} 
-                  className="bg-card border border-border rounded-xl p-4 flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "w-12 h-12 rounded-xl flex items-center justify-center",
-                      agent.status === 'active' 
-                        ? "bg-gradient-to-br from-primary to-primary/70" 
-                        : "bg-muted"
-                    )}>
-                      <Bot className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">{agent.name}</p>
-                      <p className="text-sm text-muted-foreground">{agent.role}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-foreground">{agent.tasks.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">{t('methodology.deployment.tasksToday')}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className={cn(
-                        "w-2 h-2 rounded-full",
-                        agent.status === 'active' ? "bg-green-500 animate-pulse" : "bg-yellow-500"
-                      )} />
-                      <span className={cn(
-                        "text-sm",
-                        agent.status === 'active' ? "text-green-400" : "text-yellow-400"
-                      )}>
-                        {agent.status === 'active' ? t('methodology.deployment.active') : t('methodology.deployment.paused')}
-                      </span>
-                    </div>
-                  </div>
+            {/* Agent Workspace Grid */}
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-lg">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-foreground font-semibold flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-primary" />
+                  Agentes Activos
+                </h3>
+                <div className="flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/30">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-green-600 text-xs font-medium">6 Online</span>
                 </div>
-              ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {workspaceAgents.map((agent, i) => {
+                  const colors = colorClasses[agent.color];
+                  const IconComponent = agent.icon;
+                  return (
+                    <Link 
+                      key={i} 
+                      to={agent.link}
+                      className={cn(
+                        "rounded-xl p-4 border transition-all hover:shadow-md hover:-translate-y-0.5 group",
+                        colors.bg, colors.border
+                      )}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className={cn(
+                          "w-10 h-10 rounded-lg flex items-center justify-center",
+                          colors.bg, "border", colors.border
+                        )}>
+                          <IconComponent className={cn("w-5 h-5", colors.text)} />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                        </div>
+                      </div>
+                      <p className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors line-clamp-1">
+                        {agent.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{agent.role}</p>
+                      <div className="mt-3 pt-3 border-t border-border/50">
+                        <p className="text-lg font-bold text-foreground">{agent.tasks.toLocaleString()}</p>
+                        <p className="text-[10px] text-muted-foreground">{t('methodology.deployment.tasksToday')}</p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Live Log */}
