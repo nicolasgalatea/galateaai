@@ -227,7 +227,7 @@ const translations = {
     // About - Business Model
     'about.business.title': 'Business Model',
     'about.business.intro': 'Our model combines SaaS + Marketplace + Premium Services:',
-    'about.business.saas': 'Recurring SaaS licenses (B2B and B2C) with scalable plans: Starter ($29/month), Professional ($99/month), and Enterprise (custom pricing).',
+    'about.business.saas': 'Recurring SaaS licenses (B2B and B2C) with scalable plans.',
     'about.business.marketplace': 'AI Agent Marketplace: users can license or sell their own agents, with a transaction fee for Galatea AI (App Store model applied to digital health).',
     'about.business.premium': 'Premium customization and integration services: custom agent development, EHR system integration, administrative workflows, and regulatory compliance (HIPAA, GDPR, local regulations).',
     'about.business.cta': 'View Pricing Plans',
@@ -276,6 +276,18 @@ const translations = {
     'about.roadmap.phase4.point3': 'Expansion to over 100 agents available in marketplace.',
     'about.roadmap.phase4.point4': 'Enterprise plan consolidation: complete integration with large hospital systems, regulatory support.',
     'about.roadmap.phase4.goal': 'Goal: Become the global reference in hyper-realistic AI-powered medical agent infrastructure.',
+    
+    // How It Works - Enterprise Process
+    'howItWorks.title': 'Our Methodology: From Friction to Automation',
+    'howItWorks.subtitle': 'Health-Ops infrastructure designed to integrate Artificial Intelligence into real workflow, without disrupting your operation.',
+    'howItWorks.step1.title': '1. Bottleneck Diagnosis',
+    'howItWorks.step1.desc': 'Our architects analyze your Back-Office processes (Billing, Portfolio, Accounting) to identify where manual operation is draining resources and slowing cash flow.',
+    'howItWorks.step2.title': '2. Workflow Integration',
+    'howItWorks.step2.desc': 'We are not an isolated app. We connect securely (API/VPN) to your legacy systems (HIS/ERP) to read data in real time, closing the operational "Learning Gap".',
+    'howItWorks.step3.title': '3. Autonomous Agent Deployment',
+    'howItWorks.step3.desc': 'We activate ecosystems of sovereign AI Agents that execute complex tasks: account audits, RIPS validation and financial reconciliation, working 24/7.',
+    'howItWorks.step4.title': '4. Control and Profitability',
+    'howItWorks.step4.desc': 'The system processes massive volume and your experts validate only exceptions. We transform operational efficiency into EBITDA and Cash Flow recovered from the first month.',
   },
   es: {
     // Navigation
@@ -494,7 +506,7 @@ const translations = {
     // About - Business Model
     'about.business.title': 'Modelo de Negocio',
     'about.business.intro': 'Nuestro modelo combina SaaS + Marketplace + Servicios Premium:',
-    'about.business.saas': 'Licencias SaaS recurrentes (B2B y B2C) con planes escalables: Starter ($29/mes), Professional ($99/mes) y Enterprise (personalizado).',
+    'about.business.saas': 'Licencias SaaS recurrentes (B2B y B2C) con planes escalables.',
     'about.business.marketplace': 'Marketplace de agentes AI: los usuarios pueden licenciar o vender sus propios agentes, con un fee de transacción para Galatea AI (modelo tipo App Store aplicado a salud digital).',
     'about.business.premium': 'Servicios premium de personalización e integración: desarrollo de agentes a medida, conexión con sistemas de historia clínica electrónica (EHR), flujos administrativos y cumplimiento regulatorio (HIPAA, GDPR, normativas locales).',
     'about.business.cta': 'Ver Planes de Precios',
@@ -543,6 +555,18 @@ const translations = {
     'about.roadmap.phase4.point3': 'Expansión a más de 100 agentes disponibles en el marketplace.',
     'about.roadmap.phase4.point4': 'Consolidación del plan Enterprise: integración completa con sistemas hospitalarios grandes, soporte regulatorio.',
     'about.roadmap.phase4.goal': 'Objetivo: Convertirse en la referencia global en infraestructura de agentes médicos hiperrealistas impulsados por IA.',
+    
+    // How It Works - Enterprise Process
+    'howItWorks.title': 'Nuestra Metodología: De la Fricción a la Automatización',
+    'howItWorks.subtitle': 'Infraestructura de Health-Ops diseñada para integrar Inteligencia Artificial en el flujo de trabajo real, sin interrumpir su operación.',
+    'howItWorks.step1.title': '1. Diagnóstico de Cuellos de Botella',
+    'howItWorks.step1.desc': 'Nuestros arquitectos analizan sus procesos de Back-Office (Facturación, Cartera, Contabilidad) para identificar dónde la operación manual está drenando recursos y frenando el flujo de caja.',
+    'howItWorks.step2.title': '2. Integración al Flujo de Trabajo',
+    'howItWorks.step2.desc': 'No somos una app aislada. Nos conectamos de forma segura (API/VPN) a sus sistemas legados (HIS/ERP) para leer la data en tiempo real, cerrando el "Learning Gap" operativo.',
+    'howItWorks.step3.title': '3. Despliegue de Agentes Autónomos',
+    'howItWorks.step3.desc': 'Activamos ecosistemas de Agentes de IA soberanos que ejecutan tareas complejas: auditoría de cuentas, validación de RIPS y conciliación financiera, trabajando 24/7.',
+    'howItWorks.step4.title': '4. Control y Rentabilidad',
+    'howItWorks.step4.desc': 'El sistema procesa el volumen masivo y sus expertos validan solo las excepciones. Transformamos eficiencia operativa en EBITDA y Flujo de Caja recuperado desde el primer mes.',
   },
 };
 
