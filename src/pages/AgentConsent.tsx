@@ -1,145 +1,106 @@
-import { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, Loader2, CheckCircle, FileSignature } from 'lucide-react';
+import { FileSignature, FileText, Cpu, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { AgentDetailTemplate } from '@/components/AgentDetailTemplate';
 
 export default function AgentConsent() {
-  const { t } = useLanguage();
-  const [inputData, setInputData] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const { toast } = useToast();
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
+  const handleAnalyze = async (file: File): Promise<string> => {
     await new Promise(resolve => setTimeout(resolve, 2000));
-    setResults({
-      diagnosis: 'Personalized informed consent generated',
-      confidence: 97,
-      recommendations: [
-        'Review all risk disclosures',
-        'Verify patient understanding',
-        'Obtain signatures before procedure',
-      ],
+    return `✅ Informed Consent Generated
+
+📋 INFORMED CONSENT DOCUMENT
+
+PROCEDURE: Laparoscopic Cholecystectomy
+PATIENT: [Auto-filled]
+DATE: ${new Date().toLocaleDateString()}
+
+PROCEDURE DESCRIPTION:
+Surgical removal of the gallbladder using minimally invasive technique with 4 small incisions...
+
+EXPECTED BENEFITS:
+  • Resolution of biliary colic
+  • Prevention of complications
+  • Quick recovery (1-2 weeks)
+
+RISKS AND COMPLICATIONS:
+  • Bleeding (1-2%)
+  • Infection (1-3%)
+  • Bile duct injury (<0.5%)
+  • Conversion to open surgery (5%)
+
+ALTERNATIVES:
+  • Medical management
+  • Open cholecystectomy
+  • Observation
+
+PATIENT ACKNOWLEDGMENT:
+☐ I have been informed of the procedure
+☐ My questions have been answered
+☐ I consent voluntarily
+
+✓ Legally compliant per Colombian law
+✓ Ready for patient and physician signatures`;
+  };
+
+  const handleSampleData = () => {
+    toast({
+      title: 'Sample Data',
+      description: 'Loading sample procedure data...',
     });
-    setIsAnalyzing(false);
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-
-      <main className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl shadow-glow flex items-center justify-center p-12">
-              <FileSignature className="w-48 h-48 text-primary" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('agents.consent.name')}
-              </h1>
-              <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 w-fit">
-                {t('agents.consent.specialty')}
-              </div>
-              <p className="text-lg text-muted-foreground mb-6">
-                {t('agents.consent.desc')}
-              </p>
-              <p className="text-muted-foreground">
-                Creates personalized informed consents based on procedure type, associated risks, and patient profile. Ensures legal compliance and patient understanding.
-              </p>
-            </div>
-          </div>
-
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{t('agent.upload.title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Textarea
-                  placeholder={t('agent.upload.placeholder')}
-                  value={inputData}
-                  onChange={(e) => setInputData(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Button variant="outline" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  {t('agent.upload.file')}
-                </Button>
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={!inputData || isAnalyzing}
-                  className="gap-2"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('agent.analyzing')}
-                    </>
-                  ) : (
-                    t('agent.analyze')
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {results && (
-            <Card className="animate-fade-in-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t('agent.results.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.diagnosis')}
-                  </div>
-                  <div className="text-lg font-medium">{results.diagnosis}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.confidence')}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${results.confidence}%` }}
-                      />
-                    </div>
-                    <span className="text-lg font-medium">{results.confidence}%</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.recommendations')}
-                  </div>
-                  <ul className="space-y-2">
-                    {results.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    <AgentDetailTemplate
+      name="Consent Builder AI"
+      tagline="Generate legally compliant, personalized informed consent documents for any procedure"
+      specialty="Legal Documentation"
+      description="AI generates procedure-specific informed consent documents tailored to patient profile, risk factors, and institutional requirements. Ensures legal compliance and patient understanding."
+      category="legal"
+      icon={<FileSignature className="w-full h-full" />}
+      kpiStats={[
+        { value: '100%', label: 'Legal Compliance' },
+        { value: '<1 Min', label: 'Generation' },
+        { value: '500+', label: 'Procedures' },
+      ]}
+      workflowSteps={[
+        {
+          title: 'Procedure Input',
+          description: 'Select procedure type and input patient-specific risk factors.',
+          icon: <FileText className="w-6 h-6" />,
+        },
+        {
+          title: 'AI Personalization',
+          description: 'AI customizes consent language based on procedure, patient age, comorbidities, and language preference.',
+          icon: <Cpu className="w-6 h-6" />,
+        },
+        {
+          title: 'Legal Document',
+          description: 'Generates compliant consent form with risk disclosures and signature fields.',
+          icon: <CheckCircle className="w-6 h-6" />,
+        },
+      ]}
+      techStack={['Colombian Medical Law', 'Risk Databases', 'PDF Generation', 'Multi-language']}
+      integrations={[
+        { name: 'Epic' },
+        { name: 'Servinte' },
+        { name: 'DocuSign' },
+        { name: 'Adobe Sign' },
+        { name: 'EHR Systems' },
+      ]}
+      roiCalculator={{
+        unitLabel: 'Consents Generated Monthly',
+        minValue: 50,
+        maxValue: 5000,
+        step: 50,
+        defaultValue: 500,
+        calculateSavings: (value) => `$${(value * 8).toLocaleString()} USD`,
+        savingsLabel: 'Estimated Annual Savings',
+      }}
+      onAnalyze={handleAnalyze}
+      acceptedFileTypes=".pdf,.txt"
+      uploadLabel="Upload Procedure Details"
+      sampleDataAction={handleSampleData}
+    />
   );
 }

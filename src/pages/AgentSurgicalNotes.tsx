@@ -1,145 +1,99 @@
-import { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, Loader2, CheckCircle, Scissors } from 'lucide-react';
+import { Scissors, FileText, Cpu, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { AgentDetailTemplate } from '@/components/AgentDetailTemplate';
 
 export default function AgentSurgicalNotes() {
-  const { t } = useLanguage();
-  const [inputData, setInputData] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const { toast } = useToast();
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setResults({
-      diagnosis: 'Complete surgical note generated and ready for signature',
-      confidence: 94,
-      recommendations: [
-        'Verify all procedure codes',
-        'Confirm anesthesia details',
-        'Review complications section',
-      ],
+  const handleAnalyze = async (file: File): Promise<string> => {
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    return `✅ Surgical Note Generated
+
+📋 OPERATIVE REPORT
+
+PROCEDURE: Laparoscopic Cholecystectomy
+DATE: ${new Date().toLocaleDateString()}
+SURGEON: [Auto-filled from system]
+
+PREOPERATIVE DIAGNOSIS:
+Cholelithiasis with chronic cholecystitis
+
+POSTOPERATIVE DIAGNOSIS:
+Same as above
+
+PROCEDURE DETAILS:
+Patient placed in supine position under general anesthesia...
+Four-port technique employed...
+Gallbladder dissected from liver bed...
+Critical view of safety achieved...
+
+SPECIMENS: Gallbladder sent to pathology
+
+ESTIMATED BLOOD LOSS: <50 mL
+COMPLICATIONS: None
+DISPOSITION: Recovery room, stable
+
+✓ Ready for surgeon signature`;
+  };
+
+  const handleSampleData = () => {
+    toast({
+      title: 'Sample Data',
+      description: 'Loading sample surgical procedure notes...',
     });
-    setIsAnalyzing(false);
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-
-      <main className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl shadow-glow flex items-center justify-center p-12">
-              <Scissors className="w-48 h-48 text-primary" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('agents.surgicalNotes.name')}
-              </h1>
-              <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 w-fit">
-                {t('agents.surgicalNotes.specialty')}
-              </div>
-              <p className="text-lg text-muted-foreground mb-6">
-                {t('agents.surgicalNotes.desc')}
-              </p>
-              <p className="text-muted-foreground">
-                Creates comprehensive surgical notes with all required fields, procedure details, and post-operative instructions. Ready for immediate signature and EHR integration.
-              </p>
-            </div>
-          </div>
-
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{t('agent.upload.title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Textarea
-                  placeholder={t('agent.upload.placeholder')}
-                  value={inputData}
-                  onChange={(e) => setInputData(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Button variant="outline" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  {t('agent.upload.file')}
-                </Button>
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={!inputData || isAnalyzing}
-                  className="gap-2"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('agent.analyzing')}
-                    </>
-                  ) : (
-                    t('agent.analyze')
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {results && (
-            <Card className="animate-fade-in-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t('agent.results.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.diagnosis')}
-                  </div>
-                  <div className="text-lg font-medium">{results.diagnosis}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.confidence')}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${results.confidence}%` }}
-                      />
-                    </div>
-                    <span className="text-lg font-medium">{results.confidence}%</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.recommendations')}
-                  </div>
-                  <ul className="space-y-2">
-                    {results.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    <AgentDetailTemplate
+      name="Surgical Documentation AI"
+      tagline="Generate complete operative reports from brief surgical notes in under 2 minutes"
+      specialty="Surgical Documentation"
+      description="Transforms surgeon dictations and brief notes into comprehensive operative reports with all required fields, procedure codes, and post-op instructions."
+      category="surgical"
+      icon={<Scissors className="w-full h-full" />}
+      kpiStats={[
+        { value: '94%', label: 'Completeness' },
+        { value: '<2 Min', label: 'Generation' },
+        { value: '75%', label: 'Time Saved' },
+      ]}
+      workflowSteps={[
+        {
+          title: 'Surgical Input',
+          description: 'Upload brief operative notes, dictation, or procedure summary.',
+          icon: <FileText className="w-6 h-6" />,
+        },
+        {
+          title: 'AI Expansion',
+          description: 'Medical AI expands notes into standardized operative report format with all required sections.',
+          icon: <Cpu className="w-6 h-6" />,
+        },
+        {
+          title: 'Complete Report',
+          description: 'Generates signature-ready report with procedure codes and post-op orders.',
+          icon: <CheckCircle className="w-6 h-6" />,
+        },
+      ]}
+      techStack={['Surgical Templates', 'Medical NLP', 'HIPAA Compliant', 'CPT Codes']}
+      integrations={[
+        { name: 'Epic' },
+        { name: 'Cerner' },
+        { name: 'Servinte' },
+        { name: 'OR Systems' },
+        { name: 'Anesthesia' },
+      ]}
+      roiCalculator={{
+        unitLabel: 'Surgeries Per Month',
+        minValue: 50,
+        maxValue: 2000,
+        step: 50,
+        defaultValue: 300,
+        calculateSavings: (value) => `$${(value * 25).toLocaleString()} USD`,
+        savingsLabel: 'Estimated Annual Savings',
+      }}
+      onAnalyze={handleAnalyze}
+      acceptedFileTypes="audio/*,image/*,.pdf,.txt"
+      uploadLabel="Upload Surgical Notes"
+      sampleDataAction={handleSampleData}
+    />
   );
 }
