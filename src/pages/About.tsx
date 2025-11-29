@@ -157,11 +157,11 @@ export default function About() {
               </Card>
             </div>
 
-            {/* CTO Position */}
+            {/* CTO */}
             <Card className="hover-lift scroll-reveal" style={{ animationDelay: '0.2s' }}>
               <CardContent className="p-8">
                 <h3 className="text-xl font-bold mb-2">{t('about.team.cto.name')}</h3>
-                <p className="text-accent font-semibold mb-4">{t('about.team.cto.title')}</p>
+                <p className="text-primary font-semibold mb-4">{t('about.team.cto.title')}</p>
                 <p className="text-muted-foreground mb-3">{t('about.team.cto.bio')}</p>
                 <p className="text-sm text-muted-foreground">{t('about.team.cto.profile')}</p>
               </CardContent>
