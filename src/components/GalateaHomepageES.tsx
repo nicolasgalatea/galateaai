@@ -141,27 +141,26 @@ export const GalateaHomepageES = () => {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left Side - Content */}
             <div className="space-y-8 animate-fade-in">
-              <div className="inline-flex items-center space-x-3 bg-primary/10 px-6 py-3 rounded-full">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <span className="text-primary font-medium">La infraestructura para agentes de IA médica</span>
+              <div className="inline-flex items-center space-x-3 bg-primary/10 px-6 py-3 rounded-full border border-primary/20">
+                <Shield className="w-5 h-5 text-primary" />
+                <span className="text-primary font-semibold tracking-wide">Infraestructura Soberana de Health-Ops</span>
               </div>
               
-              <h1 className="text-5xl lg:text-7xl font-bold">
+              <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold leading-tight">
+                <span className="text-foreground">La Infraestructura Soberana</span>
+                <br />
+                <span className="text-foreground">para Orquestar Tu</span>
+                <br />
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
-                  Crea y despliega
+                  Fuerza de Trabajo Digital
                 </span>
-                <br />
-                <span className="text-foreground">avatares</span>
-                <br />
-                <span className="text-foreground">hiperrealistas</span>
-                <br />
-                <span className="text-foreground">de salud</span>
               </h1>
               
-              <p className="text-xl text-muted-foreground leading-relaxed">
-                La plataforma que empodera a cada actor del sistema de salud para diseñar, coordinar, 
-                desplegar y comercializar avatares hiperrealistas potenciados por IA. Desde compañías 
-                farmacéuticas hasta pacientes individuales.
+              <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-2xl">
+                Empodera a Hospitales y Farmacéuticas para construir{' '}
+                <span className="text-primary font-semibold">Agentes Autónomos</span>{' '}
+                que automatizan el Back-Office.
+                <span className="block mt-2 font-medium text-foreground/80">Seguro. Cumplidor. Sin Código.</span>
               </p>
               
               <div className="flex flex-wrap gap-6">
