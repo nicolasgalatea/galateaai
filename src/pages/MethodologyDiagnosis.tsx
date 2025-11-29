@@ -65,8 +65,8 @@ export default function MethodologyDiagnosis() {
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Process Mining Visualization */}
-            <div className="bg-slate-900 rounded-2xl p-6 border border-slate-700/50">
-              <h3 className="text-white font-semibold mb-6 flex items-center gap-2">
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-lg">
+              <h3 className="text-foreground font-semibold mb-6 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-primary" />
                 Process Mining Dashboard
               </h3>
@@ -75,13 +75,13 @@ export default function MethodologyDiagnosis() {
               <div className="flex items-center justify-center gap-2 md:gap-4 mb-8">
                 {/* Step 1 - Admisión */}
                 <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-slate-800/80 border border-slate-600/50 flex items-center justify-center transition-all hover:border-slate-500">
-                    <FileText className="w-5 h-5 md:w-6 md:h-6 text-slate-400" />
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-muted border border-border flex items-center justify-center transition-all hover:border-primary/30">
+                    <FileText className="w-5 h-5 md:w-6 md:h-6 text-muted-foreground" />
                   </div>
-                  <span className="text-[10px] md:text-xs text-slate-400 mt-2 font-medium">Admisión</span>
+                  <span className="text-[10px] md:text-xs text-muted-foreground mt-2 font-medium">Admisión</span>
                 </div>
                 
-                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-slate-600 flex-shrink-0" />
+                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-border flex-shrink-0" />
                 
                 {/* Step 2 - Facturación (Cuello de botella) */}
                 <div className="flex flex-col items-center relative">
@@ -99,7 +99,7 @@ export default function MethodologyDiagnosis() {
                   <span className="text-[10px] md:text-xs text-primary mt-2 font-semibold">Facturación</span>
                 </div>
                 
-                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-slate-600 flex-shrink-0" />
+                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-border flex-shrink-0" />
                 
                 {/* Step 3 - Autorización (Cuello de botella secundario) */}
                 <div className="flex flex-col items-center relative">
@@ -112,31 +112,31 @@ export default function MethodologyDiagnosis() {
                     </div>
                   </div>
                   <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                    <Clock className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
+                    <Clock className="w-5 h-5 md:w-6 md:h-6 text-amber-500" />
                   </div>
-                  <span className="text-[10px] md:text-xs text-amber-400 mt-2 font-semibold">Autorización</span>
+                  <span className="text-[10px] md:text-xs text-amber-500 mt-2 font-semibold">Autorización</span>
                 </div>
                 
-                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-slate-600 flex-shrink-0" />
+                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-border flex-shrink-0" />
                 
                 {/* Step 4 - Cobro */}
                 <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-slate-800/80 border border-slate-600/50 flex items-center justify-center transition-all hover:border-green-500/50">
-                    <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-muted border border-border flex items-center justify-center transition-all hover:border-green-500/50">
+                    <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
                   </div>
-                  <span className="text-[10px] md:text-xs text-slate-400 mt-2 font-medium">Cobro</span>
+                  <span className="text-[10px] md:text-xs text-muted-foreground mt-2 font-medium">Cobro</span>
                 </div>
               </div>
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 border border-primary/20">
-                  <p className="text-slate-400 text-xs mb-1">Cuellos Detectados</p>
+                  <p className="text-muted-foreground text-xs mb-1">Cuellos Detectados</p>
                   <p className="text-2xl font-bold text-primary">2</p>
                 </div>
                 <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-xl p-4 border border-green-500/20">
-                  <p className="text-slate-400 text-xs mb-1">Potencial de Ahorro</p>
-                  <p className="text-2xl font-bold text-green-400">$2.3M</p>
+                  <p className="text-muted-foreground text-xs mb-1">Potencial de Ahorro</p>
+                  <p className="text-2xl font-bold text-green-500">$2.3M</p>
                 </div>
               </div>
             </div>

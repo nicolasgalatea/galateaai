@@ -76,8 +76,8 @@ export default function MethodologyIntegration() {
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Visual Hub */}
-            <div className="bg-slate-900 rounded-2xl p-6 border border-slate-700/50">
-              <h3 className="text-white font-semibold mb-6 flex items-center gap-2">
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-lg">
+              <h3 className="text-foreground font-semibold mb-6 flex items-center gap-2">
                 <Server className="w-5 h-5 text-primary" />
                 {t('methodology.integration.architecture')}
               </h3>
@@ -88,12 +88,12 @@ export default function MethodologyIntegration() {
                   <div className="flex flex-col gap-4">
                     {integrations.slice(0, 3).map((int, i) => (
                       <div key={i} className="flex items-center gap-3">
-                        <div className="bg-slate-800/80 border border-slate-600/50 rounded-xl px-4 py-2.5 text-center min-w-[90px] hover:border-slate-500 transition-all">
-                          <span className="text-white font-semibold text-sm">{int.name}</span>
-                          <p className="text-slate-500 text-[10px] mt-0.5">{int.type}</p>
+                        <div className="bg-muted border border-border rounded-xl px-4 py-2.5 text-center min-w-[90px] hover:border-primary/30 transition-all">
+                          <span className="text-foreground font-semibold text-sm">{int.name}</span>
+                          <p className="text-muted-foreground text-[10px] mt-0.5">{int.type}</p>
                         </div>
                         <div className="flex items-center">
-                          <div className="w-6 md:w-10 h-0.5 bg-gradient-to-r from-slate-600 to-green-500" />
+                          <div className="w-6 md:w-10 h-0.5 bg-gradient-to-r from-border to-green-500" />
                           <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50" />
                         </div>
                       </div>
@@ -122,13 +122,13 @@ export default function MethodologyIntegration() {
                           <div className={cn(
                             "w-6 md:w-10 h-0.5",
                             int.status === 'connected' 
-                              ? "bg-gradient-to-l from-slate-600 to-green-500"
-                              : "bg-gradient-to-l from-slate-600 to-yellow-500"
+                              ? "bg-gradient-to-l from-border to-green-500"
+                              : "bg-gradient-to-l from-border to-yellow-500"
                           )} />
                         </div>
-                        <div className="bg-slate-800/80 border border-slate-600/50 rounded-xl px-4 py-2.5 text-center min-w-[90px] hover:border-slate-500 transition-all">
-                          <span className="text-white font-semibold text-sm">{int.name}</span>
-                          <p className="text-slate-500 text-[10px] mt-0.5">{int.type}</p>
+                        <div className="bg-muted border border-border rounded-xl px-4 py-2.5 text-center min-w-[90px] hover:border-primary/30 transition-all">
+                          <span className="text-foreground font-semibold text-sm">{int.name}</span>
+                          <p className="text-muted-foreground text-[10px] mt-0.5">{int.type}</p>
                         </div>
                       </div>
                     ))}
@@ -137,10 +137,10 @@ export default function MethodologyIntegration() {
               </div>
 
               {/* Status Grid */}
-              <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-700/50">
+              <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-border">
                 {integrations.map((int, i) => (
-                  <div key={i} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50 hover:border-slate-600 transition-all">
-                    <p className="text-white text-sm font-semibold">{int.name}</p>
+                  <div key={i} className="bg-muted/50 rounded-xl p-3 border border-border hover:border-primary/30 transition-all">
+                    <p className="text-foreground text-sm font-semibold">{int.name}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <div className={cn(
                         "w-2 h-2 rounded-full",
@@ -148,7 +148,7 @@ export default function MethodologyIntegration() {
                       )} />
                       <span className={cn(
                         "text-xs",
-                        int.status === 'connected' ? "text-green-400" : "text-yellow-400"
+                        int.status === 'connected' ? "text-green-600" : "text-yellow-600"
                       )}>
                         {int.status === 'connected' ? t('methodology.integration.secureApi') : t('methodology.integration.pending')}
                       </span>
