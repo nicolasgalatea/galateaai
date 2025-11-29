@@ -54,38 +54,43 @@ export function HowItWorks() {
         </div>
 
         {/* Step Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 scroll-reveal">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            
-            return (
-              <Link
-                key={index}
-                to={step.path}
-                className="group relative bg-card hover:bg-card/80 p-8 rounded-2xl border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-              >
-                {/* Step Number */}
-                <div className="absolute top-5 right-5 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-primary-foreground">
-                  {index + 1}
-                </div>
+        <div className="relative scroll-reveal">
+          {/* Dotted connector line - visible only on large screens */}
+          <div className="hidden lg:block absolute top-16 left-[12.5%] right-[12.5%] h-0.5 border-t-2 border-dashed border-primary/40 z-0" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+            {steps.map((step, index) => {
+              const Icon = step.icon;
+              
+              return (
+                <Link
+                  key={index}
+                  to={step.path}
+                  className="group relative bg-card hover:bg-card/80 p-8 rounded-2xl border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                >
+                  {/* Step Number */}
+                  <div className="absolute top-5 right-5 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-primary-foreground">
+                    {index + 1}
+                  </div>
 
-                {/* Icon */}
-                <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mb-6">
-                  <Icon className="w-10 h-10 text-primary-foreground" />
-                </div>
+                  {/* Icon */}
+                  <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mb-6">
+                    <Icon className="w-10 h-10 text-primary-foreground" />
+                  </div>
 
-                {/* Title */}
-                <h3 className="font-bold text-foreground mb-4 text-xl">
-                  {t(step.titleKey)}
-                </h3>
-                
-                {/* Description */}
-                <p className="text-base text-muted-foreground leading-relaxed">
-                  {t(step.descKey)}
-                </p>
-              </Link>
-            );
-          })}
+                  {/* Title */}
+                  <h3 className="font-bold text-foreground mb-4 text-xl">
+                    {t(step.titleKey)}
+                  </h3>
+                  
+                  {/* Description */}
+                  <p className="text-base text-muted-foreground leading-relaxed">
+                    {t(step.descKey)}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
         {/* Bottom CTA */}
