@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const integrations = [
   { name: 'SAP', status: 'connected', type: 'ERP' },
@@ -16,6 +17,8 @@ const integrations = [
 ];
 
 export default function MethodologyIntegration() {
+  const { t } = useLanguage();
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -29,7 +32,7 @@ export default function MethodologyIntegration() {
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
           >
             <ArrowLeft className="w-4 h-4" />
-            Volver a Metodología
+            {t('methodology.backTo')}
           </Link>
 
           <div className="flex items-center gap-4 mb-6">
@@ -37,31 +40,30 @@ export default function MethodologyIntegration() {
               <Cable className="w-8 h-8 text-blue-400" />
             </div>
             <div className="px-4 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-400 text-sm font-medium">
-              Paso 2 de 4
+              {t('methodology.step')} 2 {t('methodology.of')} 4
             </div>
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-            Integración de <span className="text-blue-400">Flujos de Trabajo</span>
+            {t('methodology.integration.title')} <span className="text-blue-400">{t('methodology.integration.titleHighlight')}</span>
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-3xl mb-8">
-            Conexión segura y sin fricción con su infraestructura legacy. 
-            Galatea se adapta a sus sistemas, no al revés.
+            {t('methodology.integration.subtitle')}
           </p>
 
           <div className="grid grid-cols-3 gap-4 max-w-2xl">
             <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-blue-400">50+</p>
-              <p className="text-sm text-muted-foreground">Conectores Nativos</p>
+              <p className="text-3xl font-bold text-blue-400">{t('methodology.integration.stat1.value')}</p>
+              <p className="text-sm text-muted-foreground">{t('methodology.integration.stat1.label')}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-foreground">48h</p>
-              <p className="text-sm text-muted-foreground">Tiempo de Integración</p>
+              <p className="text-3xl font-bold text-foreground">{t('methodology.integration.stat2.value')}</p>
+              <p className="text-sm text-muted-foreground">{t('methodology.integration.stat2.label')}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-green-400">0</p>
-              <p className="text-sm text-muted-foreground">Downtime Requerido</p>
+              <p className="text-3xl font-bold text-green-400">{t('methodology.integration.stat3.value')}</p>
+              <p className="text-sm text-muted-foreground">{t('methodology.integration.stat3.label')}</p>
             </div>
           </div>
         </div>
@@ -70,14 +72,14 @@ export default function MethodologyIntegration() {
       {/* Integration Hub Visualization */}
       <section className="py-16 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold mb-8 text-foreground">Hub de Integraciones</h2>
+          <h2 className="text-2xl font-bold mb-8 text-foreground">{t('methodology.integration.hub')}</h2>
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Visual Hub */}
             <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
               <h3 className="text-white font-semibold mb-6 flex items-center gap-2">
                 <Server className="w-5 h-5 text-blue-400" />
-                Arquitectura de Conexión
+                {t('methodology.integration.architecture')}
               </h3>
               
               <div className="relative py-8">
@@ -135,7 +137,7 @@ export default function MethodologyIntegration() {
                         "text-[10px]",
                         int.status === 'connected' ? "text-green-400" : "text-yellow-400"
                       )}>
-                        {int.status === 'connected' ? 'API Segura' : 'Pendiente'}
+                        {int.status === 'connected' ? t('methodology.integration.secureApi') : t('methodology.integration.pending')}
                       </span>
                     </div>
                   </div>
@@ -151,9 +153,9 @@ export default function MethodologyIntegration() {
                     <Database className="w-5 h-5 text-blue-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Mapeo de Datos</h4>
+                    <h4 className="font-semibold text-foreground mb-1">{t('methodology.integration.step1.title')}</h4>
                     <p className="text-sm text-muted-foreground">
-                      Identificamos las estructuras de datos de sus sistemas y creamos mapeos automáticos.
+                      {t('methodology.integration.step1.desc')}
                     </p>
                   </div>
                 </div>
@@ -165,9 +167,9 @@ export default function MethodologyIntegration() {
                     <Lock className="w-5 h-5 text-blue-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Conexión Segura</h4>
+                    <h4 className="font-semibold text-foreground mb-1">{t('methodology.integration.step2.title')}</h4>
                     <p className="text-sm text-muted-foreground">
-                      APIs encriptadas con certificación SOC 2 Type II y cumplimiento HIPAA.
+                      {t('methodology.integration.step2.desc')}
                     </p>
                   </div>
                 </div>
@@ -179,9 +181,9 @@ export default function MethodologyIntegration() {
                     <Zap className="w-5 h-5 text-blue-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Sincronización en Tiempo Real</h4>
+                    <h4 className="font-semibold text-foreground mb-1">{t('methodology.integration.step3.title')}</h4>
                     <p className="text-sm text-muted-foreground">
-                      Flujo bidireccional de datos con latencia menor a 100ms.
+                      {t('methodology.integration.step3.desc')}
                     </p>
                   </div>
                 </div>
@@ -193,9 +195,9 @@ export default function MethodologyIntegration() {
                     <Shield className="w-5 h-5 text-blue-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-foreground mb-1">Validación Continua</h4>
+                    <h4 className="font-semibold text-foreground mb-1">{t('methodology.integration.step4.title')}</h4>
                     <p className="text-sm text-muted-foreground">
-                      Monitoreo 24/7 de la integridad de las conexiones con alertas automáticas.
+                      {t('methodology.integration.step4.desc')}
                     </p>
                   </div>
                 </div>
@@ -208,14 +210,14 @@ export default function MethodologyIntegration() {
       {/* Compatible Systems */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold mb-8 text-foreground">Sistemas Compatibles</h2>
+          <h2 className="text-2xl font-bold mb-8 text-foreground">{t('methodology.integration.systems')}</h2>
           
           <div className="grid md:grid-cols-4 gap-4">
             {[
               { category: 'ERP', systems: ['SAP', 'Oracle', 'Dynamics', 'Infor'] },
               { category: 'HIS/EHR', systems: ['Epic', 'Cerner', 'Servinte', 'MEDIFOLIOS'] },
-              { category: 'Facturación', systems: ['Quirón', 'HMS', 'Helisa', 'Siigo'] },
-              { category: 'Laboratorio', systems: ['LabWare', 'SoftLab', 'Modulab', 'Werfen'] },
+              { category: t('methodology.integration.billing'), systems: ['Quirón', 'HMS', 'Helisa', 'Siigo'] },
+              { category: t('methodology.integration.laboratory'), systems: ['LabWare', 'SoftLab', 'Modulab', 'Werfen'] },
             ].map((cat, i) => (
               <div key={i} className="bg-card border border-border rounded-xl p-5">
                 <h3 className="font-semibold text-foreground mb-3">{cat.category}</h3>
@@ -236,37 +238,37 @@ export default function MethodologyIntegration() {
       {/* ROI Section */}
       <section className="py-16 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold mb-8 text-foreground">Retorno de Inversión</h2>
+          <h2 className="text-2xl font-bold mb-8 text-foreground">{t('methodology.roi')}</h2>
           
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-xl p-6">
               <Clock className="w-10 h-10 text-blue-400 mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Implementación Rápida</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.integration.roi1.title')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Integración completa en 48 horas sin interrumpir operaciones.
+                {t('methodology.integration.roi1.desc')}
               </p>
-              <p className="text-2xl font-bold text-blue-400">48h</p>
-              <p className="text-xs text-muted-foreground">Go-live promedio</p>
+              <p className="text-2xl font-bold text-blue-400">{t('methodology.integration.roi1.value')}</p>
+              <p className="text-xs text-muted-foreground">{t('methodology.integration.roi1.label')}</p>
             </div>
 
             <div className="bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20 rounded-xl p-6">
               <TrendingUp className="w-10 h-10 text-green-400 mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Eficiencia Operativa</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.integration.roi2.title')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Eliminamos la doble digitación y errores de transcripción.
+                {t('methodology.integration.roi2.desc')}
               </p>
-              <p className="text-2xl font-bold text-green-400">-85%</p>
-              <p className="text-xs text-muted-foreground">Errores manuales</p>
+              <p className="text-2xl font-bold text-green-400">{t('methodology.integration.roi2.value')}</p>
+              <p className="text-xs text-muted-foreground">{t('methodology.integration.roi2.label')}</p>
             </div>
 
             <div className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 rounded-xl p-6">
               <Shield className="w-10 h-10 text-purple-400 mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Cumplimiento Garantizado</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.integration.roi3.title')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Trazabilidad completa de cada transacción para auditorías.
+                {t('methodology.integration.roi3.desc')}
               </p>
-              <p className="text-2xl font-bold text-purple-400">100%</p>
-              <p className="text-xs text-muted-foreground">Audit trail</p>
+              <p className="text-2xl font-bold text-purple-400">{t('methodology.integration.roi3.value')}</p>
+              <p className="text-xs text-muted-foreground">{t('methodology.integration.roi3.label')}</p>
             </div>
           </div>
         </div>
@@ -278,30 +280,29 @@ export default function MethodologyIntegration() {
           <div className="bg-card border border-border rounded-2xl p-8">
             <div className="flex items-center gap-3 mb-6">
               <Building2 className="w-6 h-6 text-primary" />
-              <span className="text-sm text-muted-foreground">Caso de Estudio</span>
+              <span className="text-sm text-muted-foreground">{t('methodology.caseStudy')}</span>
             </div>
             
             <h3 className="text-xl font-bold text-foreground mb-4">
-              Clínica del Valle - Multi-sede
+              {t('methodology.integration.case.title')}
             </h3>
             
             <p className="text-muted-foreground mb-6">
-              "Integramos Galatea con nuestro SAP y Servinte en menos de 3 días. Ahora toda la 
-              información fluye automáticamente y eliminamos 200 horas mensuales de trabajo manual."
+              {t('methodology.integration.case.quote')}
             </p>
 
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
               <div className="text-center">
                 <p className="text-2xl font-bold text-blue-400">3 días</p>
-                <p className="text-xs text-muted-foreground">Implementación</p>
+                <p className="text-xs text-muted-foreground">{t('methodology.integration.case.stat1')}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-green-400">200h</p>
-                <p className="text-xs text-muted-foreground">Ahorro Mensual</p>
+                <p className="text-xs text-muted-foreground">{t('methodology.integration.case.stat2')}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-foreground">5</p>
-                <p className="text-xs text-muted-foreground">Sistemas Conectados</p>
+                <p className="text-xs text-muted-foreground">{t('methodology.integration.case.stat3')}</p>
               </div>
             </div>
           </div>
@@ -315,13 +316,13 @@ export default function MethodologyIntegration() {
             <Link to="/methodology/diagnosis">
               <Button variant="outline" className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
-                Anterior: Diagnóstico
+                {t('methodology.integration.nav.prev')}
               </Button>
             </Link>
             
             <Link to="/methodology/deployment">
               <Button className="gap-2 bg-primary hover:bg-primary/90">
-                Siguiente: Despliegue
+                {t('methodology.integration.nav.next')}
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
