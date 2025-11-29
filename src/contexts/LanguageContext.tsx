@@ -19,7 +19,7 @@ const translations = {
     'nav.contact': 'Contact',
     
     // Hero
-    'hero.title': 'The Sovereign Infrastructure for the Healthcare Agentic Web',
+    'hero.title': 'The Infrastructure for the Healthcare Agentic Web',
     'hero.subtitle': 'Empower your operations to Build, Deploy, and Scale Autonomous Agents that automate critical Back-Office workflows. The sovereign platform for Health-Ops orchestration. Secure. Compliant. No-Code.',
     'hero.cta.create': 'Create your AI agent',
     'hero.cta.demo': 'Request a demo',
@@ -282,7 +282,7 @@ const translations = {
     'nav.contact': 'Contacto',
     
     // Hero
-    'hero.title': 'La Infraestructura Soberana para la Web Agéntica de Salud',
+    'hero.title': 'La Infraestructura para la Web Agéntica de Salud',
     'hero.subtitle': 'Empodera tus operaciones para Construir, Desplegar y Escalar Agentes Autónomos que automatizan flujos críticos del Back-Office. La plataforma soberana para orquestación de Health-Ops. Seguro. Cumplidor. Sin Código.',
     'hero.cta.create': 'Crea tu agente de IA',
     'hero.cta.demo': 'Solicita una demo',
