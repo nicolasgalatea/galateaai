@@ -43,12 +43,12 @@ export default function About() {
                     
                     {/* Title */}
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-6 tracking-tight">
-                      Our Mission
+                      Our mission
                     </h2>
                     
                     {/* Content */}
                     <p className="text-muted-foreground text-base lg:text-lg leading-relaxed">
-                      To engineer the sovereign infrastructure that powers the next generation of healthcare operations. We exist to transform administrative friction into automated value by deploying secure, compliant, and autonomous AI agents that integrate seamlessly into the daily workflows of Hospitals, Pharma, and Payers.
+                      To engineer the sovereign infrastructure that powers the next generation of healthcare operations. We exist to transform administrative friction into automated value by deploying secure, compliant, and autonomous AI agents that integrate seamlessly into the daily workflows of hospitals, pharma, and payers.
                     </p>
                   </div>
                   
@@ -71,7 +71,7 @@ export default function About() {
                     
                     {/* Title */}
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-6 tracking-tight">
-                      Our Vision
+                      Our vision
                     </h2>
                     
                     {/* Content */}
@@ -100,12 +100,12 @@ export default function About() {
                   <div className="p-6 lg:p-8">
                     {/* Label */}
                     <span className="inline-block text-xs font-semibold tracking-widest uppercase text-destructive/80 mb-4">
-                      The Problem
+                      The problem
                     </span>
                     
                     {/* Headline */}
                     <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-6 leading-tight">
-                      "Operational Paralysis" in Regulated Environments
+                      "Operational paralysis" in regulated environments
                     </h3>
                     
                     {/* Key Points */}
@@ -115,7 +115,7 @@ export default function About() {
                           <Network className="w-4 h-4 text-destructive" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-sm mb-1">Integration Failure</p>
+                          <p className="font-semibold text-foreground text-sm mb-1">Integration failure</p>
                           <p className="text-muted-foreground text-sm leading-relaxed">95% of AI pilots fail due to lack of workflow integration.</p>
                         </div>
                       </div>
@@ -125,7 +125,7 @@ export default function About() {
                           <ShieldAlert className="w-4 h-4 text-destructive" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-sm mb-1">Data Sovereignty Risks</p>
+                          <p className="font-semibold text-foreground text-sm mb-1">Data sovereignty risks</p>
                           <p className="text-muted-foreground text-sm leading-relaxed">Generic models expose sensitive IP and patient data.</p>
                         </div>
                       </div>
@@ -135,7 +135,7 @@ export default function About() {
                           <Gauge className="w-4 h-4 text-destructive" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-sm mb-1">Manual Regulatory Friction</p>
+                          <p className="font-semibold text-foreground text-sm mb-1">Manual regulatory friction</p>
                           <p className="text-muted-foreground text-sm leading-relaxed">Critical compliance tasks remain slow and error-prone.</p>
                         </div>
                       </div>
@@ -153,12 +153,12 @@ export default function About() {
                   <div className="p-6 lg:p-8">
                     {/* Label */}
                     <span className="inline-block text-xs font-semibold tracking-widest uppercase text-primary mb-4">
-                      The Solution
+                      The solution
                     </span>
                     
                     {/* Headline */}
                     <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-6 leading-tight">
-                      Sovereign Health-Ops Infrastructure
+                      Sovereign health-ops infrastructure
                     </h3>
                     
                     {/* Key Points */}
@@ -168,7 +168,7 @@ export default function About() {
                           <Server className="w-4 h-4 text-primary" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-sm mb-1">Sovereign Tech</p>
+                          <p className="font-semibold text-foreground text-sm mb-1">Sovereign tech</p>
                           <p className="text-muted-foreground text-sm leading-relaxed">Natively trained on local compliance & regulations.</p>
                         </div>
                       </div>
@@ -178,7 +178,7 @@ export default function About() {
                           <Network className="w-4 h-4 text-primary" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-sm mb-1">Deep Integration</p>
+                          <p className="font-semibold text-foreground text-sm mb-1">Deep integration</p>
                           <p className="text-muted-foreground text-sm leading-relaxed">Seamless connection with legacy cores (Veeva, SAP, HIS).</p>
                         </div>
                       </div>
@@ -188,7 +188,7 @@ export default function About() {
                           <UserCheck className="w-4 h-4 text-primary" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-sm mb-1">"Human-in-the-Loop" Security</p>
+                          <p className="font-semibold text-foreground text-sm mb-1">"Human-in-the-loop" security</p>
                           <p className="text-muted-foreground text-sm leading-relaxed">AI processes volume; experts validate critical decisions.</p>
                         </div>
                       </div>
@@ -206,12 +206,12 @@ export default function About() {
                   <div className="p-6 lg:p-8">
                     {/* Label */}
                     <span className="inline-block text-xs font-semibold tracking-widest uppercase text-green-600 dark:text-green-500 mb-4">
-                      The Opportunity
+                      The opportunity
                     </span>
                     
                     {/* Headline */}
                     <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-6 leading-tight">
-                      Total Operational Autonomy
+                      Total operational autonomy
                     </h3>
                     
                     {/* Key Points */}
@@ -221,7 +221,7 @@ export default function About() {
                           <Zap className="w-4 h-4 text-green-600 dark:text-green-500" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-sm mb-1">Deployment Speed</p>
+                          <p className="font-semibold text-foreground text-sm mb-1">Deployment speed</p>
                           <p className="text-muted-foreground text-sm leading-relaxed">Go from concept to production in weeks, not years.</p>
                         </div>
                       </div>
@@ -231,8 +231,8 @@ export default function About() {
                           <Network className="w-4 h-4 text-green-600 dark:text-green-500" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-sm mb-1">Multi-Vertical Scalability</p>
-                          <p className="text-muted-foreground text-sm leading-relaxed">One platform for Pharma, Providers, and Payers.</p>
+                          <p className="font-semibold text-foreground text-sm mb-1">Multi-vertical scalability</p>
+                          <p className="text-muted-foreground text-sm leading-relaxed">One platform for pharma, providers, and payers.</p>
                         </div>
                       </div>
                       
@@ -241,7 +241,7 @@ export default function About() {
                           <Gauge className="w-4 h-4 text-green-600 dark:text-green-500" />
                         </div>
                         <div>
-                          <p className="font-semibold text-foreground text-sm mb-1">Immediate Cost Efficiency</p>
+                          <p className="font-semibold text-foreground text-sm mb-1">Immediate cost efficiency</p>
                           <p className="text-muted-foreground text-sm leading-relaxed">Transform fixed administrative costs into scalable ROI.</p>
                         </div>
                       </div>
