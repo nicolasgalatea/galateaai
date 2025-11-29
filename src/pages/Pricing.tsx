@@ -4,7 +4,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-import { Store, Wrench } from 'lucide-react';
+import { Store, Wrench, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function Pricing() {
   const { t } = useLanguage();
@@ -30,44 +31,98 @@ export default function Pricing() {
           {/* Pricing Tiers */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {/* Starter */}
-            <Card className="hover-lift scroll-reveal">
+            <Card className="hover-lift scroll-reveal relative overflow-hidden">
               <CardContent className="p-8">
-                <h3 className="text-2xl font-bold mb-2">{t('pricing.starter.title')}</h3>
+                <h3 className="text-2xl font-bold mb-2">{t('pricing.starter.name')}</h3>
                 <p className="text-muted-foreground mb-6">{t('pricing.starter.desc')}</p>
-                <ul className="space-y-3 text-sm">
-                  <li>✓ {t('pricing.starter.feature1')}</li>
-                  <li>✓ {t('pricing.starter.feature2')}</li>
-                  <li>✓ {t('pricing.starter.feature3')}</li>
+                <ul className="space-y-3 text-sm mb-8">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.starter.feature1')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.starter.feature2')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.starter.feature3')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.starter.feature4')}
+                  </li>
                 </ul>
+                <Button className="w-full" variant="outline">{t('pricing.cta')}</Button>
               </CardContent>
             </Card>
 
             {/* Professional */}
-            <Card className="hover-lift scroll-reveal border-primary" style={{ animationDelay: '0.1s' }}>
+            <Card className="hover-lift scroll-reveal border-primary relative overflow-hidden" style={{ animationDelay: '0.1s' }}>
+              <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold rounded-bl-lg">
+                Popular
+              </div>
               <CardContent className="p-8">
-                <div className="text-xs font-semibold text-primary mb-2">{t('pricing.popular')}</div>
-                <h3 className="text-2xl font-bold mb-2">{t('pricing.professional.title')}</h3>
+                <h3 className="text-2xl font-bold mb-2">{t('pricing.professional.name')}</h3>
                 <p className="text-muted-foreground mb-6">{t('pricing.professional.desc')}</p>
-                <ul className="space-y-3 text-sm">
-                  <li>✓ {t('pricing.professional.feature1')}</li>
-                  <li>✓ {t('pricing.professional.feature2')}</li>
-                  <li>✓ {t('pricing.professional.feature3')}</li>
-                  <li>✓ {t('pricing.professional.feature4')}</li>
+                <ul className="space-y-3 text-sm mb-8">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.professional.feature1')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.professional.feature2')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.professional.feature3')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.professional.feature4')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.professional.feature5')}
+                  </li>
                 </ul>
+                <Button className="w-full">{t('pricing.cta')}</Button>
               </CardContent>
             </Card>
 
             {/* Enterprise */}
-            <Card className="hover-lift scroll-reveal" style={{ animationDelay: '0.2s' }}>
+            <Card className="hover-lift scroll-reveal relative overflow-hidden" style={{ animationDelay: '0.2s' }}>
               <CardContent className="p-8">
-                <h3 className="text-2xl font-bold mb-2">{t('pricing.enterprise.title')}</h3>
+                <h3 className="text-2xl font-bold mb-2">{t('pricing.enterprise.name')}</h3>
                 <p className="text-muted-foreground mb-6">{t('pricing.enterprise.desc')}</p>
-                <ul className="space-y-3 text-sm">
-                  <li>✓ {t('pricing.enterprise.feature1')}</li>
-                  <li>✓ {t('pricing.enterprise.feature2')}</li>
-                  <li>✓ {t('pricing.enterprise.feature3')}</li>
-                  <li>✓ {t('pricing.enterprise.feature4')}</li>
+                <ul className="space-y-3 text-sm mb-8">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.enterprise.feature1')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.enterprise.feature2')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.enterprise.feature3')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.enterprise.feature4')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.enterprise.feature5')}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    {t('pricing.enterprise.feature6')}
+                  </li>
                 </ul>
+                <Button className="w-full" variant="outline">{t('pricing.cta')}</Button>
               </CardContent>
             </Card>
           </div>
