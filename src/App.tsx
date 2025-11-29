@@ -21,6 +21,7 @@ import AgentProtocolReview from "./pages/AgentProtocolReview";
 import AgentSurgicalProtocols from "./pages/AgentSurgicalProtocols";
 import AgentLogbook from "./pages/AgentLogbook";
 import AgentBilling from "./pages/AgentBilling";
+import AgentRIPS from "./pages/AgentRIPS";
 import CustomAgent from "./pages/CustomAgent";
 import About from "./pages/About";
 import Team from "./pages/Team";
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/agent/surgical-protocols" element={<AgentSurgicalProtocols />} />
             <Route path="/agent/logbook" element={<AgentLogbook />} />
             <Route path="/agent/billing" element={<AgentBilling />} />
+            <Route path="/agent/rips" element={<AgentRIPS />} />
             <Route path="/custom-agent" element={<CustomAgent />} />
             <Route path="/about" element={<About />} />
             <Route path="/team" element={<Team />} />
