@@ -37,6 +37,18 @@
     --success: 142 76% 36%;
     --warning: 45 93% 47%;
     --info: 199 95% 74%;
+
+    /* Agent Category Colors */
+    --agent-finance: 174 72% 40%;
+    --agent-clinical: 280 65% 50%;
+    --agent-legal: 217 91% 60%;
+    --agent-research: 340 75% 55%;
+    --agent-surgical: 28 87% 55%;
+    --agent-compliance: 45 93% 47%;
+    --agent-efficiency: 142 76% 36%;
+    --agent-audit: 199 80% 50%;
+    --agent-ops: 250 65% 55%;
+    --agent-pharma: 320 70% 50%;
     
     --gradient-primary: linear-gradient(135deg, hsl(186 100% 33%), hsl(186 80% 45%));
     --gradient-hero: linear-gradient(135deg, hsl(186 100% 33% / 0.1), hsl(186 80% 45% / 0.05));

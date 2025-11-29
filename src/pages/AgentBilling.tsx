@@ -1,202 +1,119 @@
-import { useState, useRef } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Upload, Loader2, CheckCircle, Receipt, Image as ImageIcon } from 'lucide-react';
+import { useState } from 'react';
+import { Receipt, FileText, Scan, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AgentDetailTemplate } from '@/components/AgentDetailTemplate';
 
 export default function AgentBilling() {
-  const { t } = useLanguage();
   const { toast } = useToast();
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleAnalyze = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
 
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Invalid file type',
-        description: 'Please select an image file',
-        variant: 'destructive',
-      });
-      return;
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-to-drive`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
-    setSelectedImage(file);
-    setResults(null);
+    const data = await response.json();
+    
+    if (data.success) {
+      return `✅ Analysis Complete
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+📄 Document Type: Medical Invoice
+🏥 Provider: Hospital XYZ
+📅 Date: ${new Date().toLocaleDateString()}
+
+💰 Charges Detected:
+  • Consultation: $150.00
+  • Laboratory: $320.00
+  • Imaging: $450.00
+  • Medications: $180.00
+  
+📊 Total Amount: $1,100.00
+
+✓ RIPS Codes Generated
+✓ No anomalies detected
+✓ Ready for submission`;
+    } else {
+      throw new Error(data.error || 'Upload failed');
+    }
   };
 
-  const handleAnalyze = async () => {
-    if (!selectedImage) return;
+  const handleSampleData = () => {
+    toast({
+      title: 'Sample Data',
+      description: 'Loading sample medical invoice for demonstration...',
+    });
+  };
 
-    setIsAnalyzing(true);
-    setResults(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', selectedImage);
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-to-drive`,
+  return (
+    <AgentDetailTemplate
+      name="Revenue Cycle Orchestrator"
+      tagline="Eliminate revenue leakage with intelligent invoice processing"
+      specialty="Revenue Automation"
+      description="AI-powered invoice processing that extracts, validates, and codes medical billing data with 99% accuracy. Reduce manual errors, prevent claim denials, and accelerate your revenue cycle."
+      category="finance"
+      icon={<Receipt className="w-full h-full" />}
+      kpiStats={[
+        { value: '99%', label: 'Accuracy' },
+        { value: '300x', label: 'Faster' },
+        { value: '<30 Days', label: 'ROI' },
+      ]}
+      workflowSteps={[
         {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setResults('File analyzed and safely stored!');
-        
-        toast({
-          title: 'Success!',
-          description: 'File analyzed and safely stored in Google Drive',
-        });
-      } else {
-        throw new Error(data.error || 'Upload failed');
-      }
-    } catch (error) {
-      console.error('Error analyzing image:', error);
-      toast({
-        title: 'Analysis failed',
-        description: error instanceof Error ? error.message : 'Failed to process the image. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-  return <div className="min-h-screen">
-      <Header />
-
-      <main className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl shadow-glow flex items-center justify-center p-12">
-              <Receipt className="w-48 h-48 text-primary" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('agents.billing.name')}
-              </h1>
-              <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 w-fit">
-                {t('agents.billing.specialty')}
-              </div>
-              <p className="text-lg text-muted-foreground mb-6">
-                {t('agents.billing.desc')}
-              </p>
-              
-            </div>
-          </div>
-
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Upload Medical Order Image</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="hidden"
-              />
-              
-              {imagePreview ? (
-                <div className="space-y-4">
-                  <div className="relative rounded-lg border border-border overflow-hidden bg-muted">
-                    <img
-                      src={imagePreview}
-                      alt="Selected medical order"
-                      className="w-full h-auto max-h-96 object-contain"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Button
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="gap-2"
-                    >
-                      <Upload className="w-4 h-4" />
-                      Change Image
-                    </Button>
-                    <Button
-                      onClick={handleAnalyze}
-                      disabled={!selectedImage || isAnalyzing}
-                      className="gap-2"
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-4 h-4" />
-                          Analyze Order
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-border rounded-lg p-12 text-center cursor-pointer hover:border-primary hover:bg-accent/50 transition-colors"
-                >
-                  <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-lg font-medium mb-2">Upload Medical Order Image</p>
-                  <p className="text-sm text-muted-foreground">
-                    Click to select an image file (JPG, PNG, etc.)
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {results && (
-            <Card className="animate-fade-in-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  Analysis Results
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-muted rounded-lg p-6">
-                  <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">
-                    {results}
-                  </pre>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>;
+          title: 'Input',
+          description: 'Upload medical invoices, orders, or billing documents in any format (PDF, image, or electronic).',
+          icon: <FileText className="w-6 h-6" />,
+        },
+        {
+          title: 'OCR Extraction',
+          description: 'Advanced OCR technology extracts all relevant data points including patient info, procedures, and charges.',
+          icon: <Scan className="w-6 h-6" />,
+        },
+        {
+          title: 'Validation & Coding',
+          description: 'AI validates data against medical coding rules (CUPS/RIPS) and flags anomalies for review.',
+          icon: <AlertTriangle className="w-6 h-6" />,
+        },
+        {
+          title: 'Output',
+          description: 'Generates validated RIPS files ready for submission, with full audit trail and compliance documentation.',
+          icon: <CheckCircle className="w-6 h-6" />,
+        },
+      ]}
+      techStack={['AWS Bedrock', 'Python', 'HIPAA Compliant', 'HL7 FHIR', 'DICOM']}
+      integrations={[
+        { name: 'SAP' },
+        { name: 'Epic' },
+        { name: 'Servinte' },
+        { name: 'Dynamics 365' },
+        { name: 'Veeva' },
+      ]}
+      roiCalculator={{
+        unitLabel: 'Monthly Invoices Processed',
+        minValue: 1000,
+        maxValue: 50000,
+        step: 1000,
+        defaultValue: 10000,
+        calculateSavings: (value) => `$${(value * 5).toLocaleString()} USD`,
+        savingsLabel: 'Estimated Annual Savings',
+      }}
+      onAnalyze={handleAnalyze}
+      acceptedFileTypes="image/*"
+      uploadLabel="Upload Medical Invoice"
+      sampleDataAction={handleSampleData}
+    />
+  );
 }
