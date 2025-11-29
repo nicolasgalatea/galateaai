@@ -19,7 +19,7 @@ const translations = {
     'nav.contact': 'Contact',
     
     // Hero
-    'hero.title': 'The Sovereign Infrastructure for the Healthcare Agentic Web',
+    'hero.title': 'The sovereign infrastructure for the healthcare agentic web',
     'hero.subtitle': 'Empower operations to Build, Deploy, and Scale Autonomous Agents that automate critical Back-Office workflows. The industrial platform for Health-Ops. Secure. Compliant. No-Code.',
     'hero.cta.create': 'Create your AI agent',
     'hero.cta.demo': 'Request a demo',
