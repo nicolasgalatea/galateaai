@@ -127,33 +127,33 @@ export default function MethodologyDeployment() {
             </div>
 
             {/* Live Log */}
-            <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-slate-900 rounded-2xl p-6 border border-slate-700/50">
+              <div className="flex items-center justify-between mb-5">
                 <h3 className="text-white font-semibold flex items-center gap-2">
                   <Activity className="w-5 h-5 text-primary" />
                   {t('methodology.deployment.liveLog')}
                 </h3>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-green-400 text-sm">{t('methodology.deployment.live')}</span>
+                <div className="flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/30">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50" />
+                  <span className="text-green-400 text-sm font-medium">{t('methodology.deployment.live')}</span>
                 </div>
               </div>
 
-              <div className="bg-slate-950 rounded-lg p-4 font-mono text-sm border border-slate-800 max-h-64 overflow-y-auto">
+              <div className="bg-slate-950/80 rounded-xl p-4 font-mono text-sm border border-slate-800/50 max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                 {logs.map((log, i) => (
                   <div 
                     key={i} 
                     className={cn(
-                      "py-2 border-b border-slate-800 last:border-0",
-                      i === logs.length - 1 && "animate-pulse"
+                      "py-3 border-b border-slate-800/50 last:border-0 transition-all",
+                      i === logs.length - 1 && "animate-pulse bg-primary/5 rounded-lg -mx-2 px-2"
                     )}
                   >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-slate-500 text-xs">{log.time}</span>
-                      <span className="text-primary text-xs">[{log.agent}]</span>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-slate-500 text-xs font-medium">{log.time}</span>
+                      <span className="text-primary text-xs bg-primary/10 px-2 py-0.5 rounded">[{log.agent}]</span>
                     </div>
                     <span className={cn(
-                      "text-xs",
+                      "text-sm leading-relaxed",
                       log.status === 'success' && "text-green-400",
                       log.status === 'warning' && "text-amber-400",
                       log.status === 'processing' && "text-primary",
@@ -164,18 +164,18 @@ export default function MethodologyDeployment() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mt-4">
-                <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
-                  <p className="text-xl font-bold text-green-400">4,698</p>
-                  <p className="text-slate-400 text-xs">{t('methodology.deployment.processedToday')}</p>
+              <div className="grid grid-cols-3 gap-4 mt-5">
+                <div className="bg-gradient-to-br from-green-500/15 to-green-500/5 rounded-xl p-4 text-center border border-green-500/20">
+                  <p className="text-2xl font-bold text-green-400">4,698</p>
+                  <p className="text-slate-400 text-xs mt-1">{t('methodology.deployment.processedToday')}</p>
                 </div>
-                <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
-                  <p className="text-xl font-bold text-primary">99.2%</p>
-                  <p className="text-slate-400 text-xs">{t('methodology.deployment.precision')}</p>
+                <div className="bg-gradient-to-br from-primary/15 to-primary/5 rounded-xl p-4 text-center border border-primary/20">
+                  <p className="text-2xl font-bold text-primary">99.2%</p>
+                  <p className="text-slate-400 text-xs mt-1">{t('methodology.deployment.precision')}</p>
                 </div>
-                <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
-                  <p className="text-xl font-bold text-amber-400">7</p>
-                  <p className="text-slate-400 text-xs">{t('methodology.deployment.flagged')}</p>
+                <div className="bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-xl p-4 text-center border border-amber-500/20">
+                  <p className="text-2xl font-bold text-amber-400">7</p>
+                  <p className="text-slate-400 text-xs mt-1">{t('methodology.deployment.flagged')}</p>
                 </div>
               </div>
             </div>
