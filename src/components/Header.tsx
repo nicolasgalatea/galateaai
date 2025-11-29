@@ -30,7 +30,7 @@ export const Header = () => {
             <Link to="/about" className="text-foreground hover:text-primary transition-colors">
               {t('nav.about')}
             </Link>
-            <Link to="/about#founding-team" className="text-foreground hover:text-primary transition-colors">
+            <Link to="/team" className="text-foreground hover:text-primary transition-colors">
               Team
             </Link>
             <Link to="/pricing" className="text-foreground hover:text-primary transition-colors">
