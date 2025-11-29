@@ -27,6 +27,51 @@ export default function Pricing() {
             </p>
           </div>
 
+          {/* Pricing Tiers */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            {/* Starter */}
+            <Card className="hover-lift scroll-reveal">
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-bold mb-2">{t('pricing.starter.title')}</h3>
+                <p className="text-muted-foreground mb-6">{t('pricing.starter.desc')}</p>
+                <ul className="space-y-3 text-sm">
+                  <li>✓ {t('pricing.starter.feature1')}</li>
+                  <li>✓ {t('pricing.starter.feature2')}</li>
+                  <li>✓ {t('pricing.starter.feature3')}</li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Professional */}
+            <Card className="hover-lift scroll-reveal border-primary" style={{ animationDelay: '0.1s' }}>
+              <CardContent className="p-8">
+                <div className="text-xs font-semibold text-primary mb-2">{t('pricing.popular')}</div>
+                <h3 className="text-2xl font-bold mb-2">{t('pricing.professional.title')}</h3>
+                <p className="text-muted-foreground mb-6">{t('pricing.professional.desc')}</p>
+                <ul className="space-y-3 text-sm">
+                  <li>✓ {t('pricing.professional.feature1')}</li>
+                  <li>✓ {t('pricing.professional.feature2')}</li>
+                  <li>✓ {t('pricing.professional.feature3')}</li>
+                  <li>✓ {t('pricing.professional.feature4')}</li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Enterprise */}
+            <Card className="hover-lift scroll-reveal" style={{ animationDelay: '0.2s' }}>
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-bold mb-2">{t('pricing.enterprise.title')}</h3>
+                <p className="text-muted-foreground mb-6">{t('pricing.enterprise.desc')}</p>
+                <ul className="space-y-3 text-sm">
+                  <li>✓ {t('pricing.enterprise.feature1')}</li>
+                  <li>✓ {t('pricing.enterprise.feature2')}</li>
+                  <li>✓ {t('pricing.enterprise.feature3')}</li>
+                  <li>✓ {t('pricing.enterprise.feature4')}</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Additional Services */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Marketplace */}
