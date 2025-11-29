@@ -8,6 +8,7 @@ import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { Users, Building2, Telescope, ShieldAlert, Network, Zap, Server, UserCheck, Gauge } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ceoAvatar from '@/assets/ceo-avatar.jpg';
+import ctoAvatar from '@/assets/cto-avatar.png';
 
 export default function About() {
   const { t } = useLanguage();
@@ -323,10 +324,19 @@ export default function About() {
             {/* CTO */}
             <Card className="hover-lift scroll-reveal" style={{ animationDelay: '0.2s' }}>
               <CardContent className="p-8">
-                <h3 className="text-xl font-bold mb-2">{t('about.team.cto.name')}</h3>
-                <p className="text-primary font-semibold mb-4">{t('about.team.cto.title')}</p>
-                <p className="text-muted-foreground mb-3">{t('about.team.cto.bio')}</p>
-                <p className="text-sm text-muted-foreground">{t('about.team.cto.profile')}</p>
+                <div className="flex items-start gap-6">
+                  <img 
+                    src={ctoAvatar} 
+                    alt="CTO" 
+                    className="w-24 h-24 rounded-xl object-cover shadow-lg flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold mb-2">{t('about.team.cto.name')}</h3>
+                    <p className="text-primary font-semibold mb-4">{t('about.team.cto.title')}</p>
+                    <p className="text-muted-foreground mb-3">{t('about.team.cto.bio')}</p>
+                    <p className="text-sm text-muted-foreground">{t('about.team.cto.profile')}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </section>
