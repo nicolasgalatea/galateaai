@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-import { Target, Eye, Users, TrendingUp, Rocket, CheckCircle } from 'lucide-react';
+import { Target, Eye, Users, TrendingUp, Rocket, CheckCircle, Building2, Globe2, Telescope } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function About() {
@@ -26,21 +26,65 @@ export default function About() {
             </h1>
           </div>
 
-          {/* Section 1: Mission & Values */}
-          <section className="mb-20 scroll-reveal" id="mission">
-            <Card className="hover-lift">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Target className="w-6 h-6 text-primary" />
+          {/* Section 1: Mission & Vision - Foundational Pillars */}
+          <section className="mb-20" id="mission-vision">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Mission Block */}
+              <div className="scroll-reveal group">
+                <div className="relative h-full bg-white dark:bg-card rounded-2xl border border-border overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1">
+                  {/* Top accent bar */}
+                  <div className="h-1.5 bg-gradient-to-r from-primary to-primary/60" />
+                  
+                  <div className="p-8 lg:p-10">
+                    {/* Icon */}
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <Building2 className="w-8 h-8 text-primary" />
+                    </div>
+                    
+                    {/* Title */}
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-6 tracking-tight">
+                      Our Mission
+                    </h2>
+                    
+                    {/* Content */}
+                    <p className="text-muted-foreground text-base lg:text-lg leading-relaxed">
+                      To engineer the sovereign infrastructure that powers the next generation of healthcare operations. We exist to transform administrative friction into automated value by deploying secure, compliant, and autonomous AI agents that integrate seamlessly into the daily workflows of Hospitals, Pharma, and Payers.
+                    </p>
                   </div>
-                  <h2 className="text-3xl font-bold">{t('about.mission.valueTitle')}</h2>
+                  
+                  {/* Decorative element */}
+                  <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary/5 rounded-tl-full opacity-50" />
                 </div>
-                <p className="text-muted-foreground text-lg leading-relaxed">
-                  {t('about.mission.value')}
-                </p>
-              </CardContent>
-            </Card>
+              </div>
+
+              {/* Vision Block */}
+              <div className="scroll-reveal group" style={{ animationDelay: '0.15s' }}>
+                <div className="relative h-full bg-white dark:bg-card rounded-2xl border border-border overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1">
+                  {/* Top accent bar */}
+                  <div className="h-1.5 bg-gradient-to-r from-primary/60 to-primary" />
+                  
+                  <div className="p-8 lg:p-10">
+                    {/* Icon */}
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <Telescope className="w-8 h-8 text-primary" />
+                    </div>
+                    
+                    {/* Title */}
+                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-6 tracking-tight">
+                      Our Vision
+                    </h2>
+                    
+                    {/* Content */}
+                    <p className="text-muted-foreground text-base lg:text-lg leading-relaxed">
+                      To democratize intelligence across the global health ecosystem. We envision a future where any professional—clinical, financial, or administrative—can design, orchestrate, and deploy their own digital workforce in minutes, creating a self-optimizing system where technology handles the complexity, and humans focus on care.
+                    </p>
+                  </div>
+                  
+                  {/* Decorative element */}
+                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-tr-full opacity-50" />
+                </div>
+              </div>
+            </div>
           </section>
 
           {/* Section 2: Problem & Opportunity */}
