@@ -28,6 +28,10 @@ import Team from "./pages/Team";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import MethodologyDiagnosis from "./pages/MethodologyDiagnosis";
+import MethodologyIntegration from "./pages/MethodologyIntegration";
+import MethodologyDeployment from "./pages/MethodologyDeployment";
+import MethodologyControl from "./pages/MethodologyControl";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +66,10 @@ const App = () => (
             <Route path="/team" element={<Team />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/methodology/diagnosis" element={<MethodologyDiagnosis />} />
+            <Route path="/methodology/integration" element={<MethodologyIntegration />} />
+            <Route path="/methodology/deployment" element={<MethodologyDeployment />} />
+            <Route path="/methodology/control" element={<MethodologyControl />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
