@@ -1,148 +1,100 @@
-import { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, Loader2, CheckCircle, Mic } from 'lucide-react';
+import { Mic, AudioLines, Cpu, FileText } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { AgentDetailTemplate } from '@/components/AgentDetailTemplate';
 
 export default function AgentClinicalDictation() {
-  const { t } = useLanguage();
-  const [inputData, setInputData] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const { toast } = useToast();
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setResults({
-      diagnosis: 'Structured medical record generated successfully',
-      confidence: 95,
-      recommendations: [
-        'Review generated fields for accuracy',
-        'Validate patient information',
-        'Sign and submit to EHR system',
-      ],
+  const handleAnalyze = async (file: File): Promise<string> => {
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    return `✅ Transcription Complete
+
+📋 STRUCTURED CLINICAL NOTE:
+
+PATIENT: [Auto-extracted]
+DATE: ${new Date().toLocaleDateString()}
+
+CHIEF COMPLAINT:
+Chest pain x 2 days, worse with exertion
+
+HISTORY OF PRESENT ILLNESS:
+45-year-old male presents with substernal chest pain...
+
+PHYSICAL EXAMINATION:
+• Vitals: BP 138/88, HR 82, RR 16, SpO2 98%
+• Cardiac: Regular rhythm, no murmurs
+• Lungs: Clear bilateral
+
+ASSESSMENT:
+1. Atypical chest pain - low risk ACS
+2. Essential hypertension, uncontrolled
+
+PLAN:
+1. EKG and troponin
+2. Stress test if negative
+3. Adjust antihypertensive therapy
+
+✓ Ready for physician signature`;
+  };
+
+  const handleSampleData = () => {
+    toast({
+      title: 'Sample Data',
+      description: 'Loading sample clinical dictation audio...',
     });
-    setIsAnalyzing(false);
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-
-      <main className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          {/* Hero Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl shadow-glow flex items-center justify-center p-12">
-              <Mic className="w-48 h-48 text-primary" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('agents.clinicalDictation.name')}
-              </h1>
-              <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 w-fit">
-                {t('agents.clinicalDictation.specialty')}
-              </div>
-              <p className="text-lg text-muted-foreground mb-6">
-                {t('agents.clinicalDictation.desc')}
-              </p>
-              <p className="text-muted-foreground">
-                Transforms verbal clinical notes into validated, structured medical records ready for EHR integration. Supports multiple languages and medical terminologies.
-              </p>
-            </div>
-          </div>
-
-          {/* Data Upload Panel */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{t('agent.upload.title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Textarea
-                  placeholder={t('agent.upload.placeholder')}
-                  value={inputData}
-                  onChange={(e) => setInputData(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Button variant="outline" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  {t('agent.upload.file')}
-                </Button>
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={!inputData || isAnalyzing}
-                  className="gap-2"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('agent.analyzing')}
-                    </>
-                  ) : (
-                    t('agent.analyze')
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Results Panel */}
-          {results && (
-            <Card className="animate-fade-in-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t('agent.results.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.diagnosis')}
-                  </div>
-                  <div className="text-lg font-medium">{results.diagnosis}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.confidence')}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${results.confidence}%` }}
-                      />
-                    </div>
-                    <span className="text-lg font-medium">{results.confidence}%</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.recommendations')}
-                  </div>
-                  <ul className="space-y-2">
-                    {results.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    <AgentDetailTemplate
+      name="Voice-to-Record AI"
+      tagline="Transform verbal clinical notes into structured, EHR-ready medical records in real-time"
+      specialty="Clinical Documentation"
+      description="Advanced speech recognition with medical NLP transforms physician dictations into validated, structured records. Supports Spanish and English with medical terminology."
+      category="efficiency"
+      icon={<Mic className="w-full h-full" />}
+      kpiStats={[
+        { value: '98%', label: 'Accuracy' },
+        { value: '3x', label: 'Faster' },
+        { value: '2 Hrs', label: 'Saved/Day' },
+      ]}
+      workflowSteps={[
+        {
+          title: 'Voice Input',
+          description: 'Record or upload audio dictation in any format (MP3, WAV, M4A).',
+          icon: <AudioLines className="w-6 h-6" />,
+        },
+        {
+          title: 'NLP Processing',
+          description: 'Medical speech recognition extracts entities, diagnoses, and procedures with context awareness.',
+          icon: <Cpu className="w-6 h-6" />,
+        },
+        {
+          title: 'Structured Output',
+          description: 'Generates SOAP notes, discharge summaries, or custom templates ready for EHR.',
+          icon: <FileText className="w-6 h-6" />,
+        },
+      ]}
+      techStack={['Whisper AI', 'Medical NLP', 'HIPAA Compliant', 'HL7 FHIR']}
+      integrations={[
+        { name: 'Epic' },
+        { name: 'Cerner' },
+        { name: 'Servinte' },
+        { name: 'Medifolios' },
+        { name: 'FHIR' },
+      ]}
+      roiCalculator={{
+        unitLabel: 'Dictations Per Month',
+        minValue: 100,
+        maxValue: 10000,
+        step: 100,
+        defaultValue: 2000,
+        calculateSavings: (value) => `$${(value * 8).toLocaleString()} USD`,
+        savingsLabel: 'Estimated Annual Savings',
+      }}
+      onAnalyze={handleAnalyze}
+      acceptedFileTypes="audio/*,.mp3,.wav,.m4a"
+      uploadLabel="Upload Audio Dictation"
+      sampleDataAction={handleSampleData}
+    />
   );
 }

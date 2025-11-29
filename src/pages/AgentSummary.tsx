@@ -1,145 +1,104 @@
-import { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, Loader2, CheckCircle, FileStack } from 'lucide-react';
+import { FileStack, Upload, Cpu, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { AgentDetailTemplate } from '@/components/AgentDetailTemplate';
 
 export default function AgentSummary() {
-  const { t } = useLanguage();
-  const [inputData, setInputData] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const { toast } = useToast();
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setResults({
-      diagnosis: '15 years of medical history condensed to single page',
-      confidence: 90,
-      recommendations: [
-        'Review key diagnoses',
-        'Verify medication history',
-        'Check allergies section',
-      ],
+  const handleAnalyze = async (file: File): Promise<string> => {
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    return `✅ Medical History Summary Generated
+
+📋 EXECUTIVE CLINICAL SUMMARY
+Patient: [Auto-filled] | DOB: XX/XX/XXXX | ID: ****1234
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 CRITICAL INFORMATION:
+  • Allergies: Penicillin (anaphylaxis), Sulfa
+  • Blood Type: O+
+  • Implants: Cardiac pacemaker (2019)
+
+📊 CHRONIC CONDITIONS:
+  1. Type 2 Diabetes Mellitus (2015)
+     - Current HbA1c: 7.2%
+     - Metformin 850mg BID
+  2. Essential Hypertension (2012)
+     - Losartan 50mg daily
+  3. Dyslipidemia (2018)
+     - Atorvastatin 20mg nightly
+
+🏥 KEY SURGERIES:
+  • 2019: Pacemaker implantation
+  • 2016: Appendectomy
+  • 2010: Right knee arthroscopy
+
+💊 CURRENT MEDICATIONS: 6 active prescriptions
+
+📅 RECENT VISITS: 12 encounters in past year
+
+✓ 15-year history condensed
+✓ Suitable for referrals and transfers`;
+  };
+
+  const handleSampleData = () => {
+    toast({
+      title: 'Sample Data',
+      description: 'Loading sample patient history...',
     });
-    setIsAnalyzing(false);
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-
-      <main className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl shadow-glow flex items-center justify-center p-12">
-              <FileStack className="w-48 h-48 text-primary" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('agents.summary.name')}
-              </h1>
-              <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 w-fit">
-                {t('agents.summary.specialty')}
-              </div>
-              <p className="text-lg text-muted-foreground mb-6">
-                {t('agents.summary.desc')}
-              </p>
-              <p className="text-muted-foreground">
-                Condenses 10-15 years of medical history into a single-page, clinically relevant summary. Perfect for referrals, transfers, and quick patient reviews.
-              </p>
-            </div>
-          </div>
-
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{t('agent.upload.title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Textarea
-                  placeholder={t('agent.upload.placeholder')}
-                  value={inputData}
-                  onChange={(e) => setInputData(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Button variant="outline" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  {t('agent.upload.file')}
-                </Button>
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={!inputData || isAnalyzing}
-                  className="gap-2"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('agent.analyzing')}
-                    </>
-                  ) : (
-                    t('agent.analyze')
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {results && (
-            <Card className="animate-fade-in-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t('agent.results.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.diagnosis')}
-                  </div>
-                  <div className="text-lg font-medium">{results.diagnosis}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.confidence')}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${results.confidence}%` }}
-                      />
-                    </div>
-                    <span className="text-lg font-medium">{results.confidence}%</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.recommendations')}
-                  </div>
-                  <ul className="space-y-2">
-                    {results.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    <AgentDetailTemplate
+      name="History Condenser AI"
+      tagline="Condense 15 years of medical history into a clinically actionable one-page summary"
+      specialty="Clinical Efficiency"
+      description="AI analyzes extensive medical records and distills them into executive summaries highlighting critical information, chronic conditions, medications, and key surgical history."
+      category="efficiency"
+      icon={<FileStack className="w-full h-full" />}
+      kpiStats={[
+        { value: '15 Yrs', label: '→ 1 Page' },
+        { value: '<3 Min', label: 'Processing' },
+        { value: '100%', label: 'Critical Capture' },
+      ]}
+      workflowSteps={[
+        {
+          title: 'Record Upload',
+          description: 'Upload multiple years of medical records, PDFs, or connect to EHR.',
+          icon: <Upload className="w-6 h-6" />,
+        },
+        {
+          title: 'AI Synthesis',
+          description: 'NLP extracts diagnoses, procedures, medications, and risk factors across all documents.',
+          icon: <Cpu className="w-6 h-6" />,
+        },
+        {
+          title: 'Executive Summary',
+          description: 'Generates prioritized one-page summary ideal for referrals and quick reviews.',
+          icon: <CheckCircle className="w-6 h-6" />,
+        },
+      ]}
+      techStack={['Medical NLP', 'OCR', 'HIPAA Compliant', 'Multi-format']}
+      integrations={[
+        { name: 'Epic' },
+        { name: 'Cerner' },
+        { name: 'Servinte' },
+        { name: 'PDF/Images' },
+        { name: 'HL7' },
+      ]}
+      roiCalculator={{
+        unitLabel: 'Patient Summaries Monthly',
+        minValue: 50,
+        maxValue: 3000,
+        step: 50,
+        defaultValue: 500,
+        calculateSavings: (value) => `$${(value * 15).toLocaleString()} USD`,
+        savingsLabel: 'Estimated Annual Savings',
+      }}
+      onAnalyze={handleAnalyze}
+      acceptedFileTypes="image/*,.pdf"
+      uploadLabel="Upload Medical Records"
+      sampleDataAction={handleSampleData}
+    />
   );
 }
