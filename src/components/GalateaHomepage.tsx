@@ -147,25 +147,26 @@ export const GalateaHomepage = () => {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left Side - Content */}
             <div className="space-y-8 animate-fade-in">
-              <div className="inline-flex items-center space-x-3 bg-primary/10 px-6 py-3 rounded-full">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <span className="text-primary font-medium">The Infrastructure for Medical AI Agents</span>
+              <div className="inline-flex items-center space-x-3 bg-primary/10 px-6 py-3 rounded-full border border-primary/20">
+                <Shield className="w-5 h-5 text-primary" />
+                <span className="text-primary font-semibold tracking-wide">Sovereign Health-Ops Infrastructure</span>
               </div>
               
-              <h1 className="text-5xl lg:text-7xl font-bold">
+              <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold leading-tight">
+                <span className="text-foreground">The Sovereign Infrastructure</span>
+                <br />
+                <span className="text-foreground">to Orchestrate Your</span>
+                <br />
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
-                  Create & deploy
+                  Digital Workforce
                 </span>
-                <br />
-                <span className="text-foreground">hyperrealistic</span>
-                <br />
-                <span className="text-foreground">healthcare avatars</span>
               </h1>
               
-              <p className="text-xl text-muted-foreground leading-relaxed">
-                The platform that empowers every healthcare stakeholder to design, coordinate, 
-                deploy, and commercialize AI-powered hyperrealistic avatars. From pharmaceutical 
-                companies to individual patients.
+              <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-2xl">
+                Empower Hospitals and Pharma to build{' '}
+                <span className="text-primary font-semibold">Autonomous Agents</span>{' '}
+                that automate the Back-Office. 
+                <span className="block mt-2 font-medium text-foreground/80">Secure. Compliant. No-Code.</span>
               </p>
               
               <div className="flex flex-wrap gap-6">
