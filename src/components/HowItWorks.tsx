@@ -2,37 +2,38 @@ import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { Link } from 'react-router-dom';
 import { Search, Cable, Bot, TrendingUp, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const steps = [
   { 
     icon: Search, 
     key: 'step1',
-    title: 'Diagnóstico de Cuellos de Botella',
-    desc: 'IA de process mining revela ineficiencias ocultas',
+    titleKey: 'howItWorks.card1.title',
+    descKey: 'howItWorks.card1.desc',
     path: '/methodology/diagnosis',
     color: 'red',
   },
   { 
     icon: Cable, 
     key: 'step2',
-    title: 'Integración de Flujos',
-    desc: 'Conexión segura a su infraestructura legacy',
+    titleKey: 'howItWorks.card2.title',
+    descKey: 'howItWorks.card2.desc',
     path: '/methodology/integration',
     color: 'blue',
   },
   { 
     icon: Bot, 
     key: 'step3',
-    title: 'Despliegue de Agentes',
-    desc: 'Agentes autónomos ejecutan tareas 24/7',
+    titleKey: 'howItWorks.card3.title',
+    descKey: 'howItWorks.card3.desc',
     path: '/methodology/deployment',
     color: 'purple',
   },
   { 
     icon: TrendingUp, 
     key: 'step4',
-    title: 'Control & Rentabilidad',
-    desc: 'Visibilidad en tiempo real del ROI',
+    titleKey: 'howItWorks.card4.title',
+    descKey: 'howItWorks.card4.desc',
     path: '/methodology/control',
     color: 'green',
   },
@@ -40,6 +41,7 @@ const steps = [
 
 export function HowItWorks() {
   useScrollReveal();
+  const { t } = useLanguage();
 
   return (
     <section id="methodology" className="relative py-24 px-4 bg-background overflow-hidden">
@@ -53,10 +55,10 @@ export function HowItWorks() {
         {/* Section Header */}
         <div className="text-center mb-12 scroll-reveal">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
-            Metodología de Implementación
+            {t('howItWorks.sectionTitle')}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Cuatro pasos para transformar sus operaciones de salud con agentes de IA autónomos
+            {t('howItWorks.sectionSubtitle')}
           </p>
         </div>
 
@@ -125,12 +127,12 @@ export function HowItWorks() {
 
                 {/* Title */}
                 <h3 className="font-semibold text-foreground mb-2 text-lg">
-                  {step.title}
+                  {t(step.titleKey)}
                 </h3>
                 
                 {/* Description */}
                 <p className="text-sm text-muted-foreground mb-4">
-                  {step.desc}
+                  {t(step.descKey)}
                 </p>
 
                 {/* Arrow indicator */}
@@ -138,7 +140,7 @@ export function HowItWorks() {
                   "flex items-center gap-2 text-sm font-medium transition-transform group-hover:translate-x-2",
                   colors.arrow
                 )}>
-                  Ver más
+                  {t('howItWorks.viewMore')}
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </Link>
@@ -151,7 +153,7 @@ export function HowItWorks() {
           <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-muted border border-border">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             <p className="text-sm font-medium text-foreground">
-              Infraestructura Enterprise para Instituciones de Salud
+              {t('howItWorks.bottomCta')}
             </p>
           </div>
         </div>
