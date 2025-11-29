@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { 
-  Bot, ArrowLeft, ArrowRight, CheckCircle, Play, Pause,
+  Bot, ArrowLeft, ArrowRight, CheckCircle,
   Activity, Zap, Clock, TrendingUp, Building2, FileText,
   AlertTriangle, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const agents = [
   { name: 'Audit-Bot-01', role: 'Revenue Cycle', status: 'active', tasks: 1247 },
@@ -23,6 +24,8 @@ const logs = [
 ];
 
 export default function MethodologyDeployment() {
+  const { t } = useLanguage();
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -36,7 +39,7 @@ export default function MethodologyDeployment() {
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
           >
             <ArrowLeft className="w-4 h-4" />
-            Volver a Metodología
+            {t('methodology.backTo')}
           </Link>
 
           <div className="flex items-center gap-4 mb-6">
@@ -44,31 +47,30 @@ export default function MethodologyDeployment() {
               <Bot className="w-8 h-8 text-purple-400" />
             </div>
             <div className="px-4 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-400 text-sm font-medium">
-              Paso 3 de 4
+              {t('methodology.step')} 3 {t('methodology.of')} 4
             </div>
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-            Despliegue de <span className="text-purple-400">Agentes Autónomos</span>
+            {t('methodology.deployment.title')} <span className="text-purple-400">{t('methodology.deployment.titleHighlight')}</span>
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-3xl mb-8">
-            Su fuerza laboral digital ejecuta tareas las 24 horas, los 7 días de la semana, 
-            sin fatiga, sin errores y con supervisión humana cuando se requiere.
+            {t('methodology.deployment.subtitle')}
           </p>
 
           <div className="grid grid-cols-3 gap-4 max-w-2xl">
             <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-purple-400">24/7</p>
-              <p className="text-sm text-muted-foreground">Operación Continua</p>
+              <p className="text-3xl font-bold text-purple-400">{t('methodology.deployment.stat1.value')}</p>
+              <p className="text-sm text-muted-foreground">{t('methodology.deployment.stat1.label')}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-foreground">99.2%</p>
-              <p className="text-sm text-muted-foreground">Precisión</p>
+              <p className="text-3xl font-bold text-foreground">{t('methodology.deployment.stat2.value')}</p>
+              <p className="text-sm text-muted-foreground">{t('methodology.deployment.stat2.label')}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-green-400">10x</p>
-              <p className="text-sm text-muted-foreground">Velocidad vs Manual</p>
+              <p className="text-3xl font-bold text-green-400">{t('methodology.deployment.stat3.value')}</p>
+              <p className="text-sm text-muted-foreground">{t('methodology.deployment.stat3.label')}</p>
             </div>
           </div>
         </div>
@@ -77,7 +79,7 @@ export default function MethodologyDeployment() {
       {/* Agent Console */}
       <section className="py-16 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold mb-8 text-foreground">Consola de Agentes Activos</h2>
+          <h2 className="text-2xl font-bold mb-8 text-foreground">{t('methodology.deployment.console')}</h2>
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Agent List */}
@@ -105,7 +107,7 @@ export default function MethodologyDeployment() {
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="text-lg font-bold text-foreground">{agent.tasks.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">Tareas hoy</p>
+                      <p className="text-xs text-muted-foreground">{t('methodology.deployment.tasksToday')}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className={cn(
@@ -116,7 +118,7 @@ export default function MethodologyDeployment() {
                         "text-sm",
                         agent.status === 'active' ? "text-green-400" : "text-yellow-400"
                       )}>
-                        {agent.status === 'active' ? 'Activo' : 'Pausado'}
+                        {agent.status === 'active' ? t('methodology.deployment.active') : t('methodology.deployment.paused')}
                       </span>
                     </div>
                   </div>
@@ -129,11 +131,11 @@ export default function MethodologyDeployment() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-white font-semibold flex items-center gap-2">
                   <Activity className="w-5 h-5 text-purple-400" />
-                  Log en Tiempo Real
+                  {t('methodology.deployment.liveLog')}
                 </h3>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-green-400 text-sm">Live</span>
+                  <span className="text-green-400 text-sm">{t('methodology.deployment.live')}</span>
                 </div>
               </div>
 
@@ -165,15 +167,15 @@ export default function MethodologyDeployment() {
               <div className="grid grid-cols-3 gap-3 mt-4">
                 <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
                   <p className="text-xl font-bold text-green-400">4,698</p>
-                  <p className="text-slate-400 text-xs">Procesados Hoy</p>
+                  <p className="text-slate-400 text-xs">{t('methodology.deployment.processedToday')}</p>
                 </div>
                 <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
                   <p className="text-xl font-bold text-purple-400">99.2%</p>
-                  <p className="text-slate-400 text-xs">Precisión</p>
+                  <p className="text-slate-400 text-xs">{t('methodology.deployment.precision')}</p>
                 </div>
                 <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
                   <p className="text-xl font-bold text-amber-400">7</p>
-                  <p className="text-slate-400 text-xs">Flagged</p>
+                  <p className="text-slate-400 text-xs">{t('methodology.deployment.flagged')}</p>
                 </div>
               </div>
             </div>
@@ -184,16 +186,16 @@ export default function MethodologyDeployment() {
       {/* How Agents Work */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold mb-8 text-foreground">Cómo Operan los Agentes</h2>
+          <h2 className="text-2xl font-bold mb-8 text-foreground">{t('methodology.deployment.howAgentsWork')}</h2>
           
           <div className="grid md:grid-cols-4 gap-6">
             <div className="bg-card border border-border rounded-xl p-5">
               <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
                 <FileText className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">1. Reciben Tarea</h3>
+              <h3 className="font-semibold text-foreground mb-2">{t('methodology.deployment.step1.title')}</h3>
               <p className="text-sm text-muted-foreground">
-                Documentos, notas clínicas o facturas ingresan automáticamente a la cola de trabajo.
+                {t('methodology.deployment.step1.desc')}
               </p>
             </div>
 
@@ -201,9 +203,9 @@ export default function MethodologyDeployment() {
               <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
                 <Settings className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">2. Procesan</h3>
+              <h3 className="font-semibold text-foreground mb-2">{t('methodology.deployment.step2.title')}</h3>
               <p className="text-sm text-muted-foreground">
-                Ejecutan reglas de negocio, validan contra normativa y extraen información clave.
+                {t('methodology.deployment.step2.desc')}
               </p>
             </div>
 
@@ -211,9 +213,9 @@ export default function MethodologyDeployment() {
               <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
                 <AlertTriangle className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">3. Escalan si es Necesario</h3>
+              <h3 className="font-semibold text-foreground mb-2">{t('methodology.deployment.step3.title')}</h3>
               <p className="text-sm text-muted-foreground">
-                Casos complejos o excepcionales se envían a humanos con contexto completo.
+                {t('methodology.deployment.step3.desc')}
               </p>
             </div>
 
@@ -221,9 +223,9 @@ export default function MethodologyDeployment() {
               <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
                 <CheckCircle className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">4. Completan</h3>
+              <h3 className="font-semibold text-foreground mb-2">{t('methodology.deployment.step4.title')}</h3>
               <p className="text-sm text-muted-foreground">
-                Resultados se envían a sistemas destino con trazabilidad completa.
+                {t('methodology.deployment.step4.desc')}
               </p>
             </div>
           </div>
@@ -233,37 +235,37 @@ export default function MethodologyDeployment() {
       {/* ROI Section */}
       <section className="py-16 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold mb-8 text-foreground">Retorno de Inversión</h2>
+          <h2 className="text-2xl font-bold mb-8 text-foreground">{t('methodology.roi')}</h2>
           
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 rounded-xl p-6">
               <Zap className="w-10 h-10 text-purple-400 mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Velocidad 10x</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.deployment.roi1.title')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Un agente procesa en 1 hora lo que un equipo hace en un día completo.
+                {t('methodology.deployment.roi1.desc')}
               </p>
-              <p className="text-2xl font-bold text-purple-400">10x</p>
-              <p className="text-xs text-muted-foreground">Más rápido</p>
+              <p className="text-2xl font-bold text-purple-400">{t('methodology.deployment.roi1.value')}</p>
+              <p className="text-xs text-muted-foreground">{t('methodology.deployment.roi1.label')}</p>
             </div>
 
             <div className="bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20 rounded-xl p-6">
               <TrendingUp className="w-10 h-10 text-green-400 mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Costo Reducido</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.deployment.roi2.title')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Fracción del costo de FTEs con mayor consistencia y sin ausentismo.
+                {t('methodology.deployment.roi2.desc')}
               </p>
-              <p className="text-2xl font-bold text-green-400">-70%</p>
-              <p className="text-xs text-muted-foreground">Costo operativo</p>
+              <p className="text-2xl font-bold text-green-400">{t('methodology.deployment.roi2.value')}</p>
+              <p className="text-xs text-muted-foreground">{t('methodology.deployment.roi2.label')}</p>
             </div>
 
             <div className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-xl p-6">
               <Clock className="w-10 h-10 text-blue-400 mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Disponibilidad Total</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.deployment.roi3.title')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Operación continua sin turnos nocturnos ni fines de semana extras.
+                {t('methodology.deployment.roi3.desc')}
               </p>
-              <p className="text-2xl font-bold text-blue-400">24/7</p>
-              <p className="text-xs text-muted-foreground">Sin interrupciones</p>
+              <p className="text-2xl font-bold text-blue-400">{t('methodology.deployment.roi3.value')}</p>
+              <p className="text-xs text-muted-foreground">{t('methodology.deployment.roi3.label')}</p>
             </div>
           </div>
         </div>
@@ -275,30 +277,29 @@ export default function MethodologyDeployment() {
           <div className="bg-card border border-border rounded-2xl p-8">
             <div className="flex items-center gap-3 mb-6">
               <Building2 className="w-6 h-6 text-primary" />
-              <span className="text-sm text-muted-foreground">Caso de Estudio</span>
+              <span className="text-sm text-muted-foreground">{t('methodology.caseStudy')}</span>
             </div>
             
             <h3 className="text-xl font-bold text-foreground mb-4">
-              IPS Nacional - Red de 12 clínicas
+              {t('methodology.deployment.case.title')}
             </h3>
             
             <p className="text-muted-foreground mb-6">
-              "Desplegamos 8 agentes Galatea para facturación. En el primer mes procesaron 45,000 
-              facturas con 99.4% de precisión. Liberamos a 15 personas para tareas de mayor valor."
+              {t('methodology.deployment.case.quote')}
             </p>
 
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
               <div className="text-center">
                 <p className="text-2xl font-bold text-purple-400">8</p>
-                <p className="text-xs text-muted-foreground">Agentes Activos</p>
+                <p className="text-xs text-muted-foreground">{t('methodology.deployment.case.stat1')}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-green-400">45K</p>
-                <p className="text-xs text-muted-foreground">Facturas/Mes</p>
+                <p className="text-xs text-muted-foreground">{t('methodology.deployment.case.stat2')}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-foreground">99.4%</p>
-                <p className="text-xs text-muted-foreground">Precisión</p>
+                <p className="text-xs text-muted-foreground">{t('methodology.deployment.case.stat3')}</p>
               </div>
             </div>
           </div>
@@ -312,13 +313,13 @@ export default function MethodologyDeployment() {
             <Link to="/methodology/integration">
               <Button variant="outline" className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
-                Anterior: Integración
+                {t('methodology.deployment.nav.prev')}
               </Button>
             </Link>
             
             <Link to="/methodology/control">
               <Button className="gap-2 bg-primary hover:bg-primary/90">
-                Siguiente: Control
+                {t('methodology.deployment.nav.next')}
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
