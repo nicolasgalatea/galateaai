@@ -11,6 +11,8 @@ import {
   Upload, TestTube, Eye, Headphones, Lock, Globe2, Languages, AlertTriangle
 } from 'lucide-react';
 
+import { HowItWorks } from '@/components/HowItWorks';
+
 // Import hyper-realistic avatar images
 import miraAvatar from '@/assets/mira-avatar.jpg';
 import aydaAvatar from '@/assets/ayda-avatar.jpg';
@@ -110,17 +112,16 @@ export const GalateaHomepageES = () => {
               <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold leading-tight">
                 <span className="text-foreground">La Infraestructura Soberana</span>
                 <br />
-                <span className="text-foreground">para Orquestar Tu</span>
-                <br />
+                <span className="text-foreground">para la</span>{' '}
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
-                  Fuerza de Trabajo Digital
+                  Web Agéntica de Salud
                 </span>
               </h1>
               
               <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-2xl">
-                Empodera a Hospitales y Farmacéuticas para construir{' '}
+                Empodera tus operaciones para Construir, Desplegar y Escalar{' '}
                 <span className="text-primary font-semibold">Agentes Autónomos</span>{' '}
-                que automatizan el Back-Office.
+                que automatizan flujos críticos del Back-Office. La plataforma soberana para orquestación de Health-Ops.
                 <span className="block mt-2 font-medium text-foreground/80">Seguro. Cumplidor. Sin Código.</span>
               </p>
               
@@ -232,6 +233,9 @@ export const GalateaHomepageES = () => {
           </div>
         </div>
       </section>
+
+      {/* How It Works - 4 Step Methodology */}
+      <HowItWorks />
 
       {/* DEMO EN VIVO - SECCIÓN PRINCIPAL */}
       <section id="demo-video" className="py-32 px-6 bg-gradient-to-br from-red-500/10 via-primary/5 to-secondary/10 relative overflow-hidden border-y-4 border-primary/20">
