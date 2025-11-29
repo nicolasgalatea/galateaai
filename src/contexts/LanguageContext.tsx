@@ -110,7 +110,7 @@ const translations = {
     'footer.legal': 'Legal',
     'footer.privacy': 'Privacy Policy',
     'footer.terms': 'Terms of Service',
-    'footer.rights': '© 2024 Galatea AI. All rights reserved.',
+    'footer.rights': '© 2025 Galatea AI. All rights reserved.',
 
     // Auth
     'auth.title': 'Welcome to Galatea AI',
@@ -372,7 +372,7 @@ const translations = {
     'footer.legal': 'Legal',
     'footer.privacy': 'Política de Privacidad',
     'footer.terms': 'Términos de Servicio',
-    'footer.rights': '© 2024 Galatea AI. Todos los derechos reservados.',
+    'footer.rights': '© 2025 Galatea AI. Todos los derechos reservados.',
 
     // Auth
     'auth.title': 'Bienvenido a Galatea AI',
