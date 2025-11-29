@@ -7,6 +7,7 @@ import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { Users, Building2, Telescope, ShieldAlert, Network, Zap, Server, UserCheck, Gauge } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ceoAvatar from '@/assets/ceo-avatar.jpg';
 
 export default function About() {
   const { t } = useLanguage();
@@ -263,13 +264,22 @@ export default function About() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              {/* Nicolás */}
+              {/* Nicolás - CEO */}
               <Card className="hover-lift scroll-reveal">
                 <CardContent className="p-8">
-                  <h3 className="text-xl font-bold mb-2">{t('about.team.nicolas.name')}</h3>
-                  <p className="text-primary font-semibold mb-4">{t('about.team.nicolas.title')}</p>
-                  <p className="text-muted-foreground mb-4">{t('about.team.nicolas.bio')}</p>
-                  <ul className="space-y-2">
+                  <div className="flex items-start gap-6">
+                    <img 
+                      src={ceoAvatar} 
+                      alt="Nicolás - CEO" 
+                      className="w-24 h-24 rounded-xl object-cover shadow-lg flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold mb-2">{t('about.team.nicolas.name')}</h3>
+                      <p className="text-primary font-semibold mb-4">{t('about.team.nicolas.title')}</p>
+                      <p className="text-muted-foreground mb-4">{t('about.team.nicolas.bio')}</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2 mt-4">
                     <li className="text-sm text-muted-foreground flex items-start gap-2">
                       <span>•</span>
                       <span>{t('about.team.nicolas.highlight1')}</span>
