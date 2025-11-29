@@ -1,15 +1,10 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-import { Users, Building2, Telescope, ShieldAlert, Network, Zap, Server, UserCheck, Gauge } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import ceoAvatar from '@/assets/ceo-avatar.jpg';
-import ctoAvatar from '@/assets/cto-avatar.png';
-import cmoAvatar from '@/assets/cmo-avatar.png';
+import { Building2, Telescope, ShieldAlert, Network, Zap, Server, UserCheck, Gauge } from 'lucide-react';
+import { FoundingTeam } from '@/components/FoundingTeam';
 
 export default function About() {
   const { t } = useLanguage();
@@ -256,100 +251,8 @@ export default function About() {
             </div>
           </section>
 
-          {/* Section 3: Team */}
-          <section className="mb-20" id="team">
-            <div className="text-center mb-12 scroll-reveal">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <Users className="w-8 h-8 text-primary" />
-                <h2 className="text-3xl font-bold">{t('about.team.title')}</h2>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              {/* Nicolás - CEO */}
-              <Card className="hover-lift scroll-reveal">
-                <CardContent className="p-8">
-                  <div className="flex items-start gap-6">
-                    <img 
-                      src={ceoAvatar} 
-                      alt="Nicolás - CEO" 
-                      className="w-32 h-32 rounded-xl object-cover object-top shadow-lg flex-shrink-0"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-2">{t('about.team.nicolas.name')}</h3>
-                      <p className="text-primary font-semibold mb-4">{t('about.team.nicolas.title')}</p>
-                      <p className="text-muted-foreground mb-4">{t('about.team.nicolas.bio')}</p>
-                    </div>
-                  </div>
-                  <ul className="space-y-2 mt-4">
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span>•</span>
-                      <span>{t('about.team.nicolas.highlight1')}</span>
-                    </li>
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span>•</span>
-                      <span>{t('about.team.nicolas.highlight2')}</span>
-                    </li>
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span>•</span>
-                      <span>{t('about.team.nicolas.highlight3')}</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Carlos - CMO */}
-              <Card className="hover-lift scroll-reveal" style={{ animationDelay: '0.1s' }}>
-                <CardContent className="p-8">
-                  <div className="flex items-start gap-6">
-                    <img 
-                      src={cmoAvatar} 
-                      alt="Carlos - CMO" 
-                      className="w-32 h-32 rounded-xl object-cover shadow-lg flex-shrink-0"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-2">{t('about.team.carlos.name')}</h3>
-                      <p className="text-primary font-semibold mb-4">{t('about.team.carlos.title')}</p>
-                      <p className="text-muted-foreground mb-4">{t('about.team.carlos.bio')}</p>
-                    </div>
-                  </div>
-                  <ul className="space-y-2 mt-4">
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span>•</span>
-                      <span>{t('about.team.carlos.highlight1')}</span>
-                    </li>
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span>•</span>
-                      <span>{t('about.team.carlos.highlight2')}</span>
-                    </li>
-                    <li className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span>•</span>
-                      <span>{t('about.team.carlos.highlight3')}</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* CTO */}
-            <Card className="hover-lift scroll-reveal" style={{ animationDelay: '0.2s' }}>
-              <CardContent className="p-8">
-                <div className="flex items-start gap-6">
-                  <img 
-                    src={ctoAvatar} 
-                    alt="CTO" 
-                    className="w-32 h-32 rounded-xl object-cover object-top shadow-lg flex-shrink-0"
-                  />
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2">{t('about.team.cto.name')}</h3>
-                    <p className="text-primary font-semibold mb-4">{t('about.team.cto.title')}</p>
-                    <p className="text-muted-foreground mb-3">{t('about.team.cto.bio')}</p>
-                    <p className="text-sm text-muted-foreground">{t('about.team.cto.profile')}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
+          {/* Section 3: Founding Team */}
+          <FoundingTeam />
 
         </div>
       </main>
