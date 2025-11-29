@@ -65,83 +65,89 @@ export default function MethodologyControl() {
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-2xl font-bold mb-8 text-foreground">{t('methodology.control.dashboard')}</h2>
           
-          <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
-            {/* Header */}
+          <div className="bg-slate-900 rounded-2xl p-6 border border-slate-700/50 shadow-2xl">
+            {/* Header with window controls */}
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-              </div>
               <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500 shadow-lg shadow-red-500/30" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-lg shadow-yellow-500/30" />
+                <div className="w-3 h-3 rounded-full bg-green-500 shadow-lg shadow-green-500/30" />
+              </div>
+              <div className="flex items-center gap-2 bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/30">
                 <Activity className="w-4 h-4 text-green-400" />
-                <span className="text-green-400 text-sm">{t('methodology.control.liveData')}</span>
+                <span className="text-green-400 text-sm font-medium">{t('methodology.control.liveData')}</span>
               </div>
             </div>
 
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-xl p-4 border border-green-500/30">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-xl p-4 border border-green-500/30 hover:border-green-500/50 transition-all">
+                <div className="flex items-center gap-2 mb-3">
                   <DollarSign className="w-4 h-4 text-green-400" />
                   <span className="text-slate-400 text-xs">{t('methodology.control.revenueRecovered')}</span>
                 </div>
-                <p className="text-2xl font-bold text-green-400">$150M</p>
-                <p className="text-green-400/70 text-xs mt-1">↑ 23% {t('methodology.control.vsLastQuarter')}</p>
+                <p className="text-2xl md:text-3xl font-bold text-green-400">$150M</p>
+                <p className="text-green-400/70 text-xs mt-2 flex items-center gap-1">
+                  <span className="inline-block w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-green-400" />
+                  23% {t('methodology.control.vsLastQuarter')}
+                </p>
               </div>
               
-              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/30">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/30 hover:border-primary/50 transition-all">
+                <div className="flex items-center gap-2 mb-3">
                   <Clock className="w-4 h-4 text-primary" />
                   <span className="text-slate-400 text-xs">{t('methodology.control.adminHoursSaved')}</span>
                 </div>
-                <p className="text-2xl font-bold text-primary">4,000</p>
-                <p className="text-primary/70 text-xs mt-1">↑ 156 {t('methodology.control.thisWeek')}</p>
+                <p className="text-2xl md:text-3xl font-bold text-primary">4,000</p>
+                <p className="text-primary/70 text-xs mt-2 flex items-center gap-1">
+                  <span className="inline-block w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-primary" />
+                  156 {t('methodology.control.thisWeek')}
+                </p>
               </div>
 
-              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/30">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/30 hover:border-primary/50 transition-all">
+                <div className="flex items-center gap-2 mb-3">
                   <Users className="w-4 h-4 text-primary" />
                   <span className="text-slate-400 text-xs">{t('methodology.control.activeAgents')}</span>
                 </div>
-                <p className="text-2xl font-bold text-primary">12</p>
-                <p className="text-primary/70 text-xs mt-1">100% {t('methodology.control.uptime')}</p>
+                <p className="text-2xl md:text-3xl font-bold text-primary">12</p>
+                <p className="text-primary/70 text-xs mt-2">100% {t('methodology.control.uptime')}</p>
               </div>
 
-              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-xl p-4 border border-amber-500/30">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-xl p-4 border border-amber-500/30 hover:border-amber-500/50 transition-all">
+                <div className="flex items-center gap-2 mb-3">
                   <Zap className="w-4 h-4 text-amber-400" />
                   <span className="text-slate-400 text-xs">{t('methodology.control.tasksCompleted')}</span>
                 </div>
-                <p className="text-2xl font-bold text-amber-400">2.3M</p>
-                <p className="text-amber-400/70 text-xs mt-1">{t('methodology.control.thisMonth')}</p>
+                <p className="text-2xl md:text-3xl font-bold text-amber-400">2.3M</p>
+                <p className="text-amber-400/70 text-xs mt-2">{t('methodology.control.thisMonth')}</p>
               </div>
             </div>
 
             {/* Chart */}
-            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-white text-sm font-medium">{t('methodology.control.monthlyImpact')}</span>
-                <div className="flex items-center gap-4">
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700/50 mb-5">
+              <div className="flex items-center justify-between mb-5">
+                <span className="text-white text-sm font-semibold">{t('methodology.control.monthlyImpact')}</span>
+                <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400 shadow-lg shadow-green-400/50" />
                     <span className="text-slate-400 text-xs">{t('methodology.control.recovered')}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-primary" />
+                    <div className="w-3 h-3 rounded-full bg-primary shadow-lg shadow-primary/50" />
                     <span className="text-slate-400 text-xs">{t('methodology.control.projected')}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-end justify-between h-32 gap-2">
+              <div className="flex items-end justify-between h-36 gap-2">
                 {[35, 45, 40, 55, 60, 75, 85, 90, 88, 95, 100, 110].map((height, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
                     <div 
-                      className="w-full bg-gradient-to-t from-primary to-green-400 rounded-t"
+                      className="w-full bg-gradient-to-t from-primary via-primary/80 to-green-400 rounded-t-md transition-all group-hover:shadow-lg group-hover:shadow-primary/30"
                       style={{ height: `${height}%` }}
                     />
-                    <span className="text-slate-500 text-[10px]">
+                    <span className="text-slate-500 text-[10px] font-medium">
                       {['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][i]}
                     </span>
                   </div>
@@ -150,10 +156,10 @@ export default function MethodologyControl() {
             </div>
 
             {/* ROI Indicator */}
-            <div className="bg-gradient-to-r from-green-500/20 via-primary/20 to-primary/20 rounded-lg p-4 border border-green-500/30 text-center">
-              <p className="text-slate-400 text-sm mb-1">{t('methodology.control.roiIndicator')}</p>
-              <p className="text-4xl font-bold text-green-400">340%</p>
-              <p className="text-slate-500 text-xs mt-1">{t('methodology.control.roiCalculation')}</p>
+            <div className="bg-gradient-to-r from-green-500/20 via-primary/10 to-primary/20 rounded-xl p-6 border border-green-500/30 text-center">
+              <p className="text-slate-400 text-sm mb-2">{t('methodology.control.roiIndicator')}</p>
+              <p className="text-5xl font-bold text-green-400 mb-1">340%</p>
+              <p className="text-slate-500 text-xs">{t('methodology.control.roiCalculation')}</p>
             </div>
           </div>
         </div>

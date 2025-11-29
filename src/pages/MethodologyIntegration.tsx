@@ -76,47 +76,59 @@ export default function MethodologyIntegration() {
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Visual Hub */}
-            <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
+            <div className="bg-slate-900 rounded-2xl p-6 border border-slate-700/50">
               <h3 className="text-white font-semibold mb-6 flex items-center gap-2">
                 <Server className="w-5 h-5 text-primary" />
                 {t('methodology.integration.architecture')}
               </h3>
               
-              <div className="relative py-8">
+              <div className="relative py-6">
                 <div className="flex items-center justify-center">
                   {/* Left Systems */}
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-4">
                     {integrations.slice(0, 3).map((int, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-center min-w-[80px]">
-                          <span className="text-white font-medium text-sm">{int.name}</span>
-                          <p className="text-slate-500 text-xs">{int.type}</p>
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="bg-slate-800/80 border border-slate-600/50 rounded-xl px-4 py-2.5 text-center min-w-[90px] hover:border-slate-500 transition-all">
+                          <span className="text-white font-semibold text-sm">{int.name}</span>
+                          <p className="text-slate-500 text-[10px] mt-0.5">{int.type}</p>
                         </div>
-                        <div className="w-8 h-0.5 bg-gradient-to-r from-green-500 to-primary relative">
-                          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        <div className="flex items-center">
+                          <div className="w-6 md:w-10 h-0.5 bg-gradient-to-r from-slate-600 to-green-500" />
+                          <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50" />
                         </div>
                       </div>
                     ))}
                   </div>
 
                   {/* Central Galatea Node */}
-                  <div className="mx-4 relative">
-                    <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl animate-pulse" />
-                    <div className="relative w-20 h-20 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center border-4 border-primary/50">
-                      <span className="text-white font-bold text-sm">Galatea</span>
+                  <div className="mx-3 md:mx-6 relative">
+                    <div className="absolute inset-0 bg-primary/40 rounded-full blur-2xl animate-pulse scale-150" />
+                    <div className="relative w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-primary via-primary to-primary/70 rounded-full flex items-center justify-center border-4 border-primary/30 shadow-2xl shadow-primary/30">
+                      <span className="text-white font-bold text-sm md:text-base">Galatea</span>
                     </div>
                   </div>
 
                   {/* Right Systems */}
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-4">
                     {integrations.slice(3).map((int, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div className="w-8 h-0.5 bg-gradient-to-l from-green-500 to-primary relative">
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="flex items-center">
+                          <div className={cn(
+                            "w-2.5 h-2.5 rounded-full shadow-lg",
+                            int.status === 'connected' 
+                              ? "bg-green-500 animate-pulse shadow-green-500/50" 
+                              : "bg-yellow-500 animate-pulse shadow-yellow-500/50"
+                          )} />
+                          <div className={cn(
+                            "w-6 md:w-10 h-0.5",
+                            int.status === 'connected' 
+                              ? "bg-gradient-to-l from-slate-600 to-green-500"
+                              : "bg-gradient-to-l from-slate-600 to-yellow-500"
+                          )} />
                         </div>
-                        <div className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-center min-w-[80px]">
-                          <span className="text-white font-medium text-sm">{int.name}</span>
-                          <p className="text-slate-500 text-xs">{int.type}</p>
+                        <div className="bg-slate-800/80 border border-slate-600/50 rounded-xl px-4 py-2.5 text-center min-w-[90px] hover:border-slate-500 transition-all">
+                          <span className="text-white font-semibold text-sm">{int.name}</span>
+                          <p className="text-slate-500 text-[10px] mt-0.5">{int.type}</p>
                         </div>
                       </div>
                     ))}
@@ -124,17 +136,18 @@ export default function MethodologyIntegration() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 mt-4">
+              {/* Status Grid */}
+              <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-700/50">
                 {integrations.map((int, i) => (
-                  <div key={i} className="bg-slate-800 rounded-lg p-2 border border-slate-700">
-                    <p className="text-white text-xs font-medium">{int.name}</p>
-                    <div className="flex items-center gap-1 mt-1">
+                  <div key={i} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50 hover:border-slate-600 transition-all">
+                    <p className="text-white text-sm font-semibold">{int.name}</p>
+                    <div className="flex items-center gap-1.5 mt-1.5">
                       <div className={cn(
-                        "w-1.5 h-1.5 rounded-full",
+                        "w-2 h-2 rounded-full",
                         int.status === 'connected' ? "bg-green-500" : "bg-yellow-500"
                       )} />
                       <span className={cn(
-                        "text-[10px]",
+                        "text-xs",
                         int.status === 'connected' ? "text-green-400" : "text-yellow-400"
                       )}>
                         {int.status === 'connected' ? t('methodology.integration.secureApi') : t('methodology.integration.pending')}
