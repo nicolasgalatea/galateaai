@@ -47,45 +47,6 @@ export const GalateaHomepageES = () => {
     }
   ];
 
-  const platformSteps = [
-    {
-      icon: UserPlus,
-      title: "Regístrate y define rol",
-      description: "Elige tu rol en salud: Médico, Hospital, EPS, Investigador o Paciente",
-      color: "bg-blue-500"
-    },
-    {
-      icon: Bot,
-      title: "Crear agente de IA",
-      description: "Selecciona tipo de agente: Clínico, Administrativo, Investigación o Soporte al Paciente",
-      color: "bg-green-500"
-    },
-    {
-      icon: Settings,
-      title: "Personalizar avatar",
-      description: "Diseña apariencia hiperrealista con síntesis de voz vía ElevenLabs",
-      color: "bg-purple-500"
-    },
-    {
-      icon: Upload,
-      title: "Entrenar con datos",
-      description: "Sube protocolos médicos, artículos de investigación y guías institucionales",
-      color: "bg-orange-500"
-    },
-    {
-      icon: TestTube,
-      title: "Probar y validar",
-      description: "Pruebas interactivas con conversaciones de texto y voz",
-      color: "bg-red-500"
-    },
-    {
-      icon: Globe2,
-      title: "Desplegar y escalar",
-      description: "Lanza globalmente o vende en nuestro mercado de agentes de IA",
-      color: "bg-teal-500"
-    }
-  ];
-
   const stakeholders = [
     { icon: Stethoscope, title: "Médicos", description: "Doctores individuales y especialistas" },
     { icon: Building2, title: "Hospitales", description: "Instituciones de salud y redes" },
