@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { HowItWorks } from '@/components/HowItWorks';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { UserPlus, Bot, Palette, Database, TestTube, Rocket, ArrowRight } from 'lucide-react';
 import heroImage from '@/assets/hero-medical-team.jpg';
@@ -59,6 +60,9 @@ export default function NewHome() {
           </div>
         </div>
       </section>
+
+      {/* How It Works Section */}
+      <HowItWorks />
 
       {/* Process Section */}
       <section className="py-20 px-4">
