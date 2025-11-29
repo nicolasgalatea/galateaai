@@ -19,8 +19,8 @@ const translations = {
     'nav.contact': 'Contact',
     
     // Hero
-    'hero.title': 'The Infrastructure for the Healthcare Agentic Web',
-    'hero.subtitle': 'Empower your operations to Build, Deploy, and Scale Autonomous Agents that automate critical Back-Office workflows. The sovereign platform for Health-Ops orchestration. Secure. Compliant. No-Code.',
+    'hero.title': 'The infrastructure for the healthcare agentic web',
+    'hero.subtitle': 'Empower your operations to build, deploy, and scale autonomous agents that automate critical back-office workflows. The sovereign platform for health-ops orchestration. Secure. Compliant. No-code.',
     'hero.cta.create': 'Create your AI agent',
     'hero.cta.demo': 'Request a demo',
     
@@ -263,16 +263,16 @@ const translations = {
     'about.roadmap.phase4.goal': 'Goal: Become the global reference in hyper-realistic AI-powered medical agent infrastructure.',
     
     // How It Works - Enterprise Process
-    'howItWorks.title': 'How It Works',
-    'howItWorks.subtitle': 'Health-Ops infrastructure designed to integrate Artificial Intelligence into real workflow, without disrupting your operation.',
-    'howItWorks.step1.title': '1. Bottleneck Diagnosis',
-    'howItWorks.step1.desc': 'Our architects analyze your Back-Office processes (Billing, Portfolio, Accounting) to identify where manual operation is draining resources and slowing cash flow.',
-    'howItWorks.step2.title': '2. Workflow Integration',
-    'howItWorks.step2.desc': 'We are not an isolated app. We connect securely (API/VPN) to your legacy systems (HIS/ERP) to read data in real time, closing the operational "Learning Gap".',
-    'howItWorks.step3.title': '3. Autonomous Agent Deployment',
-    'howItWorks.step3.desc': 'We activate ecosystems of sovereign AI Agents that execute complex tasks: account audits, RIPS validation and financial reconciliation, working 24/7.',
-    'howItWorks.step4.title': '4. Control and Profitability',
-    'howItWorks.step4.desc': 'The system processes massive volume and your experts validate only exceptions. We transform operational efficiency into EBITDA and Cash Flow recovered from the first month.',
+    'howItWorks.title': 'How it works',
+    'howItWorks.subtitle': 'Health-ops infrastructure designed to integrate artificial intelligence into real workflow, without disrupting your operation.',
+    'howItWorks.step1.title': '1. Bottleneck diagnosis',
+    'howItWorks.step1.desc': 'Our architects analyze your back-office processes (billing, portfolio, accounting) to identify where manual operation is draining resources and slowing cash flow.',
+    'howItWorks.step2.title': '2. Workflow integration',
+    'howItWorks.step2.desc': 'We are not an isolated app. We connect securely (API/VPN) to your legacy systems (HIS/ERP) to read data in real time, closing the operational "learning gap".',
+    'howItWorks.step3.title': '3. Autonomous agent deployment',
+    'howItWorks.step3.desc': 'We activate ecosystems of sovereign AI agents that execute complex tasks: account audits, RIPS validation and financial reconciliation, working 24/7.',
+    'howItWorks.step4.title': '4. Control and profitability',
+    'howItWorks.step4.desc': 'The system processes massive volume and your experts validate only exceptions. We transform operational efficiency into EBITDA and cash flow recovered from the first month.',
   },
   es: {
     // Navigation
@@ -282,8 +282,8 @@ const translations = {
     'nav.contact': 'Contacto',
     
     // Hero
-    'hero.title': 'La Infraestructura para la Web Agéntica de Salud',
-    'hero.subtitle': 'Empodera tus operaciones para Construir, Desplegar y Escalar Agentes Autónomos que automatizan flujos críticos del Back-Office. La plataforma soberana para orquestación de Health-Ops. Seguro. Cumplidor. Sin Código.',
+    'hero.title': 'La infraestructura para la web agéntica de salud',
+    'hero.subtitle': 'Empodera tus operaciones para construir, desplegar y escalar agentes autónomos que automatizan flujos críticos del back-office. La plataforma soberana para orquestación de health-ops. Seguro. Cumplidor. Sin código.',
     'hero.cta.create': 'Crea tu agente de IA',
     'hero.cta.demo': 'Solicita una demo',
     
@@ -526,16 +526,16 @@ const translations = {
     'about.roadmap.phase4.goal': 'Objetivo: Convertirse en la referencia global en infraestructura de agentes médicos hiperrealistas impulsados por IA.',
     
     // How It Works - Enterprise Process
-    'howItWorks.title': 'Cómo Funciona',
-    'howItWorks.subtitle': 'Infraestructura de Health-Ops diseñada para integrar Inteligencia Artificial en el flujo de trabajo real, sin interrumpir su operación.',
-    'howItWorks.step1.title': '1. Diagnóstico de Cuellos de Botella',
-    'howItWorks.step1.desc': 'Nuestros arquitectos analizan sus procesos de Back-Office (Facturación, Cartera, Contabilidad) para identificar dónde la operación manual está drenando recursos y frenando el flujo de caja.',
-    'howItWorks.step2.title': '2. Integración al Flujo de Trabajo',
-    'howItWorks.step2.desc': 'No somos una app aislada. Nos conectamos de forma segura (API/VPN) a sus sistemas legados (HIS/ERP) para leer la data en tiempo real, cerrando el "Learning Gap" operativo.',
-    'howItWorks.step3.title': '3. Despliegue de Agentes Autónomos',
-    'howItWorks.step3.desc': 'Activamos ecosistemas de Agentes de IA soberanos que ejecutan tareas complejas: auditoría de cuentas, validación de RIPS y conciliación financiera, trabajando 24/7.',
-    'howItWorks.step4.title': '4. Control y Rentabilidad',
-    'howItWorks.step4.desc': 'El sistema procesa el volumen masivo y sus expertos validan solo las excepciones. Transformamos eficiencia operativa en EBITDA y Flujo de Caja recuperado desde el primer mes.',
+    'howItWorks.title': 'Cómo funciona',
+    'howItWorks.subtitle': 'Infraestructura de health-ops diseñada para integrar inteligencia artificial en el flujo de trabajo real, sin interrumpir su operación.',
+    'howItWorks.step1.title': '1. Diagnóstico de cuellos de botella',
+    'howItWorks.step1.desc': 'Nuestros arquitectos analizan sus procesos de back-office (facturación, cartera, contabilidad) para identificar dónde la operación manual está drenando recursos y frenando el flujo de caja.',
+    'howItWorks.step2.title': '2. Integración al flujo de trabajo',
+    'howItWorks.step2.desc': 'No somos una app aislada. Nos conectamos de forma segura (API/VPN) a sus sistemas legados (HIS/ERP) para leer la data en tiempo real, cerrando el "learning gap" operativo.',
+    'howItWorks.step3.title': '3. Despliegue de agentes autónomos',
+    'howItWorks.step3.desc': 'Activamos ecosistemas de agentes de IA soberanos que ejecutan tareas complejas: auditoría de cuentas, validación de RIPS y conciliación financiera, trabajando 24/7.',
+    'howItWorks.step4.title': '4. Control y rentabilidad',
+    'howItWorks.step4.desc': 'El sistema procesa el volumen masivo y sus expertos validan solo las excepciones. Transformamos eficiencia operativa en EBITDA y flujo de caja recuperado desde el primer mes.',
   },
 };
 
