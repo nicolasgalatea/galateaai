@@ -1,14 +1,84 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { 
   TrendingUp, ArrowLeft, ArrowRight, DollarSign, Clock,
   Users, Zap, Activity, Building2,
-  BarChart3, PieChart, LineChart
+  BarChart3, PieChart, LineChart, Bot, CheckCircle, Code
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
+
+// Animated counter hook
+const useAnimatedCounter = (target: number, duration: number = 2000, delay: number = 0) => {
+  const [count, setCount] = useState(0);
+  
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      let start = 0;
+      const increment = target / (duration / 16);
+      const timer = setInterval(() => {
+        start += increment;
+        if (start >= target) {
+          setCount(target);
+          clearInterval(timer);
+        } else {
+          setCount(Math.floor(start));
+        }
+      }, 16);
+      return () => clearInterval(timer);
+    }, delay);
+    return () => clearTimeout(timeout);
+  }, [target, duration, delay]);
+  
+  return count;
+};
+
+// Live agent task simulation
+const agentTasks = [
+  { task: 'Validando factura #4892...', status: 'processing' },
+  { task: 'Código CIE-10 mapeado: J18.9 ✓', status: 'success' },
+  { task: 'Verificando cumplimiento RIPS...', status: 'processing' },
+  { task: 'Glosa #1247 resuelta automáticamente ✓', status: 'success' },
+  { task: 'Extrayendo datos de historia clínica...', status: 'processing' },
+  { task: 'Autorización previa completada ✓', status: 'success' },
+];
 
 export default function MethodologyControl() {
   const { t } = useLanguage();
+  const [chartAnimated, setChartAnimated] = useState(false);
+  const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
+  const [taskProgress, setTaskProgress] = useState(0);
+  
+  // Animated counters
+  const revenueCount = useAnimatedCounter(150, 2000, 500);
+  const hoursCount = useAnimatedCounter(4000, 2000, 700);
+  const agentsCount = useAnimatedCounter(12, 1500, 900);
+  const tasksCount = useAnimatedCounter(2.3, 2000, 1100);
+  const roiCount = useAnimatedCounter(340, 2500, 1500);
+  
+  // Chart animation
+  useEffect(() => {
+    const timer = setTimeout(() => setChartAnimated(true), 800);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  // Agent task animation
+  useEffect(() => {
+    const taskTimer = setInterval(() => {
+      setTaskProgress(prev => {
+        if (prev >= 100) {
+          setCurrentTaskIndex(i => (i + 1) % agentTasks.length);
+          return 0;
+        }
+        return prev + 2;
+      });
+    }, 50);
+    return () => clearInterval(taskTimer);
+  }, []);
+  
+  const chartHeights = [35, 45, 40, 55, 60, 75, 85, 90, 88, 95, 100, 110];
+  const currentTask = agentTasks[currentTaskIndex];
   
   return (
     <div className="min-h-screen bg-background">
@@ -74,57 +144,93 @@ export default function MethodologyControl() {
                 <div className="w-3 h-3 rounded-full bg-green-500 shadow-lg shadow-green-500/30" />
               </div>
               <div className="flex items-center gap-2 bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/30">
-                <Activity className="w-4 h-4 text-green-600" />
+                <Activity className="w-4 h-4 text-green-600 animate-pulse" />
                 <span className="text-green-600 text-sm font-medium">{t('methodology.control.liveData')}</span>
               </div>
             </div>
 
-            {/* KPI Cards */}
+            {/* Live Agent Task - NEW */}
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-xl p-4 border border-primary/20 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Code className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-card flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-semibold text-foreground">Agente Codificación</span>
+                    <span className="text-xs bg-green-500/20 text-green-600 px-2 py-0.5 rounded-full">Activo</span>
+                  </div>
+                  <p className={cn(
+                    "text-sm",
+                    currentTask.status === 'success' ? "text-green-600" : "text-muted-foreground"
+                  )}>
+                    {currentTask.task}
+                  </p>
+                  <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary to-green-500 rounded-full transition-all duration-100"
+                      style={{ width: `${taskProgress}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-primary">847</p>
+                  <p className="text-[10px] text-muted-foreground">tareas hoy</p>
+                </div>
+              </div>
+            </div>
+
+            {/* KPI Cards with animated counters */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-xl p-4 border border-green-500/30 hover:border-green-500/50 transition-all">
+              <div className="bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-xl p-4 border border-green-500/30 hover:border-green-500/50 transition-all hover:scale-[1.02]">
                 <div className="flex items-center gap-2 mb-3">
                   <DollarSign className="w-4 h-4 text-green-600" />
                   <span className="text-muted-foreground text-xs">{t('methodology.control.revenueRecovered')}</span>
                 </div>
-                <p className="text-2xl md:text-3xl font-bold text-green-600">$150M</p>
+                <p className="text-2xl md:text-3xl font-bold text-green-600">${revenueCount}M</p>
                 <p className="text-green-600/70 text-xs mt-2 flex items-center gap-1">
                   <span className="inline-block w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-green-600" />
                   23% {t('methodology.control.vsLastQuarter')}
                 </p>
               </div>
               
-              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/30 hover:border-primary/50 transition-all">
+              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/30 hover:border-primary/50 transition-all hover:scale-[1.02]">
                 <div className="flex items-center gap-2 mb-3">
                   <Clock className="w-4 h-4 text-primary" />
                   <span className="text-muted-foreground text-xs">{t('methodology.control.adminHoursSaved')}</span>
                 </div>
-                <p className="text-2xl md:text-3xl font-bold text-primary">4,000</p>
+                <p className="text-2xl md:text-3xl font-bold text-primary">{hoursCount.toLocaleString()}</p>
                 <p className="text-primary/70 text-xs mt-2 flex items-center gap-1">
                   <span className="inline-block w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-primary" />
                   156 {t('methodology.control.thisWeek')}
                 </p>
               </div>
 
-              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/30 hover:border-primary/50 transition-all">
+              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/30 hover:border-primary/50 transition-all hover:scale-[1.02]">
                 <div className="flex items-center gap-2 mb-3">
                   <Users className="w-4 h-4 text-primary" />
                   <span className="text-muted-foreground text-xs">{t('methodology.control.activeAgents')}</span>
                 </div>
-                <p className="text-2xl md:text-3xl font-bold text-primary">12</p>
+                <p className="text-2xl md:text-3xl font-bold text-primary">{agentsCount}</p>
                 <p className="text-primary/70 text-xs mt-2">100% {t('methodology.control.uptime')}</p>
               </div>
 
-              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-xl p-4 border border-amber-500/30 hover:border-amber-500/50 transition-all">
+              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-xl p-4 border border-amber-500/30 hover:border-amber-500/50 transition-all hover:scale-[1.02]">
                 <div className="flex items-center gap-2 mb-3">
                   <Zap className="w-4 h-4 text-amber-600" />
                   <span className="text-muted-foreground text-xs">{t('methodology.control.tasksCompleted')}</span>
                 </div>
-                <p className="text-2xl md:text-3xl font-bold text-amber-600">2.3M</p>
+                <p className="text-2xl md:text-3xl font-bold text-amber-600">{tasksCount.toFixed(1)}M</p>
                 <p className="text-amber-600/70 text-xs mt-2">{t('methodology.control.thisMonth')}</p>
               </div>
             </div>
 
-            {/* Chart */}
+            {/* Animated Chart */}
             <div className="bg-muted/50 rounded-xl p-5 border border-border mb-5">
               <div className="flex items-center justify-between mb-5">
                 <span className="text-foreground text-sm font-semibold">{t('methodology.control.monthlyImpact')}</span>
@@ -141,11 +247,14 @@ export default function MethodologyControl() {
               </div>
               
               <div className="flex items-end justify-between h-36 gap-2">
-                {[35, 45, 40, 55, 60, 75, 85, 90, 88, 95, 100, 110].map((height, i) => (
+                {chartHeights.map((height, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
                     <div 
-                      className="w-full bg-gradient-to-t from-primary via-primary/80 to-green-500 rounded-t-md transition-all group-hover:shadow-lg group-hover:shadow-primary/30"
-                      style={{ height: `${height}%` }}
+                      className="w-full bg-gradient-to-t from-primary via-primary/80 to-green-500 rounded-t-md transition-all duration-1000 ease-out group-hover:shadow-lg group-hover:shadow-primary/30"
+                      style={{ 
+                        height: chartAnimated ? `${height}%` : '0%',
+                        transitionDelay: `${i * 100}ms`
+                      }}
                     />
                     <span className="text-muted-foreground text-[10px] font-medium">
                       {['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][i]}
@@ -155,11 +264,12 @@ export default function MethodologyControl() {
               </div>
             </div>
 
-            {/* ROI Indicator */}
-            <div className="bg-gradient-to-r from-green-500/20 via-primary/10 to-primary/20 rounded-xl p-6 border border-green-500/30 text-center">
-              <p className="text-muted-foreground text-sm mb-2">{t('methodology.control.roiIndicator')}</p>
-              <p className="text-5xl font-bold text-green-600 mb-1">340%</p>
-              <p className="text-muted-foreground text-xs">{t('methodology.control.roiCalculation')}</p>
+            {/* ROI Indicator with animated counter */}
+            <div className="bg-gradient-to-r from-green-500/20 via-primary/10 to-primary/20 rounded-xl p-6 border border-green-500/30 text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+              <p className="text-muted-foreground text-sm mb-2 relative">{t('methodology.control.roiIndicator')}</p>
+              <p className="text-5xl font-bold text-green-600 mb-1 relative">{roiCount}%</p>
+              <p className="text-muted-foreground text-xs relative">{t('methodology.control.roiCalculation')}</p>
             </div>
           </div>
         </div>
@@ -172,11 +282,11 @@ export default function MethodologyControl() {
           
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-card border border-border rounded-xl p-6">
-              <BarChart3 className="w-10 h-10 text-green-400 mb-4" />
+              <BarChart3 className="w-10 h-10 text-green-500 mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.control.financialMetrics')}</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
                   {t('methodology.control.cashFlowRecovered')}
                 </li>
                 <li className="flex items-center gap-2">
