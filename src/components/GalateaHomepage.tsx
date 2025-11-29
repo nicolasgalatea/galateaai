@@ -11,6 +11,8 @@ import {
   Upload, TestTube, Eye, Headphones, Lock, Globe2, Languages, AlertTriangle
 } from 'lucide-react';
 
+import { HowItWorks } from '@/components/HowItWorks';
+
 // Import hyper-realistic avatar images
 import miraAvatar from '@/assets/mira-avatar.jpg';
 import aydaAvatar from '@/assets/ayda-avatar.jpg';
@@ -114,17 +116,18 @@ export const GalateaHomepage = () => {
               </div>
               
               <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold leading-tight">
-                <span className="text-foreground">Infrastructure for the</span>
+                <span className="text-foreground">The Sovereign Infrastructure</span>
                 <br />
-                <span className="text-foreground">Healthcare</span>{' '}
+                <span className="text-foreground">for the Healthcare</span>{' '}
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
                   Agentic Web
                 </span>
               </h1>
               
               <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-2xl">
-                Build, Deploy, and Scale{' '}
-                <span className="text-primary font-semibold">Sovereign Autonomous Agents</span>.
+                Empower your operations to Build, Deploy, and Scale{' '}
+                <span className="text-primary font-semibold">Autonomous Agents</span>{' '}
+                that automate critical Back-Office workflows. The sovereign platform for Health-Ops orchestration.
                 <span className="block mt-2 font-medium text-foreground/80">Secure. Compliant. No-Code.</span>
               </p>
               
@@ -242,6 +245,9 @@ export const GalateaHomepage = () => {
           </div>
         </div>
       </section>
+
+      {/* How It Works - 4 Step Methodology */}
+      <HowItWorks />
 
       {/* AI LAB SECTION */}
       <section id="lab" className="py-32 px-6 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 relative overflow-hidden">
