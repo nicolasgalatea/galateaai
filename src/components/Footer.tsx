@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Github, Linkedin, Twitter } from 'lucide-react';
+import galateaLogo from '@/assets/galatea-logo-icon.png';
 
 export const Footer = () => {
   const { t } = useLanguage();
@@ -10,11 +11,8 @@ export const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">G</span>
-              </div>
-              <span className="text-xl font-bold">Galatea AI</span>
+            <div className="flex items-center mb-4">
+              <img src={galateaLogo} alt="Galatea AI" className="h-8" />
             </div>
             <p className="text-muted-foreground mb-4 max-w-md">
               {t('footer.tagline')}
