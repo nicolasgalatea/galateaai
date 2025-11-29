@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { HowItWorks } from '@/components/HowItWorks';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import heroImage from '@/assets/hero-medical-team.jpg';
 
@@ -48,6 +49,9 @@ export default function NewHome() {
           </div>
         </div>
       </section>
+
+      {/* How It Works - 4 Step Methodology */}
+      <HowItWorks />
 
       <Footer />
     </div>
