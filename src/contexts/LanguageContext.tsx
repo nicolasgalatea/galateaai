@@ -247,8 +247,8 @@ const translations = {
     'about.team.carlos.highlight3': 'Role: Guarantees the scientific and medical validity of AI solutions, ensuring clinical relevance and academic rigor.',
     'about.team.cto.name': 'Uriel Rodríguez Castro',
     'about.team.cto.title': 'CTO & Co-Founder',
-    'about.team.cto.bio': '"The Enterprise Architect" Executive leader with 15+ years architecting digital ecosystems for Fortune 500 companies.',
-    'about.team.cto.profile': 'Global Scale: Ex-Head of Digital Engineering at Inchcape PLC, leading 300+ engineers across 60 countries. Enterprise Trust: Former C-Level Advisor at NTT DATA and Digital Architect for Chedraui (Retail Giant). Galatea Mission: Building the "Sovereign Infrastructure" ensuring banking-grade security, compliance (TOGAF/CGEIT), and seamless integration with legacy hospital systems.',
+    'about.team.cto.bio': 'Executive Leader in Enterprise Architecture & Digital Governance 15+ years architecting mission-critical ecosystems for Fortune 500 corporations.',
+    'about.team.cto.profile': 'Global Operations: Formerly Head of Global Digital Engineering at Inchcape PLC, leading 300+ engineers across 60 countries. Strategic Trust: Proven track record as C-Level Advisor at NTT DATA and Digital Leader for Chedraui, driving multi-million dollar transformations. Galatea Mission: Building our "Sovereign Infrastructure", ensuring banking-grade security, TOGAF/CGEIT compliance, and seamless integration for healthcare.',
     
     // About - Roadmap
     'about.roadmap.title': 'Strategic Roadmap',
@@ -526,8 +526,8 @@ const translations = {
     'about.team.carlos.highlight3': 'Rol: Garantiza la validez científica y médica de las soluciones de IA, asegurando relevancia clínica y rigor académico.',
     'about.team.cto.name': 'Uriel Rodríguez Castro',
     'about.team.cto.title': 'CTO & Co-Fundador',
-    'about.team.cto.bio': '"The Enterprise Architect" Líder ejecutivo con más de 15 años arquitectando ecosistemas digitales para empresas Fortune 500.',
-    'about.team.cto.profile': 'Escala Global: Ex-Head of Digital Engineering en Inchcape PLC, liderando más de 300 ingenieros en 60 países. Confianza Empresarial: Ex-C-Level Advisor en NTT DATA y Arquitecto Digital para Chedraui (gigante del retail). Misión Galatea: Construyendo la "Infraestructura Soberana" asegurando seguridad de nivel bancario, cumplimiento normativo (TOGAF/CGEIT) e integración perfecta con sistemas hospitalarios legados.',
+    'about.team.cto.bio': 'Líder Ejecutivo en Arquitectura Empresarial y Gobernanza Digital con más de 15 años arquitectando ecosistemas críticos para corporaciones Fortune 500.',
+    'about.team.cto.profile': 'Operaciones Globales: Anteriormente Head of Global Digital Engineering en Inchcape PLC, liderando más de 300 ingenieros en 60 países. Confianza Estratégica: Trayectoria comprobada como C-Level Advisor en NTT DATA y Líder Digital para Chedraui, impulsando transformaciones multimillonarias. Misión Galatea: Construyendo nuestra "Infraestructura Soberana", asegurando seguridad de nivel bancario, cumplimiento TOGAF/CGEIT e integración perfecta para healthcare.',
     
     // About - Roadmap
     'about.roadmap.title': 'Roadmap Estratégico',
