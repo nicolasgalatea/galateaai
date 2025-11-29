@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Github, Linkedin, Twitter } from 'lucide-react';
-import galateaLogo from '@/assets/galatea-logo-icon.png';
+import galateaLogo from '@/assets/galatea-logo-new.png';
 
 export const Footer = () => {
   const { t } = useLanguage();
