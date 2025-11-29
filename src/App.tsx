@@ -23,6 +23,7 @@ import AgentLogbook from "./pages/AgentLogbook";
 import AgentBilling from "./pages/AgentBilling";
 import CustomAgent from "./pages/CustomAgent";
 import About from "./pages/About";
+import Team from "./pages/Team";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/agent/billing" element={<AgentBilling />} />
             <Route path="/custom-agent" element={<CustomAgent />} />
             <Route path="/about" element={<About />} />
+            <Route path="/team" element={<Team />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
