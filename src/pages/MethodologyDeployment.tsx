@@ -30,8 +30,8 @@ export default function MethodologyDeployment() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative py-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-background to-background" />
-        <div className="absolute top-20 left-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
+        <div className="absolute top-20 left-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         
         <div className="container mx-auto max-w-6xl relative z-10">
           <Link 
@@ -43,16 +43,16 @@ export default function MethodologyDeployment() {
           </Link>
 
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
-              <Bot className="w-8 h-8 text-purple-400" />
+            <div className="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center">
+              <Bot className="w-8 h-8 text-primary" />
             </div>
-            <div className="px-4 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-400 text-sm font-medium">
+            <div className="px-4 py-1 rounded-full bg-primary/20 border border-primary/30 text-primary text-sm font-medium">
               {t('methodology.step')} 3 {t('methodology.of')} 4
             </div>
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-            {t('methodology.deployment.title')} <span className="text-purple-400">{t('methodology.deployment.titleHighlight')}</span>
+            {t('methodology.deployment.title')} <span className="text-primary">{t('methodology.deployment.titleHighlight')}</span>
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-3xl mb-8">
@@ -61,7 +61,7 @@ export default function MethodologyDeployment() {
 
           <div className="grid grid-cols-3 gap-4 max-w-2xl">
             <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-purple-400">{t('methodology.deployment.stat1.value')}</p>
+              <p className="text-3xl font-bold text-primary">{t('methodology.deployment.stat1.value')}</p>
               <p className="text-sm text-muted-foreground">{t('methodology.deployment.stat1.label')}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4 text-center">
@@ -93,7 +93,7 @@ export default function MethodologyDeployment() {
                     <div className={cn(
                       "w-12 h-12 rounded-xl flex items-center justify-center",
                       agent.status === 'active' 
-                        ? "bg-gradient-to-br from-purple-500 to-primary" 
+                        ? "bg-gradient-to-br from-primary to-primary/70" 
                         : "bg-muted"
                     )}>
                       <Bot className="w-6 h-6 text-white" />
@@ -130,7 +130,7 @@ export default function MethodologyDeployment() {
             <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-white font-semibold flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-purple-400" />
+                  <Activity className="w-5 h-5 text-primary" />
                   {t('methodology.deployment.liveLog')}
                 </h3>
                 <div className="flex items-center gap-2">
@@ -150,13 +150,13 @@ export default function MethodologyDeployment() {
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-slate-500 text-xs">{log.time}</span>
-                      <span className="text-purple-400 text-xs">[{log.agent}]</span>
+                      <span className="text-primary text-xs">[{log.agent}]</span>
                     </div>
                     <span className={cn(
                       "text-xs",
                       log.status === 'success' && "text-green-400",
                       log.status === 'warning' && "text-amber-400",
-                      log.status === 'processing' && "text-blue-400",
+                      log.status === 'processing' && "text-primary",
                     )}>
                       {log.text}
                     </span>
@@ -170,7 +170,7 @@ export default function MethodologyDeployment() {
                   <p className="text-slate-400 text-xs">{t('methodology.deployment.processedToday')}</p>
                 </div>
                 <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
-                  <p className="text-xl font-bold text-purple-400">99.2%</p>
+                  <p className="text-xl font-bold text-primary">99.2%</p>
                   <p className="text-slate-400 text-xs">{t('methodology.deployment.precision')}</p>
                 </div>
                 <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
@@ -190,8 +190,8 @@ export default function MethodologyDeployment() {
           
           <div className="grid md:grid-cols-4 gap-6">
             <div className="bg-card border border-border rounded-xl p-5">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
-                <FileText className="w-6 h-6 text-purple-400" />
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-4">
+                <FileText className="w-6 h-6 text-primary" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">{t('methodology.deployment.step1.title')}</h3>
               <p className="text-sm text-muted-foreground">
@@ -200,8 +200,8 @@ export default function MethodologyDeployment() {
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
-                <Settings className="w-6 h-6 text-purple-400" />
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-4">
+                <Settings className="w-6 h-6 text-primary" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">{t('methodology.deployment.step2.title')}</h3>
               <p className="text-sm text-muted-foreground">
@@ -210,8 +210,8 @@ export default function MethodologyDeployment() {
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
-                <AlertTriangle className="w-6 h-6 text-purple-400" />
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-4">
+                <AlertTriangle className="w-6 h-6 text-primary" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">{t('methodology.deployment.step3.title')}</h3>
               <p className="text-sm text-muted-foreground">
@@ -220,8 +220,8 @@ export default function MethodologyDeployment() {
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
-                <CheckCircle className="w-6 h-6 text-purple-400" />
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-4">
+                <CheckCircle className="w-6 h-6 text-primary" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">{t('methodology.deployment.step4.title')}</h3>
               <p className="text-sm text-muted-foreground">
@@ -238,13 +238,13 @@ export default function MethodologyDeployment() {
           <h2 className="text-2xl font-bold mb-8 text-foreground">{t('methodology.roi')}</h2>
           
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 rounded-xl p-6">
-              <Zap className="w-10 h-10 text-purple-400 mb-4" />
+            <div className="bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-xl p-6">
+              <Zap className="w-10 h-10 text-primary mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.deployment.roi1.title')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
                 {t('methodology.deployment.roi1.desc')}
               </p>
-              <p className="text-2xl font-bold text-purple-400">{t('methodology.deployment.roi1.value')}</p>
+              <p className="text-2xl font-bold text-primary">{t('methodology.deployment.roi1.value')}</p>
               <p className="text-xs text-muted-foreground">{t('methodology.deployment.roi1.label')}</p>
             </div>
 
@@ -258,13 +258,13 @@ export default function MethodologyDeployment() {
               <p className="text-xs text-muted-foreground">{t('methodology.deployment.roi2.label')}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-xl p-6">
-              <Clock className="w-10 h-10 text-blue-400 mb-4" />
+            <div className="bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-xl p-6">
+              <Clock className="w-10 h-10 text-primary mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.deployment.roi3.title')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
                 {t('methodology.deployment.roi3.desc')}
               </p>
-              <p className="text-2xl font-bold text-blue-400">{t('methodology.deployment.roi3.value')}</p>
+              <p className="text-2xl font-bold text-primary">{t('methodology.deployment.roi3.value')}</p>
               <p className="text-xs text-muted-foreground">{t('methodology.deployment.roi3.label')}</p>
             </div>
           </div>
@@ -290,7 +290,7 @@ export default function MethodologyDeployment() {
 
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
               <div className="text-center">
-                <p className="text-2xl font-bold text-purple-400">8</p>
+                <p className="text-2xl font-bold text-primary">8</p>
                 <p className="text-xs text-muted-foreground">{t('methodology.deployment.case.stat1')}</p>
               </div>
               <div className="text-center">

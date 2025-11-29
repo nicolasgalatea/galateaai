@@ -9,69 +9,26 @@ const steps = [
     titleKey: 'howItWorks.step1.title',
     descKey: 'howItWorks.step1.desc',
     path: '/methodology/diagnosis',
-    color: 'red',
   },
   { 
     icon: Cable, 
     titleKey: 'howItWorks.step2.title',
     descKey: 'howItWorks.step2.desc',
     path: '/methodology/integration',
-    color: 'blue',
   },
   { 
     icon: Bot, 
     titleKey: 'howItWorks.step3.title',
     descKey: 'howItWorks.step3.desc',
     path: '/methodology/deployment',
-    color: 'purple',
   },
   { 
     icon: TrendingUp, 
     titleKey: 'howItWorks.step4.title',
     descKey: 'howItWorks.step4.desc',
     path: '/methodology/control',
-    color: 'green',
   },
 ];
-
-const colorClasses = {
-  red: {
-    bg: 'bg-red-500/20',
-    border: 'border-red-500/30',
-    text: 'text-red-400',
-    icon: 'bg-red-500',
-    iconText: 'text-white',
-    hoverBorder: 'hover:border-red-500/50',
-    dotBorder: 'border-red-500/40',
-  },
-  blue: {
-    bg: 'bg-blue-500/20',
-    border: 'border-blue-500/30',
-    text: 'text-blue-400',
-    icon: 'bg-blue-500',
-    iconText: 'text-white',
-    hoverBorder: 'hover:border-blue-500/50',
-    dotBorder: 'border-blue-500/40',
-  },
-  purple: {
-    bg: 'bg-purple-500/20',
-    border: 'border-purple-500/30',
-    text: 'text-purple-400',
-    icon: 'bg-purple-500',
-    iconText: 'text-white',
-    hoverBorder: 'hover:border-purple-500/50',
-    dotBorder: 'border-purple-500/40',
-  },
-  green: {
-    bg: 'bg-green-500/20',
-    border: 'border-green-500/30',
-    text: 'text-green-400',
-    icon: 'bg-green-500',
-    iconText: 'text-white',
-    hoverBorder: 'hover:border-green-500/50',
-    dotBorder: 'border-green-500/40',
-  },
-};
 
 export function HowItWorks() {
   useScrollReveal();
@@ -104,26 +61,25 @@ export function HowItWorks() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
             {steps.map((step, index) => {
               const Icon = step.icon;
-              const colors = colorClasses[step.color as keyof typeof colorClasses];
               
               return (
                 <Link
                   key={index}
                   to={step.path}
-                  className={`group relative bg-card hover:bg-card/80 p-8 rounded-2xl border ${colors.border} ${colors.hoverBorder} transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}
+                  className="group relative bg-card hover:bg-card/80 p-8 rounded-2xl border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                 >
                   {/* Step Number */}
-                  <div className={`absolute top-5 right-5 w-8 h-8 rounded-full ${colors.icon} flex items-center justify-center text-sm font-bold ${colors.iconText}`}>
+                  <div className="absolute top-5 right-5 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-primary-foreground">
                     {index + 1}
                   </div>
 
                   {/* Icon */}
-                  <div className={`w-20 h-20 rounded-2xl ${colors.icon} flex items-center justify-center mb-6`}>
-                    <Icon className={`w-10 h-10 ${colors.iconText}`} />
+                  <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mb-6">
+                    <Icon className="w-10 h-10 text-primary-foreground" />
                   </div>
 
                   {/* Title */}
-                  <h3 className={`font-bold mb-4 text-xl ${colors.text}`}>
+                  <h3 className="font-bold text-foreground mb-4 text-xl">
                     {t(step.titleKey)}
                   </h3>
                   
