@@ -23,8 +23,8 @@ export default function MethodologyIntegration() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative py-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-background to-background" />
-        <div className="absolute top-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
+        <div className="absolute top-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         
         <div className="container mx-auto max-w-6xl relative z-10">
           <Link 
@@ -36,16 +36,16 @@ export default function MethodologyIntegration() {
           </Link>
 
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
-              <Cable className="w-8 h-8 text-blue-400" />
+            <div className="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center">
+              <Cable className="w-8 h-8 text-primary" />
             </div>
-            <div className="px-4 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-400 text-sm font-medium">
+            <div className="px-4 py-1 rounded-full bg-primary/20 border border-primary/30 text-primary text-sm font-medium">
               {t('methodology.step')} 2 {t('methodology.of')} 4
             </div>
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-            {t('methodology.integration.title')} <span className="text-blue-400">{t('methodology.integration.titleHighlight')}</span>
+            {t('methodology.integration.title')} <span className="text-primary">{t('methodology.integration.titleHighlight')}</span>
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-3xl mb-8">
@@ -54,7 +54,7 @@ export default function MethodologyIntegration() {
 
           <div className="grid grid-cols-3 gap-4 max-w-2xl">
             <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-blue-400">{t('methodology.integration.stat1.value')}</p>
+              <p className="text-3xl font-bold text-primary">{t('methodology.integration.stat1.value')}</p>
               <p className="text-sm text-muted-foreground">{t('methodology.integration.stat1.label')}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4 text-center">
@@ -78,7 +78,7 @@ export default function MethodologyIntegration() {
             {/* Visual Hub */}
             <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
               <h3 className="text-white font-semibold mb-6 flex items-center gap-2">
-                <Server className="w-5 h-5 text-blue-400" />
+                <Server className="w-5 h-5 text-primary" />
                 {t('methodology.integration.architecture')}
               </h3>
               
@@ -92,7 +92,7 @@ export default function MethodologyIntegration() {
                           <span className="text-white font-medium text-sm">{int.name}</span>
                           <p className="text-slate-500 text-xs">{int.type}</p>
                         </div>
-                        <div className="w-8 h-0.5 bg-gradient-to-r from-green-500 to-blue-500 relative">
+                        <div className="w-8 h-0.5 bg-gradient-to-r from-green-500 to-primary relative">
                           <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                         </div>
                       </div>
@@ -101,8 +101,8 @@ export default function MethodologyIntegration() {
 
                   {/* Central Galatea Node */}
                   <div className="mx-4 relative">
-                    <div className="absolute inset-0 bg-blue-500/30 rounded-full blur-xl animate-pulse" />
-                    <div className="relative w-20 h-20 bg-gradient-to-br from-blue-500 to-primary rounded-full flex items-center justify-center border-4 border-blue-500/50">
+                    <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl animate-pulse" />
+                    <div className="relative w-20 h-20 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center border-4 border-primary/50">
                       <span className="text-white font-bold text-sm">Galatea</span>
                     </div>
                   </div>
@@ -111,7 +111,7 @@ export default function MethodologyIntegration() {
                   <div className="flex flex-col gap-3">
                     {integrations.slice(3).map((int, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <div className="w-8 h-0.5 bg-gradient-to-l from-green-500 to-blue-500 relative">
+                        <div className="w-8 h-0.5 bg-gradient-to-l from-green-500 to-primary relative">
                           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                         </div>
                         <div className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-center min-w-[80px]">
@@ -149,8 +149,8 @@ export default function MethodologyIntegration() {
             <div className="space-y-4">
               <div className="bg-card border border-border rounded-xl p-5">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <Database className="w-5 h-5 text-blue-400" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Database className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-foreground mb-1">{t('methodology.integration.step1.title')}</h4>
@@ -163,8 +163,8 @@ export default function MethodologyIntegration() {
 
               <div className="bg-card border border-border rounded-xl p-5">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <Lock className="w-5 h-5 text-blue-400" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Lock className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-foreground mb-1">{t('methodology.integration.step2.title')}</h4>
@@ -177,8 +177,8 @@ export default function MethodologyIntegration() {
 
               <div className="bg-card border border-border rounded-xl p-5">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <Zap className="w-5 h-5 text-blue-400" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Zap className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-foreground mb-1">{t('methodology.integration.step3.title')}</h4>
@@ -191,8 +191,8 @@ export default function MethodologyIntegration() {
 
               <div className="bg-card border border-border rounded-xl p-5">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <Shield className="w-5 h-5 text-blue-400" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-foreground mb-1">{t('methodology.integration.step4.title')}</h4>
@@ -241,13 +241,13 @@ export default function MethodologyIntegration() {
           <h2 className="text-2xl font-bold mb-8 text-foreground">{t('methodology.roi')}</h2>
           
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-xl p-6">
-              <Clock className="w-10 h-10 text-blue-400 mb-4" />
+            <div className="bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-xl p-6">
+              <Clock className="w-10 h-10 text-primary mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.integration.roi1.title')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
                 {t('methodology.integration.roi1.desc')}
               </p>
-              <p className="text-2xl font-bold text-blue-400">{t('methodology.integration.roi1.value')}</p>
+              <p className="text-2xl font-bold text-primary">{t('methodology.integration.roi1.value')}</p>
               <p className="text-xs text-muted-foreground">{t('methodology.integration.roi1.label')}</p>
             </div>
 
@@ -261,13 +261,13 @@ export default function MethodologyIntegration() {
               <p className="text-xs text-muted-foreground">{t('methodology.integration.roi2.label')}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 rounded-xl p-6">
-              <Shield className="w-10 h-10 text-purple-400 mb-4" />
+            <div className="bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-xl p-6">
+              <Shield className="w-10 h-10 text-primary mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.integration.roi3.title')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
                 {t('methodology.integration.roi3.desc')}
               </p>
-              <p className="text-2xl font-bold text-purple-400">{t('methodology.integration.roi3.value')}</p>
+              <p className="text-2xl font-bold text-primary">{t('methodology.integration.roi3.value')}</p>
               <p className="text-xs text-muted-foreground">{t('methodology.integration.roi3.label')}</p>
             </div>
           </div>
@@ -293,7 +293,7 @@ export default function MethodologyIntegration() {
 
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
               <div className="text-center">
-                <p className="text-2xl font-bold text-blue-400">3 días</p>
+                <p className="text-2xl font-bold text-primary">3 días</p>
                 <p className="text-xs text-muted-foreground">{t('methodology.integration.case.stat1')}</p>
               </div>
               <div className="text-center">

@@ -14,8 +14,8 @@ export default function MethodologyControl() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative py-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-background to-background" />
-        <div className="absolute top-20 right-10 w-96 h-96 bg-green-500/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
+        <div className="absolute top-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         
         <div className="container mx-auto max-w-6xl relative z-10">
           <Link 
@@ -27,16 +27,16 @@ export default function MethodologyControl() {
           </Link>
 
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-green-500/20 border border-green-500/30 flex items-center justify-center">
-              <TrendingUp className="w-8 h-8 text-green-400" />
+            <div className="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center">
+              <TrendingUp className="w-8 h-8 text-primary" />
             </div>
-            <div className="px-4 py-1 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-medium">
+            <div className="px-4 py-1 rounded-full bg-primary/20 border border-primary/30 text-primary text-sm font-medium">
               {t('methodology.step')} 4 {t('methodology.of')} 4
             </div>
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-            {t('methodology.control.title')} <span className="text-green-400">{t('methodology.control.titleHighlight')}</span>
+            {t('methodology.control.title')} <span className="text-primary">{t('methodology.control.titleHighlight')}</span>
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-3xl mb-8">
@@ -45,7 +45,7 @@ export default function MethodologyControl() {
 
           <div className="grid grid-cols-3 gap-4 max-w-2xl">
             <div className="bg-card border border-border rounded-xl p-4 text-center">
-              <p className="text-3xl font-bold text-green-400">{t('methodology.control.stat1.value')}</p>
+              <p className="text-3xl font-bold text-primary">{t('methodology.control.stat1.value')}</p>
               <p className="text-sm text-muted-foreground">{t('methodology.control.stat1.label')}</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4 text-center">
@@ -99,13 +99,13 @@ export default function MethodologyControl() {
                 <p className="text-primary/70 text-xs mt-1">↑ 156 {t('methodology.control.thisWeek')}</p>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-500/20 to-purple-500/5 rounded-xl p-4 border border-purple-500/30">
+              <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-4 border border-primary/30">
                 <div className="flex items-center gap-2 mb-2">
-                  <Users className="w-4 h-4 text-purple-400" />
+                  <Users className="w-4 h-4 text-primary" />
                   <span className="text-slate-400 text-xs">{t('methodology.control.activeAgents')}</span>
                 </div>
-                <p className="text-2xl font-bold text-purple-400">12</p>
-                <p className="text-purple-400/70 text-xs mt-1">100% {t('methodology.control.uptime')}</p>
+                <p className="text-2xl font-bold text-primary">12</p>
+                <p className="text-primary/70 text-xs mt-1">100% {t('methodology.control.uptime')}</p>
               </div>
 
               <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-xl p-4 border border-amber-500/30">
@@ -150,7 +150,7 @@ export default function MethodologyControl() {
             </div>
 
             {/* ROI Indicator */}
-            <div className="bg-gradient-to-r from-green-500/20 via-primary/20 to-purple-500/20 rounded-lg p-4 border border-green-500/30 text-center">
+            <div className="bg-gradient-to-r from-green-500/20 via-primary/20 to-primary/20 rounded-lg p-4 border border-green-500/30 text-center">
               <p className="text-slate-400 text-sm mb-1">{t('methodology.control.roiIndicator')}</p>
               <p className="text-4xl font-bold text-green-400">340%</p>
               <p className="text-slate-500 text-xs mt-1">{t('methodology.control.roiCalculation')}</p>
@@ -212,23 +212,23 @@ export default function MethodologyControl() {
             </div>
 
             <div className="bg-card border border-border rounded-xl p-6">
-              <LineChart className="w-10 h-10 text-purple-400 mb-4" />
+              <LineChart className="w-10 h-10 text-primary mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">{t('methodology.control.productivityMetrics')}</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   {t('methodology.control.fteHoursSaved')}
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   {t('methodology.control.tasksPerAgent')}
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   {t('methodology.control.responseTime')}
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   {t('methodology.control.teamSatisfaction')}
                 </li>
               </ul>
@@ -328,7 +328,7 @@ export default function MethodologyControl() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 px-4 bg-gradient-to-br from-primary/10 via-background to-green-500/10">
+      <section className="py-16 px-4 bg-gradient-to-br from-primary/10 via-background to-primary/10">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-bold mb-4 text-foreground">
             {t('methodology.control.cta.title')}
@@ -340,7 +340,6 @@ export default function MethodologyControl() {
             <Link to="/contact">
               <Button size="lg" className="gap-2 bg-primary hover:bg-primary/90">
                 {t('methodology.control.cta.demo')}
-                <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
             <Link to="/pricing">
