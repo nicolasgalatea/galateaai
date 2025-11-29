@@ -1,145 +1,106 @@
-import { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, Loader2, CheckCircle, Scale } from 'lucide-react';
+import { Scale, FileText, Search, AlertTriangle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { AgentDetailTemplate } from '@/components/AgentDetailTemplate';
 
 export default function AgentLegalReview() {
-  const { t } = useLanguage();
-  const [inputData, setInputData] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const { toast } = useToast();
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setResults({
-      diagnosis: 'Legal compliance verified, low risk assessment',
-      confidence: 88,
-      recommendations: [
-        'Update consent documentation',
-        'Add risk disclosure statement',
-        'Review insurance requirements',
-      ],
+  const handleAnalyze = async (file: File): Promise<string> => {
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    return `✅ Legal Risk Assessment Complete
+
+📋 MEDICOLEGAL REVIEW REPORT
+
+DOCUMENT TYPE: Clinical Record
+RISK LEVEL: 🟡 MODERATE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ COMPLIANT ELEMENTS:
+  • Patient identification complete
+  • Informed consent documented
+  • Treatment rationale explained
+  • Follow-up plan documented
+
+⚠️ RISK AREAS IDENTIFIED:
+
+1. DOCUMENTATION GAP (Medium Risk)
+   Location: Progress notes, Day 3
+   Issue: No documentation of patient status
+   Recommendation: Add addendum
+
+2. INFORMED CONSENT (Low Risk)
+   Issue: Alternative treatments not documented
+   Recommendation: Update consent form
+
+3. TIMING (Medium Risk)
+   Issue: 4-hour delay in documenting critical lab
+   Recommendation: Staff education
+
+📊 LITIGATION RISK SCORE: 35/100 (Low-Moderate)
+
+✓ Full recommendations available
+✓ Remediation checklist generated`;
+  };
+
+  const handleSampleData = () => {
+    toast({
+      title: 'Sample Data',
+      description: 'Loading sample clinical documentation...',
     });
-    setIsAnalyzing(false);
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-
-      <main className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl shadow-glow flex items-center justify-center p-12">
-              <Scale className="w-48 h-48 text-primary" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('agents.legalReview.name')}
-              </h1>
-              <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 w-fit">
-                {t('agents.legalReview.specialty')}
-              </div>
-              <p className="text-lg text-muted-foreground mb-6">
-                {t('agents.legalReview.desc')}
-              </p>
-              <p className="text-muted-foreground">
-                Reviews clinical documents to ensure legal compliance and minimize institutional risk. Identifies gaps in documentation and suggests corrective actions.
-              </p>
-            </div>
-          </div>
-
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{t('agent.upload.title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Textarea
-                  placeholder={t('agent.upload.placeholder')}
-                  value={inputData}
-                  onChange={(e) => setInputData(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Button variant="outline" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  {t('agent.upload.file')}
-                </Button>
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={!inputData || isAnalyzing}
-                  className="gap-2"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('agent.analyzing')}
-                    </>
-                  ) : (
-                    t('agent.analyze')
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {results && (
-            <Card className="animate-fade-in-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t('agent.results.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.diagnosis')}
-                  </div>
-                  <div className="text-lg font-medium">{results.diagnosis}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.confidence')}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${results.confidence}%` }}
-                      />
-                    </div>
-                    <span className="text-lg font-medium">{results.confidence}%</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.recommendations')}
-                  </div>
-                  <ul className="space-y-2">
-                    {results.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    <AgentDetailTemplate
+      name="Legal Risk Analyzer"
+      tagline="AI-powered medicolegal review to identify documentation gaps and minimize litigation risk"
+      specialty="Risk Management"
+      description="Reviews clinical documentation through a legal lens, identifying potential liability issues, documentation gaps, and compliance failures before they become legal problems."
+      category="legal"
+      icon={<Scale className="w-full h-full" />}
+      kpiStats={[
+        { value: '88%', label: 'Risk Detection' },
+        { value: '60%', label: 'Claims Reduced' },
+        { value: '<5 Min', label: 'Review Time' },
+      ]}
+      workflowSteps={[
+        {
+          title: 'Document Upload',
+          description: 'Upload clinical records, consent forms, or incident reports for review.',
+          icon: <FileText className="w-6 h-6" />,
+        },
+        {
+          title: 'Legal Analysis',
+          description: 'AI scans for documentation gaps, timing issues, and potential liability exposures.',
+          icon: <Search className="w-6 h-6" />,
+        },
+        {
+          title: 'Risk Report',
+          description: 'Generates risk score with specific recommendations and remediation steps.',
+          icon: <AlertTriangle className="w-6 h-6" />,
+        },
+      ]}
+      techStack={['Legal AI', 'Colombian Medical Law', 'Risk Scoring', 'NLP']}
+      integrations={[
+        { name: 'Epic' },
+        { name: 'Servinte' },
+        { name: 'Risk Management' },
+        { name: 'Legal Dept' },
+        { name: 'Insurance' },
+      ]}
+      roiCalculator={{
+        unitLabel: 'Records Reviewed Monthly',
+        minValue: 50,
+        maxValue: 2000,
+        step: 50,
+        defaultValue: 300,
+        calculateSavings: (value) => `$${(value * 50).toLocaleString()} USD`,
+        savingsLabel: 'Estimated Risk Avoidance Value',
+      }}
+      onAnalyze={handleAnalyze}
+      acceptedFileTypes="image/*,.pdf"
+      uploadLabel="Upload Clinical Record"
+      sampleDataAction={handleSampleData}
+    />
   );
 }

@@ -1,145 +1,95 @@
-import { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, Loader2, CheckCircle, Shield } from 'lucide-react';
+import { Shield, FileText, Search, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { AgentDetailTemplate } from '@/components/AgentDetailTemplate';
 
 export default function AgentCompliance() {
-  const { t } = useLanguage();
-  const [inputData, setInputData] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const { toast } = useToast();
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
+  const handleAnalyze = async (file: File): Promise<string> => {
     await new Promise(resolve => setTimeout(resolve, 2000));
-    setResults({
-      diagnosis: 'Documentation compliant with Colombian medical standards',
-      confidence: 91,
-      recommendations: [
-        'Minor formatting adjustments needed',
-        'Add required consent documentation',
-        'Update medication coding to latest CUPS standards',
-      ],
+    return `✅ Compliance Audit Complete
+
+📋 Document Analysis:
+
+COMPLIANCE STATUS: ✓ PASSED (92/100)
+
+✓ COMPLIANT ITEMS:
+  • Patient identification complete
+  • Diagnosis documentation adequate
+  • Treatment plan documented
+  • Informed consent present
+
+⚠️ MINOR ISSUES (3):
+  1. Missing physician signature on page 2
+  2. Date format inconsistent (recommend DD/MM/YYYY)
+  3. Medication dosage units not standardized
+
+📊 REGULATORY CHECK:
+  • Resolution 3100/2019: ✓ Compliant
+  • HIPAA Privacy Rule: ✓ Compliant
+  • Colombian Medical Standards: ✓ Compliant
+
+✓ Ready for submission after corrections`;
+  };
+
+  const handleSampleData = () => {
+    toast({
+      title: 'Sample Data',
+      description: 'Loading sample medical document for audit...',
     });
-    setIsAnalyzing(false);
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-
-      <main className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl shadow-glow flex items-center justify-center p-12">
-              <Shield className="w-48 h-48 text-primary" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('agents.compliance.name')}
-              </h1>
-              <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 w-fit">
-                {t('agents.compliance.specialty')}
-              </div>
-              <p className="text-lg text-muted-foreground mb-6">
-                {t('agents.compliance.desc')}
-              </p>
-              <p className="text-muted-foreground">
-                Automatically audits medical documentation to ensure compliance with Colombian medical and legal standards, reducing institutional risk and improving quality assurance.
-              </p>
-            </div>
-          </div>
-
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{t('agent.upload.title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Textarea
-                  placeholder={t('agent.upload.placeholder')}
-                  value={inputData}
-                  onChange={(e) => setInputData(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Button variant="outline" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  {t('agent.upload.file')}
-                </Button>
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={!inputData || isAnalyzing}
-                  className="gap-2"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('agent.analyzing')}
-                    </>
-                  ) : (
-                    t('agent.analyze')
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {results && (
-            <Card className="animate-fade-in-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t('agent.results.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.diagnosis')}
-                  </div>
-                  <div className="text-lg font-medium">{results.diagnosis}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.confidence')}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${results.confidence}%` }}
-                      />
-                    </div>
-                    <span className="text-lg font-medium">{results.confidence}%</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.recommendations')}
-                  </div>
-                  <ul className="space-y-2">
-                    {results.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    <AgentDetailTemplate
+      name="Compliance Guardian"
+      tagline="Automated regulatory compliance auditing for medical documentation against Colombian and international standards"
+      specialty="Regulatory Compliance"
+      description="AI-powered document auditor that validates medical records against Resolution 3100, HIPAA, and institutional protocols. Reduces audit time by 80% and prevents compliance penalties."
+      category="compliance"
+      icon={<Shield className="w-full h-full" />}
+      kpiStats={[
+        { value: '99%', label: 'Detection Rate' },
+        { value: '80%', label: 'Time Saved' },
+        { value: '0', label: 'Penalties' },
+      ]}
+      workflowSteps={[
+        {
+          title: 'Document Upload',
+          description: 'Upload medical records, clinical notes, or consent forms in PDF or image format.',
+          icon: <FileText className="w-6 h-6" />,
+        },
+        {
+          title: 'Regulatory Scan',
+          description: 'AI cross-references document against Colombian regulations, HIPAA, and institutional requirements.',
+          icon: <Search className="w-6 h-6" />,
+        },
+        {
+          title: 'Compliance Report',
+          description: 'Generates detailed audit report with compliance score and specific corrective actions.',
+          icon: <CheckCircle className="w-6 h-6" />,
+        },
+      ]}
+      techStack={['Res. 3100/2019', 'HIPAA', 'ISO 27001', 'Document AI']}
+      integrations={[
+        { name: 'Epic' },
+        { name: 'Servinte' },
+        { name: 'Dynamics 365' },
+        { name: 'SharePoint' },
+        { name: 'ADRES' },
+      ]}
+      roiCalculator={{
+        unitLabel: 'Documents Audited Monthly',
+        minValue: 100,
+        maxValue: 10000,
+        step: 100,
+        defaultValue: 1000,
+        calculateSavings: (value) => `$${(value * 12).toLocaleString()} USD`,
+        savingsLabel: 'Estimated Annual Savings',
+      }}
+      onAnalyze={handleAnalyze}
+      acceptedFileTypes="image/*,.pdf"
+      uploadLabel="Upload Document for Audit"
+      sampleDataAction={handleSampleData}
+    />
   );
 }

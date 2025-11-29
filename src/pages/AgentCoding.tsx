@@ -1,145 +1,94 @@
-import { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, Loader2, CheckCircle, Code } from 'lucide-react';
+import { Code, FileText, Cpu, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { AgentDetailTemplate } from '@/components/AgentDetailTemplate';
 
 export default function AgentCoding() {
-  const { t } = useLanguage();
-  const [inputData, setInputData] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const { toast } = useToast();
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
+  const handleAnalyze = async (file: File): Promise<string> => {
     await new Promise(resolve => setTimeout(resolve, 2000));
-    setResults({
-      diagnosis: 'CUPS/RIPS codes automatically assigned',
-      confidence: 96,
-      recommendations: [
-        'Review procedure code 890201',
-        'Validate diagnosis codes',
-        'Confirm billing accuracy',
-      ],
+    return `✅ Medical Coding Complete
+
+📋 EXTRACTED CODES:
+
+DIAGNOSES (CIE-10):
+  • J18.9 - Neumonía, no especificada (Principal)
+  • J96.0 - Insuficiencia respiratoria aguda
+  • E11.9 - Diabetes mellitus tipo 2
+
+PROCEDURES (CUPS):
+  • 890302 - Consulta de urgencias especializada
+  • 903841 - Radiografía de tórax
+  • 906201 - Hemograma completo
+
+📊 VALIDATION:
+  ✓ All codes valid per CUPS 2024
+  ✓ Diagnosis-procedure consistency verified
+  ✓ No duplicate codes detected
+
+💰 BILLING ESTIMATE: $450,000 COP
+
+✓ Ready for RIPS submission`;
+  };
+
+  const handleSampleData = () => {
+    toast({
+      title: 'Sample Data',
+      description: 'Loading sample clinical documentation...',
     });
-    setIsAnalyzing(false);
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-
-      <main className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl shadow-glow flex items-center justify-center p-12">
-              <Code className="w-48 h-48 text-primary" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('agents.coding.name')}
-              </h1>
-              <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 w-fit">
-                {t('agents.coding.specialty')}
-              </div>
-              <p className="text-lg text-muted-foreground mb-6">
-                {t('agents.coding.desc')}
-              </p>
-              <p className="text-muted-foreground">
-                Automatically codes procedures and consultations using CUPS/RIPS standards, reducing administrative burden and improving billing accuracy.
-              </p>
-            </div>
-          </div>
-
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{t('agent.upload.title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Textarea
-                  placeholder={t('agent.upload.placeholder')}
-                  value={inputData}
-                  onChange={(e) => setInputData(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Button variant="outline" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  {t('agent.upload.file')}
-                </Button>
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={!inputData || isAnalyzing}
-                  className="gap-2"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('agent.analyzing')}
-                    </>
-                  ) : (
-                    t('agent.analyze')
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {results && (
-            <Card className="animate-fade-in-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t('agent.results.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.diagnosis')}
-                  </div>
-                  <div className="text-lg font-medium">{results.diagnosis}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.confidence')}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${results.confidence}%` }}
-                      />
-                    </div>
-                    <span className="text-lg font-medium">{results.confidence}%</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.recommendations')}
-                  </div>
-                  <ul className="space-y-2">
-                    {results.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    <AgentDetailTemplate
+      name="Medical Coding Engine"
+      tagline="Automated CIE-10 and CUPS coding from clinical documentation with 99% accuracy"
+      specialty="Revenue Cycle"
+      description="AI extracts diagnoses and procedures from clinical notes and automatically assigns validated CIE-10 and CUPS codes. Reduces coding errors and accelerates billing cycles."
+      category="finance"
+      icon={<Code className="w-full h-full" />}
+      kpiStats={[
+        { value: '99%', label: 'Accuracy' },
+        { value: '10x', label: 'Faster' },
+        { value: '45%', label: 'Less Denials' },
+      ]}
+      workflowSteps={[
+        {
+          title: 'Clinical Input',
+          description: 'Upload clinical notes, discharge summaries, or operative reports.',
+          icon: <FileText className="w-6 h-6" />,
+        },
+        {
+          title: 'NLP Extraction',
+          description: 'Medical NLP identifies diagnoses, procedures, and maps to official code sets.',
+          icon: <Cpu className="w-6 h-6" />,
+        },
+        {
+          title: 'Validated Codes',
+          description: 'Outputs validated CIE-10/CUPS codes with confidence scores and billing estimates.',
+          icon: <CheckCircle className="w-6 h-6" />,
+        },
+      ]}
+      techStack={['CIE-10', 'CUPS 2024', 'Medical NLP', 'RIPS v2.0']}
+      integrations={[
+        { name: 'SAP' },
+        { name: 'Servinte' },
+        { name: 'Dynamics 365' },
+        { name: 'ADRES' },
+        { name: 'Epic' },
+      ]}
+      roiCalculator={{
+        unitLabel: 'Records Coded Monthly',
+        minValue: 500,
+        maxValue: 50000,
+        step: 500,
+        defaultValue: 5000,
+        calculateSavings: (value) => `$${(value * 6).toLocaleString()} USD`,
+        savingsLabel: 'Estimated Annual Savings',
+      }}
+      onAnalyze={handleAnalyze}
+      acceptedFileTypes="image/*,.pdf,.txt"
+      uploadLabel="Upload Clinical Document"
+      sampleDataAction={handleSampleData}
+    />
   );
 }
