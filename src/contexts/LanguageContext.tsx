@@ -158,7 +158,7 @@ const translations = {
 
     // Pricing - Enterprise Licensing
     'nav.pricing': 'Licensing',
-    'pricing.title': 'Enterprise Licensing Models',
+    'pricing.title': 'Enterprise licensing models',
     'pricing.subtitle': 'Scalable sovereign infrastructure tailored to your operational volume and compliance needs.',
     'pricing.recommended': 'Recommended',
     'pricing.trust.title': 'Compliance & Certifications',
