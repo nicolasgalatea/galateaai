@@ -1,145 +1,103 @@
-import { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Upload, Loader2, CheckCircle, ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, FileText, Cpu, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { AgentDetailTemplate } from '@/components/AgentDetailTemplate';
 
 export default function AgentSurgicalProtocols() {
-  const { t } = useLanguage();
-  const [inputData, setInputData] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const { toast } = useToast();
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
+  const handleAnalyze = async (file: File): Promise<string> => {
     await new Promise(resolve => setTimeout(resolve, 2000));
-    setResults({
-      diagnosis: 'Pre-op and post-op checklists generated',
-      confidence: 95,
-      recommendations: [
-        'Verify surgical team availability',
-        'Confirm equipment sterilization',
-        'Review patient allergies',
-      ],
+    return `✅ Surgical Checklist Generated
+
+📋 PRE-OPERATIVE CHECKLIST
+Procedure: Laparoscopic Cholecystectomy
+Date: ${new Date().toLocaleDateString()}
+
+━━━ BEFORE INDUCTION ━━━
+☐ Patient identity verified (Name + ID)
+☐ Procedure and site confirmed
+☐ Consent signed and witnessed
+☐ Site marked (if applicable)
+☐ Allergies reviewed
+☐ NPO status confirmed (>8 hours)
+☐ Antibiotics given within 60 min
+☐ DVT prophylaxis administered
+
+━━━ BEFORE INCISION ━━━
+☐ Time-out performed
+☐ All team members introduced
+☐ Anticipated blood loss reviewed
+☐ Equipment sterility confirmed
+☐ Essential imaging displayed
+
+━━━ POST-OPERATIVE ━━━
+☐ Instrument and sponge count correct
+☐ Specimen labeled and sent
+☐ Equipment issues documented
+☐ Recovery plan communicated
+
+✓ WHO Safe Surgery Checklist compliant
+✓ Institutional requirements met`;
+  };
+
+  const handleSampleData = () => {
+    toast({
+      title: 'Sample Data',
+      description: 'Loading sample surgical procedure data...',
     });
-    setIsAnalyzing(false);
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-
-      <main className="pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-            <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl shadow-glow flex items-center justify-center p-12">
-              <ClipboardCheck className="w-48 h-48 text-primary" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {t('agents.surgicalProtocols.name')}
-              </h1>
-              <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 w-fit">
-                {t('agents.surgicalProtocols.specialty')}
-              </div>
-              <p className="text-lg text-muted-foreground mb-6">
-                {t('agents.surgicalProtocols.desc')}
-              </p>
-              <p className="text-muted-foreground">
-                Generates automatic pre-operative and post-operative checklists and protocols. Ensures quality assurance and patient safety in surgical procedures.
-              </p>
-            </div>
-          </div>
-
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{t('agent.upload.title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Textarea
-                  placeholder={t('agent.upload.placeholder')}
-                  value={inputData}
-                  onChange={(e) => setInputData(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Button variant="outline" className="gap-2">
-                  <Upload className="w-4 h-4" />
-                  {t('agent.upload.file')}
-                </Button>
-                <Button
-                  onClick={handleAnalyze}
-                  disabled={!inputData || isAnalyzing}
-                  className="gap-2"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('agent.analyzing')}
-                    </>
-                  ) : (
-                    t('agent.analyze')
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {results && (
-            <Card className="animate-fade-in-up">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t('agent.results.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.diagnosis')}
-                  </div>
-                  <div className="text-lg font-medium">{results.diagnosis}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.confidence')}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${results.confidence}%` }}
-                      />
-                    </div>
-                    <span className="text-lg font-medium">{results.confidence}%</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    {t('agent.results.recommendations')}
-                  </div>
-                  <ul className="space-y-2">
-                    {results.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    <AgentDetailTemplate
+      name="Surgical Safety Protocol"
+      tagline="Automated pre-op, intra-op, and post-op checklists for surgical safety compliance"
+      specialty="Surgical Quality"
+      description="Generates WHO-compliant surgical safety checklists customized by procedure type. Ensures all safety checks are completed and documented, reducing never events."
+      category="surgical"
+      icon={<ClipboardCheck className="w-full h-full" />}
+      kpiStats={[
+        { value: '100%', label: 'WHO Compliant' },
+        { value: '0', label: 'Never Events' },
+        { value: '2 Min', label: 'Generation' },
+      ]}
+      workflowSteps={[
+        {
+          title: 'Procedure Selection',
+          description: 'Select surgical procedure from library or input custom procedure details.',
+          icon: <FileText className="w-6 h-6" />,
+        },
+        {
+          title: 'Checklist Generation',
+          description: 'AI generates procedure-specific checklists based on WHO guidelines and institutional protocols.',
+          icon: <Cpu className="w-6 h-6" />,
+        },
+        {
+          title: 'Safety Documentation',
+          description: 'Interactive checklist with timestamps and team verification for complete audit trail.',
+          icon: <CheckCircle className="w-6 h-6" />,
+        },
+      ]}
+      techStack={['WHO Guidelines', 'Joint Commission', 'HIPAA Compliant', 'Real-time']}
+      integrations={[
+        { name: 'Epic' },
+        { name: 'Cerner' },
+        { name: 'OR Systems' },
+        { name: 'Anesthesia' },
+        { name: 'Quality Dept' },
+      ]}
+      roiCalculator={{
+        unitLabel: 'Surgeries Per Month',
+        minValue: 50,
+        maxValue: 2000,
+        step: 50,
+        defaultValue: 400,
+        calculateSavings: (value) => `$${(value * 20).toLocaleString()} USD`,
+        savingsLabel: 'Risk Avoidance Value',
+      }}
+      onAnalyze={handleAnalyze}
+      acceptedFileTypes=".pdf,.txt"
+      uploadLabel="Upload Procedure Details"
+      sampleDataAction={handleSampleData}
+    />
   );
 }
