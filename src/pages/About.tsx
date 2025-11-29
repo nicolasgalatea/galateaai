@@ -9,6 +9,7 @@ import { Users, Building2, Telescope, ShieldAlert, Network, Zap, Server, UserChe
 import { Link } from 'react-router-dom';
 import ceoAvatar from '@/assets/ceo-avatar.jpg';
 import ctoAvatar from '@/assets/cto-avatar.png';
+import cmoAvatar from '@/assets/cmo-avatar.png';
 
 export default function About() {
   const { t } = useLanguage();
@@ -297,13 +298,22 @@ export default function About() {
                 </CardContent>
               </Card>
 
-              {/* Carlos */}
+              {/* Carlos - CMO */}
               <Card className="hover-lift scroll-reveal" style={{ animationDelay: '0.1s' }}>
                 <CardContent className="p-8">
-                  <h3 className="text-xl font-bold mb-2">{t('about.team.carlos.name')}</h3>
-                  <p className="text-primary font-semibold mb-4">{t('about.team.carlos.title')}</p>
-                  <p className="text-muted-foreground mb-4">{t('about.team.carlos.bio')}</p>
-                  <ul className="space-y-2">
+                  <div className="flex items-start gap-6">
+                    <img 
+                      src={cmoAvatar} 
+                      alt="Carlos - CMO" 
+                      className="w-24 h-24 rounded-xl object-cover shadow-lg flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold mb-2">{t('about.team.carlos.name')}</h3>
+                      <p className="text-primary font-semibold mb-4">{t('about.team.carlos.title')}</p>
+                      <p className="text-muted-foreground mb-4">{t('about.team.carlos.bio')}</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2 mt-4">
                     <li className="text-sm text-muted-foreground flex items-start gap-2">
                       <span>•</span>
                       <span>{t('about.team.carlos.highlight1')}</span>
