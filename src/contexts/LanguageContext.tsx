@@ -19,8 +19,8 @@ const translations = {
     'nav.contact': 'Contact',
     
     // Hero
-    'hero.title': 'We build safe and intelligent agents for the healthcare sector',
-    'hero.subtitle': 'Galatea AI empowers professionals, institutions, and patients through personalized AI agents for clinical, administrative, and research tasks.',
+    'hero.title': 'Infrastructure for the Healthcare Agentic Web',
+    'hero.subtitle': 'Build, Deploy, and Scale Sovereign Autonomous Agents. Secure. Compliant. No-Code.',
     'hero.cta.create': 'Create your AI agent',
     'hero.cta.demo': 'Request a demo',
     
@@ -297,8 +297,8 @@ const translations = {
     'nav.contact': 'Contacto',
     
     // Hero
-    'hero.title': 'Construimos agentes seguros e inteligentes para el sector de la salud',
-    'hero.subtitle': 'Galatea AI empodera a profesionales, instituciones y pacientes a través de agentes de IA personalizados para tareas clínicas, administrativas y de investigación.',
+    'hero.title': 'Infraestructura para la Web Agéntica de Salud',
+    'hero.subtitle': 'Construye, Despliega y Escala Agentes Autónomos Soberanos. Seguro. Cumplidor. Sin Código.',
     'hero.cta.create': 'Crea tu agente de IA',
     'hero.cta.demo': 'Solicita una demo',
     
