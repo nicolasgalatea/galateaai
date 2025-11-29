@@ -24,21 +24,6 @@ const translations = {
     'hero.cta.create': 'Create your AI agent',
     'hero.cta.demo': 'Request a demo',
     
-    // Process Steps
-    'process.title': 'How It Works',
-    'process.step1.title': 'Register & Define Your Role',
-    'process.step1.desc': 'Doctor, Hospital, HMO, Researcher, or Patient',
-    'process.step2.title': 'Create an AI Agent',
-    'process.step2.desc': 'Clinical, Administrative, Research, or Patient Support',
-    'process.step3.title': 'Customize Avatar',
-    'process.step3.desc': 'Hyper-realistic appearance with synthetic voice',
-    'process.step4.title': 'Train with Data',
-    'process.step4.desc': 'Upload medical protocols, research papers, and guidelines',
-    'process.step5.title': 'Test & Validate',
-    'process.step5.desc': 'Interactive text and voice testing',
-    'process.step6.title': 'Deploy & Scale',
-    'process.step6.desc': 'Launch globally or sell in our AI marketplace',
-    'process.cta': 'Start building your agent today',
     
     // Agents
     'agents.title': 'Our AI Agents',
@@ -301,22 +286,6 @@ const translations = {
     'hero.subtitle': 'Construye, Despliega y Escala Agentes Autónomos Soberanos. Seguro. Cumplidor. Sin Código.',
     'hero.cta.create': 'Crea tu agente de IA',
     'hero.cta.demo': 'Solicita una demo',
-    
-    // Process Steps
-    'process.title': 'Cómo Funciona',
-    'process.step1.title': 'Regístrate y Define tu Rol',
-    'process.step1.desc': 'Doctor, Hospital, HMO, Investigador o Paciente',
-    'process.step2.title': 'Crea un Agente de IA',
-    'process.step2.desc': 'Clínico, Administrativo, Investigación o Soporte al Paciente',
-    'process.step3.title': 'Personaliza el Avatar',
-    'process.step3.desc': 'Apariencia hiperrealista con voz sintética',
-    'process.step4.title': 'Entrena con Datos',
-    'process.step4.desc': 'Carga protocolos médicos, artículos de investigación y guías',
-    'process.step5.title': 'Prueba y Valida',
-    'process.step5.desc': 'Pruebas interactivas de texto y voz',
-    'process.step6.title': 'Despliega y Escala',
-    'process.step6.desc': 'Lanza globalmente o vende en nuestro marketplace de IA',
-    'process.cta': 'Comienza a construir tu agente hoy',
     
     // Agents
     'agents.title': 'Nuestros Agentes IA',
