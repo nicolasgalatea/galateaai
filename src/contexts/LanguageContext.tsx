@@ -245,10 +245,10 @@ const translations = {
     'about.team.carlos.highlight1': 'Medical Training: Specialist in General Surgery (Universidad El Bosque), Master in Clinical Epidemiology (Universidad de los Andes).',
     'about.team.carlos.highlight2': 'Research: Author/co-author of over 40 scientific publications. Awards include Paul Dudley White International Scholar Award (AHA 2024).',
     'about.team.carlos.highlight3': 'Role: Guarantees the scientific and medical validity of AI solutions, ensuring clinical relevance and academic rigor.',
-    'about.team.cto.name': 'Chief Technology Officer (CTO)',
-    'about.team.cto.title': 'Actively Recruiting',
-    'about.team.cto.bio': 'To complete the core team, Galatea AI is recruiting a CTO with solid AI engineering background and machine learning experience applied to healthcare.',
-    'about.team.cto.profile': 'Expected profile: Deep learning, NLP, computer vision, generative models expertise. Experience implementing AI pipelines in hospital or pharmaceutical environments with understanding of privacy and security standards (HIPAA, GDPR).',
+    'about.team.cto.name': 'Uriel Rodríguez Castro',
+    'about.team.cto.title': 'CTO & Co-Founder',
+    'about.team.cto.bio': '"The Enterprise Architect" Executive leader with 15+ years architecting digital ecosystems for Fortune 500 companies.',
+    'about.team.cto.profile': 'Global Scale: Ex-Head of Digital Engineering at Inchcape PLC, leading 300+ engineers across 60 countries. Enterprise Trust: Former C-Level Advisor at NTT DATA and Digital Architect for Chedraui (Retail Giant). Galatea Mission: Building the "Sovereign Infrastructure" ensuring banking-grade security, compliance (TOGAF/CGEIT), and seamless integration with legacy hospital systems.',
     
     // About - Roadmap
     'about.roadmap.title': 'Strategic Roadmap',
@@ -524,10 +524,10 @@ const translations = {
     'about.team.carlos.highlight1': 'Formación médica: Especialista en Cirugía General (Universidad El Bosque), Maestría en Epidemiología Clínica (Universidad de los Andes).',
     'about.team.carlos.highlight2': 'Investigación: Autor/coautor de más de 40 publicaciones científicas. Premios incluyen Paul Dudley White International Scholar Award (AHA 2024).',
     'about.team.carlos.highlight3': 'Rol: Garantiza la validez científica y médica de las soluciones de IA, asegurando relevancia clínica y rigor académico.',
-    'about.team.cto.name': 'Director de Tecnología (CTO)',
-    'about.team.cto.title': 'En Búsqueda Activa',
-    'about.team.cto.bio': 'Para completar el core team, Galatea AI está en proceso de reclutar un CTO con sólida formación en ingeniería de IA y experiencia en machine learning aplicado a salud.',
-    'about.team.cto.profile': 'Perfil esperado: Expertise en deep learning, NLP, visión computacional, modelos generativos. Experiencia implementando pipelines de IA en entornos hospitalarios o farmacéuticos con comprensión de estándares de privacidad y seguridad (HIPAA, GDPR).',
+    'about.team.cto.name': 'Uriel Rodríguez Castro',
+    'about.team.cto.title': 'CTO & Co-Fundador',
+    'about.team.cto.bio': '"The Enterprise Architect" Líder ejecutivo con más de 15 años arquitectando ecosistemas digitales para empresas Fortune 500.',
+    'about.team.cto.profile': 'Escala Global: Ex-Head of Digital Engineering en Inchcape PLC, liderando más de 300 ingenieros en 60 países. Confianza Empresarial: Ex-C-Level Advisor en NTT DATA y Arquitecto Digital para Chedraui (gigante del retail). Misión Galatea: Construyendo la "Infraestructura Soberana" asegurando seguridad de nivel bancario, cumplimiento normativo (TOGAF/CGEIT) e integración perfecta con sistemas hospitalarios legados.',
     
     // About - Roadmap
     'about.roadmap.title': 'Roadmap Estratégico',
