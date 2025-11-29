@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Globe, User } from 'lucide-react';
 import { AuthModal } from './AuthModal';
-import galateaLogo from '@/assets/galatea-logo-icon.png';
+import galateaLogo from '@/assets/galatea-logo-new.png';
 
 export const Header = () => {
   const { language, setLanguage, t } = useLanguage();
