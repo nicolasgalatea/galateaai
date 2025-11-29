@@ -809,47 +809,6 @@ export const GalateaHomepage = () => {
         </div>
       </section>
 
-      {/* Platform Steps Section */}
-      <section id="platform" className="py-20 px-6 bg-muted/30">
-        <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4">How It Works</Badge>
-            <h2 className="text-4xl font-bold mb-6">
-              Create your healthcare AI agent in 6 steps
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Our intuitive platform guides you through the entire process, from concept to deployment
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {platformSteps.map((step, index) => (
-              <Card key={index} className="p-6 hover:shadow-glow transition-all duration-300 hover:-translate-y-2">
-                <div className="flex items-start space-x-4">
-                  <div className={`p-3 rounded-xl text-white ${step.color}`}>
-                    <step.icon className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="text-xs">{index + 1}</Badge>
-                      <h3 className="text-lg font-semibold">{step.title}</h3>
-                    </div>
-                    <p className="text-muted-foreground text-sm">{step.description}</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Button size="lg" className="bg-gradient-primary hover:opacity-90">
-              <Bot className="w-5 h-5 mr-2" />
-              Start Creating Your Agent
-            </Button>
-          </div>
-        </div>
-      </section>
-
       {/* AI Agent Types Section */}
       <section id="agents" className="py-20 px-6">
         <div className="container mx-auto max-w-7xl">
