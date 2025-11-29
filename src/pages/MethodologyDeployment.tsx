@@ -1,0 +1,330 @@
+import { Link } from 'react-router-dom';
+import { 
+  Bot, ArrowLeft, ArrowRight, CheckCircle, Play, Pause,
+  Activity, Zap, Clock, TrendingUp, Building2, FileText,
+  AlertTriangle, Settings
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+const agents = [
+  { name: 'Audit-Bot-01', role: 'Revenue Cycle', status: 'active', tasks: 1247 },
+  { name: 'RIPS-Agent', role: 'Compliance', status: 'active', tasks: 892 },
+  { name: 'Doc-Parser', role: 'Clinical Notes', status: 'active', tasks: 2103 },
+  { name: 'Auth-Bot', role: 'Prior Auth', status: 'paused', tasks: 456 },
+];
+
+const logs = [
+  { time: '14:32:01', status: 'success', agent: 'Audit-Bot-01', text: 'Invoice #489 validated → RIPS compliant ✓' },
+  { time: '14:32:03', status: 'success', agent: 'RIPS-Agent', text: 'CIE-10 code mapped: J18.9 → Approved' },
+  { time: '14:32:05', status: 'warning', agent: 'Doc-Parser', text: 'Note #1205 → Missing signature → Flagged' },
+  { time: '14:32:08', status: 'success', agent: 'Audit-Bot-01', text: 'Invoice #490 validated → RIPS compliant ✓' },
+  { time: '14:32:10', status: 'processing', agent: 'RIPS-Agent', text: 'Processing batch #47... Extracting codes...' },
+];
+
+export default function MethodologyDeployment() {
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative py-20 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-background to-background" />
+        <div className="absolute top-20 left-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+        
+        <div className="container mx-auto max-w-6xl relative z-10">
+          <Link 
+            to="/#methodology" 
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver a Metodología
+          </Link>
+
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
+              <Bot className="w-8 h-8 text-purple-400" />
+            </div>
+            <div className="px-4 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-400 text-sm font-medium">
+              Paso 3 de 4
+            </div>
+          </div>
+
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
+            Despliegue de <span className="text-purple-400">Agentes Autónomos</span>
+          </h1>
+          
+          <p className="text-xl text-muted-foreground max-w-3xl mb-8">
+            Su fuerza laboral digital ejecuta tareas las 24 horas, los 7 días de la semana, 
+            sin fatiga, sin errores y con supervisión humana cuando se requiere.
+          </p>
+
+          <div className="grid grid-cols-3 gap-4 max-w-2xl">
+            <div className="bg-card border border-border rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-purple-400">24/7</p>
+              <p className="text-sm text-muted-foreground">Operación Continua</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-foreground">99.2%</p>
+              <p className="text-sm text-muted-foreground">Precisión</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-green-400">10x</p>
+              <p className="text-sm text-muted-foreground">Velocidad vs Manual</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Agent Console */}
+      <section className="py-16 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-2xl font-bold mb-8 text-foreground">Consola de Agentes Activos</h2>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Agent List */}
+            <div className="space-y-4">
+              {agents.map((agent, i) => (
+                <div 
+                  key={i} 
+                  className="bg-card border border-border rounded-xl p-4 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-xl flex items-center justify-center",
+                      agent.status === 'active' 
+                        ? "bg-gradient-to-br from-purple-500 to-primary" 
+                        : "bg-muted"
+                    )}>
+                      <Bot className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">{agent.name}</p>
+                      <p className="text-sm text-muted-foreground">{agent.role}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-foreground">{agent.tasks.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Tareas hoy</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "w-2 h-2 rounded-full",
+                        agent.status === 'active' ? "bg-green-500 animate-pulse" : "bg-yellow-500"
+                      )} />
+                      <span className={cn(
+                        "text-sm",
+                        agent.status === 'active' ? "text-green-400" : "text-yellow-400"
+                      )}>
+                        {agent.status === 'active' ? 'Activo' : 'Pausado'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Live Log */}
+            <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white font-semibold flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-purple-400" />
+                  Log en Tiempo Real
+                </h3>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-green-400 text-sm">Live</span>
+                </div>
+              </div>
+
+              <div className="bg-slate-950 rounded-lg p-4 font-mono text-sm border border-slate-800 max-h-64 overflow-y-auto">
+                {logs.map((log, i) => (
+                  <div 
+                    key={i} 
+                    className={cn(
+                      "py-2 border-b border-slate-800 last:border-0",
+                      i === logs.length - 1 && "animate-pulse"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-slate-500 text-xs">{log.time}</span>
+                      <span className="text-purple-400 text-xs">[{log.agent}]</span>
+                    </div>
+                    <span className={cn(
+                      "text-xs",
+                      log.status === 'success' && "text-green-400",
+                      log.status === 'warning' && "text-amber-400",
+                      log.status === 'processing' && "text-blue-400",
+                    )}>
+                      {log.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 mt-4">
+                <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
+                  <p className="text-xl font-bold text-green-400">4,698</p>
+                  <p className="text-slate-400 text-xs">Procesados Hoy</p>
+                </div>
+                <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
+                  <p className="text-xl font-bold text-purple-400">99.2%</p>
+                  <p className="text-slate-400 text-xs">Precisión</p>
+                </div>
+                <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-700">
+                  <p className="text-xl font-bold text-amber-400">7</p>
+                  <p className="text-slate-400 text-xs">Flagged</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How Agents Work */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-2xl font-bold mb-8 text-foreground">Cómo Operan los Agentes</h2>
+          
+          <div className="grid md:grid-cols-4 gap-6">
+            <div className="bg-card border border-border rounded-xl p-5">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
+                <FileText className="w-6 h-6 text-purple-400" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">1. Reciben Tarea</h3>
+              <p className="text-sm text-muted-foreground">
+                Documentos, notas clínicas o facturas ingresan automáticamente a la cola de trabajo.
+              </p>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-5">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
+                <Settings className="w-6 h-6 text-purple-400" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">2. Procesan</h3>
+              <p className="text-sm text-muted-foreground">
+                Ejecutan reglas de negocio, validan contra normativa y extraen información clave.
+              </p>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-5">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
+                <AlertTriangle className="w-6 h-6 text-purple-400" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">3. Escalan si es Necesario</h3>
+              <p className="text-sm text-muted-foreground">
+                Casos complejos o excepcionales se envían a humanos con contexto completo.
+              </p>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-5">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
+                <CheckCircle className="w-6 h-6 text-purple-400" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">4. Completan</h3>
+              <p className="text-sm text-muted-foreground">
+                Resultados se envían a sistemas destino con trazabilidad completa.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ROI Section */}
+      <section className="py-16 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-2xl font-bold mb-8 text-foreground">Retorno de Inversión</h2>
+          
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 rounded-xl p-6">
+              <Zap className="w-10 h-10 text-purple-400 mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Velocidad 10x</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Un agente procesa en 1 hora lo que un equipo hace en un día completo.
+              </p>
+              <p className="text-2xl font-bold text-purple-400">10x</p>
+              <p className="text-xs text-muted-foreground">Más rápido</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20 rounded-xl p-6">
+              <TrendingUp className="w-10 h-10 text-green-400 mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Costo Reducido</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Fracción del costo de FTEs con mayor consistencia y sin ausentismo.
+              </p>
+              <p className="text-2xl font-bold text-green-400">-70%</p>
+              <p className="text-xs text-muted-foreground">Costo operativo</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-xl p-6">
+              <Clock className="w-10 h-10 text-blue-400 mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Disponibilidad Total</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Operación continua sin turnos nocturnos ni fines de semana extras.
+              </p>
+              <p className="text-2xl font-bold text-blue-400">24/7</p>
+              <p className="text-xs text-muted-foreground">Sin interrupciones</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Case Study */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <div className="bg-card border border-border rounded-2xl p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <Building2 className="w-6 h-6 text-primary" />
+              <span className="text-sm text-muted-foreground">Caso de Estudio</span>
+            </div>
+            
+            <h3 className="text-xl font-bold text-foreground mb-4">
+              IPS Nacional - Red de 12 clínicas
+            </h3>
+            
+            <p className="text-muted-foreground mb-6">
+              "Desplegamos 8 agentes Galatea para facturación. En el primer mes procesaron 45,000 
+              facturas con 99.4% de precisión. Liberamos a 15 personas para tareas de mayor valor."
+            </p>
+
+            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-purple-400">8</p>
+                <p className="text-xs text-muted-foreground">Agentes Activos</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-400">45K</p>
+                <p className="text-xs text-muted-foreground">Facturas/Mes</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-foreground">99.4%</p>
+                <p className="text-xs text-muted-foreground">Precisión</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Navigation */}
+      <section className="py-12 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex justify-between items-center">
+            <Link to="/methodology/integration">
+              <Button variant="outline" className="gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Anterior: Integración
+              </Button>
+            </Link>
+            
+            <Link to="/methodology/control">
+              <Button className="gap-2 bg-primary hover:bg-primary/90">
+                Siguiente: Control
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
