@@ -65,63 +65,78 @@ export default function MethodologyDiagnosis() {
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Process Mining Visualization */}
-            <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
-              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+            <div className="bg-slate-900 rounded-2xl p-6 border border-slate-700/50">
+              <h3 className="text-white font-semibold mb-6 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-primary" />
                 Process Mining Dashboard
               </h3>
               
-              {/* Flowchart */}
-              <div className="flex items-center justify-between mb-6">
+              {/* Flowchart - Improved */}
+              <div className="flex items-center justify-center gap-2 md:gap-4 mb-8">
+                {/* Step 1 - Admisión */}
                 <div className="flex flex-col items-center">
-                  <div className="w-14 h-14 rounded-lg bg-slate-800 border border-slate-600 flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-slate-400" />
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-slate-800/80 border border-slate-600/50 flex items-center justify-center transition-all hover:border-slate-500">
+                    <FileText className="w-5 h-5 md:w-6 md:h-6 text-slate-400" />
                   </div>
-                  <span className="text-xs text-slate-400 mt-2">Admisión</span>
+                  <span className="text-[10px] md:text-xs text-slate-400 mt-2 font-medium">Admisión</span>
                 </div>
                 
-                <ArrowRight className="w-5 h-5 text-slate-600" />
+                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-slate-600 flex-shrink-0" />
                 
+                {/* Step 2 - Facturación (Cuello de botella) */}
                 <div className="flex flex-col items-center relative">
-                  <div className="absolute -top-2 -right-2 z-10">
-                    <AlertTriangle className="w-4 h-4 text-primary animate-pulse" />
+                  <div className="absolute -top-1 -right-1 z-10">
+                    <div className="relative">
+                      <AlertTriangle className="w-4 h-4 text-primary" />
+                      <div className="absolute inset-0 animate-ping">
+                        <AlertTriangle className="w-4 h-4 text-primary/50" />
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-14 h-14 rounded-lg bg-primary/20 border-2 border-primary flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-primary" />
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-primary/20 border-2 border-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                    <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                   </div>
-                  <span className="text-xs text-primary mt-2">Facturación</span>
+                  <span className="text-[10px] md:text-xs text-primary mt-2 font-semibold">Facturación</span>
                 </div>
                 
-                <ArrowRight className="w-5 h-5 text-slate-600" />
+                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-slate-600 flex-shrink-0" />
                 
+                {/* Step 3 - Autorización (Cuello de botella secundario) */}
                 <div className="flex flex-col items-center relative">
-                  <div className="absolute -top-2 -right-2 z-10">
-                    <AlertTriangle className="w-4 h-4 text-amber-500 animate-pulse" />
+                  <div className="absolute -top-1 -right-1 z-10">
+                    <div className="relative">
+                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      <div className="absolute inset-0 animate-ping" style={{ animationDelay: '0.5s' }}>
+                        <AlertTriangle className="w-4 h-4 text-amber-500/50" />
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-14 h-14 rounded-lg bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-amber-400" />
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                    <Clock className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
                   </div>
-                  <span className="text-xs text-amber-400 mt-2">Autorización</span>
+                  <span className="text-[10px] md:text-xs text-amber-400 mt-2 font-semibold">Autorización</span>
                 </div>
                 
-                <ArrowRight className="w-5 h-5 text-slate-600" />
+                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-slate-600 flex-shrink-0" />
                 
+                {/* Step 4 - Cobro */}
                 <div className="flex flex-col items-center">
-                  <div className="w-14 h-14 rounded-lg bg-slate-800 border border-slate-600 flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-green-400" />
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-slate-800/80 border border-slate-600/50 flex items-center justify-center transition-all hover:border-green-500/50">
+                    <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
                   </div>
-                  <span className="text-xs text-slate-400 mt-2">Cobro</span>
+                  <span className="text-[10px] md:text-xs text-slate-400 mt-2 font-medium">Cobro</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-800 rounded-lg p-3 border border-slate-700">
-                  <p className="text-slate-400 text-xs">Cuellos Detectados</p>
-                  <p className="text-xl font-bold text-primary">2</p>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 border border-primary/20">
+                  <p className="text-slate-400 text-xs mb-1">Cuellos Detectados</p>
+                  <p className="text-2xl font-bold text-primary">2</p>
                 </div>
-                <div className="bg-slate-800 rounded-lg p-3 border border-slate-700">
-                  <p className="text-slate-400 text-xs">Potencial de Ahorro</p>
-                  <p className="text-xl font-bold text-green-400">$2.3M</p>
+                <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-xl p-4 border border-green-500/20">
+                  <p className="text-slate-400 text-xs mb-1">Potencial de Ahorro</p>
+                  <p className="text-2xl font-bold text-green-400">$2.3M</p>
                 </div>
               </div>
             </div>
