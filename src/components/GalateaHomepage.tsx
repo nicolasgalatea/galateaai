@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,9 +24,44 @@ import amaraPediatricAvatar from '@/assets/amara-pediatric-avatar.jpg';
 import rajOrthoAvatar from '@/assets/raj-ortho-avatar.jpg';
 import galateaAvatar from '@/assets/galatea-avatar.jpg';
 
+// Typing animation hook
+const useTypingEffect = (texts: string[], typingSpeed = 80, deletingSpeed = 40, pauseDuration = 2000) => {
+  const [displayText, setDisplayText] = useState('');
+  const [textIndex, setTextIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentText = texts[textIndex];
+    
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        if (displayText.length < currentText.length) {
+          setDisplayText(currentText.slice(0, displayText.length + 1));
+        } else {
+          setTimeout(() => setIsDeleting(true), pauseDuration);
+        }
+      } else {
+        if (displayText.length > 0) {
+          setDisplayText(currentText.slice(0, displayText.length - 1));
+        } else {
+          setIsDeleting(false);
+          setTextIndex((prev) => (prev + 1) % texts.length);
+        }
+      }
+    }, isDeleting ? deletingSpeed : typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, textIndex, texts, typingSpeed, deletingSpeed, pauseDuration]);
+
+  return displayText;
+};
+
 export const GalateaHomepage = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [showAvatar, setShowAvatar] = useState(false);
+  
+  const typingWords = ['Agentic Web', 'AI Revolution', 'Automation Era', 'Digital Future'];
+  const typedText = useTypingEffect(typingWords, 100, 50, 2500);
 
   const avatarSteps = [
     { 
@@ -119,8 +154,9 @@ export const GalateaHomepage = () => {
                 <span className="text-foreground">The Industrial Infrastructure</span>
                 <br />
                 <span className="text-foreground">for the Global Healthcare</span>{' '}
-                <span className="bg-gradient-primary bg-clip-text text-transparent">
-                  Agentic Web
+                <span className="bg-gradient-primary bg-clip-text text-transparent inline-flex items-baseline">
+                  {typedText}
+                  <span className="w-1 h-[0.9em] bg-primary ml-1 animate-pulse" />
                 </span>
               </h1>
               
