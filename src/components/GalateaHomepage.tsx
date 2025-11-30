@@ -116,18 +116,18 @@ export const GalateaHomepage = () => {
               </div>
               
               <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold leading-tight">
-                <span className="text-foreground">The Sovereign Infrastructure</span>
+                <span className="text-foreground">The Industrial Infrastructure</span>
                 <br />
-                <span className="text-foreground">for the Healthcare</span>{' '}
+                <span className="text-foreground">for the Global Healthcare</span>{' '}
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
                   Agentic Web
                 </span>
               </h1>
               
               <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-2xl">
-                Empower your operations to Build, Deploy, and Scale{' '}
-                <span className="text-primary font-semibold">Autonomous Agents</span>{' '}
-                that automate critical Back-Office workflows. The sovereign platform for Health-Ops orchestration.
+                The industrial-grade platform to build, deploy, and scale{' '}
+                <span className="text-primary font-semibold">Autonomous Agents</span>.{' '}
+                Automate critical Back-Office workflows and master any regulatory environment.
                 <span className="block mt-2 font-medium text-foreground/80">Secure. Compliant. No-Code.</span>
               </p>
               
