@@ -6,33 +6,35 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    /* Cream/Beige background from logo */
+    --background: 55 30% 94%;
     --foreground: 210 11% 15%;
 
-    --card: 0 0% 100%;
+    --card: 55 25% 96%;
     --card-foreground: 210 11% 15%;
 
-    --popover: 0 0% 100%;
+    --popover: 55 25% 96%;
     --popover-foreground: 210 11% 15%;
 
-    --primary: 186 100% 33%;
-    --primary-foreground: 0 0% 100%;
+    /* Teal green from Galatea logo */
+    --primary: 177 55% 35%;
+    --primary-foreground: 55 30% 94%;
 
-    --secondary: 210 11% 96%;
+    --secondary: 55 20% 90%;
     --secondary-foreground: 210 11% 15%;
 
-    --muted: 210 11% 96%;
+    --muted: 55 20% 90%;
     --muted-foreground: 210 11% 45%;
 
-    --accent: 186 100% 33%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 177 55% 35%;
+    --accent-foreground: 55 30% 94%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 11% 90%;
-    --input: 210 11% 90%;
-    --ring: 186 100% 45%;
+    --border: 55 15% 85%;
+    --input: 55 15% 85%;
+    --ring: 177 55% 45%;
 
     --success: 142 76% 36%;
     --warning: 45 93% 47%;
@@ -50,44 +52,46 @@
     --agent-ops: 250 65% 55%;
     --agent-pharma: 320 70% 50%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(186 100% 33%), hsl(186 80% 45%));
-    --gradient-hero: linear-gradient(135deg, hsl(186 100% 33% / 0.1), hsl(186 80% 45% / 0.05));
-    --gradient-animated: linear-gradient(270deg, hsl(186 100% 33%), hsl(186 80% 45%), hsl(186 100% 33%));
+    --gradient-primary: linear-gradient(135deg, hsl(177 55% 35%), hsl(177 45% 45%));
+    --gradient-hero: linear-gradient(135deg, hsl(177 55% 35% / 0.1), hsl(55 30% 94%));
+    --gradient-animated: linear-gradient(270deg, hsl(177 55% 35%), hsl(177 45% 45%), hsl(177 55% 35%));
+    --gradient-subtle: linear-gradient(180deg, hsl(55 30% 94%), hsl(55 25% 92%));
     --shadow-subtle: 0 2px 8px hsl(210 11% 15% / 0.04);
     --shadow-medium: 0 4px 16px hsl(210 11% 15% / 0.08);
-    --shadow-glow: 0 0 40px hsl(186 100% 33% / 0.2);
+    --shadow-glow: 0 0 40px hsl(177 55% 35% / 0.2);
 
     --radius: 0.5rem;
   }
 
   .dark {
     --background: 210 11% 8%;
-    --foreground: 0 0% 98%;
+    --foreground: 55 20% 95%;
 
     --card: 210 11% 10%;
-    --card-foreground: 0 0% 98%;
+    --card-foreground: 55 20% 95%;
 
     --popover: 210 11% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover-foreground: 55 20% 95%;
 
-    --primary: 186 100% 33%;
-    --primary-foreground: 0 0% 100%;
+    /* Teal green from Galatea logo */
+    --primary: 177 55% 40%;
+    --primary-foreground: 55 30% 94%;
 
     --secondary: 210 11% 15%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary-foreground: 55 20% 95%;
 
     --muted: 210 11% 15%;
     --muted-foreground: 210 11% 60%;
 
-    --accent: 186 100% 33%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 177 55% 40%;
+    --accent-foreground: 55 30% 94%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 210 11% 20%;
     --input: 210 11% 20%;
-    --ring: 186 100% 45%;
+    --ring: 177 55% 50%;
   }
 }
 
