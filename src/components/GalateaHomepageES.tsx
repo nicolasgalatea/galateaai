@@ -23,6 +23,7 @@ import elenaOncoAvatar from '@/assets/elena-onco-avatar.jpg';
 import amaraPediatricAvatar from '@/assets/amara-pediatric-avatar.jpg';
 import rajOrthoAvatar from '@/assets/raj-ortho-avatar.jpg';
 import galateaAvatar from '@/assets/galatea-avatar.jpg';
+import galateaLogo from '@/assets/galatea-logo.png';
 
 export const GalateaHomepageES = () => {
   const [activeStep, setActiveStep] = useState(1);
@@ -64,11 +65,8 @@ export const GalateaHomepageES = () => {
         <div className="container mx-auto max-w-7xl px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Avatar className="w-12 h-12">
-                <AvatarImage src={galateaAvatar} alt="Dra. Galatea - Fundadora de Galatea AI" />
-                <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">GA</AvatarFallback>
-              </Avatar>
-              <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              <img src={galateaLogo} alt="Galatea AI" className="h-12 w-auto" />
+              <span className="text-2xl font-bold text-primary">
                 Galatea AI
               </span>
             </div>
