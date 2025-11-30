@@ -110,19 +110,19 @@ export const GalateaHomepageES = () => {
               </div>
               
               <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold leading-tight">
-                <span className="text-foreground">La Infraestructura Soberana</span>
+                <span className="text-foreground">The Industrial Infrastructure</span>
                 <br />
-                <span className="text-foreground">para la</span>{' '}
+                <span className="text-foreground">for the Global Healthcare</span>{' '}
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
-                  Web Agéntica de Salud
+                  Agentic Web
                 </span>
               </h1>
               
               <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-2xl">
-                Empodera tus operaciones para Construir, Desplegar y Escalar{' '}
-                <span className="text-primary font-semibold">Agentes Autónomos</span>{' '}
-                que automatizan flujos críticos del Back-Office. La plataforma soberana para orquestación de Health-Ops.
-                <span className="block mt-2 font-medium text-foreground/80">Seguro. Cumplidor. Sin Código.</span>
+                The industrial-grade platform to build, deploy, and scale{' '}
+                <span className="text-primary font-semibold">Autonomous Agents</span>.{' '}
+                Automate critical Back-Office workflows and master any regulatory environment.
+                <span className="block mt-2 font-medium text-foreground/80">Secure. Compliant. No-Code.</span>
               </p>
               
               <div className="flex flex-wrap gap-6">
