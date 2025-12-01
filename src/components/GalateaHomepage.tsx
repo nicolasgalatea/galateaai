@@ -100,10 +100,7 @@ export const GalateaHomepage = () => {
         <div className="container mx-auto max-w-7xl px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <img src={galateaLogo} alt="Galatea AI" className="h-12 w-auto" />
-              <span className="text-2xl font-bold text-primary">
-                Galatea AI
-              </span>
+              <img src={galateaLogo} alt="Galatea AI" className="h-16 w-auto" />
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
@@ -145,13 +142,13 @@ export const GalateaHomepage = () => {
             <div className="space-y-8 animate-fade-in">
               <div className="inline-flex items-center space-x-3 bg-primary/10 px-6 py-3 rounded-full border border-primary/20">
                 <Shield className="w-5 h-5 text-primary" />
-                <span className="text-primary font-semibold tracking-wide">Sovereign Health-Ops Infrastructure</span>
+                <span className="text-primary font-semibold tracking-wide">Industrial Health-Ops Infrastructure</span>
               </div>
               
               <h1 className="text-4xl lg:text-6xl xl:text-7xl font-bold leading-tight">
-                <span className="text-foreground">The Industrial Infrastructure</span>
+                <span className="text-foreground">The Industrial Infrastructure for the</span>
                 <br />
-                <span className="text-foreground">for the Global Healthcare</span>{' '}
+                <span className="text-foreground">Global Healthcare</span>{' '}
                 <span className="bg-gradient-primary bg-clip-text text-transparent inline-flex items-baseline">
                   {typedText}
                   <span className="w-1 h-[0.9em] bg-primary ml-1 animate-pulse" />
