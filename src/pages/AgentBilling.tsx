@@ -7,17 +7,27 @@ export default function AgentBilling() {
   const { toast } = useToast();
 
   const handleAnalyze = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
+    // Convert file to base64
+    const reader = new FileReader();
+    const base64Promise = new Promise<string>((resolve, reject) => {
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const imageBase64 = await base64Promise;
 
     const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-to-drive`,
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-to-drive-oauth`,
       {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({
+          fileName: file.name,
+          imageBase64,
+        }),
       }
     );
 
