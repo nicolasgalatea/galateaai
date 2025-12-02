@@ -15,7 +15,7 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <nav className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-3">
-            <img src={galateaLogo} alt="Galatea AI" className="h-16 w-auto" />
+            <img src={galateaLogo} alt="Galatea AI" className="h-24 w-auto" />
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">

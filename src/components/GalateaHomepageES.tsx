@@ -65,10 +65,7 @@ export const GalateaHomepageES = () => {
         <div className="container mx-auto max-w-7xl px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <img src={galateaLogo} alt="Galatea AI" className="h-12 w-auto" />
-              <span className="text-2xl font-bold text-primary">
-                Galatea AI
-              </span>
+              <img src={galateaLogo} alt="Galatea AI" className="h-24 w-auto" />
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
