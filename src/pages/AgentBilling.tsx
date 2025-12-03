@@ -5,8 +5,13 @@ import { AgentDetailTemplate } from '@/components/AgentDetailTemplate';
 
 export default function AgentBilling() {
   const { toast } = useToast();
+  const [uploadTimestamp, setUploadTimestamp] = useState<number | null>(null);
 
   const handleAnalyze = async (file: File): Promise<string> => {
+    // Generate unique timestamp ID
+    const timestamp = Date.now();
+    const modifiedFileName = `${timestamp}_${file.name}`;
+
     // Convert file to base64
     const reader = new FileReader();
     const base64Promise = new Promise<string>((resolve, reject) => {
@@ -25,7 +30,7 @@ export default function AgentBilling() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fileName: file.name,
+          fileName: modifiedFileName,
           imageBase64,
         }),
       }
@@ -39,6 +44,9 @@ export default function AgentBilling() {
     const data = await response.json();
     
     if (data.success) {
+      // Save timestamp in state for later use
+      setUploadTimestamp(timestamp);
+      
       return `✅ Analysis Complete
 
 📄 Document Type: Medical Invoice
