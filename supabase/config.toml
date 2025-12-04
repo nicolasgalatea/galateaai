@@ -2,3 +2,6 @@ project_id = "stoxauquwryanlnfmthm"
 
 [functions.upload-to-drive-oauth]
 verify_jwt = false
+
+[functions.read-drive-ocr-result]
+verify_jwt = false
