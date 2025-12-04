@@ -7,6 +7,49 @@ export default function AgentBilling() {
   const { toast } = useToast();
   const [uploadTimestamp, setUploadTimestamp] = useState<number | null>(null);
 
+  const pollForOCRResult = async (timestamp: number): Promise<string> => {
+    const maxAttempts = 60;
+    const pollInterval = 2000; // 2 seconds
+    
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      console.log(`Polling attempt ${attempt + 1}/${maxAttempts} for resultado_${timestamp}.json`);
+      
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/read-drive-ocr-result`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ timestamp }),
+          }
+        );
+
+        if (!response.ok) {
+          console.error('Poll response not ok:', response.status);
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+          continue;
+        }
+
+        const data = await response.json();
+        
+        if (data.found && data.data) {
+          const { status, nombrePaciente, fecha, tipoOrden } = data.data;
+          return `✅ La orden del día ${fecha} del paciente ${nombrePaciente} (${tipoOrden}) ya fue procesada exitosamente`;
+        }
+      } catch (error) {
+        console.error('Poll error:', error);
+      }
+      
+      // Wait before next attempt
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+    
+    throw new Error('Timeout: No se encontró el resultado del OCR después de 2 minutos');
+  };
+
   const handleAnalyze = async (file: File): Promise<string> => {
     // Generate unique timestamp ID
     const timestamp = Date.now();
@@ -47,23 +90,22 @@ export default function AgentBilling() {
       // Save timestamp in state for later use
       setUploadTimestamp(timestamp);
       
-      return `✅ Analysis Complete
-
-📄 Document Type: Medical Invoice
-🏥 Provider: Hospital XYZ
-📅 Date: ${new Date().toLocaleDateString()}
-
-💰 Charges Detected:
-  • Consultation: $150.00
-  • Laboratory: $320.00
-  • Imaging: $450.00
-  • Medications: $180.00
-  
-📊 Total Amount: $1,100.00
-
-✓ RIPS Codes Generated
-✓ No anomalies detected
-✓ Ready for submission`;
+      // Show processing message via toast
+      toast({
+        title: 'Procesando con OCR...',
+        description: 'Esperando resultado del procesamiento. Esto puede tomar hasta 2 minutos.',
+      });
+      
+      // Poll for OCR result
+      try {
+        const ocrResult = await pollForOCRResult(timestamp);
+        return ocrResult;
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('Timeout')) {
+          throw new Error('⏱️ Timeout: El procesamiento OCR está tardando más de lo esperado. Por favor intente nuevamente.');
+        }
+        throw error;
+      }
     } else {
       throw new Error(data.error || 'Upload failed');
     }
