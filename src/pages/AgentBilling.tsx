@@ -37,7 +37,7 @@ export default function AgentBilling() {
         
         if (data.found && data.data) {
           const { status, nombrePaciente, fecha, tipoOrden } = data.data;
-          return `✅ La orden del día ${fecha} del paciente ${nombrePaciente} (${tipoOrden}) ya fue procesada exitosamente`;
+          return `🎉 ¡Procesamiento completado!\n\n👤 Paciente: ${nombrePaciente}\n📅 Fecha: ${fecha}\n📋 Tipo: ${tipoOrden}\n✅ Estado: ${status}`;
         }
       } catch (error) {
         console.error('Poll error:', error);
