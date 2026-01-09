@@ -1,20 +1,42 @@
-import { useState } from 'react';
-import { FileSearch, Upload, Cpu, AlertTriangle, Plus, Send, Building2, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { 
+  FileSearch, Upload, Cpu, AlertTriangle, Plus, Send, Building2, FileText,
+  Search, ClipboardCheck, Shield, Play, Copy, Check, ChevronRight
+} from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Sparkles, Play, ArrowRight, ArrowDown, Shield, Zap, DollarSign } from 'lucide-react';
+import { Sparkles, ArrowRight, ArrowDown, Zap, DollarSign } from 'lucide-react';
 
 interface PastConversation {
   id: string;
   title: string;
   lastPhase: string;
   institution: string;
+}
+
+interface AgentMessage {
+  id: string;
+  agent: 'yadav' | 'cmo' | 'regulatory';
+  message: string;
+  timestamp: Date;
+}
+
+interface SubAgent {
+  id: 'yadav' | 'cmo' | 'regulatory';
+  name: string;
+  role: string;
+  icon: React.ReactNode;
+  color: string;
+  isActive: boolean;
+  isProcessing: boolean;
 }
 
 const exampleConversations: PastConversation[] = [
@@ -78,6 +100,31 @@ const integrations = [
   { name: 'EDC Systems' },
 ];
 
+const milestones = [
+  { id: 'picot', label: 'PICOT Definido', completed: false },
+  { id: 'search', label: 'Búsqueda Generada', completed: false },
+  { id: 'audit', label: 'Protocolo Auditado', completed: false },
+  { id: 'report', label: 'Reporte Final', completed: false },
+];
+
+const sampleSearchEquations = {
+  pubmed: `("Omega-3 Fatty Acids"[MeSH] OR "Fish Oils"[MeSH] OR "Eicosapentaenoic Acid"[MeSH])
+AND ("Myocardial Infarction"[MeSH] OR "Acute Coronary Syndrome"[MeSH])
+AND ("Recovery of Function"[MeSH] OR "Cardiac Rehabilitation"[MeSH])
+AND ("Randomized Controlled Trial"[pt] OR "Clinical Trial"[pt])
+Filters: Humans, English, 2019-2025`,
+  embase: `('omega 3 fatty acid'/exp OR 'fish oil'/exp OR 'eicosapentaenoic acid'/exp)
+AND ('heart infarction'/exp OR 'acute coronary syndrome'/exp)
+AND ('convalescence'/exp OR 'cardiac rehabilitation'/exp)
+AND [randomized controlled trial]/lim
+AND [2019-2025]/py AND [english]/lim`,
+  scopus: `TITLE-ABS-KEY(("omega-3" OR "fish oil" OR "EPA" OR "DHA")
+AND ("myocardial infarction" OR "heart attack" OR "acute coronary")
+AND ("recovery" OR "rehabilitation" OR "outcome"))
+AND DOCTYPE(ar) AND PUBYEAR > 2018
+AND LANGUAGE(english)`,
+};
+
 export default function AgentProtocolReview() {
   const { toast } = useToast();
   const [conversations] = useState<PastConversation[]>(exampleConversations);
@@ -86,30 +133,167 @@ export default function AgentProtocolReview() {
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [newInstitution, setNewInstitution] = useState('');
   const [roiValue, setRoiValue] = useState(25);
+  const [isOrchestrating, setIsOrchestrating] = useState(false);
+  const [picotInput, setPicotInput] = useState('');
+  const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
+  const [completedMilestones, setCompletedMilestones] = useState<string[]>([]);
+  const [copiedTab, setCopiedTab] = useState<string | null>(null);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  const [subAgents, setSubAgents] = useState<SubAgent[]>([
+    {
+      id: 'yadav',
+      name: 'Yadav Search Specialist',
+      role: 'Estrategia de búsqueda científica',
+      icon: <Search className="w-5 h-5" />,
+      color: '#0033A0',
+      isActive: false,
+      isProcessing: false,
+    },
+    {
+      id: 'cmo',
+      name: 'CMO Methodology Auditor',
+      role: 'Verificación de 16 fases institucionales',
+      icon: <ClipboardCheck className="w-5 h-5" />,
+      color: '#00A651',
+      isActive: false,
+      isProcessing: false,
+    },
+    {
+      id: 'regulatory',
+      name: 'Regulatory & Ethics Scout',
+      role: 'ICH-GCP & FDA Compliance',
+      icon: <Shield className="w-5 h-5" />,
+      color: '#6B21A8',
+      isActive: false,
+      isProcessing: false,
+    },
+  ]);
 
   const categoryColor = 'agent-pharma';
+  const bayerBlue = '#0033A0';
 
   const handleStartNewConversation = () => {
     setSelectedConversation(null);
     setIsStartingNew(true);
     setNewProjectTitle('');
     setNewInstitution('');
+    setAgentMessages([]);
+    setCompletedMilestones([]);
+    setShowSearchResults(false);
+    setPicotInput('');
   };
 
   const handleSubmitNewProject = () => {
     if (newProjectTitle.trim() && newInstitution.trim()) {
+      setIsStartingNew(false);
+      setSelectedConversation('new');
       toast({
-        title: 'Project Started',
-        description: `Research project "${newProjectTitle}" has been created.`,
+        title: 'Proyecto Iniciado',
+        description: `Proyecto de investigación "${newProjectTitle}" ha sido creado.`,
       });
     }
   };
 
-  const handleSampleData = () => {
+  const handleCopyToClipboard = async (text: string, tab: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedTab(tab);
+    setTimeout(() => setCopiedTab(null), 2000);
     toast({
-      title: 'Sample Data',
-      description: 'Loading sample clinical protocol...',
+      title: 'Copiado',
+      description: 'Ecuación de búsqueda copiada al portapapeles.',
     });
+  };
+
+  const simulateOrchestration = async () => {
+    if (!picotInput.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Por favor ingresa una pregunta PICOT o sube un protocolo.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsOrchestrating(true);
+    setAgentMessages([]);
+    setCompletedMilestones([]);
+    setShowSearchResults(false);
+
+    // Activate Yadav agent
+    setSubAgents(prev => prev.map(a => 
+      a.id === 'yadav' ? { ...a, isActive: true, isProcessing: true } : a
+    ));
+
+    await new Promise(r => setTimeout(r, 1500));
+    
+    setAgentMessages(prev => [...prev, {
+      id: '1',
+      agent: 'yadav',
+      message: 'He analizado la pregunta PICOT y generado la sintaxis de búsqueda para PubMed, Embase y Scopus.',
+      timestamp: new Date(),
+    }]);
+    
+    setSubAgents(prev => prev.map(a => 
+      a.id === 'yadav' ? { ...a, isProcessing: false } : a
+    ));
+    setCompletedMilestones(['picot']);
+    setShowSearchResults(true);
+
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Activate CMO agent
+    setSubAgents(prev => prev.map(a => 
+      a.id === 'cmo' ? { ...a, isActive: true, isProcessing: true } : a
+    ));
+
+    await new Promise(r => setTimeout(r, 2000));
+
+    setAgentMessages(prev => [...prev, {
+      id: '2',
+      agent: 'cmo',
+      message: 'Recibido. Validando que la estrategia de búsqueda coincida con el objetivo de la Fase 3 del protocolo institucional. Verificando alineación con las 16 fases metodológicas.',
+      timestamp: new Date(),
+    }]);
+
+    setSubAgents(prev => prev.map(a => 
+      a.id === 'cmo' ? { ...a, isProcessing: false } : a
+    ));
+    setCompletedMilestones(prev => [...prev, 'search']);
+
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Activate Regulatory agent
+    setSubAgents(prev => prev.map(a => 
+      a.id === 'regulatory' ? { ...a, isActive: true, isProcessing: true } : a
+    ));
+
+    await new Promise(r => setTimeout(r, 1800));
+
+    setAgentMessages(prev => [...prev, {
+      id: '3',
+      agent: 'regulatory',
+      message: 'Análisis regulatorio completado. El protocolo cumple con ICH-GCP E6(R2) y directrices FDA 21 CFR Part 11. Se identificaron 2 áreas menores que requieren documentación adicional.',
+      timestamp: new Date(),
+    }]);
+
+    setSubAgents(prev => prev.map(a => 
+      a.id === 'regulatory' ? { ...a, isProcessing: false } : a
+    ));
+    setCompletedMilestones(prev => [...prev, 'audit']);
+
+    await new Promise(r => setTimeout(r, 800));
+    setCompletedMilestones(prev => [...prev, 'report']);
+
+    setIsOrchestrating(false);
+    toast({
+      title: '✅ Orquestación Completada',
+      description: 'Todos los agentes han finalizado su análisis.',
+    });
+  };
+
+  const getAgentInfo = (agentId: 'yadav' | 'cmo' | 'regulatory') => {
+    return subAgents.find(a => a.id === agentId)!;
   };
 
   return (
@@ -376,232 +560,301 @@ export default function AgentProtocolReview() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          SECTION 5: INTERACTIVE DEMO - CHATGPT-LIKE INTERFACE
+          SECTION 5: MULTI-AGENT ORCHESTRATION CENTER
       ═══════════════════════════════════════════════════════════════════════ */}
-      <section id="live-demo" className="py-20 px-4 bg-background">
-        <div className="container mx-auto max-w-6xl">
+      <section id="live-demo" className="py-20 px-4 bg-white">
+        <div className="container mx-auto max-w-7xl">
+          {/* Dynamic Header */}
           <div className="text-center mb-8">
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border mb-4"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold border-2 mb-4"
               style={{
-                borderColor: `hsl(var(--${categoryColor}) / 0.3)`,
-                background: `hsl(var(--${categoryColor}) / 0.08)`,
-                color: `hsl(var(--${categoryColor}))`
+                borderColor: bayerBlue,
+                background: `${bayerBlue}10`,
+                color: bayerBlue
               }}
             >
               <Zap className="w-4 h-4" />
-              Interactive Workspace
+              Centro de Orquestación
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">Try the Agent</h2>
-            <p className="text-muted-foreground text-lg">
-              Structure your clinical or academic research project with guided phases
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+              Orquestador Galatea
+            </h2>
+            <p className="text-lg text-muted-foreground font-medium">
+              Listo para iniciar auditoría metodológica
             </p>
           </div>
 
-          {/* ChatGPT-like Layout */}
-          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm min-h-[550px] flex">
-            {/* Left Sidebar - Past Conversations */}
-            <div className="w-80 border-r border-border bg-muted/30 flex flex-col">
-              {/* New Conversation Button */}
-              <div className="p-4 border-b border-border">
-                <Button
-                  onClick={handleStartNewConversation}
-                  className="w-full gap-2 text-white"
-                  style={{ background: `hsl(var(--${categoryColor}))` }}
+          {/* Sub-Agents Panel */}
+          <div className="flex justify-center gap-4 md:gap-6 mb-8 flex-wrap">
+            {subAgents.map((agent) => (
+              <div
+                key={agent.id}
+                className={cn(
+                  "relative flex flex-col items-center p-4 rounded-2xl border-2 transition-all duration-300 min-w-[140px]",
+                  agent.isActive 
+                    ? "bg-white shadow-lg scale-105" 
+                    : "bg-muted/30 opacity-60"
+                )}
+                style={{
+                  borderColor: agent.isActive ? agent.color : 'transparent',
+                  boxShadow: agent.isActive ? `0 8px 30px -8px ${agent.color}40` : 'none'
+                }}
+              >
+                {/* Processing Animation */}
+                {agent.isProcessing && (
+                  <div 
+                    className="absolute inset-0 rounded-2xl animate-pulse"
+                    style={{ background: `${agent.color}15` }}
+                  />
+                )}
+                
+                {/* Avatar */}
+                <div 
+                  className={cn(
+                    "w-14 h-14 rounded-xl flex items-center justify-center text-white mb-3 transition-transform",
+                    agent.isProcessing && "animate-bounce"
+                  )}
+                  style={{ background: agent.color }}
                 >
-                  <Plus className="w-4 h-4" />
-                  New Research Project
-                </Button>
+                  {agent.icon}
+                </div>
+                
+                {/* Name */}
+                <h4 className="font-semibold text-sm text-foreground text-center leading-tight mb-1">
+                  {agent.name}
+                </h4>
+                
+                {/* Role */}
+                <p className="text-xs text-muted-foreground text-center">
+                  {agent.role}
+                </p>
+                
+                {/* Status Indicator */}
+                <div className={cn(
+                  "mt-2 w-2 h-2 rounded-full",
+                  agent.isProcessing 
+                    ? "animate-ping" 
+                    : agent.isActive 
+                      ? "bg-emerald-500" 
+                      : "bg-muted-foreground/30"
+                )} style={agent.isProcessing ? { background: agent.color } : {}} />
               </div>
+            ))}
+          </div>
 
-              {/* Conversation List */}
-              <ScrollArea className="flex-1">
-                <div className="p-3 space-y-2">
-                  {conversations.map((conv) => (
-                    <button
-                      key={conv.id}
-                      onClick={() => {
-                        setSelectedConversation(conv.id);
-                        setIsStartingNew(false);
-                      }}
+          {/* Milestone Progress Bar */}
+          <div className="max-w-3xl mx-auto mb-8">
+            <div className="flex items-center justify-between gap-2">
+              {milestones.map((milestone, index) => (
+                <div key={milestone.id} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center flex-1">
+                    <div 
                       className={cn(
-                        "w-full text-left p-4 rounded-xl transition-all duration-200 group",
-                        "hover:bg-background border border-transparent",
-                        selectedConversation === conv.id
-                          ? "bg-background border-border shadow-sm"
-                          : "hover:border-border"
+                        "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all duration-500",
+                        completedMilestones.includes(milestone.id)
+                          ? "text-white shadow-lg"
+                          : "bg-muted text-muted-foreground"
                       )}
-                      style={selectedConversation === conv.id ? {
-                        borderColor: `hsl(var(--${categoryColor}) / 0.3)`
+                      style={completedMilestones.includes(milestone.id) ? {
+                        background: bayerBlue,
+                        boxShadow: `0 4px 15px -3px ${bayerBlue}50`
                       } : {}}
                     >
-                      {/* Title - Largest */}
-                      <h3 className="font-semibold text-foreground text-sm leading-tight mb-2 line-clamp-2">
-                        {conv.title}
-                      </h3>
-                      
-                      {/* Phase with Green Circle - Smaller */}
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                        <span className="text-emerald-500">🟢</span>
-                        <span className="font-medium">{conv.lastPhase}</span>
-                      </div>
-                      
-                      {/* Institution - Smallest */}
-                      <p className="text-xs text-muted-foreground/70 truncate">
-                        {conv.institution}
-                      </p>
-                    </button>
-                  ))}
+                      {completedMilestones.includes(milestone.id) ? (
+                        <Check className="w-5 h-5" />
+                      ) : (
+                        index + 1
+                      )}
+                    </div>
+                    <span className={cn(
+                      "text-xs mt-2 text-center font-medium transition-colors",
+                      completedMilestones.includes(milestone.id)
+                        ? "text-foreground"
+                        : "text-muted-foreground"
+                    )}>
+                      {milestone.label}
+                    </span>
+                  </div>
+                  {index < milestones.length - 1 && (
+                    <ChevronRight 
+                      className={cn(
+                        "w-5 h-5 mx-1 transition-colors",
+                        completedMilestones.includes(milestones[index + 1]?.id)
+                          ? "text-foreground"
+                          : "text-muted-foreground/40"
+                      )}
+                    />
+                  )}
                 </div>
-              </ScrollArea>
+              ))}
+            </div>
+          </div>
+
+          {/* Split Screen Workspace */}
+          <div 
+            className="bg-white border-2 rounded-2xl overflow-hidden min-h-[600px] flex"
+            style={{ 
+              borderColor: '#e5e7eb',
+              boxShadow: '0 4px 20px -5px rgba(0,0,0,0.08)'
+            }}
+          >
+            {/* Left Side - Input Panel */}
+            <div className="w-1/2 border-r border-border flex flex-col">
+              <div 
+                className="p-4 border-b font-semibold flex items-center gap-2"
+                style={{ background: `${bayerBlue}08`, color: bayerBlue }}
+              >
+                <Upload className="w-5 h-5" />
+                Input: Protocolo o Pregunta PICOT
+              </div>
+              
+              <div className="flex-1 p-6 flex flex-col">
+                {/* File Upload Area */}
+                <div 
+                  className="border-2 border-dashed rounded-xl p-6 text-center mb-6 transition-colors hover:border-primary/50 cursor-pointer"
+                  style={{ borderColor: '#d1d5db' }}
+                >
+                  <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+                  <p className="font-medium text-foreground mb-1">Subir Protocolo</p>
+                  <p className="text-sm text-muted-foreground">PDF, Word o texto plano</p>
+                </div>
+
+                {/* PICOT Input */}
+                <div className="flex-1 flex flex-col">
+                  <label className="text-sm font-medium text-foreground mb-2">
+                    O escribe tu pregunta PICOT:
+                  </label>
+                  <Textarea
+                    placeholder="P: Pacientes adultos post-infarto&#10;I: Suplementación con Omega-3 (2g/día)&#10;C: Placebo o tratamiento estándar&#10;O: Recuperación funcional cardíaca&#10;T: 12 meses de seguimiento"
+                    value={picotInput}
+                    onChange={(e) => setPicotInput(e.target.value)}
+                    className="flex-1 resize-none text-sm border-border"
+                  />
+                </div>
+
+                {/* Execute Button */}
+                <Button
+                  onClick={simulateOrchestration}
+                  disabled={isOrchestrating || !picotInput.trim()}
+                  className="mt-6 h-14 text-lg font-semibold text-white gap-3 rounded-xl transition-all"
+                  style={{ 
+                    background: isOrchestrating ? '#6b7280' : bayerBlue,
+                    boxShadow: isOrchestrating ? 'none' : `0 8px 25px -5px ${bayerBlue}40`
+                  }}
+                >
+                  {isOrchestrating ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Orquestando Agentes...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5" />
+                      Ejecutar Orquestación Completa
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
 
-            {/* Main Panel - Conversation Area */}
-            <div className="flex-1 flex flex-col bg-background">
-              {!selectedConversation && !isStartingNew ? (
-                /* Empty State */
-                <div className="flex-1 flex items-center justify-center p-8">
-                  <div className="text-center max-w-md">
-                    <div 
-                      className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6"
-                      style={{ background: `hsl(var(--${categoryColor}) / 0.1)` }}
-                    >
-                      <FileSearch className="w-10 h-10" style={{ color: `hsl(var(--${categoryColor}))` }} />
-                    </div>
-                    <h3 className="text-xl font-semibold text-foreground mb-3">
-                      Welcome to Clinical Guideline Navigator
-                    </h3>
-                    <p className="text-muted-foreground mb-6">
-                      Start a new research project or select an existing one from the sidebar to continue your work.
-                    </p>
-                    <Button
-                      onClick={handleStartNewConversation}
-                      className="gap-2 text-white"
-                      style={{ background: `hsl(var(--${categoryColor}))` }}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Start New Project
-                    </Button>
-                  </div>
-                </div>
-              ) : isStartingNew ? (
-                /* New Conversation Form */
-                <div className="flex-1 flex items-center justify-center p-8">
-                  <div className="w-full max-w-lg">
-                    <div className="text-center mb-8">
-                      <div 
-                        className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                        style={{ background: `hsl(var(--${categoryColor}) / 0.1)` }}
-                      >
-                        <FileText className="w-8 h-8" style={{ color: `hsl(var(--${categoryColor}))` }} />
-                      </div>
-                      <h3 className="text-2xl font-semibold text-foreground mb-2">
-                        New Research Project
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Enter the details of your clinical or academic research project
-                      </p>
-                    </div>
+            {/* Right Side - Agent Output Panel */}
+            <div className="w-1/2 flex flex-col bg-muted/20">
+              <div 
+                className="p-4 border-b font-semibold flex items-center gap-2"
+                style={{ background: `${bayerBlue}08`, color: bayerBlue }}
+              >
+                <Cpu className="w-5 h-5" />
+                Output: Feed de Actividad de Agentes
+              </div>
 
-                    <div className="space-y-6">
-                      {/* Project Title Input */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                          <FileText className="w-4 h-4" style={{ color: `hsl(var(--${categoryColor}))` }} />
-                          Title of the Research Project
-                        </label>
-                        <Input
-                          placeholder="e.g., Impact of Early Mobilization on Post-Surgical Recovery"
-                          value={newProjectTitle}
-                          onChange={(e) => setNewProjectTitle(e.target.value)}
-                          className="h-12 text-base border-border"
-                        />
-                      </div>
-
-                      {/* Institution Input */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                          <Building2 className="w-4 h-4" style={{ color: `hsl(var(--${categoryColor}))` }} />
-                          Institution (Clinic, Hospital, or University)
-                        </label>
-                        <Input
-                          placeholder="e.g., Harvard Medical School"
-                          value={newInstitution}
-                          onChange={(e) => setNewInstitution(e.target.value)}
-                          className="h-12 text-base border-border"
-                        />
-                      </div>
-
-                      {/* Submit Button */}
-                      <Button
-                        onClick={handleSubmitNewProject}
-                        disabled={!newProjectTitle.trim() || !newInstitution.trim()}
-                        className="w-full h-12 gap-2 text-white disabled:opacity-50"
-                        style={{ background: `hsl(var(--${categoryColor}))` }}
-                      >
-                        <Send className="w-4 h-4" />
-                        Begin Research Guidance
-                      </Button>
+              <ScrollArea className="flex-1">
+                <div className="p-4 space-y-4">
+                  {agentMessages.length === 0 ? (
+                    <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+                      Los agentes comenzarán a comunicarse aquí...
                     </div>
-                  </div>
-                </div>
-              ) : (
-                /* Selected Conversation View */
-                <div className="flex-1 flex flex-col">
-                  {/* Conversation Header */}
-                  {selectedConversation && (
-                    <div className="p-6 border-b border-border bg-muted/20">
-                      {(() => {
-                        const conv = conversations.find(c => c.id === selectedConversation);
-                        if (!conv) return null;
-                        return (
-                          <div>
-                            <h3 className="text-lg font-semibold text-foreground mb-2">
-                              {conv.title}
-                            </h3>
-                            <div className="flex items-center gap-4 text-sm">
-                              <span className="flex items-center gap-1.5 text-emerald-600">
-                                <span>🟢</span>
-                                <span className="font-medium">{conv.lastPhase}</span>
-                              </span>
-                              <span className="text-muted-foreground">
-                                {conv.institution}
-                              </span>
+                  ) : (
+                    agentMessages.map((msg) => {
+                      const agent = getAgentInfo(msg.agent);
+                      return (
+                        <div 
+                          key={msg.id}
+                          className="bg-white rounded-xl p-4 border shadow-sm animate-fade-in"
+                          style={{ borderLeftWidth: 4, borderLeftColor: agent.color }}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <div 
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
+                              style={{ background: agent.color }}
+                            >
+                              {agent.icon}
                             </div>
+                            <span className="font-semibold text-sm" style={{ color: agent.color }}>
+                              {agent.name}
+                            </span>
                           </div>
-                        );
-                      })()}
-                    </div>
+                          <p className="text-sm text-foreground leading-relaxed">
+                            {msg.message}
+                          </p>
+                        </div>
+                      );
+                    })
                   )}
 
-                  {/* Conversation Content Placeholder */}
-                  <div className="flex-1 flex items-center justify-center p-8">
-                    <div className="text-center text-muted-foreground">
-                      <FileSearch className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                      <p>Conversation history and guidance will appear here.</p>
-                      <p className="text-sm mt-2">The checklist system will be implemented in the next phase.</p>
-                    </div>
-                  </div>
-
-                  {/* Input Area */}
-                  <div className="p-4 border-t border-border bg-muted/10">
-                    <div className="flex gap-3">
-                      <Input
-                        placeholder="Type your message..."
-                        className="flex-1 h-12 border-border"
-                        disabled
-                      />
-                      <Button
-                        className="h-12 px-6 text-white"
-                        style={{ background: `hsl(var(--${categoryColor}))` }}
-                        disabled
+                  {/* Yadav Search Equations Widget */}
+                  {showSearchResults && (
+                    <div className="bg-white rounded-xl border shadow-sm overflow-hidden mt-4">
+                      <div 
+                        className="p-3 font-semibold text-sm flex items-center gap-2"
+                        style={{ background: `${bayerBlue}08`, color: bayerBlue }}
                       >
-                        <Send className="w-4 h-4" />
-                      </Button>
+                        <Search className="w-4 h-4" />
+                        Ecuaciones de Búsqueda - Método Yadav 2025
+                      </div>
+                      
+                      <Tabs defaultValue="pubmed" className="p-4">
+                        <TabsList className="grid w-full grid-cols-3 mb-4">
+                          <TabsTrigger value="pubmed" className="text-xs font-medium">PubMed</TabsTrigger>
+                          <TabsTrigger value="embase" className="text-xs font-medium">Embase</TabsTrigger>
+                          <TabsTrigger value="scopus" className="text-xs font-medium">Scopus</TabsTrigger>
+                        </TabsList>
+                        
+                        {(['pubmed', 'embase', 'scopus'] as const).map((db) => (
+                          <TabsContent key={db} value={db}>
+                            <div className="relative">
+                              <pre 
+                                className="bg-slate-900 text-slate-100 p-4 rounded-xl text-xs overflow-x-auto font-mono leading-relaxed"
+                                style={{ maxHeight: 200 }}
+                              >
+                                {sampleSearchEquations[db]}
+                              </pre>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="absolute top-2 right-2 gap-1.5 text-xs"
+                                onClick={() => handleCopyToClipboard(sampleSearchEquations[db], db)}
+                              >
+                                {copiedTab === db ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5" />
+                                    Copiado
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3.5 h-3.5" />
+                                    Copiar
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </TabsContent>
+                        ))}
+                      </Tabs>
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
+              </ScrollArea>
             </div>
           </div>
         </div>
