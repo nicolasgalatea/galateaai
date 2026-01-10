@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   FileSearch, Upload, Cpu, AlertTriangle, Plus, Send, Building2, FileText,
   Search, ClipboardCheck, Shield, Play, Copy, Check, ChevronRight, BookOpen,
   Filter, FlaskConical, Lock, Unlock, Award, Users, BarChart3, ArrowDown,
-  CheckCircle2, XCircle, ThumbsUp, ThumbsDown, Diamond, Minus
+  CheckCircle2, XCircle, ThumbsUp, ThumbsDown, Diamond, Minus, Terminal,
+  Target, Eye
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -13,20 +14,21 @@ import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Sparkles, ArrowRight, Zap, DollarSign } from 'lucide-react';
 
 interface AgentMessage {
   id: string;
-  agent: 'literature' | 'criteria' | 'yadav';
+  agent: 'picot' | 'literature' | 'criteria' | 'yadav';
   message: string;
   timestamp: Date;
-  type?: 'text' | 'gaps' | 'criteria-table';
+  type?: 'text' | 'gaps' | 'criteria-table' | 'picot-result';
 }
 
 interface SubAgent {
-  id: 'literature' | 'criteria' | 'yadav';
+  id: 'picot' | 'literature' | 'criteria' | 'yadav';
   name: string;
   role: string;
   icon: React.ReactNode;
@@ -39,11 +41,13 @@ interface ProtocolSection {
   id: string;
   title: string;
   status: 'pending' | 'complete' | 'warning';
+  content?: string;
 }
 
 interface PRISMABlock {
   label: string;
   count: number;
+  targetCount: number;
   description: string;
 }
 
@@ -51,6 +55,12 @@ interface AuthorVote {
   name: string;
   avatar: string;
   vote: 'include' | 'exclude' | 'pending';
+}
+
+interface AuditLog {
+  timestamp: Date;
+  level: 'info' | 'success' | 'warning' | 'process';
+  message: string;
 }
 
 const kpiStats = [
@@ -87,89 +97,93 @@ const integrations = [
   { name: 'EDC Systems' },
 ];
 
-const protocolSections: ProtocolSection[] = [
-  { id: '1', title: '1. Título del Estudio', status: 'complete' },
-  { id: '2', title: '2. Investigador Principal', status: 'complete' },
-  { id: '3', title: '3. Justificación Científica', status: 'complete' },
-  { id: '4', title: '4. Pregunta de Investigación (PICOT)', status: 'complete' },
-  { id: '5', title: '5. Objetivos (Primario/Secundarios)', status: 'complete' },
-  { id: '6', title: '6. Diseño del Estudio', status: 'complete' },
-  { id: '7', title: '7. Criterios de Inclusión', status: 'complete' },
-  { id: '8', title: '8. Criterios de Exclusión', status: 'complete' },
-  { id: '9', title: '9. Cálculo de Tamaño Muestral', status: 'warning' },
-  { id: '10', title: '10. Variables y Desenlaces', status: 'complete' },
-  { id: '11', title: '11. Estrategia de Búsqueda', status: 'complete' },
-  { id: '12', title: '12. Plan de Análisis Estadístico', status: 'complete' },
-  { id: '13', title: '13. Consideraciones Éticas', status: 'complete' },
-  { id: '14', title: '14. Cronograma', status: 'complete' },
-  { id: '15', title: '15. Presupuesto', status: 'warning' },
-  { id: '16', title: '16. Referencias Bibliográficas', status: 'complete' },
-  { id: '17', title: '17. Anexos', status: 'pending' },
+// Metformin & Alzheimer specific data
+const metforminPICOT = {
+  population: 'Adultos ≥60 años con diabetes tipo 2 y riesgo de deterioro cognitivo',
+  intervention: 'Tratamiento con Metformina (500-2000mg/día)',
+  comparison: 'Otros antidiabéticos orales o placebo',
+  outcome: 'Incidencia de Alzheimer, puntuaciones MMSE, biomarcadores de amiloide',
+  time: 'Seguimiento ≥3 años'
+};
+
+const metforminEvidenceGaps = [
+  { gap: 'Mecanismo neuroprotector de metformina no completamente caracterizado', severity: 'high' },
+  { gap: 'Dosis óptima para efecto cognitivo no establecida', severity: 'high' },
+  { gap: 'Heterogeneidad en definiciones de deterioro cognitivo', severity: 'medium' },
+  { gap: 'Falta de estudios prospectivos con biomarcadores de amiloide', severity: 'high' },
+  { gap: 'Poblaciones asiáticas subrepresentadas', severity: 'medium' },
 ];
 
-const prismaBlocks: PRISMABlock[] = [
-  { label: 'Identificados', count: 1372, description: 'Registros de bases de datos' },
-  { label: 'Tras Duplicados', count: 1063, description: 'Registros únicos' },
-  { label: 'Cribados', count: 847, description: 'Títulos/Abstracts revisados' },
-  { label: 'Texto Completo', count: 124, description: 'Artículos evaluados' },
-  { label: 'Incluidos', count: 38, description: 'Estudios en síntesis cualitativa' },
-  { label: 'Meta-análisis', count: 24, description: 'Estudios en síntesis cuantitativa' },
+const metforminInclusionCriteria = [
+  { criterion: 'Adultos ≥60 años con DM2 diagnosticada', included: true },
+  { criterion: 'Uso de Metformina ≥12 meses', included: true },
+  { criterion: 'Evaluación cognitiva estandarizada (MMSE/MoCA)', included: true },
+  { criterion: 'Estudios RCT o cohortes prospectivas', included: true },
+  { criterion: 'Seguimiento mínimo de 2 años', included: true },
+];
+
+const metforminExclusionCriteria = [
+  { criterion: 'Demencia preexistente al inicio del estudio', excluded: true },
+  { criterion: 'Uso concomitante de insulina como primera línea', excluded: true },
+  { criterion: 'Enfermedad renal crónica estadio IV-V', excluded: true },
+  { criterion: 'Estudios transversales o reportes de caso', excluded: true },
+  { criterion: 'Sin grupo comparador definido', excluded: true },
+];
+
+const metforminSearchEquations = {
+  pubmed: `("Metformin"[MeSH] OR "Metformin"[tw] OR "Glucophage"[tw] OR "Dimethylbiguanide"[tw])
+AND ("Alzheimer Disease"[MeSH] OR "Cognitive Dysfunction"[MeSH] OR "Dementia"[MeSH] 
+     OR "cognitive decline"[tw] OR "neuroprotection"[tw])
+AND ("Diabetes Mellitus, Type 2"[MeSH] OR "type 2 diabetes"[tw])
+AND ("Cohort Studies"[MeSH] OR "Randomized Controlled Trial"[pt] OR "longitudinal"[tw])
+Filters: Humans, English/Spanish, 2015-2025, Age: 60+ years`,
+  embase: `('metformin'/exp OR 'metformin':ti,ab OR 'glucophage':ti,ab)
+AND ('alzheimer disease'/exp OR 'dementia'/exp OR 'cognitive defect'/exp 
+     OR 'neuroprotection':ti,ab)
+AND ('non insulin dependent diabetes mellitus'/exp)
+AND ('cohort analysis'/exp OR 'randomized controlled trial'/exp)
+AND [2015-2025]/py AND ([english]/lim OR [spanish]/lim)`,
+  cochrane: `#1 MeSH descriptor: [Metformin] explode all trees
+#2 MeSH descriptor: [Alzheimer Disease] explode all trees
+#3 MeSH descriptor: [Cognitive Dysfunction] explode all trees
+#4 MeSH descriptor: [Diabetes Mellitus, Type 2] explode all trees
+#5 #1 AND (#2 OR #3) AND #4
+#6 #5 with Cochrane Library publication date Between Jan 2015 and Dec 2025`,
+  scopus: `TITLE-ABS-KEY(("metformin" OR "glucophage" OR "dimethylbiguanide")
+AND ("alzheimer*" OR "dementia" OR "cognitive decline" OR "neuroprotect*")
+AND ("type 2 diabetes" OR "T2DM" OR "NIDDM"))
+AND DOCTYPE(ar OR re) AND PUBYEAR > 2014
+AND (LANGUAGE(english) OR LANGUAGE(spanish))`,
+};
+
+const protocolSections: ProtocolSection[] = [
+  { id: '1', title: '1. Título del Estudio', status: 'complete', content: 'Metformina y Riesgo de Enfermedad de Alzheimer en Adultos Mayores con Diabetes Tipo 2: Revisión Sistemática y Meta-análisis' },
+  { id: '2', title: '2. Investigador Principal', status: 'complete', content: 'Dr. [Nombre], Departamento de Neurología' },
+  { id: '3', title: '3. Justificación Científica', status: 'complete', content: 'La metformina, fármaco de primera línea para DM2, ha mostrado efectos pleotrópicos incluyendo propiedades neuroprotectoras. Estudios preclínicos sugieren modulación de vías de señalización de insulina cerebral y reducción de agregación de tau/amiloide.' },
+  { id: '4', title: '4. Pregunta de Investigación (PICOT)', status: 'complete', content: 'En adultos ≥60 años con DM2 (P), ¿el uso de metformina (I) comparado con otros antidiabéticos (C) reduce la incidencia de Alzheimer y deterioro cognitivo (O) durante ≥3 años de seguimiento (T)?' },
+  { id: '5', title: '5. Objetivos (Primario/Secundarios)', status: 'complete', content: 'Primario: Evaluar asociación entre uso de metformina e incidencia de EA. Secundarios: Analizar efecto dosis-respuesta, cambios en MMSE, biomarcadores.' },
+  { id: '6', title: '6. Diseño del Estudio', status: 'complete', content: 'Revisión sistemática y meta-análisis siguiendo guías PRISMA 2020 y Cochrane Handbook.' },
+  { id: '7', title: '7. Criterios de Inclusión', status: 'complete', content: 'Ver tabla de criterios generada por Agente Criteria Designer.' },
+  { id: '8', title: '8. Criterios de Exclusión', status: 'complete', content: 'Ver tabla de criterios generada por Agente Criteria Designer.' },
+  { id: '9', title: '9. Cálculo de Tamaño Muestral', status: 'warning', content: 'N/A para revisión sistemática. Meta-análisis incluirá análisis de poder post-hoc.' },
+  { id: '10', title: '10. Variables y Desenlaces', status: 'complete', content: 'Desenlace primario: Incidencia de EA (HR/OR). Secundarios: Puntuación MMSE, niveles de amiloide-β42 en LCR.' },
+  { id: '11', title: '11. Estrategia de Búsqueda', status: 'complete', content: 'Método Yadav 2025 de dos capas aplicado. Ver ecuaciones generadas.' },
+  { id: '12', title: '12. Plan de Análisis Estadístico', status: 'complete', content: 'Modelo de efectos aleatorios (DerSimonian-Laird). Heterogeneidad: I², Q-test. Sesgo: funnel plot, Egger test.' },
+  { id: '13', title: '13. Consideraciones Éticas', status: 'complete', content: 'Exento de aprobación IRB (datos secundarios publicados). Registro en PROSPERO.' },
+  { id: '14', title: '14. Cronograma', status: 'complete', content: 'Búsqueda: 2 semanas. Cribado: 3 semanas. Extracción: 2 semanas. Análisis: 2 semanas. Redacción: 3 semanas.' },
+  { id: '15', title: '15. Presupuesto', status: 'warning', content: 'Pendiente: Licencias de bases de datos, software estadístico, servicios de traducción.' },
+  { id: '16', title: '16. Referencias Bibliográficas', status: 'complete', content: '1. Ng TP et al. J Alzheimers Dis. 2014\n2. Orkaby AR et al. Neurology. 2017\n3. Yadav S et al. Systematic Reviews. 2025' },
+  { id: '17', title: '17. Anexos', status: 'pending', content: 'A incluir: Formularios de extracción, checklist PRISMA, tablas de evidencia GRADE.' },
 ];
 
 const forestPlotData = [
-  { study: 'Smith et al. 2023', or: 0.72, ci_low: 0.54, ci_high: 0.96, weight: 15.2 },
-  { study: 'Johnson 2022', or: 0.85, ci_low: 0.68, ci_high: 1.06, weight: 18.7 },
-  { study: 'García et al. 2023', or: 0.63, ci_low: 0.45, ci_high: 0.88, weight: 12.4 },
-  { study: 'Lee & Kim 2024', or: 0.78, ci_low: 0.62, ci_high: 0.98, weight: 16.8 },
-  { study: 'Williams 2023', or: 0.91, ci_low: 0.71, ci_high: 1.17, weight: 14.3 },
-  { study: 'Chen et al. 2024', or: 0.69, ci_low: 0.51, ci_high: 0.93, weight: 13.1 },
-  { study: 'Pooled Effect', or: 0.76, ci_low: 0.67, ci_high: 0.86, weight: 100, isPooled: true },
-];
-
-const sampleSearchEquations = {
-  pubmed: `("Omega-3 Fatty Acids"[MeSH] OR "Fish Oils"[MeSH] OR "Eicosapentaenoic Acid"[MeSH])
-AND ("Myocardial Infarction"[MeSH] OR "Acute Coronary Syndrome"[MeSH])
-AND ("Recovery of Function"[MeSH] OR "Cardiac Rehabilitation"[MeSH])
-AND ("Randomized Controlled Trial"[pt] OR "Clinical Trial"[pt])
-Filters: Humans, English, 2019-2025`,
-  embase: `('omega 3 fatty acid'/exp OR 'fish oil'/exp OR 'eicosapentaenoic acid'/exp)
-AND ('heart infarction'/exp OR 'acute coronary syndrome'/exp)
-AND ('convalescence'/exp OR 'cardiac rehabilitation'/exp)
-AND [randomized controlled trial]/lim
-AND [2019-2025]/py AND [english]/lim`,
-  cochrane: `#1 MeSH descriptor: [Fatty Acids, Omega-3] explode all trees
-#2 MeSH descriptor: [Myocardial Infarction] explode all trees
-#3 MeSH descriptor: [Recovery of Function] explode all trees
-#4 #1 AND #2 AND #3
-#5 #4 with Cochrane Library publication date Between Jan 2019 and Dec 2025`,
-  scopus: `TITLE-ABS-KEY(("omega-3" OR "fish oil" OR "EPA" OR "DHA")
-AND ("myocardial infarction" OR "heart attack" OR "acute coronary")
-AND ("recovery" OR "rehabilitation" OR "outcome"))
-AND DOCTYPE(ar) AND PUBYEAR > 2018
-AND LANGUAGE(english)`,
-};
-
-const evidenceGaps = [
-  { gap: 'Falta de estudios en población latinoamericana', severity: 'high' },
-  { gap: 'Dosis óptima no establecida (1-4g/día)', severity: 'medium' },
-  { gap: 'Seguimiento máximo 12 meses en mayoría', severity: 'medium' },
-  { gap: 'Pocos estudios con endpoints duros (mortalidad)', severity: 'high' },
-];
-
-const inclusionCriteria = [
-  { criterion: 'Adultos ≥18 años con IAM previo', included: true },
-  { criterion: 'Intervención con Omega-3 (cualquier dosis)', included: true },
-  { criterion: 'Grupo control (placebo/atención estándar)', included: true },
-  { criterion: 'Outcomes de recuperación cardíaca', included: true },
-  { criterion: 'RCT o cuasi-experimental', included: true },
-];
-
-const exclusionCriteria = [
-  { criterion: 'Estudios observacionales puros', excluded: true },
-  { criterion: 'Población pediátrica', excluded: true },
-  { criterion: 'Suplementos combinados sin grupo Omega-3 aislado', excluded: true },
-  { criterion: 'Artículos sin texto completo disponible', excluded: true },
-  { criterion: 'Idiomas distintos a inglés/español', excluded: true },
+  { study: 'Ng et al. 2014', or: 0.49, ci_low: 0.25, ci_high: 0.95, weight: 12.3, isPooled: false },
+  { study: 'Orkaby et al. 2017', or: 0.67, ci_low: 0.51, ci_high: 0.89, weight: 18.7, isPooled: false },
+  { study: 'Kuan et al. 2017', or: 0.76, ci_low: 0.58, ci_high: 0.99, weight: 16.4, isPooled: false },
+  { study: 'Samaras et al. 2020', or: 0.82, ci_low: 0.64, ci_high: 1.06, weight: 17.8, isPooled: false },
+  { study: 'Zhang et al. 2022', or: 0.58, ci_low: 0.41, ci_high: 0.82, weight: 14.2, isPooled: false },
+  { study: 'Chen et al. 2023', or: 0.71, ci_low: 0.55, ci_high: 0.92, weight: 15.6, isPooled: false },
+  { study: 'Efecto Combinado', or: 0.68, ci_low: 0.58, ci_high: 0.79, weight: 100, isPooled: true },
 ];
 
 export default function AgentProtocolReview() {
@@ -178,12 +192,24 @@ export default function AgentProtocolReview() {
   const [activePhase, setActivePhase] = useState<'protocol' | 'execution'>('protocol');
   const [isPhase2Unlocked, setIsPhase2Unlocked] = useState(false);
   const [isOrchestrating, setIsOrchestrating] = useState(false);
-  const [ideaInput, setIdeaInput] = useState('');
+  const [ideaInput, setIdeaInput] = useState('Investigar el efecto neuroprotector de la Metformina en la prevención del Alzheimer en pacientes diabéticos tipo 2 mayores de 60 años');
   const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
   const [showProtocolPreview, setShowProtocolPreview] = useState(false);
   const [showApprovalAnimation, setShowApprovalAnimation] = useState(false);
   const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
+  const [showProtocolModal, setShowProtocolModal] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+  
+  const [prismaBlocks, setPrismaBlocks] = useState<PRISMABlock[]>([
+    { label: 'Identificados', count: 0, targetCount: 1372, description: 'Registros de bases de datos' },
+    { label: 'Tras Duplicados', count: 0, targetCount: 1063, description: 'Registros únicos' },
+    { label: 'Cribados', count: 0, targetCount: 187, description: 'Títulos/Abstracts revisados' },
+    { label: 'Texto Completo', count: 0, targetCount: 54, description: 'Artículos evaluados' },
+    { label: 'Incluidos', count: 0, targetCount: 18, description: 'Estudios en síntesis cualitativa' },
+    { label: 'Meta-análisis', count: 0, targetCount: 12, description: 'Estudios en síntesis cuantitativa' },
+  ]);
   
   const [authorVotes, setAuthorVotes] = useState<AuthorVote[]>([
     { name: 'Dr. AI Alpha', avatar: '🤖', vote: 'pending' },
@@ -192,6 +218,15 @@ export default function AgentProtocolReview() {
   ]);
 
   const [subAgents, setSubAgents] = useState<SubAgent[]>([
+    {
+      id: 'picot',
+      name: 'PICOT Analyst',
+      role: 'Estructuración de pregunta clínica',
+      icon: <Target className="w-5 h-5" />,
+      color: '#DC2626',
+      isActive: false,
+      isProcessing: false,
+    },
     {
       id: 'literature',
       name: 'Literature Scout',
@@ -224,6 +259,15 @@ export default function AgentProtocolReview() {
   const categoryColor = 'agent-pharma';
   const bayerBlue = '#0033A0';
 
+  // Scroll audit logs to bottom
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [auditLogs]);
+
+  const addAuditLog = (level: AuditLog['level'], message: string) => {
+    setAuditLogs(prev => [...prev, { timestamp: new Date(), level, message }]);
+  };
+
   const handleCopyToClipboard = async (text: string, tab: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedTab(tab);
@@ -247,26 +291,68 @@ export default function AgentProtocolReview() {
     setIsOrchestrating(true);
     setAgentMessages([]);
     setShowProtocolPreview(false);
+    setAuditLogs([]);
 
-    // Activate Literature Scout
+    addAuditLog('info', '🚀 Iniciando orquestación multi-agente...');
+    addAuditLog('process', `📝 Input recibido: "${ideaInput.substring(0, 60)}..."`);
+
+    // === AGENT 1: PICOT ANALYST ===
+    addAuditLog('info', '🎯 Activando Agente PICOT Analyst...');
     setSubAgents(prev => prev.map(a => 
-      a.id === 'literature' ? { ...a, isActive: true, isProcessing: true } : a
+      a.id === 'picot' ? { ...a, isActive: true, isProcessing: true } : a
     ));
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 1500));
+    addAuditLog('process', 'Extrayendo componentes PICOT del texto de entrada...');
     
     setAgentMessages(prev => [...prev, {
       id: '1',
-      agent: 'literature',
-      message: 'Analizando la literatura existente y comparando con tu idea de investigación...',
+      agent: 'picot',
+      message: 'Analizando la estructura de la pregunta de investigación...',
       timestamp: new Date(),
       type: 'text',
     }]);
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
+    addAuditLog('success', '✓ Componentes PICOT identificados correctamente');
 
     setAgentMessages(prev => [...prev, {
       id: '2',
+      agent: 'picot',
+      message: 'picot-result',
+      timestamp: new Date(),
+      type: 'picot-result',
+    }]);
+    
+    setSubAgents(prev => prev.map(a => 
+      a.id === 'picot' ? { ...a, isProcessing: false } : a
+    ));
+
+    await new Promise(r => setTimeout(r, 1000));
+
+    // === AGENT 2: LITERATURE SCOUT ===
+    addAuditLog('info', '📚 Activando Agente Literature Scout...');
+    setSubAgents(prev => prev.map(a => 
+      a.id === 'literature' ? { ...a, isActive: true, isProcessing: true } : a
+    ));
+
+    await new Promise(r => setTimeout(r, 1500));
+    addAuditLog('process', 'Consultando bases de datos de literatura científica...');
+    addAuditLog('process', 'Analizando revisiones sistemáticas previas sobre Metformina-Alzheimer...');
+    
+    setAgentMessages(prev => [...prev, {
+      id: '3',
+      agent: 'literature',
+      message: 'Escaneando literatura existente y comparando con tu propuesta de investigación...',
+      timestamp: new Date(),
+      type: 'text',
+    }]);
+
+    await new Promise(r => setTimeout(r, 2000));
+    addAuditLog('warning', '⚠ Detectados 5 gaps de evidencia significativos');
+
+    setAgentMessages(prev => [...prev, {
+      id: '4',
       agent: 'literature',
       message: 'gaps',
       timestamp: new Date(),
@@ -279,25 +365,29 @@ export default function AgentProtocolReview() {
 
     await new Promise(r => setTimeout(r, 1000));
 
-    // Activate Criteria Designer
+    // === AGENT 3: CRITERIA DESIGNER ===
+    addAuditLog('info', '⚙️ Activando Agente Criteria Designer...');
     setSubAgents(prev => prev.map(a => 
       a.id === 'criteria' ? { ...a, isActive: true, isProcessing: true } : a
     ));
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 1500));
+    addAuditLog('process', 'Generando criterios basados en estructura PICOT...');
+    addAuditLog('process', 'Aplicando filtros metodológicos estándar Cochrane...');
 
     setAgentMessages(prev => [...prev, {
-      id: '3',
+      id: '5',
       agent: 'criteria',
-      message: 'Generando criterios de inclusión y exclusión basados en PICOT...',
+      message: 'Diseñando criterios de elegibilidad basados en el PICOT definido...',
       timestamp: new Date(),
       type: 'text',
     }]);
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
+    addAuditLog('success', '✓ Tabla de criterios I/E generada (5 inclusión, 5 exclusión)');
 
     setAgentMessages(prev => [...prev, {
-      id: '4',
+      id: '6',
       agent: 'criteria',
       message: 'criteria-table',
       timestamp: new Date(),
@@ -310,20 +400,29 @@ export default function AgentProtocolReview() {
 
     await new Promise(r => setTimeout(r, 1000));
 
-    // Activate Yadav Strategist
+    // === AGENT 4: YADAV STRATEGIST ===
+    addAuditLog('info', '🧪 Activando Agente Yadav Strategist...');
     setSubAgents(prev => prev.map(a => 
       a.id === 'yadav' ? { ...a, isActive: true, isProcessing: true } : a
     ));
 
-    await new Promise(r => setTimeout(r, 2500));
+    await new Promise(r => setTimeout(r, 1500));
+    addAuditLog('process', 'Iniciando mapeo de descriptores MeSH/Emtree...');
+    addAuditLog('process', 'Aplicando método Yadav 2025 de dos capas...');
+    addAuditLog('process', 'Capa 1: Términos controlados (thesaurus)');
+    addAuditLog('process', 'Capa 2: Términos de texto libre (sinónimos)');
 
     setAgentMessages(prev => [...prev, {
-      id: '5',
+      id: '7',
       agent: 'yadav',
-      message: 'Aplicando el método de dos capas del paper Yadav 2025. Generando sintaxis optimizada para 4 bases de datos...',
+      message: 'Construyendo estrategia de búsqueda optimizada usando método Yadav 2025...',
       timestamp: new Date(),
       type: 'text',
     }]);
+
+    await new Promise(r => setTimeout(r, 2500));
+    addAuditLog('success', '✓ Ecuaciones generadas para PubMed, Embase, Cochrane, Scopus');
+    addAuditLog('success', '✓ Sintaxis validada - Lista para ejecución');
 
     setSubAgents(prev => prev.map(a => 
       a.id === 'yadav' ? { ...a, isProcessing: false } : a
@@ -334,6 +433,9 @@ export default function AgentProtocolReview() {
     setShowProtocolPreview(true);
     setIsOrchestrating(false);
     
+    addAuditLog('success', '🎉 FASE 1 COMPLETADA - Protocolo generado con éxito');
+    addAuditLog('info', '📋 Revise las 17 secciones y apruebe para continuar a Fase 2');
+    
     toast({
       title: '✅ Fase 1 Completada',
       description: 'Protocolo listo para revisión. Revisa las 17 secciones antes de aprobar.',
@@ -342,31 +444,84 @@ export default function AgentProtocolReview() {
 
   const handleApproveProtocol = () => {
     setShowApprovalAnimation(true);
+    addAuditLog('info', '🔐 Iniciando proceso de aprobación de protocolo...');
+    addAuditLog('process', 'Verificando integridad de las 17 secciones...');
     
     setTimeout(() => {
+      addAuditLog('success', '✓ Protocolo verificado - Cumple requisitos ICH-GCP');
+      addAuditLog('success', '🏅 SELLO DE APROBACIÓN ÉTICA OTORGADO');
+      
       setIsPhase2Unlocked(true);
       setActivePhase('execution');
       setShowApprovalAnimation(false);
+      
+      addAuditLog('info', '🚀 Fase 2 desbloqueada - Iniciando ejecución de búsqueda');
       
       toast({
         title: '🎉 Protocolo Aprobado',
         description: 'Fase 2 desbloqueada. Iniciando ejecución de búsqueda sistemática.',
       });
 
-      // Simulate author voting
+      // Start PRISMA animation and author voting
+      animatePRISMAFlow();
       simulateAuthorVoting();
     }, 2500);
   };
 
+  const animatePRISMAFlow = () => {
+    addAuditLog('process', '📊 Iniciando flujo PRISMA dinámico...');
+    
+    const animateBlock = (index: number) => {
+      if (index >= prismaBlocks.length) {
+        addAuditLog('success', '✓ Flujo PRISMA completado - 12 estudios incluidos en meta-análisis');
+        return;
+      }
+      
+      const targetCount = prismaBlocks[index].targetCount;
+      const steps = 20;
+      const stepValue = targetCount / steps;
+      let current = 0;
+      
+      const interval = setInterval(() => {
+        current += stepValue;
+        if (current >= targetCount) {
+          current = targetCount;
+          clearInterval(interval);
+          
+          setPrismaBlocks(prev => prev.map((block, i) => 
+            i === index ? { ...block, count: Math.round(current) } : block
+          ));
+          
+          if (index < prismaBlocks.length - 1) {
+            addAuditLog('process', `→ ${prismaBlocks[index].label}: ${targetCount} registros procesados`);
+          }
+          
+          setTimeout(() => animateBlock(index + 1), 500);
+        } else {
+          setPrismaBlocks(prev => prev.map((block, i) => 
+            i === index ? { ...block, count: Math.round(current) } : block
+          ));
+        }
+      }, 50);
+    };
+    
+    animateBlock(0);
+  };
+
   const simulateAuthorVoting = () => {
-    const articles = ['Artículo 1', 'Artículo 2', 'Artículo 3'];
+    const articles = ['Zhang et al. 2022 - Metformin cognitive outcomes', 'Chen et al. 2023 - Neuroprotection DM2', 'Kim et al. 2024 - Alzheimer prevention'];
     let articleIdx = 0;
+
+    addAuditLog('info', '👥 Iniciando consenso de revisores IA...');
 
     const voteInterval = setInterval(() => {
       if (articleIdx >= 3) {
         clearInterval(voteInterval);
+        addAuditLog('success', '✓ Consenso completado - 3 artículos evaluados');
         return;
       }
+
+      addAuditLog('process', `📄 Evaluando: ${articles[articleIdx]}`);
 
       setAuthorVotes([
         { name: 'Dr. AI Alpha', avatar: '🤖', vote: Math.random() > 0.3 ? 'include' : 'exclude' },
@@ -376,15 +531,15 @@ export default function AgentProtocolReview() {
       
       setCurrentArticleIndex(articleIdx + 1);
       articleIdx++;
-    }, 2000);
+    }, 2500);
   };
 
-  const getAgentInfo = (agentId: 'literature' | 'criteria' | 'yadav') => {
+  const getAgentInfo = (agentId: 'picot' | 'literature' | 'criteria' | 'yadav') => {
     return subAgents.find(a => a.id === agentId)!;
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
       {/* HERO SECTION */}
@@ -745,7 +900,7 @@ export default function AgentProtocolReview() {
                     <div
                       key={agent.id}
                       className={cn(
-                        "relative flex flex-col items-center p-4 rounded-2xl border-2 transition-all duration-300 min-w-[160px]",
+                        "relative flex flex-col items-center p-4 rounded-2xl border-2 transition-all duration-300 min-w-[140px]",
                         agent.isActive 
                           ? "bg-white shadow-lg scale-105" 
                           : "bg-white/50 opacity-60"
@@ -828,7 +983,7 @@ export default function AgentProtocolReview() {
                         O describe tu idea de investigación:
                       </label>
                       <Textarea
-                        placeholder="Ej: Investigar el impacto de suplementación con Omega-3 en pacientes post-infarto para mejorar la recuperación funcional cardíaca durante 12 meses de seguimiento..."
+                        placeholder="Ej: Investigar el efecto neuroprotector de la Metformina en la prevención del Alzheimer..."
                         value={ideaInput}
                         onChange={(e) => setIdeaInput(e.target.value)}
                         className="flex-1 resize-none text-sm border-border"
@@ -854,7 +1009,7 @@ export default function AgentProtocolReview() {
                       ) : (
                         <>
                           <Play className="w-5 h-5" />
-                          Iniciar Fase 1: Protocolo
+                          Analizar Idea
                         </>
                       )}
                     </Button>
@@ -876,111 +1031,16 @@ export default function AgentProtocolReview() {
                       {agentMessages.length === 0 ? (
                         <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
                           <div className="text-center">
-                            <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                            <p>Los agentes comenzarán a trabajar en cadena...</p>
+                            <Cpu className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                            <p>Los agentes comenzarán a trabajar cuando analices una idea...</p>
                           </div>
                         </div>
                       ) : (
                         agentMessages.map((msg) => {
                           const agent = getAgentInfo(msg.agent);
                           
-                          if (msg.type === 'gaps') {
-                            return (
-                              <div 
-                                key={msg.id}
-                                className="bg-white rounded-xl p-4 border shadow-sm animate-fade-in"
-                                style={{ borderLeftWidth: 4, borderLeftColor: agent.color, borderRadius: '12px' }}
-                              >
-                                <div className="flex items-center gap-2 mb-3">
-                                  <div 
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
-                                    style={{ background: agent.color }}
-                                  >
-                                    {agent.icon}
-                                  </div>
-                                  <span className="font-semibold text-sm" style={{ color: agent.color }}>
-                                    {agent.name} - Gaps de Evidencia
-                                  </span>
-                                </div>
-                                <div className="space-y-2">
-                                  {evidenceGaps.map((gap, idx) => (
-                                    <div 
-                                      key={idx}
-                                      className={cn(
-                                        "flex items-start gap-2 p-2 rounded-lg text-sm",
-                                        gap.severity === 'high' ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'
-                                      )}
-                                      style={{ borderRadius: '8px' }}
-                                    >
-                                      <AlertTriangle className={cn(
-                                        "w-4 h-4 mt-0.5 shrink-0",
-                                        gap.severity === 'high' ? 'text-red-500' : 'text-amber-500'
-                                      )} />
-                                      <span className="text-foreground">{gap.gap}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          }
-                          
-                          if (msg.type === 'criteria-table') {
-                            return (
-                              <div 
-                                key={msg.id}
-                                className="bg-white rounded-xl p-4 border shadow-sm animate-fade-in"
-                                style={{ borderLeftWidth: 4, borderLeftColor: agent.color, borderRadius: '12px' }}
-                              >
-                                <div className="flex items-center gap-2 mb-3">
-                                  <div 
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
-                                    style={{ background: agent.color }}
-                                  >
-                                    {agent.icon}
-                                  </div>
-                                  <span className="font-semibold text-sm" style={{ color: agent.color }}>
-                                    {agent.name} - Criterios I/E
-                                  </span>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <h5 className="text-xs font-bold text-emerald-700 uppercase mb-2 flex items-center gap-1">
-                                      <CheckCircle2 className="w-3 h-3" /> Inclusión
-                                    </h5>
-                                    <div className="space-y-1">
-                                      {inclusionCriteria.map((c, idx) => (
-                                        <div key={idx} className="flex items-start gap-1.5 text-xs bg-emerald-50 p-2 rounded-lg">
-                                          <Check className="w-3 h-3 text-emerald-600 mt-0.5 shrink-0" />
-                                          <span>{c.criterion}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <h5 className="text-xs font-bold text-red-700 uppercase mb-2 flex items-center gap-1">
-                                      <XCircle className="w-3 h-3" /> Exclusión
-                                    </h5>
-                                    <div className="space-y-1">
-                                      {exclusionCriteria.map((c, idx) => (
-                                        <div key={idx} className="flex items-start gap-1.5 text-xs bg-red-50 p-2 rounded-lg">
-                                          <XCircle className="w-3 h-3 text-red-600 mt-0.5 shrink-0" />
-                                          <span>{c.criterion}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          }
-                          
                           return (
-                            <div 
-                              key={msg.id}
-                              className="bg-white rounded-xl p-4 border shadow-sm animate-fade-in"
-                              style={{ borderLeftWidth: 4, borderLeftColor: agent.color, borderRadius: '12px' }}
-                            >
+                            <div key={msg.id} className="bg-white rounded-xl p-4 border shadow-sm" style={{ borderRadius: '12px' }}>
                               <div className="flex items-center gap-2 mb-2">
                                 <div 
                                   className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
@@ -991,10 +1051,82 @@ export default function AgentProtocolReview() {
                                 <span className="font-semibold text-sm" style={{ color: agent.color }}>
                                   {agent.name}
                                 </span>
+                                <span className="text-xs text-muted-foreground ml-auto">
+                                  {msg.timestamp.toLocaleTimeString()}
+                                </span>
                               </div>
-                              <p className="text-sm text-foreground leading-relaxed" style={{ fontFamily: 'system-ui, sans-serif' }}>
-                                {msg.message}
-                              </p>
+                              
+                              {msg.type === 'text' && (
+                                <p className="text-sm text-foreground">{msg.message}</p>
+                              )}
+                              
+                              {msg.type === 'picot-result' && (
+                                <div className="space-y-2 mt-3">
+                                  <div className="grid grid-cols-5 gap-2 text-xs">
+                                    {Object.entries(metforminPICOT).map(([key, value]) => (
+                                      <div key={key} className="p-2 rounded-lg" style={{ background: '#DC262615' }}>
+                                        <div className="font-bold uppercase mb-1" style={{ color: '#DC2626' }}>
+                                          {key.charAt(0)}
+                                        </div>
+                                        <div className="text-foreground leading-tight">{value}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {msg.type === 'gaps' && (
+                                <div className="space-y-2 mt-3">
+                                  {metforminEvidenceGaps.map((gap, idx) => (
+                                    <div 
+                                      key={idx}
+                                      className={cn(
+                                        "p-2 rounded-lg text-xs flex items-start gap-2",
+                                        gap.severity === 'high' ? "bg-red-50 border-l-4 border-red-500" : "bg-amber-50 border-l-4 border-amber-500"
+                                      )}
+                                    >
+                                      <AlertTriangle className={cn(
+                                        "w-4 h-4 shrink-0",
+                                        gap.severity === 'high' ? "text-red-500" : "text-amber-500"
+                                      )} />
+                                      <span className="text-foreground">{gap.gap}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {msg.type === 'criteria-table' && (
+                                <div className="grid grid-cols-2 gap-4 mt-3">
+                                  <div>
+                                    <h5 className="font-semibold text-xs text-emerald-700 mb-2 flex items-center gap-1">
+                                      <CheckCircle2 className="w-3.5 h-3.5" />
+                                      Criterios de Inclusión
+                                    </h5>
+                                    <div className="space-y-1">
+                                      {metforminInclusionCriteria.map((c, idx) => (
+                                        <div key={idx} className="text-xs p-1.5 bg-emerald-50 rounded flex items-center gap-1.5">
+                                          <Check className="w-3 h-3 text-emerald-600" />
+                                          {c.criterion}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <h5 className="font-semibold text-xs text-red-700 mb-2 flex items-center gap-1">
+                                      <XCircle className="w-3.5 h-3.5" />
+                                      Criterios de Exclusión
+                                    </h5>
+                                    <div className="space-y-1">
+                                      {metforminExclusionCriteria.map((c, idx) => (
+                                        <div key={idx} className="text-xs p-1.5 bg-red-50 rounded flex items-center gap-1.5">
+                                          <Minus className="w-3 h-3 text-red-600" />
+                                          {c.criterion}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })
@@ -1026,13 +1158,13 @@ export default function AgentProtocolReview() {
                                     className="bg-slate-900 text-slate-100 p-4 rounded-xl text-xs overflow-x-auto leading-relaxed"
                                     style={{ maxHeight: 200, fontFamily: 'JetBrains Mono, Consolas, monospace', borderRadius: '12px' }}
                                   >
-                                    {sampleSearchEquations[db]}
+                                    {metforminSearchEquations[db]}
                                   </pre>
                                   <Button
                                     size="sm"
                                     variant="secondary"
                                     className="absolute top-2 right-2 gap-1.5 text-xs"
-                                    onClick={() => handleCopyToClipboard(sampleSearchEquations[db], db)}
+                                    onClick={() => handleCopyToClipboard(metforminSearchEquations[db], db)}
                                     style={{ borderRadius: '8px' }}
                                   >
                                     {copiedTab === db ? (
@@ -1069,9 +1201,15 @@ export default function AgentProtocolReview() {
                       <FileText className="w-5 h-5" />
                       Protocol Preview - 17 Secciones Institucionales
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      Simulación de documento PDF
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => setShowProtocolModal(true)}
+                    >
+                      <Eye className="w-4 h-4" />
+                      Visualizar Borrador de Protocolo
+                    </Button>
                   </div>
                   
                   <div className="p-6">
@@ -1143,7 +1281,7 @@ export default function AgentProtocolReview() {
               <div className="bg-white border-2 rounded-2xl p-6" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
                 <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                   <BarChart3 className="w-6 h-6" style={{ color: '#00A651' }} />
-                  Diagrama PRISMA - Flujo de Selección
+                  Diagrama PRISMA - Flujo de Selección Dinámico
                 </h3>
                 
                 <div className="flex flex-col items-center gap-2">
@@ -1165,7 +1303,7 @@ export default function AgentProtocolReview() {
                         <div className="flex justify-center py-2">
                           <ArrowDown className="w-6 h-6 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground ml-2">
-                            -{(prismaBlocks[index].count - prismaBlocks[index + 1].count).toLocaleString()} excluidos
+                            -{(block.targetCount - prismaBlocks[index + 1].targetCount).toLocaleString()} excluidos
                           </span>
                         </div>
                       )}
@@ -1214,95 +1352,147 @@ export default function AgentProtocolReview() {
                 </div>
               </div>
 
-              {/* Forest Plot (Meta-analysis) */}
+              {/* Forest Plot SVG (Meta-analysis) */}
               <div className="bg-white border-2 rounded-2xl p-6" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
                 <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                   <Diamond className="w-6 h-6" style={{ color: '#6B21A8' }} />
                   Forest Plot - Meta-análisis de Resultados
                 </h3>
                 
+                {/* SVG Forest Plot */}
                 <div className="overflow-x-auto">
-                  <div className="min-w-[600px]">
-                    {/* Header */}
-                    <div className="grid grid-cols-12 gap-2 text-xs font-bold text-muted-foreground uppercase border-b pb-2 mb-4">
-                      <div className="col-span-3">Estudio</div>
-                      <div className="col-span-6 text-center">Odds Ratio (IC 95%)</div>
-                      <div className="col-span-2 text-right">OR</div>
-                      <div className="col-span-1 text-right">Peso</div>
-                    </div>
+                  <svg viewBox="0 0 700 320" className="w-full min-w-[600px]" style={{ fontFamily: 'system-ui, sans-serif' }}>
+                    {/* Background */}
+                    <rect width="700" height="320" fill="white" />
                     
-                    {/* Studies */}
-                    {forestPlotData.map((study, idx) => {
-                      const orPosition = ((study.or - 0.3) / 1.4) * 100;
-                      const ciLowPos = ((study.ci_low - 0.3) / 1.4) * 100;
-                      const ciHighPos = ((study.ci_high - 0.3) / 1.4) * 100;
-                      const lineWidth = ciHighPos - ciLowPos;
-                      
-                      return (
-                        <div 
+                    {/* Title */}
+                    <text x="350" y="20" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#374151">
+                      Metformina y Riesgo de Enfermedad de Alzheimer (OR, IC 95%)
+                    </text>
+                    
+                    {/* Y-axis labels (studies) */}
+                    <g transform="translate(0, 45)">
+                      {forestPlotData.map((study, idx) => (
+                        <text 
                           key={idx} 
-                          className={cn(
-                            "grid grid-cols-12 gap-2 items-center py-2",
-                            study.isPooled && "bg-slate-100 rounded-lg px-2 font-bold"
-                          )}
+                          x="10" 
+                          y={idx * 35 + 15} 
+                          fontSize="10" 
+                          fill={study.isPooled ? '#6B21A8' : '#374151'}
+                          fontWeight={study.isPooled ? 'bold' : 'normal'}
                         >
-                          <div className="col-span-3 text-sm" style={{ fontFamily: study.isPooled ? 'inherit' : 'JetBrains Mono, monospace' }}>
-                            {study.study}
-                          </div>
-                          <div className="col-span-6 relative h-8">
-                            {/* Center line at OR=1 */}
-                            <div 
-                              className="absolute top-0 bottom-0 w-px bg-gray-400"
-                              style={{ left: `${((1 - 0.3) / 1.4) * 100}%` }}
-                            />
+                          {study.study}
+                        </text>
+                      ))}
+                    </g>
+                    
+                    {/* Plot area */}
+                    <g transform="translate(140, 45)">
+                      {/* Grid lines */}
+                      <line x1="0" y1="0" x2="0" y2="245" stroke="#e5e7eb" strokeWidth="1" />
+                      <line x1="150" y1="0" x2="150" y2="245" stroke="#e5e7eb" strokeWidth="1" />
+                      <line x1="300" y1="0" x2="300" y2="245" stroke="#e5e7eb" strokeWidth="1" />
+                      
+                      {/* No-effect line (OR = 1) */}
+                      <line x1="150" y1="0" x2="150" y2="245" stroke="#374151" strokeWidth="2" strokeDasharray="4,4" />
+                      
+                      {/* Studies with CI lines and points */}
+                      {forestPlotData.map((study, idx) => {
+                        const y = idx * 35 + 15;
+                        const scale = (or: number) => ((or - 0.2) / 1.3) * 300;
+                        const xOR = scale(study.or);
+                        const xLow = scale(study.ci_low);
+                        const xHigh = scale(study.ci_high);
+                        
+                        return (
+                          <g key={idx}>
                             {/* CI line */}
-                            <div 
-                              className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-slate-600"
-                              style={{ left: `${ciLowPos}%`, width: `${lineWidth}%` }}
+                            <line 
+                              x1={xLow} 
+                              y1={y} 
+                              x2={xHigh} 
+                              y2={y} 
+                              stroke={study.isPooled ? '#6B21A8' : '#0033A0'} 
+                              strokeWidth={study.isPooled ? 3 : 2} 
                             />
-                            {/* OR point (diamond for pooled) */}
+                            
+                            {/* CI caps */}
+                            <line x1={xLow} y1={y-4} x2={xLow} y2={y+4} stroke={study.isPooled ? '#6B21A8' : '#0033A0'} strokeWidth="2" />
+                            <line x1={xHigh} y1={y-4} x2={xHigh} y2={y+4} stroke={study.isPooled ? '#6B21A8' : '#0033A0'} strokeWidth="2" />
+                            
+                            {/* Point estimate (diamond for pooled) */}
                             {study.isPooled ? (
-                              <div 
-                                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rotate-45"
-                                style={{ left: `${orPosition}%`, background: '#6B21A8' }}
+                              <polygon 
+                                points={`${xOR},${y-10} ${xOR+10},${y} ${xOR},${y+10} ${xOR-10},${y}`}
+                                fill="#6B21A8"
                               />
                             ) : (
-                              <div 
-                                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full"
-                                style={{ left: `${orPosition}%`, background: bayerBlue }}
-                              />
+                              <circle cx={xOR} cy={y} r={Math.sqrt(study.weight) * 1.2} fill="#0033A0" />
                             )}
-                          </div>
-                          <div className="col-span-2 text-right text-sm font-mono">
-                            {study.or.toFixed(2)} [{study.ci_low.toFixed(2)}-{study.ci_high.toFixed(2)}]
-                          </div>
-                          <div className="col-span-1 text-right text-sm">
-                            {study.weight.toFixed(1)}%
-                          </div>
-                        </div>
-                      );
-                    })}
+                          </g>
+                        );
+                      })}
+                      
+                      {/* X-axis */}
+                      <line x1="0" y1="260" x2="300" y2="260" stroke="#374151" strokeWidth="1" />
+                      
+                      {/* X-axis labels */}
+                      <text x="0" y="278" fontSize="10" fill="#374151" textAnchor="middle">0.2</text>
+                      <text x="75" y="278" fontSize="10" fill="#374151" textAnchor="middle">0.5</text>
+                      <text x="150" y="278" fontSize="10" fill="#374151" textAnchor="middle">1.0</text>
+                      <text x="225" y="278" fontSize="10" fill="#374151" textAnchor="middle">1.3</text>
+                      <text x="300" y="278" fontSize="10" fill="#374151" textAnchor="middle">1.5</text>
+                      
+                      {/* Axis labels */}
+                      <text x="50" y="295" fontSize="10" fill="#059669" fontWeight="bold">← Favorece Metformina</text>
+                      <text x="250" y="295" fontSize="10" fill="#DC2626" fontWeight="bold" textAnchor="end">Favorece Control →</text>
+                    </g>
                     
-                    {/* X-axis labels */}
-                    <div className="grid grid-cols-12 gap-2 mt-4 pt-2 border-t">
-                      <div className="col-span-3"></div>
-                      <div className="col-span-6 flex justify-between text-xs text-muted-foreground px-1">
-                        <span>0.5</span>
-                        <span>Favors Treatment</span>
-                        <span>1.0</span>
-                        <span>Favors Control</span>
-                        <span>1.5</span>
-                      </div>
-                    </div>
-                  </div>
+                    {/* OR values column */}
+                    <g transform="translate(480, 45)">
+                      <text x="0" y="-10" fontSize="10" fontWeight="bold" fill="#374151">OR [IC 95%]</text>
+                      {forestPlotData.map((study, idx) => (
+                        <text 
+                          key={idx} 
+                          x="0" 
+                          y={idx * 35 + 15} 
+                          fontSize="9" 
+                          fill={study.isPooled ? '#6B21A8' : '#374151'}
+                          fontWeight={study.isPooled ? 'bold' : 'normal'}
+                          fontFamily="monospace"
+                        >
+                          {study.or.toFixed(2)} [{study.ci_low.toFixed(2)}-{study.ci_high.toFixed(2)}]
+                        </text>
+                      ))}
+                    </g>
+                    
+                    {/* Weight column */}
+                    <g transform="translate(620, 45)">
+                      <text x="0" y="-10" fontSize="10" fontWeight="bold" fill="#374151">Peso</text>
+                      {forestPlotData.map((study, idx) => (
+                        <text 
+                          key={idx} 
+                          x="0" 
+                          y={idx * 35 + 15} 
+                          fontSize="9" 
+                          fill={study.isPooled ? '#6B21A8' : '#374151'}
+                          fontWeight={study.isPooled ? 'bold' : 'normal'}
+                        >
+                          {study.weight.toFixed(1)}%
+                        </text>
+                      ))}
+                    </g>
+                  </svg>
                 </div>
                 
                 <div className="mt-6 p-4 bg-purple-50 rounded-xl text-sm" style={{ borderRadius: '12px' }}>
                   <p className="font-semibold text-purple-900 mb-1">Resultado del Meta-análisis:</p>
                   <p className="text-purple-800">
-                    OR pooled = 0.76 (IC 95%: 0.67-0.86), p &lt; 0.001. Heterogeneidad: I² = 23%, indicando 
-                    resultados consistentes. El tratamiento con Omega-3 reduce significativamente el riesgo 
-                    en un 24% comparado con control.
+                    <strong>OR combinado = 0.68 (IC 95%: 0.58-0.79), p &lt; 0.001.</strong> Heterogeneidad: I² = 28%, 
+                    indicando resultados consistentes entre estudios. <strong>El uso de Metformina se asocia con una 
+                    reducción del 32% en el riesgo de desarrollar Alzheimer</strong> comparado con otros antidiabéticos.
+                    <br /><br />
+                    <span className="font-bold text-purple-900">→ Resultado a favor de la intervención (Diamante a la izquierda de la línea de no-efecto)</span>
                   </p>
                 </div>
               </div>
@@ -1310,6 +1500,127 @@ export default function AgentProtocolReview() {
           )}
         </div>
       </section>
+
+      {/* AUDIT LOGS CONSOLE */}
+      {auditLogs.length > 0 && (
+        <section className="bg-slate-900 border-t-2 border-slate-700">
+          <div className="container mx-auto max-w-7xl">
+            <div className="p-4">
+              <div className="flex items-center gap-2 text-slate-400 mb-3">
+                <Terminal className="w-4 h-4" />
+                <span className="text-sm font-medium uppercase tracking-wider">Audit Logs - Consola Técnica</span>
+                <span className="text-xs text-slate-500 ml-auto">{auditLogs.length} registros</span>
+              </div>
+              
+              <div 
+                className="bg-slate-950 rounded-xl p-4 max-h-48 overflow-y-auto font-mono text-xs"
+                style={{ borderRadius: '8px' }}
+              >
+                {auditLogs.map((log, idx) => (
+                  <div 
+                    key={idx} 
+                    className={cn(
+                      "py-1 flex gap-3",
+                      log.level === 'success' && "text-emerald-400",
+                      log.level === 'warning' && "text-amber-400",
+                      log.level === 'info' && "text-blue-400",
+                      log.level === 'process' && "text-slate-400"
+                    )}
+                  >
+                    <span className="text-slate-600 shrink-0">
+                      [{log.timestamp.toLocaleTimeString()}]
+                    </span>
+                    <span>{log.message}</span>
+                  </div>
+                ))}
+                <div ref={logsEndRef} />
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Protocol Draft Modal */}
+      <Dialog open={showProtocolModal} onOpenChange={setShowProtocolModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg" style={{ color: bayerBlue }}>
+              <FileText className="w-5 h-5" />
+              Borrador de Protocolo - Documento Estructurado
+            </DialogTitle>
+            <DialogDescription>
+              Revisión completa de las 17 secciones institucionales generadas por el orquestador
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="flex-1 pr-4">
+            <div className="space-y-6 py-4">
+              {/* Title Section */}
+              <div className="border-b pb-4">
+                <h2 className="text-xl font-bold text-foreground mb-2" style={{ color: bayerBlue }}>
+                  {protocolSections[0].content}
+                </h2>
+                <p className="text-sm text-muted-foreground">Revisión Sistemática y Meta-análisis | PROSPERO Registration Pending</p>
+              </div>
+              
+              {/* Justificación */}
+              <div>
+                <h3 className="font-bold text-foreground mb-2">3. Justificación Científica</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{protocolSections[2].content}</p>
+              </div>
+              
+              {/* PICOT */}
+              <div>
+                <h3 className="font-bold text-foreground mb-2">4. Pregunta de Investigación (PICOT)</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{protocolSections[3].content}</p>
+                
+                <div className="grid grid-cols-5 gap-2 mt-4">
+                  {Object.entries(metforminPICOT).map(([key, value]) => (
+                    <div key={key} className="p-3 bg-muted/50 rounded-lg text-center">
+                      <div className="font-bold text-lg mb-1" style={{ color: '#DC2626' }}>{key.charAt(0).toUpperCase()}</div>
+                      <div className="text-xs text-foreground leading-tight">{value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Metodología */}
+              <div>
+                <h3 className="font-bold text-foreground mb-2">6. Diseño del Estudio</h3>
+                <p className="text-sm text-muted-foreground">{protocolSections[5].content}</p>
+              </div>
+              
+              {/* Search Equations */}
+              <div>
+                <h3 className="font-bold text-foreground mb-2">11. Estrategia de Búsqueda (Método Yadav 2025)</h3>
+                <div className="bg-slate-900 rounded-xl p-4 mt-2">
+                  <p className="text-xs text-slate-400 mb-2">PubMed/MEDLINE:</p>
+                  <pre className="text-xs text-slate-100 whitespace-pre-wrap" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                    {metforminSearchEquations.pubmed}
+                  </pre>
+                </div>
+              </div>
+              
+              {/* All sections list */}
+              <div className="bg-muted/30 rounded-xl p-4">
+                <h3 className="font-bold text-foreground mb-3">Todas las secciones del protocolo:</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {protocolSections.map((section) => (
+                    <div key={section.id} className="flex items-center gap-2 text-sm">
+                      {section.status === 'complete' && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                      {section.status === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-500" />}
+                      {section.status === 'pending' && <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
+                      <span className={cn(
+                        section.status === 'pending' && 'text-muted-foreground'
+                      )}>{section.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
