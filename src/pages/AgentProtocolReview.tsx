@@ -5,8 +5,9 @@ import {
   Filter, FlaskConical, Lock, Unlock, Award, Users, BarChart3, ArrowDown,
   CheckCircle2, XCircle, ThumbsUp, ThumbsDown, Diamond, Minus, Terminal,
   Target, Eye, Microscope, Download, RefreshCw, ShieldCheck, AlertOctagon,
-  Activity, Database, Timer
+  Activity, Database, Timer, Brain
 } from 'lucide-react';
+import { MultiAIConsensusLab } from '@/components/MultiAIConsensusLab';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -2110,6 +2111,13 @@ export default function AgentProtocolReview() {
                   </div>
                 </div>
               </div>
+
+              {/* MULTI-AI CONSENSUS & VALIDATION LAB */}
+              <MultiAIConsensusLab 
+                searchEquation={metforminSearchEquations.pubmed}
+                isVisible={true}
+                bayerBlue={bayerBlue}
+              />
             </div>
           )}
         </div>
