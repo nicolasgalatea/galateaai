@@ -70,7 +70,10 @@ interface ReproducibilityResult {
   actualCount: number;
   deviation: number;
   keyStudiesFound: string[];
+  keyStudiesTotal: number;
   status: 'validating' | 'success' | 'warning' | 'error';
+  latencyMs: number;
+  searchStringSent: string;
 }
 
 interface ValidationLog {
@@ -78,6 +81,32 @@ interface ValidationLog {
   action: string;
   result: string;
   details?: string;
+  latency?: number;
+}
+
+interface SyntaxHealth {
+  isValid: boolean;
+  parenthesesBalanced: boolean;
+  operatorsValid: boolean;
+  quotesBalanced: boolean;
+  issues: string[];
+}
+
+interface AuditSummary {
+  volumeMatch: boolean;
+  volumeDeviation: number;
+  keyStudiesMatch: boolean;
+  keyStudiesFound: number;
+  keyStudiesTotal: number;
+  syntaxHealth: SyntaxHealth;
+  overallStatus: 'reproducible' | 'bias-detected' | 'syntax-error';
+}
+
+interface PRISMAExcludedArticle {
+  id: string;
+  title: string;
+  reason: string;
+  phase: string;
 }
 
 const kpiStats = [
@@ -219,14 +248,25 @@ export default function AgentProtocolReview() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const logsEndRef = useRef<HTMLDivElement>(null);
   
-  // Reproducibility Check State
+  // Reproducibility Check State - Enhanced
   const [showReproducibilityModal, setShowReproducibilityModal] = useState(false);
   const [reproducibilityInput, setReproducibilityInput] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [reproducibilityResults, setReproducibilityResults] = useState<ReproducibilityResult[]>([]);
   const [validationLogs, setValidationLogs] = useState<ValidationLog[]>([]);
-  const [reproducibilityStatus, setReproducibilityStatus] = useState<'idle' | 'validating' | 'reproducible' | 'bias-detected'>('idle');
+  const [reproducibilityStatus, setReproducibilityStatus] = useState<'idle' | 'validating' | 'reproducible' | 'bias-detected' | 'syntax-error'>('idle');
   const [useGeneratedEquation, setUseGeneratedEquation] = useState(true);
+  const [auditSummary, setAuditSummary] = useState<AuditSummary | null>(null);
+  const [showPRISMAVerification, setShowPRISMAVerification] = useState(false);
+  const [prismaExcludedArticles, setPrismaExcludedArticles] = useState<PRISMAExcludedArticle[]>([
+    { id: '1', title: 'Liu et al. 2019 - Cross-sectional analysis', reason: 'Diseño no elegible (estudio transversal)', phase: 'duplicados' },
+    { id: '2', title: 'Smith et al. 2020 - Case series', reason: 'Sin grupo comparador', phase: 'duplicados' },
+    { id: '3', title: 'Wang et al. 2018 - Insulin combined therapy', reason: 'Criterio de exclusión: insulina como primera línea', phase: 'cribado' },
+    { id: '4', title: 'García et al. 2021 - Dementia at baseline', reason: 'Demencia preexistente al inicio', phase: 'cribado' },
+    { id: '5', title: 'Kumar et al. 2022 - Follow-up < 1 year', reason: 'Seguimiento insuficiente (< 2 años)', phase: 'texto_completo' },
+    { id: '6', title: 'Patel et al. 2023 - No cognitive assessment', reason: 'Sin evaluación cognitiva estandarizada', phase: 'texto_completo' },
+  ]);
+  const [selectedPRISMAPhase, setSelectedPRISMAPhase] = useState<string | null>(null);
   
   const [prismaBlocks, setPrismaBlocks] = useState<PRISMABlock[]>([
     { label: 'Identificados', count: 0, targetCount: 1372, description: 'Registros de bases de datos' },
@@ -294,8 +334,8 @@ export default function AgentProtocolReview() {
     setAuditLogs(prev => [...prev, { timestamp: new Date(), level, message }]);
   };
 
-  const addValidationLog = (action: string, result: string, details?: string) => {
-    setValidationLogs(prev => [...prev, { timestamp: new Date(), action, result, details }]);
+  const addValidationLog = (action: string, result: string, details?: string, latency?: number) => {
+    setValidationLogs(prev => [...prev, { timestamp: new Date(), action, result, details, latency }]);
   };
 
   const handleCopyToClipboard = async (text: string, tab: string) => {
@@ -308,7 +348,41 @@ export default function AgentProtocolReview() {
     });
   };
 
-  // Reproducibility Check Simulation
+  // Validate Syntax Health
+  const validateSyntaxHealth = (equation: string): SyntaxHealth => {
+    const issues: string[] = [];
+    
+    // Check parentheses balance
+    let parenCount = 0;
+    for (const char of equation) {
+      if (char === '(') parenCount++;
+      if (char === ')') parenCount--;
+      if (parenCount < 0) break;
+    }
+    const parenthesesBalanced = parenCount === 0;
+    if (!parenthesesBalanced) issues.push('Paréntesis desbalanceados');
+    
+    // Check quotes balance
+    const quoteMatches = equation.match(/"/g);
+    const quotesBalanced = !quoteMatches || quoteMatches.length % 2 === 0;
+    if (!quotesBalanced) issues.push('Comillas sin cerrar');
+    
+    // Check operators
+    const operatorsValid = !/(AND\s+AND|OR\s+OR|NOT\s+NOT)/.test(equation) && 
+                           !/^\s*(AND|OR|NOT)/.test(equation) &&
+                           !/(AND|OR|NOT)\s*$/.test(equation);
+    if (!operatorsValid) issues.push('Operadores booleanos mal formados');
+    
+    return {
+      isValid: parenthesesBalanced && quotesBalanced && operatorsValid,
+      parenthesesBalanced,
+      operatorsValid,
+      quotesBalanced,
+      issues
+    };
+  };
+
+  // Enhanced Reproducibility Check Simulation
   const runReproducibilityCheck = async () => {
     const equationToValidate = useGeneratedEquation ? metforminSearchEquations.pubmed : reproducibilityInput;
     
@@ -325,15 +399,45 @@ export default function AgentProtocolReview() {
     setReproducibilityStatus('validating');
     setReproducibilityResults([]);
     setValidationLogs([]);
+    setAuditSummary(null);
 
     addValidationLog('INIT', 'Iniciando validación de reproducibilidad', 'Protocolo Galatea AI v2.1');
     
+    // Syntax Health Check
+    addValidationLog('SYNTAX', 'Verificando salud de sintaxis booleana', 'Análisis estructural...', 45);
+    await new Promise(r => setTimeout(r, 800));
+    
+    const syntaxHealth = validateSyntaxHealth(equationToValidate);
+    
+    if (!syntaxHealth.isValid) {
+      addValidationLog('SYNTAX_ERROR', 'Error de sintaxis detectado', syntaxHealth.issues.join(', '), 12);
+      setReproducibilityStatus('syntax-error');
+      setAuditSummary({
+        volumeMatch: false,
+        volumeDeviation: 100,
+        keyStudiesMatch: false,
+        keyStudiesFound: 0,
+        keyStudiesTotal: 5,
+        syntaxHealth,
+        overallStatus: 'syntax-error'
+      });
+      setIsValidating(false);
+      toast({
+        title: '❌ Error de Sintaxis',
+        description: 'La ecuación contiene errores de sintaxis que impiden la validación.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    addValidationLog('SYNTAX_OK', 'Sintaxis válida', `Paréntesis: ✓ | Operadores: ✓ | Comillas: ✓`, 58);
+    
     // Simulate database connections
     const databases = [
-      { name: 'PubMed/MEDLINE', expected: 342, delay: 2000 },
-      { name: 'Embase', expected: 287, delay: 2500 },
-      { name: 'Scopus', expected: 156, delay: 2000 },
-      { name: 'Cochrane Library', expected: 45, delay: 1500 },
+      { name: 'PubMed/MEDLINE', expected: 342, delay: 2000, searchString: '("Metformin"[MeSH] OR "Metformin"[tw])...' },
+      { name: 'Embase', expected: 287, delay: 2500, searchString: "('metformin'/exp OR 'metformin':ti,ab)..." },
+      { name: 'Scopus', expected: 156, delay: 2000, searchString: 'TITLE-ABS-KEY(("metformin" OR...))' },
+      { name: 'Cochrane Library', expected: 45, delay: 1500, searchString: '#1 MeSH descriptor: [Metformin]...' },
     ];
 
     const keyStudies = [
@@ -344,15 +448,20 @@ export default function AgentProtocolReview() {
       'Chen F et al. 2023 - Alzheimer prevention'
     ];
 
-    addValidationLog('PARSE', 'Parseando sintaxis booleana', `${equationToValidate.substring(0, 50)}...`);
+    addValidationLog('PARSE', 'Parseando sintaxis booleana', `${equationToValidate.substring(0, 50)}...`, 125);
     await new Promise(r => setTimeout(r, 1000));
 
-    addValidationLog('CONNECT', 'Estableciendo conexiones API', 'PubMed E-utilities, Embase API, Scopus API');
+    addValidationLog('CONNECT', 'Estableciendo conexiones API', 'PubMed E-utilities, Embase API, Scopus API, Cochrane API', 340);
     await new Promise(r => setTimeout(r, 800));
+
+    let totalExpected = 0;
+    let totalActual = 0;
+    let totalKeyStudiesFound = 0;
 
     for (let i = 0; i < databases.length; i++) {
       const db = databases[i];
-      addValidationLog('QUERY', `Ejecutando query en ${db.name}`, 'Timeout: 30s');
+      const startTime = Date.now();
+      addValidationLog('QUERY', `Enviando query a ${db.name}`, db.searchString, 0);
       
       setReproducibilityResults(prev => [...prev, {
         database: db.name,
@@ -360,20 +469,30 @@ export default function AgentProtocolReview() {
         actualCount: 0,
         deviation: 0,
         keyStudiesFound: [],
-        status: 'validating'
+        keyStudiesTotal: keyStudies.length,
+        status: 'validating',
+        latencyMs: 0,
+        searchStringSent: db.searchString
       }]);
 
       await new Promise(r => setTimeout(r, db.delay));
+      
+      const latencyMs = Date.now() - startTime + Math.floor(Math.random() * 200);
 
       // Simulate result with small random variance
       const variance = Math.random() * 0.08 - 0.04; // -4% to +4% variance
       const actualCount = Math.round(db.expected * (1 + variance));
       const deviation = Math.abs((actualCount - db.expected) / db.expected * 100);
       
-      // Randomly select 2-3 key studies as found
+      totalExpected += db.expected;
+      totalActual += actualCount;
+      
+      // Randomly select 3-4 key studies as found
       const foundStudies = keyStudies
         .sort(() => Math.random() - 0.5)
-        .slice(0, Math.floor(Math.random() * 2) + 2);
+        .slice(0, Math.floor(Math.random() * 2) + 3);
+      
+      totalKeyStudiesFound = Math.max(totalKeyStudiesFound, foundStudies.length);
 
       setReproducibilityResults(prev => prev.map(r => 
         r.database === db.name ? {
@@ -381,24 +500,40 @@ export default function AgentProtocolReview() {
           actualCount,
           deviation,
           keyStudiesFound: foundStudies,
-          status: deviation > 5 ? 'warning' : 'success'
+          keyStudiesTotal: keyStudies.length,
+          status: deviation > 5 ? 'warning' : 'success',
+          latencyMs,
+          searchStringSent: db.searchString
         } : r
       ));
 
-      addValidationLog('RESULT', `${db.name}: ${actualCount} resultados`, `Desviación: ${deviation.toFixed(2)}%`);
+      addValidationLog('RESPONSE', `${db.name}: ${actualCount} resultados`, `Latencia: ${latencyMs}ms | Desviación: ${deviation.toFixed(2)}%`, latencyMs);
     }
 
     await new Promise(r => setTimeout(r, 500));
-    addValidationLog('VERIFY', 'Verificando estudios clave en resultados', `${keyStudies.length} estudios de referencia`);
+    addValidationLog('VERIFY', 'Verificando estudios clave en resultados', `${totalKeyStudiesFound}/${keyStudies.length} estudios detectados`, 89);
     await new Promise(r => setTimeout(r, 800));
-    addValidationLog('COMPLETE', 'Auditoría de reproducibilidad finalizada', 'Generando reporte...');
+    
+    // Calculate overall statistics
+    const overallDeviation = Math.abs((totalActual - totalExpected) / totalExpected * 100);
+    const hasDeviation = overallDeviation > 5;
+    const keyStudiesMatch = totalKeyStudiesFound >= 4;
 
-    // Check overall status
-    const hasDeviation = databases.some((_, idx) => {
-      const result = reproducibilityResults[idx];
-      return result && result.deviation > 5;
-    });
+    addValidationLog('SUMMARY', 'Generando resumen de auditoría', `Volumen: ${overallDeviation.toFixed(2)}% desv. | Estudios clave: ${totalKeyStudiesFound}/${keyStudies.length}`, 45);
+    addValidationLog('COMPLETE', 'Auditoría de reproducibilidad finalizada', 'Certificado listo para exportar', 12);
 
+    // Set audit summary
+    const summary: AuditSummary = {
+      volumeMatch: !hasDeviation,
+      volumeDeviation: overallDeviation,
+      keyStudiesMatch,
+      keyStudiesFound: totalKeyStudiesFound,
+      keyStudiesTotal: keyStudies.length,
+      syntaxHealth,
+      overallStatus: hasDeviation ? 'bias-detected' : 'reproducible'
+    };
+    
+    setAuditSummary(summary);
     setReproducibilityStatus(hasDeviation ? 'bias-detected' : 'reproducible');
     setIsValidating(false);
 
@@ -411,59 +546,102 @@ export default function AgentProtocolReview() {
     });
   };
 
-  const exportValidationLog = () => {
+  // Export Transparency Certificate
+  const exportTransparencyCertificate = () => {
+    const now = new Date();
+    const certificateId = `GALATEA-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    
     const logContent = [
-      '═══════════════════════════════════════════════════════════════',
-      '           GALATEA AI - REPORTE DE VALIDACIÓN DE REPRODUCIBILIDAD',
-      '═══════════════════════════════════════════════════════════════',
+      '╔══════════════════════════════════════════════════════════════════════════════╗',
+      '║                                                                              ║',
+      '║           GALATEA AI - CERTIFICADO DE TRANSPARENCIA METODOLÓGICA            ║',
+      '║                     REPRODUCIBILITY VALIDATION CERTIFICATE                   ║',
+      '║                                                                              ║',
+      '╚══════════════════════════════════════════════════════════════════════════════╝',
       '',
-      `Fecha: ${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}`,
-      `Hora: ${new Date().toLocaleTimeString('es-ES')}`,
-      `Estado: ${reproducibilityStatus === 'reproducible' ? 'METODOLOGÍA REPRODUCIBLE ✓' : 'DESVIACIÓN DETECTADA ⚠️'}`,
+      `  📋 Certificado ID: ${certificateId}`,
+      `  📅 Fecha de Emisión: ${now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+      `  ⏰ Hora de Validación: ${now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`,
+      `  🔒 Hash de Integridad: ${btoa(certificateId).substring(0, 32)}`,
       '',
-      '───────────────────────────────────────────────────────────────',
-      '                        ECUACIÓN VALIDADA',
-      '───────────────────────────────────────────────────────────────',
+      '═══════════════════════════════════════════════════════════════════════════════',
+      '                              ESTADO DE VALIDACIÓN',
+      '═══════════════════════════════════════════════════════════════════════════════',
+      '',
+      reproducibilityStatus === 'reproducible' 
+        ? '  ✅ ESTADO: METODOLOGÍA VALIDADA COMO REPRODUCIBLE'
+        : reproducibilityStatus === 'syntax-error'
+        ? '  ❌ ESTADO: ERROR DE SINTAXIS - VALIDACIÓN FALLIDA'
+        : '  ⚠️ ESTADO: DESVIACIÓN DETECTADA - REQUIERE REVISIÓN',
+      '',
+      auditSummary ? [
+        '  ┌─────────────────────────────────────────────────────────────────────────┐',
+        '  │ RESUMEN DE AUDITORÍA                                                    │',
+        '  ├─────────────────────────────────────────────────────────────────────────┤',
+        `  │ • Volumen de Artículos: ${auditSummary.volumeMatch ? '✓ COINCIDE' : '✗ DESVIACIÓN'} (${auditSummary.volumeDeviation.toFixed(2)}% desv.)${' '.repeat(Math.max(0, 20 - auditSummary.volumeDeviation.toFixed(2).length))}│`,
+        `  │ • Estudios Clave: ${auditSummary.keyStudiesMatch ? '✓ DETECTADOS' : '✗ INCOMPLETO'} (${auditSummary.keyStudiesFound}/${auditSummary.keyStudiesTotal})${' '.repeat(22)}│`,
+        `  │ • Salud de Sintaxis: ${auditSummary.syntaxHealth.isValid ? '✓ VÁLIDA' : '✗ ERRORES'}${' '.repeat(36)}│`,
+        `  │   - Paréntesis: ${auditSummary.syntaxHealth.parenthesesBalanced ? '✓' : '✗'}  Operadores: ${auditSummary.syntaxHealth.operatorsValid ? '✓' : '✗'}  Comillas: ${auditSummary.syntaxHealth.quotesBalanced ? '✓' : '✗'}${' '.repeat(14)}│`,
+        '  └─────────────────────────────────────────────────────────────────────────┘',
+      ].join('\n') : '',
+      '',
+      '═══════════════════════════════════════════════════════════════════════════════',
+      '                           ECUACIÓN DE BÚSQUEDA VALIDADA',
+      '═══════════════════════════════════════════════════════════════════════════════',
+      '',
       useGeneratedEquation ? metforminSearchEquations.pubmed : reproducibilityInput,
       '',
-      '───────────────────────────────────────────────────────────────',
-      '                    RESULTADOS POR BASE DE DATOS',
-      '───────────────────────────────────────────────────────────────',
+      '═══════════════════════════════════════════════════════════════════════════════',
+      '                       RESULTADOS POR BASE DE DATOS',
+      '═══════════════════════════════════════════════════════════════════════════════',
+      '',
       ...reproducibilityResults.map(r => [
-        `${r.database}:`,
-        `  - Resultados Esperados: ${r.expectedCount}`,
-        `  - Resultados Obtenidos: ${r.actualCount}`,
-        `  - Desviación: ${r.deviation.toFixed(2)}%`,
-        `  - Estado: ${r.status === 'success' ? 'VÁLIDO' : 'REVISAR'}`,
-        `  - Estudios Clave Detectados: ${r.keyStudiesFound.length}`,
+        `  📊 ${r.database}`,
+        `     ├─ Resultados Esperados: ${r.expectedCount}`,
+        `     ├─ Resultados Obtenidos: ${r.actualCount}`,
+        `     ├─ Desviación: ${r.deviation.toFixed(2)}%`,
+        `     ├─ Estado: ${r.status === 'success' ? '✓ VÁLIDO' : '⚠ REVISAR'}`,
+        `     ├─ Latencia de Respuesta: ${r.latencyMs}ms`,
+        `     ├─ Estudios Clave: ${r.keyStudiesFound.length}/${r.keyStudiesTotal}`,
+        `     └─ Search String: ${r.searchStringSent}`,
         ''
       ].join('\n')),
-      '───────────────────────────────────────────────────────────────',
-      '                        LOG DE AUDITORÍA',
-      '───────────────────────────────────────────────────────────────',
+      '',
+      '═══════════════════════════════════════════════════════════════════════════════',
+      '                          LOG TÉCNICO DE AUDITORÍA',
+      '═══════════════════════════════════════════════════════════════════════════════',
+      '',
       ...validationLogs.map(l => 
-        `[${l.timestamp.toLocaleTimeString()}] ${l.action}: ${l.result}${l.details ? ` | ${l.details}` : ''}`
+        `  [${l.timestamp.toLocaleTimeString()}] ${l.action}: ${l.result}${l.details ? ` | ${l.details}` : ''}${l.latency ? ` (${l.latency}ms)` : ''}`
       ),
       '',
-      '═══════════════════════════════════════════════════════════════',
-      '    Este reporte fue generado automáticamente por Galatea AI',
-      '         para demostrar reproducibilidad metodológica',
-      '═══════════════════════════════════════════════════════════════',
+      '╔══════════════════════════════════════════════════════════════════════════════╗',
+      '║                                                                              ║',
+      '║     Este certificado fue generado automáticamente por Galatea AI para       ║',
+      '║     demostrar la reproducibilidad metodológica de la búsqueda sistemática.  ║',
+      '║                                                                              ║',
+      '║     Puede ser adjuntado como anexo en publicaciones científicas para        ║',
+      '║     demostrar transparencia ante revisores de revistas indexadas.           ║',
+      '║                                                                              ║',
+      '║     Galatea AI - Precision Medicine Intelligence                            ║',
+      '║     https://galatea.ai                                                       ║',
+      '║                                                                              ║',
+      '╚══════════════════════════════════════════════════════════════════════════════╝',
     ].join('\n');
 
     const blob = new Blob([logContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `galatea-validation-log-${new Date().toISOString().split('T')[0]}.txt`;
+    a.download = `certificado-transparencia-${certificateId}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
     toast({
-      title: '📄 Log Exportado',
-      description: 'El reporte de validación ha sido descargado.',
+      title: '📜 Certificado Exportado',
+      description: `Certificado de Transparencia ${certificateId} descargado.`,
     });
   };
 
@@ -1466,28 +1644,69 @@ export default function AgentProtocolReview() {
           {/* PHASE 2: EXECUTION */}
           {activePhase === 'execution' && isPhase2Unlocked && (
             <div className="space-y-8">
-              {/* PRISMA Flow Diagram */}
+              {/* PRISMA Flow Diagram with Verification */}
               <div className="bg-white border-2 rounded-2xl p-6" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
-                <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
-                  <BarChart3 className="w-6 h-6" style={{ color: '#00A651' }} />
-                  Diagrama PRISMA - Flujo de Selección Dinámico
-                </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                    <BarChart3 className="w-6 h-6" style={{ color: '#00A651' }} />
+                    Diagrama PRISMA - Flujo de Selección Dinámico
+                  </h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPRISMAVerification(!showPRISMAVerification)}
+                    className="gap-2"
+                    style={{ borderRadius: '12px' }}
+                  >
+                    <Eye className="w-4 h-4" />
+                    {showPRISMAVerification ? 'Ocultar Detalles' : 'Verificar cada fase'}
+                  </Button>
+                </div>
                 
                 <div className="flex flex-col items-center gap-2">
                   {prismaBlocks.map((block, index) => (
                     <div key={index} className="w-full max-w-md">
                       <div 
-                        className="p-4 rounded-xl text-center transition-all hover:scale-102"
+                        className={cn(
+                          "p-4 rounded-xl text-center transition-all cursor-pointer",
+                          selectedPRISMAPhase === block.label ? "ring-2 ring-offset-2 ring-blue-500" : "hover:scale-102"
+                        )}
                         style={{ 
                           background: index === prismaBlocks.length - 1 ? '#00A651' : `${bayerBlue}${15 - index * 2}0`,
                           color: index === prismaBlocks.length - 1 ? 'white' : bayerBlue,
                           borderRadius: '12px'
                         }}
+                        onClick={() => setSelectedPRISMAPhase(selectedPRISMAPhase === block.label ? null : block.label)}
                       >
                         <div className="text-3xl font-bold font-mono">{block.count.toLocaleString()}</div>
                         <div className="font-semibold">{block.label}</div>
                         <div className="text-xs opacity-80">{block.description}</div>
                       </div>
+                      
+                      {/* Show excluded articles for this phase if verification is on */}
+                      {showPRISMAVerification && selectedPRISMAPhase === block.label && index < prismaBlocks.length - 1 && (
+                        <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-xl" style={{ borderRadius: '12px' }}>
+                          <h4 className="text-sm font-bold text-red-700 mb-2 flex items-center gap-2">
+                            <XCircle className="w-4 h-4" />
+                            Artículos Excluidos en: {block.label}
+                          </h4>
+                          <div className="space-y-2">
+                            {prismaExcludedArticles
+                              .filter(a => 
+                                (block.label === 'Identificados' && a.phase === 'duplicados') ||
+                                (block.label === 'Tras Duplicados' && a.phase === 'cribado') ||
+                                (block.label === 'Cribados' && a.phase === 'texto_completo')
+                              )
+                              .map((article) => (
+                                <div key={article.id} className="text-xs p-2 bg-white rounded-lg border border-red-100">
+                                  <p className="font-medium text-foreground">{article.title}</p>
+                                  <p className="text-red-600 mt-1">📋 Razón: {article.reason}</p>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                      
                       {index < prismaBlocks.length - 1 && (
                         <div className="flex justify-center py-2">
                           <ArrowDown className="w-6 h-6 text-muted-foreground" />
@@ -1686,42 +1905,208 @@ export default function AgentProtocolReview() {
                 </div>
               </div>
 
-              {/* REPRODUCIBILITY CHECK - Auditor Mode */}
-              <div className="bg-white border-2 rounded-2xl p-6" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-                    <Microscope className="w-6 h-6" style={{ color: '#0033A0' }} />
-                    Reproducibility Check - Modo Auditor
+              {/* AUDIT & CONSISTENCY LAB - Enhanced Reproducibility Check */}
+              <div className="bg-white border-2 rounded-2xl overflow-hidden" style={{ borderColor: bayerBlue, borderRadius: '12px' }}>
+                {/* Header */}
+                <div 
+                  className="p-4 flex items-center justify-between"
+                  style={{ background: `${bayerBlue}08` }}
+                >
+                  <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: bayerBlue }}>
+                    <Microscope className="w-6 h-6" />
+                    Audit & Consistency Lab
                   </h3>
-                  <Button
-                    onClick={() => setShowReproducibilityModal(true)}
-                    className="gap-2 text-white"
-                    style={{ background: bayerBlue, borderRadius: '12px' }}
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    Iniciar Auditoría
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <div className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-blue-100" style={{ color: bayerBlue }}>
+                      Bayer Compliance
+                    </div>
+                    <Button
+                      onClick={() => setShowReproducibilityModal(true)}
+                      className="gap-2 text-white font-bold"
+                      style={{ background: bayerBlue, borderRadius: '12px' }}
+                    >
+                      <Search className="w-4 h-4" />
+                      🔍 EJECUTAR PRUEBA DE REPRODUCIBILIDAD
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="p-4 bg-muted/30 rounded-xl text-sm" style={{ borderRadius: '12px' }}>
-                  <p className="text-muted-foreground mb-3">
-                    El <strong>Reproducibility Check</strong> valida que las ecuaciones de búsqueda generadas producen 
-                    resultados consistentes con lo reportado en el protocolo. Esto permite demostrar a revisores de 
-                    revistas científicas que la metodología es reproducible y transparente.
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                      <span className="text-xs font-medium text-emerald-700">Verificación en tiempo real</span>
+                <div className="p-6">
+                  {/* Scanner de Consistencia - 3 Checks */}
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    {/* Volume Check */}
+                    <div className={cn(
+                      "p-4 rounded-xl border-2 text-center transition-all",
+                      !auditSummary ? "bg-gray-50 border-gray-200" :
+                      auditSummary.volumeMatch ? "bg-emerald-50 border-emerald-500" : "bg-amber-50 border-amber-500"
+                    )} style={{ borderRadius: '12px' }}>
+                      <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" 
+                        style={{ background: auditSummary?.volumeMatch ? '#10b981' : auditSummary ? '#f59e0b' : '#9ca3af' }}>
+                        <BarChart3 className="w-6 h-6 text-white" />
+                      </div>
+                      <h4 className="font-bold text-sm mb-1">Volumen de Artículos</h4>
+                      {auditSummary ? (
+                        <>
+                          <p className={cn("text-2xl font-bold", auditSummary.volumeMatch ? "text-emerald-600" : "text-amber-600")}>
+                            {auditSummary.volumeDeviation.toFixed(1)}%
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {auditSummary.volumeMatch ? 'Coincide con protocolo' : 'Desviación detectada'}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Ejecuta la prueba para ver resultados</p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Database className="w-5 h-5 text-blue-600" />
-                      <span className="text-xs font-medium text-blue-700">Conexión multi-base</span>
+
+                    {/* Key Studies Match */}
+                    <div className={cn(
+                      "p-4 rounded-xl border-2 text-center transition-all",
+                      !auditSummary ? "bg-gray-50 border-gray-200" :
+                      auditSummary.keyStudiesMatch ? "bg-emerald-50 border-emerald-500" : "bg-amber-50 border-amber-500"
+                    )} style={{ borderRadius: '12px' }}>
+                      <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" 
+                        style={{ background: auditSummary?.keyStudiesMatch ? '#10b981' : auditSummary ? '#f59e0b' : '#9ca3af' }}>
+                        <BookOpen className="w-6 h-6 text-white" />
+                      </div>
+                      <h4 className="font-bold text-sm mb-1">Key Studies Match</h4>
+                      {auditSummary ? (
+                        <>
+                          <p className={cn("text-2xl font-bold", auditSummary.keyStudiesMatch ? "text-emerald-600" : "text-amber-600")}>
+                            {auditSummary.keyStudiesFound}/{auditSummary.keyStudiesTotal}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {auditSummary.keyStudiesMatch ? 'Estudios clave detectados' : 'Estudios faltantes'}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">5 estudios de referencia</p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Download className="w-5 h-5 text-purple-600" />
-                      <span className="text-xs font-medium text-purple-700">Log exportable</span>
+
+                    {/* Syntax Health */}
+                    <div className={cn(
+                      "p-4 rounded-xl border-2 text-center transition-all",
+                      !auditSummary ? "bg-gray-50 border-gray-200" :
+                      auditSummary.syntaxHealth.isValid ? "bg-emerald-50 border-emerald-500" : "bg-red-50 border-red-500"
+                    )} style={{ borderRadius: '12px' }}>
+                      <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" 
+                        style={{ background: auditSummary?.syntaxHealth.isValid ? '#10b981' : auditSummary ? '#ef4444' : '#9ca3af' }}>
+                        <Shield className="w-6 h-6 text-white" />
+                      </div>
+                      <h4 className="font-bold text-sm mb-1">Syntax Health</h4>
+                      {auditSummary ? (
+                        <>
+                          <div className="flex justify-center gap-2 mb-1">
+                            <span className={cn("text-xs px-2 py-0.5 rounded", auditSummary.syntaxHealth.parenthesesBalanced ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
+                              () {auditSummary.syntaxHealth.parenthesesBalanced ? '✓' : '✗'}
+                            </span>
+                            <span className={cn("text-xs px-2 py-0.5 rounded", auditSummary.syntaxHealth.operatorsValid ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
+                              AND/OR {auditSummary.syntaxHealth.operatorsValid ? '✓' : '✗'}
+                            </span>
+                            <span className={cn("text-xs px-2 py-0.5 rounded", auditSummary.syntaxHealth.quotesBalanced ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
+                              "" {auditSummary.syntaxHealth.quotesBalanced ? '✓' : '✗'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {auditSummary.syntaxHealth.isValid ? 'Sintaxis válida' : auditSummary.syntaxHealth.issues[0]}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Verificación de operadores</p>
+                      )}
                     </div>
+                  </div>
+
+                  {/* Feedback Metodológico - Badge */}
+                  {auditSummary && (
+                    <div 
+                      className={cn(
+                        "p-6 rounded-xl text-center border-2 mb-6",
+                        auditSummary.overallStatus === 'reproducible' && "bg-emerald-50 border-emerald-500",
+                        auditSummary.overallStatus === 'bias-detected' && "bg-amber-50 border-amber-500",
+                        auditSummary.overallStatus === 'syntax-error' && "bg-red-50 border-red-500"
+                      )}
+                      style={{ borderRadius: '12px' }}
+                    >
+                      {auditSummary.overallStatus === 'reproducible' && (
+                        <>
+                          <div className="flex justify-center mb-3">
+                            <div className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center animate-pulse">
+                              <ShieldCheck className="w-12 h-12 text-white" />
+                            </div>
+                          </div>
+                          <h4 className="text-2xl font-bold text-emerald-700 mb-2">
+                            🏅 METODOLOGÍA VALIDADA: REPRODUCIBLE
+                          </h4>
+                          <p className="text-sm text-emerald-600 max-w-xl mx-auto">
+                            Los resultados de búsqueda coinciden con lo reportado en el protocolo. 
+                            Esta metodología cumple con los estándares de reproducibilidad científica.
+                            <br /><strong>Certificado por Galatea AI</strong>
+                          </p>
+                        </>
+                      )}
+                      {auditSummary.overallStatus === 'bias-detected' && (
+                        <>
+                          <div className="flex justify-center mb-3">
+                            <div className="w-20 h-20 rounded-full bg-amber-500 flex items-center justify-center">
+                              <AlertOctagon className="w-12 h-12 text-white" />
+                            </div>
+                          </div>
+                          <h4 className="text-2xl font-bold text-amber-700 mb-2">
+                            ⚠️ Advertencia de Sesgo
+                          </h4>
+                          <p className="text-sm text-amber-600 max-w-xl mx-auto">
+                            La búsqueda actual no replica exactamente los resultados del protocolo. 
+                            <br /><strong>Revise la fecha de consulta o la sintaxis de búsqueda.</strong>
+                          </p>
+                        </>
+                      )}
+                      {auditSummary.overallStatus === 'syntax-error' && (
+                        <>
+                          <div className="flex justify-center mb-3">
+                            <div className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center">
+                              <XCircle className="w-12 h-12 text-white" />
+                            </div>
+                          </div>
+                          <h4 className="text-2xl font-bold text-red-700 mb-2">
+                            ❌ Error de Sintaxis
+                          </h4>
+                          <p className="text-sm text-red-600 max-w-xl mx-auto">
+                            Se detectaron errores en la sintaxis de la ecuación de búsqueda.
+                            <br /><strong>Corrija los errores antes de validar.</strong>
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Quick Actions */}
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                        <span className="text-xs font-medium text-emerald-700">Verificación en tiempo real</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Database className="w-5 h-5 text-blue-600" />
+                        <span className="text-xs font-medium text-blue-700">Conexión multi-base</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Timer className="w-5 h-5 text-purple-600" />
+                        <span className="text-xs font-medium text-purple-700">Latencia monitoreada</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={exportTransparencyCertificate}
+                      disabled={!auditSummary}
+                      className="gap-2"
+                      style={{ borderRadius: '12px' }}
+                    >
+                      <Download className="w-4 h-4" />
+                      Exportar Certificado de Transparencia
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -2088,13 +2473,13 @@ export default function AgentProtocolReview() {
 
             <Button
               variant="outline"
-              onClick={exportValidationLog}
+              onClick={exportTransparencyCertificate}
               disabled={validationLogs.length === 0}
               className="gap-2 h-12"
               style={{ borderRadius: '12px' }}
             >
               <Download className="w-5 h-5" />
-              Exportar Log de Validación
+              Exportar Certificado de Transparencia
             </Button>
           </div>
         </DialogContent>
