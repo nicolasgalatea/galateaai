@@ -5,9 +5,10 @@ import {
   Filter, FlaskConical, Lock, Unlock, Award, Users, BarChart3, ArrowDown,
   CheckCircle2, XCircle, ThumbsUp, ThumbsDown, Diamond, Minus, Terminal,
   Target, Eye, Microscope, Download, RefreshCw, ShieldCheck, AlertOctagon,
-  Activity, Database, Timer, Brain
+  Activity, Database, Timer, Brain, PenTool, Lightbulb
 } from 'lucide-react';
 import { MultiAIConsensusLab } from '@/components/MultiAIConsensusLab';
+import { ScientificArchitect } from '@/components/ScientificArchitect';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -268,7 +269,8 @@ export default function AgentProtocolReview() {
     { id: '6', title: 'Patel et al. 2023 - No cognitive assessment', reason: 'Sin evaluación cognitiva estandarizada', phase: 'texto_completo' },
   ]);
   const [selectedPRISMAPhase, setSelectedPRISMAPhase] = useState<string | null>(null);
-  
+  const [showScientificFoundation, setShowScientificFoundation] = useState(false);
+  const [scientificFoundationComplete, setScientificFoundationComplete] = useState(false);
   const [prismaBlocks, setPrismaBlocks] = useState<PRISMABlock[]>([
     { label: 'Identificados', count: 0, targetCount: 1372, description: 'Registros de bases de datos' },
     { label: 'Tras Duplicados', count: 0, targetCount: 1063, description: 'Registros únicos' },
@@ -1254,11 +1256,41 @@ export default function AgentProtocolReview() {
             </div>
           </div>
 
-          {/* PHASE 1: PROTOCOL */}
+          {/* PHASE 1: PROTOCOL - Author's Desk Aesthetic */}
           {activePhase === 'protocol' && (
             <div className="space-y-8">
+              {/* Author's Desk Header */}
+              <div 
+                className="text-center py-6 rounded-2xl"
+                style={{ 
+                  background: 'linear-gradient(180deg, #fefce8 0%, #ffffff 100%)',
+                  borderRadius: '12px'
+                }}
+              >
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <PenTool className="w-6 h-6 text-amber-600" />
+                  <h3 className="text-xl font-bold text-amber-900" style={{ fontFamily: 'Georgia, serif' }}>
+                    Escritorio del Autor
+                  </h3>
+                </div>
+                <p className="text-sm text-amber-700/80 max-w-lg mx-auto" style={{ fontFamily: 'Georgia, serif' }}>
+                  Un espacio minimalista para construir la base científica de tu investigación. 
+                  Enfócate en el contenido mientras los agentes estructuran tu protocolo.
+                </p>
+              </div>
+
+              {/* Scientific Foundation Module - BEFORE PICOT */}
+              <ScientificArchitect
+                isVisible={true}
+                ideaInput={ideaInput}
+                onFoundationComplete={() => {
+                  setScientificFoundationComplete(true);
+                  setShowScientificFoundation(true);
+                }}
+              />
+
               {/* Sub-Agents Panel */}
-              <div className="bg-muted/20 rounded-2xl p-6 border">
+              <div className="bg-white rounded-2xl p-6 border shadow-sm" style={{ borderRadius: '12px' }}>
                 <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                   <Users className="w-5 h-5" style={{ color: bayerBlue }} />
                   Agentes en Servicio
@@ -1642,9 +1674,30 @@ export default function AgentProtocolReview() {
             </div>
           )}
 
-          {/* PHASE 2: EXECUTION */}
+          {/* PHASE 2: EXECUTION - Data Laboratory Aesthetic */}
           {activePhase === 'execution' && isPhase2Unlocked && (
             <div className="space-y-8">
+              {/* Data Lab Header */}
+              <div 
+                className="text-center py-6 rounded-2xl border-2"
+                style={{ 
+                  background: 'linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%)',
+                  borderColor: bayerBlue,
+                  borderRadius: '12px'
+                }}
+              >
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <BarChart3 className="w-6 h-6" style={{ color: bayerBlue }} />
+                  <h3 className="text-xl font-bold" style={{ color: bayerBlue, fontFamily: 'JetBrains Mono, monospace' }}>
+                    LABORATORIO DE DATOS
+                  </h3>
+                </div>
+                <p className="text-sm text-blue-700/80 max-w-lg mx-auto font-mono">
+                  Ejecución científica con gráficos, tablas y queries en tiempo real.
+                  Validación cruzada multi-motor habilitada.
+                </p>
+              </div>
+
               {/* PRISMA Flow Diagram with Verification */}
               <div className="bg-white border-2 rounded-2xl p-6" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
                 <div className="flex items-center justify-between mb-6">
