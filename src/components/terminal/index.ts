@@ -5,3 +5,5 @@ export { AgentTerminal } from './AgentTerminal';
 export { ConsistencyRadar } from './ConsistencyRadar';
 export { MultiAIConsensusGrid } from './MultiAIConsensusGrid';
 export { AnimatedPRISMAFlow } from './AnimatedPRISMAFlow';
+export { IntegratedTerminalView } from './IntegratedTerminalView';
+export type { TerminalLog } from './IntegratedTerminalView';
