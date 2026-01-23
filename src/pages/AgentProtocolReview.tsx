@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FileSearch, Upload, Cpu, AlertTriangle, Plus, Send, Building2, FileText,
   Search, ClipboardCheck, Shield, Play, Copy, Check, ChevronRight, BookOpen,
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react';
 import { MultiAIConsensusLab } from '@/components/MultiAIConsensusLab';
 import { ScientificArchitect } from '@/components/ScientificArchitect';
+import { IntegratedTerminalView } from '@/components/terminal';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -249,6 +251,9 @@ export default function AgentProtocolReview() {
   const [showProtocolModal, setShowProtocolModal] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const logsEndRef = useRef<HTMLDivElement>(null);
+  
+  // Terminal Mode State - NEW
+  const [isTerminalMode, setIsTerminalMode] = useState(false);
   
   // Reproducibility Check State - Enhanced
   const [showReproducibilityModal, setShowReproducibilityModal] = useState(false);
@@ -908,8 +913,47 @@ export default function AgentProtocolReview() {
     return subAgents.find(a => a.id === agentId)!;
   };
 
+  // Handle terminal mode activation
+  const activateTerminalMode = () => {
+    if (!ideaInput.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Por favor ingresa una idea de investigación.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsTerminalMode(true);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Terminal Mode Overlay */}
+      <AnimatePresence>
+        {isTerminalMode && (
+          <IntegratedTerminalView
+            isVisible={isTerminalMode}
+            ideaInput={ideaInput}
+            onClose={() => setIsTerminalMode(false)}
+            onPhase2Unlock={() => {
+              setIsPhase2Unlocked(true);
+              setActivePhase('execution');
+              toast({
+                title: '🎉 Fase 2 Desbloqueada',
+                description: 'PRISMA completado. Puede acceder al meta-análisis.',
+              });
+            }}
+            onComplete={() => {
+              setShowProtocolPreview(true);
+              toast({
+                title: '✅ Fase 1 Completada',
+                description: 'Multi-AI Consensus validado. Protocolo listo para aprobación.',
+              });
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <Header />
 
       {/* HERO SECTION */}
@@ -1392,7 +1436,7 @@ export default function AgentProtocolReview() {
                     </div>
 
                     <Button
-                      onClick={simulatePhase1Orchestration}
+                      onClick={activateTerminalMode}
                       disabled={isOrchestrating || !ideaInput.trim()}
                       className="mt-6 h-14 text-lg font-semibold text-white gap-3 transition-all"
                       style={{ 
@@ -1408,8 +1452,9 @@ export default function AgentProtocolReview() {
                         </>
                       ) : (
                         <>
-                          <Play className="w-5 h-5" />
+                          <Terminal className="w-5 h-5" />
                           Analizar Idea
+                          <span className="text-xs opacity-70 ml-1">→ Terminal Mode</span>
                         </>
                       )}
                     </Button>
