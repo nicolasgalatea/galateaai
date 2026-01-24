@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { MultiAIConsensusLab } from '@/components/MultiAIConsensusLab';
 import { ScientificArchitect } from '@/components/ScientificArchitect';
-import { IntegratedTerminalView, MedicalAuditStation } from '@/components/terminal';
+import { IntegratedTerminalView, MedicalAuditStation, PDFReportViewer } from '@/components/terminal';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -258,6 +258,7 @@ export default function AgentProtocolReview() {
   // Medical Audit Station State - NEW
   const [isAuditMode, setIsAuditMode] = useState(false);
   const [viewMode, setViewMode] = useState<'terminal' | 'audit'>('audit');
+  const [showDossierPDF, setShowDossierPDF] = useState(false);
   
   // Reproducibility Check State - Enhanced
   const [showReproducibilityModal, setShowReproducibilityModal] = useState(false);
@@ -2367,12 +2368,7 @@ export default function AgentProtocolReview() {
                       boxShadow: '0 15px 40px -10px rgba(0,188,255,0.5)',
                       borderRadius: '16px'
                     }}
-                    onClick={() => {
-                      toast({
-                        title: '📄 Generando Dossier...',
-                        description: 'El reporte PDF está siendo compilado.',
-                      });
-                    }}
+                    onClick={() => setShowDossierPDF(true)}
                   >
                     <Download className="w-7 h-7" />
                     Descargar Dossier de Evidencia Bayer
@@ -2757,6 +2753,20 @@ export default function AgentProtocolReview() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* PDF Dossier Viewer */}
+      <PDFReportViewer
+        isOpen={showDossierPDF}
+        onClose={() => setShowDossierPDF(false)}
+        reportData={{
+          title: 'Metformina y Neuroprotección en Pacientes con DM2: Revisión Sistemática y Meta-análisis',
+          researchQuestion: ideaInput,
+          generatedAt: new Date(),
+          totalStudies: 1372,
+          metaAnalysisStudies: 12,
+          validationScore: 94.2
+        }}
+      />
 
       <Footer />
     </div>
