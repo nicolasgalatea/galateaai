@@ -7,3 +7,13 @@ export { MultiAIConsensusGrid } from './MultiAIConsensusGrid';
 export { AnimatedPRISMAFlow } from './AnimatedPRISMAFlow';
 export { IntegratedTerminalView } from './IntegratedTerminalView';
 export type { TerminalLog } from './IntegratedTerminalView';
+
+// Medical Audit Station Components
+export { MedicalAuditStation } from './MedicalAuditStation';
+export { AgentEvidenceCard } from './AgentEvidenceCard';
+export type { AgentEvidence, ClinicalReference } from './AgentEvidenceCard';
+export { ExcludedArticlesTable } from './ExcludedArticlesTable';
+export type { ExcludedArticle } from './ExcludedArticlesTable';
+export { DataExtractorTable } from './DataExtractorTable';
+export type { ExtractedStudy } from './DataExtractorTable';
+export { PDFReportViewer } from './PDFReportViewer';
