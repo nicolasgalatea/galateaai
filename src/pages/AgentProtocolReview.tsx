@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { MultiAIConsensusLab } from '@/components/MultiAIConsensusLab';
 import { ScientificArchitect } from '@/components/ScientificArchitect';
-import { IntegratedTerminalView } from '@/components/terminal';
+import { IntegratedTerminalView, MedicalAuditStation } from '@/components/terminal';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -254,6 +254,10 @@ export default function AgentProtocolReview() {
   
   // Terminal Mode State - NEW
   const [isTerminalMode, setIsTerminalMode] = useState(false);
+  
+  // Medical Audit Station State - NEW
+  const [isAuditMode, setIsAuditMode] = useState(false);
+  const [viewMode, setViewMode] = useState<'terminal' | 'audit'>('audit');
   
   // Reproducibility Check State - Enhanced
   const [showReproducibilityModal, setShowReproducibilityModal] = useState(false);
@@ -926,6 +930,28 @@ export default function AgentProtocolReview() {
     setIsTerminalMode(true);
   };
 
+  // Handle audit mode activation - NEW
+  const activateAuditMode = () => {
+    if (!ideaInput.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Por favor ingresa una idea de investigación.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsAuditMode(true);
+  };
+
+  // Handle analysis based on view mode
+  const handleAnalyzeIdea = () => {
+    if (viewMode === 'terminal') {
+      activateTerminalMode();
+    } else {
+      activateAuditMode();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Terminal Mode Overlay */}
@@ -948,6 +974,25 @@ export default function AgentProtocolReview() {
               toast({
                 title: '✅ Fase 1 Completada',
                 description: 'Multi-AI Consensus validado. Protocolo listo para aprobación.',
+              });
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Medical Audit Station Overlay - NEW */}
+      <AnimatePresence>
+        {isAuditMode && (
+          <MedicalAuditStation
+            isVisible={isAuditMode}
+            ideaInput={ideaInput}
+            onClose={() => {
+              setIsAuditMode(false);
+              setShowProtocolPreview(true);
+              setIsPhase2Unlocked(true);
+              toast({
+                title: '✅ Auditoría Completada',
+                description: 'Estación de Auditoría Médica finalizada. Protocolo listo.',
               });
             }}
           />
@@ -1435,13 +1480,52 @@ export default function AgentProtocolReview() {
                       />
                     </div>
 
+                    {/* View Mode Toggle */}
+                    <div className="mt-4 flex items-center gap-4 p-3 bg-muted/30 rounded-xl">
+                      <span className="text-sm font-medium text-muted-foreground">Modo de vista:</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setViewMode('audit')}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                            viewMode === 'audit'
+                              ? "bg-[#0097A7] text-white shadow-md"
+                              : "bg-card hover:bg-muted text-muted-foreground"
+                          )}
+                        >
+                          <Microscope className="w-4 h-4" />
+                          Auditoría Médica
+                        </button>
+                        <button
+                          onClick={() => setViewMode('terminal')}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                            viewMode === 'terminal'
+                              ? "bg-[#0A0E14] text-[#00BCFF] shadow-md"
+                              : "bg-card hover:bg-muted text-muted-foreground"
+                          )}
+                        >
+                          <Terminal className="w-4 h-4" />
+                          Terminal Mode
+                        </button>
+                      </div>
+                    </div>
+
                     <Button
-                      onClick={activateTerminalMode}
+                      onClick={handleAnalyzeIdea}
                       disabled={isOrchestrating || !ideaInput.trim()}
-                      className="mt-6 h-14 text-lg font-semibold text-white gap-3 transition-all"
+                      className="mt-4 h-14 text-lg font-semibold text-white gap-3 transition-all"
                       style={{ 
-                        background: isOrchestrating ? '#6b7280' : bayerBlue,
-                        boxShadow: isOrchestrating ? 'none' : `0 8px 25px -5px ${bayerBlue}40`,
+                        background: isOrchestrating 
+                          ? '#6b7280' 
+                          : viewMode === 'audit' 
+                            ? '#0097A7' 
+                            : bayerBlue,
+                        boxShadow: isOrchestrating 
+                          ? 'none' 
+                          : viewMode === 'audit'
+                            ? '0 8px 25px -5px rgba(0,151,167,0.4)'
+                            : `0 8px 25px -5px ${bayerBlue}40`,
                         borderRadius: '12px'
                       }}
                     >
@@ -1449,6 +1533,12 @@ export default function AgentProtocolReview() {
                         <>
                           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           Orquestando Agentes...
+                        </>
+                      ) : viewMode === 'audit' ? (
+                        <>
+                          <Microscope className="w-5 h-5" />
+                          Analizar Idea
+                          <span className="text-xs opacity-70 ml-1">→ Auditoría Médica</span>
                         </>
                       ) : (
                         <>
