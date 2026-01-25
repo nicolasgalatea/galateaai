@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { MultiAIConsensusLab } from '@/components/MultiAIConsensusLab';
 import { ScientificArchitect } from '@/components/ScientificArchitect';
-import { IntegratedTerminalView, MedicalAuditStation, PDFReportViewer } from '@/components/terminal';
+import { IntegratedTerminalView, MedicalAuditStation, PDFReportViewer, AgentExplanationCard } from '@/components/terminal';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Sparkles, ArrowRight, Zap, DollarSign } from 'lucide-react';
+
+// Agent explanation data for dynamic "What am I doing?" cards
+const agentExplanations = {
+  picot: {
+    doing: 'Extrayendo y estructurando los componentes PICOT de tu pregunta de investigación. Analizando población, intervención, comparación, outcome y tiempo...',
+    deliverable: 'Marco PICOT estructurado listo para diseño de protocolo.'
+  },
+  literature: {
+    doing: 'Escaneando revisiones sistemáticas previas en Cochrane, PubMed y Embase. Identificando brechas de conocimiento no cubiertas...',
+    deliverable: 'Lista priorizada de gaps de evidencia científica detectados.'
+  },
+  criteria: {
+    doing: 'Diseñando criterios de inclusión y exclusión basados en el marco PICOT. Aplicando estándares metodológicos Cochrane...',
+    deliverable: 'Tabla I/E validada para selección de estudios.'
+  },
+  yadav: {
+    doing: 'Mapeando términos MeSH y construyendo sintaxis booleana multicapa para máxima sensibilidad y especificidad...',
+    deliverable: 'Query booleana optimizada compatible con PubMed, Embase, Cochrane y Scopus.'
+  }
+};
 
 interface AgentMessage {
   id: string;
@@ -335,8 +355,14 @@ export default function AgentProtocolReview() {
     },
   ]);
 
-  const categoryColor = 'agent-pharma';
-  const bayerBlue = '#0033A0';
+  // Active agent explanation state
+  const [activeAgentExplanation, setActiveAgentExplanation] = useState<'picot' | 'literature' | 'criteria' | 'yadav' | null>(null);
+
+  // Galatea brand colors - synchronized with main site
+  const galateaTeal = 'hsl(177 55% 35%)';
+  const galateaTealLight = 'hsl(177 55% 45%)';
+  const categoryColor = 'primary';
+  const bayerBlue = '#0097A7'; // Using Galatea teal instead of Bayer blue
 
   // Scroll audit logs to bottom
   useEffect(() => {
@@ -678,11 +704,12 @@ export default function AgentProtocolReview() {
 
     // === AGENT 1: PICOT ANALYST ===
     addAuditLog('info', '🎯 Activando Agente PICOT Analyst...');
+    setActiveAgentExplanation('picot');
     setSubAgents(prev => prev.map(a => 
       a.id === 'picot' ? { ...a, isActive: true, isProcessing: true } : a
     ));
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
     addAuditLog('process', 'Extrayendo componentes PICOT del texto de entrada...');
     
     setAgentMessages(prev => [...prev, {
@@ -693,7 +720,7 @@ export default function AgentProtocolReview() {
       type: 'text',
     }]);
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 2500));
     addAuditLog('success', '✓ Componentes PICOT identificados correctamente');
 
     setAgentMessages(prev => [...prev, {
@@ -707,16 +734,18 @@ export default function AgentProtocolReview() {
     setSubAgents(prev => prev.map(a => 
       a.id === 'picot' ? { ...a, isProcessing: false } : a
     ));
+    setActiveAgentExplanation(null);
 
     await new Promise(r => setTimeout(r, 1000));
 
     // === AGENT 2: LITERATURE SCOUT ===
     addAuditLog('info', '📚 Activando Agente Literature Scout...');
+    setActiveAgentExplanation('literature');
     setSubAgents(prev => prev.map(a => 
       a.id === 'literature' ? { ...a, isActive: true, isProcessing: true } : a
     ));
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
     addAuditLog('process', 'Consultando bases de datos de literatura científica...');
     addAuditLog('process', 'Analizando revisiones sistemáticas previas sobre Metformina-Alzheimer...');
     
@@ -728,7 +757,7 @@ export default function AgentProtocolReview() {
       type: 'text',
     }]);
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 2500));
     addAuditLog('warning', '⚠ Detectados 5 gaps de evidencia significativos');
 
     setAgentMessages(prev => [...prev, {
@@ -742,16 +771,18 @@ export default function AgentProtocolReview() {
     setSubAgents(prev => prev.map(a => 
       a.id === 'literature' ? { ...a, isProcessing: false } : a
     ));
+    setActiveAgentExplanation(null);
 
     await new Promise(r => setTimeout(r, 1000));
 
     // === AGENT 3: CRITERIA DESIGNER ===
     addAuditLog('info', '⚙️ Activando Agente Criteria Designer...');
+    setActiveAgentExplanation('criteria');
     setSubAgents(prev => prev.map(a => 
       a.id === 'criteria' ? { ...a, isActive: true, isProcessing: true } : a
     ));
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
     addAuditLog('process', 'Generando criterios basados en estructura PICOT...');
     addAuditLog('process', 'Aplicando filtros metodológicos estándar Cochrane...');
 
@@ -763,7 +794,7 @@ export default function AgentProtocolReview() {
       type: 'text',
     }]);
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 2500));
     addAuditLog('success', '✓ Tabla de criterios I/E generada (5 inclusión, 5 exclusión)');
 
     setAgentMessages(prev => [...prev, {
@@ -777,16 +808,18 @@ export default function AgentProtocolReview() {
     setSubAgents(prev => prev.map(a => 
       a.id === 'criteria' ? { ...a, isProcessing: false } : a
     ));
+    setActiveAgentExplanation(null);
 
     await new Promise(r => setTimeout(r, 1000));
 
     // === AGENT 4: YADAV STRATEGIST ===
     addAuditLog('info', '🧪 Activando Agente Yadav Strategist...');
+    setActiveAgentExplanation('yadav');
     setSubAgents(prev => prev.map(a => 
       a.id === 'yadav' ? { ...a, isActive: true, isProcessing: true } : a
     ));
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
     addAuditLog('process', 'Iniciando mapeo de descriptores MeSH/Emtree...');
     addAuditLog('process', 'Aplicando método Yadav 2025 de dos capas...');
     addAuditLog('process', 'Capa 1: Términos controlados (thesaurus)');
@@ -800,13 +833,14 @@ export default function AgentProtocolReview() {
       type: 'text',
     }]);
 
-    await new Promise(r => setTimeout(r, 2500));
+    await new Promise(r => setTimeout(r, 3000));
     addAuditLog('success', '✓ Ecuaciones generadas para PubMed, Embase, Cochrane, Scopus');
     addAuditLog('success', '✓ Sintaxis validada - Lista para ejecución');
 
     setSubAgents(prev => prev.map(a => 
       a.id === 'yadav' ? { ...a, isProcessing: false } : a
     ));
+    setActiveAgentExplanation(null);
 
     await new Promise(r => setTimeout(r, 800));
     
@@ -1038,37 +1072,37 @@ export default function AgentProtocolReview() {
             </div>
           </div>
 
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 tracking-tight">
+          <div className="text-center max-w-4xl mx-auto mb-12">
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-foreground mb-8 tracking-tight">
               Clinical Guideline Navigator
             </h1>
             <div 
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg text-base font-bold mb-6"
-              style={{ background: `${bayerBlue}15`, color: bayerBlue }}
+              className="inline-flex items-center gap-3 px-6 py-4 rounded-xl text-xl font-bold mb-8"
+              style={{ background: `hsl(177 55% 35% / 0.12)`, color: galateaTeal }}
             >
-              <Cpu className="w-5 h-5" />
+              <Cpu className="w-6 h-6" />
               ORCHESTRATOR MODE
             </div>
-            <p className="text-2xl md:text-3xl text-muted-foreground font-light leading-relaxed">
-              A medical research assistant that helps structure clinical or academic projects through clear phases and institutional requirements.
+            <p className="text-2xl md:text-3xl lg:text-4xl text-muted-foreground font-light leading-relaxed">
+              Asistente de investigación médica para estructurar proyectos clínicos con rigor metodológico.
               <br />
-              <span className="text-xl">Designed for clean, scientific UX with a guided workflow.</span>
+              <span className="text-xl md:text-2xl mt-2 block">Diseñado para presentaciones ejecutivas y auditorías científicas.</span>
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 md:gap-6 max-w-2xl mx-auto mb-12">
+          <div className="grid grid-cols-3 gap-6 md:gap-8 max-w-3xl mx-auto mb-12">
             {kpiStats.map((stat, index) => (
               <div 
                 key={index}
-                className="bg-card border border-border rounded-xl p-4 md:p-6 text-center shadow-sm hover:shadow-md transition-shadow"
+                className="bg-card border-2 border-border rounded-2xl p-6 md:p-8 text-center shadow-md hover:shadow-xl transition-all hover:-translate-y-1"
               >
                 <div 
-                  className="text-2xl md:text-3xl font-bold mb-1"
-                  style={{ color: `hsl(var(--${categoryColor}))` }}
+                  className="text-4xl md:text-5xl font-black mb-2"
+                  style={{ color: galateaTeal }}
                 >
                   {stat.value}
                 </div>
-                <div className="text-xs md:text-sm text-muted-foreground font-medium uppercase tracking-wide">
+                <div className="text-sm md:text-base text-muted-foreground font-semibold uppercase tracking-wider">
                   {stat.label}
                 </div>
               </div>
@@ -1097,9 +1131,9 @@ export default function AgentProtocolReview() {
       <section className="py-20 px-4 bg-muted/30 border-y border-border">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">How It Works</h2>
-            <p className="text-muted-foreground text-xl">
-              Intelligent automation in three simple steps
+            <h2 className="text-5xl md:text-6xl font-bold text-foreground mb-6">Cómo Funciona</h2>
+            <p className="text-muted-foreground text-2xl">
+              Automatización inteligente en tres pasos simples
             </p>
           </div>
 
@@ -1256,23 +1290,23 @@ export default function AgentProtocolReview() {
       {/* MULTI-AGENT ORCHESTRATION CENTER - 2 PHASES */}
       <section id="live-demo" className="py-20 px-4 bg-white">
         <div className="container mx-auto max-w-7xl">
-          {/* Dynamic Header */}
-          <div className="text-center mb-10">
+          {/* Dynamic Header - Enhanced for boardroom visibility */}
+          <div className="text-center mb-12">
             <div 
-              className="inline-flex items-center gap-3 px-6 py-3 rounded-full text-base font-bold border-2 mb-6"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full text-xl font-bold border-3 mb-8"
               style={{
-                borderColor: bayerBlue,
-                background: `${bayerBlue}10`,
-                color: bayerBlue
+                borderColor: galateaTeal,
+                background: `hsl(177 55% 35% / 0.08)`,
+                color: galateaTeal
               }}
             >
-              <Zap className="w-5 h-5" />
-              Multi-Agent Orchestrator
+              <Zap className="w-6 h-6" />
+              Orquestador Multi-Agente Galatea
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Clinical Guideline Navigator: Orchestrator Mode
+            <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-foreground mb-6">
+              Navegador de Guías Clínicas
             </h2>
-            <p className="text-xl text-muted-foreground font-medium">
+            <p className="text-2xl md:text-3xl text-muted-foreground font-medium">
               Sistema de 2 Fases para Investigación Científica Rigurosa
             </p>
           </div>
@@ -1379,64 +1413,92 @@ export default function AgentProtocolReview() {
                 }}
               />
 
-              {/* Sub-Agents Panel */}
-              <div className="bg-white rounded-2xl p-6 border shadow-sm" style={{ borderRadius: '12px' }}>
-                <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                  <Users className="w-5 h-5" style={{ color: bayerBlue }} />
+              {/* Sub-Agents Panel - Enhanced for visibility */}
+              <div className="bg-white rounded-2xl p-8 border-2 shadow-lg" style={{ borderRadius: '16px', borderColor: 'hsl(177 55% 35% / 0.2)' }}>
+                <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+                  <Users className="w-7 h-7" style={{ color: galateaTeal }} />
                   Agentes en Servicio
                 </h3>
-                <div className="flex justify-center gap-4 md:gap-6 flex-wrap">
+                <div className="flex justify-center gap-6 md:gap-8 flex-wrap">
                   {subAgents.map((agent) => (
                     <div
                       key={agent.id}
                       className={cn(
-                        "relative flex flex-col items-center p-4 rounded-2xl border-2 transition-all duration-300 min-w-[140px]",
+                        "relative flex flex-col items-center p-6 rounded-2xl border-3 transition-all duration-300 min-w-[160px]",
                         agent.isActive 
-                          ? "bg-white shadow-lg scale-105" 
-                          : "bg-white/50 opacity-60"
+                          ? "bg-white shadow-2xl scale-110" 
+                          : "bg-white/50 opacity-50"
                       )}
                       style={{
                         borderColor: agent.isActive ? agent.color : 'transparent',
-                        boxShadow: agent.isActive ? `0 8px 30px -8px ${agent.color}40` : 'none',
-                        borderRadius: '12px'
+                        boxShadow: agent.isActive ? `0 15px 40px -10px ${agent.color}50` : 'none',
+                        borderRadius: '16px'
                       }}
                     >
                       {agent.isProcessing && (
                         <div 
-                          className="absolute inset-0 rounded-xl animate-pulse"
-                          style={{ background: `${agent.color}15` }}
+                          className="absolute inset-0 rounded-2xl animate-pulse"
+                          style={{ background: `${agent.color}20` }}
                         />
                       )}
                       
                       <div 
                         className={cn(
-                          "w-14 h-14 rounded-xl flex items-center justify-center text-white mb-3 transition-transform",
+                          "w-16 h-16 rounded-xl flex items-center justify-center text-white mb-4 transition-transform",
                           agent.isProcessing && "animate-bounce"
                         )}
-                        style={{ background: agent.color }}
+                        style={{ 
+                          background: agent.color,
+                          boxShadow: agent.isActive ? `0 8px 20px -5px ${agent.color}60` : 'none'
+                        }}
                       >
                         {agent.icon}
                       </div>
                       
-                      <h4 className="font-bold text-base text-foreground text-center leading-tight mb-1">
+                      <h4 className="font-black text-lg text-foreground text-center leading-tight mb-2">
                         {agent.name}
                       </h4>
                       
-                      <p className="text-sm text-muted-foreground text-center">
+                      <p className="text-base text-muted-foreground text-center font-medium">
                         {agent.role}
                       </p>
                       
+                      {/* Enhanced Status Badge */}
                       <div className={cn(
-                        "mt-3 w-3 h-3 rounded-full",
+                        "mt-4 px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide",
                         agent.isProcessing 
-                          ? "animate-ping" 
+                          ? "text-white animate-pulse" 
                           : agent.isActive 
-                            ? "bg-emerald-500" 
-                            : "bg-muted-foreground/30"
-                      )} style={agent.isProcessing ? { background: agent.color } : {}} />
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-muted text-muted-foreground"
+                      )} style={agent.isProcessing ? { background: agent.color } : {}}>
+                        {agent.isProcessing ? 'Procesando...' : agent.isActive ? 'Completado' : 'En Espera'}
+                      </div>
                     </div>
                   ))}
                 </div>
+
+                {/* Active Agent Explanation Card */}
+                <AnimatePresence mode="wait">
+                  {activeAgentExplanation && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-8"
+                    >
+                      <AgentExplanationCard
+                        agentName={subAgents.find(a => a.id === activeAgentExplanation)?.name || ''}
+                        agentColor={subAgents.find(a => a.id === activeAgentExplanation)?.color || galateaTeal}
+                        isActive={true}
+                        isProcessing={subAgents.find(a => a.id === activeAgentExplanation)?.isProcessing || false}
+                        doing={agentExplanations[activeAgentExplanation]?.doing || ''}
+                        deliverable={agentExplanations[activeAgentExplanation]?.deliverable || ''}
+                        icon={subAgents.find(a => a.id === activeAgentExplanation)?.icon}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Split Screen Workspace */}
@@ -1593,18 +1655,29 @@ export default function AgentProtocolReview() {
                               </div>
                               
                               {msg.type === 'text' && (
-                                <p className="text-base text-foreground leading-relaxed">{msg.message}</p>
+                                <p className="text-xl text-foreground leading-relaxed font-medium">{msg.message}</p>
                               )}
                               
                               {msg.type === 'picot-result' && (
-                                <div className="space-y-3 mt-4">
-                                  <div className="grid grid-cols-5 gap-3">
+                                <div className="space-y-4 mt-6">
+                                  <div className="grid grid-cols-5 gap-4">
                                     {Object.entries(metforminPICOT).map(([key, value]) => (
-                                      <div key={key} className="p-3 rounded-xl border-2 transition-all hover:scale-105" style={{ background: '#DC262608', borderColor: '#DC262640' }}>
-                                        <div className="font-black text-xl uppercase mb-2 tracking-wide" style={{ color: '#DC2626' }}>
+                                      <div 
+                                        key={key} 
+                                        className="p-5 rounded-2xl border-3 transition-all hover:scale-105 shadow-lg" 
+                                        style={{ 
+                                          background: '#DC262608', 
+                                          borderColor: '#DC262650',
+                                          boxShadow: '0 8px 25px -10px rgba(220, 38, 38, 0.3)'
+                                        }}
+                                      >
+                                        <div 
+                                          className="font-black text-3xl uppercase mb-3 tracking-wide" 
+                                          style={{ color: '#DC2626' }}
+                                        >
                                           {key.charAt(0)}
                                         </div>
-                                        <div className="text-sm text-foreground leading-snug font-medium">{value}</div>
+                                        <div className="text-base text-foreground leading-relaxed font-semibold">{value}</div>
                                       </div>
                                     ))}
                                   </div>
@@ -1612,50 +1685,50 @@ export default function AgentProtocolReview() {
                               )}
                               
                               {msg.type === 'gaps' && (
-                                <div className="space-y-3 mt-4">
+                                <div className="space-y-4 mt-6">
                                   {metforminEvidenceGaps.map((gap, idx) => (
                                     <div 
                                       key={idx}
                                       className={cn(
-                                        "p-3 rounded-xl text-sm flex items-start gap-3",
+                                        "p-5 rounded-xl text-lg flex items-start gap-4",
                                         gap.severity === 'high' ? "bg-red-50 border-l-4 border-red-500" : "bg-amber-50 border-l-4 border-amber-500"
                                       )}
                                     >
                                       <AlertTriangle className={cn(
-                                        "w-5 h-5 shrink-0 mt-0.5",
+                                        "w-6 h-6 shrink-0 mt-0.5",
                                         gap.severity === 'high' ? "text-red-500" : "text-amber-500"
                                       )} />
-                                      <span className="text-foreground font-medium">{gap.gap}</span>
+                                      <span className="text-foreground font-semibold">{gap.gap}</span>
                                     </div>
                                   ))}
                                 </div>
                               )}
                               
                               {msg.type === 'criteria-table' && (
-                                <div className="grid grid-cols-2 gap-6 mt-4">
+                                <div className="grid grid-cols-2 gap-8 mt-6">
                                   <div>
-                                    <h5 className="font-bold text-base text-emerald-700 mb-3 flex items-center gap-2">
-                                      <CheckCircle2 className="w-5 h-5" />
+                                    <h5 className="font-black text-xl text-emerald-700 mb-4 flex items-center gap-3">
+                                      <CheckCircle2 className="w-6 h-6" />
                                       Criterios de Inclusión
                                     </h5>
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                       {metforminInclusionCriteria.map((c, idx) => (
-                                        <div key={idx} className="text-sm p-2.5 bg-emerald-50 rounded-lg flex items-center gap-2 font-medium">
-                                          <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                                        <div key={idx} className="text-base p-4 bg-emerald-50 rounded-xl flex items-center gap-3 font-semibold border border-emerald-200">
+                                          <Check className="w-5 h-5 text-emerald-600 shrink-0" />
                                           {c.criterion}
                                         </div>
                                       ))}
                                     </div>
                                   </div>
                                   <div>
-                                    <h5 className="font-bold text-base text-red-700 mb-3 flex items-center gap-2">
-                                      <XCircle className="w-5 h-5" />
+                                    <h5 className="font-black text-xl text-red-700 mb-4 flex items-center gap-3">
+                                      <XCircle className="w-6 h-6" />
                                       Criterios de Exclusión
                                     </h5>
-                                    <div className="space-y-2">
+                                    <div className="space-y-3">
                                       {metforminExclusionCriteria.map((c, idx) => (
-                                        <div key={idx} className="text-sm p-2.5 bg-red-50 rounded-lg flex items-center gap-2 font-medium">
-                                          <Minus className="w-4 h-4 text-red-600 shrink-0" />
+                                        <div key={idx} className="text-base p-4 bg-red-50 rounded-xl flex items-center gap-3 font-semibold border border-red-200">
+                                          <Minus className="w-5 h-5 text-red-600 shrink-0" />
                                           {c.criterion}
                                         </div>
                                       ))}
@@ -2371,11 +2444,11 @@ export default function AgentProtocolReview() {
                     onClick={() => setShowDossierPDF(true)}
                   >
                     <Download className="w-7 h-7" />
-                    Descargar Dossier de Evidencia Bayer
+                    Descargar Dossier de Evidencia Galatea
                   </Button>
 
-                  <p className="mt-6 text-xs text-blue-400/60">
-                    Formato: PDF Institucional · Generado por Galatea AI · Válido para auditorías
+                  <p className="mt-6 text-sm text-primary/60">
+                    Formato: PDF Institucional · Generado por Galatea AI · Válido para auditorías científicas
                   </p>
                 </div>
               </div>
@@ -2384,36 +2457,42 @@ export default function AgentProtocolReview() {
         </div>
       </section>
 
-      {/* AUDIT LOGS CONSOLE */}
+      {/* AUDIT LOGS CONSOLE - Enhanced Contrast for Visibility */}
       {auditLogs.length > 0 && (
-        <section className="bg-slate-900 border-t-2 border-slate-700">
+        <section className="bg-[#0A0E14] border-t-2 border-[#00BCFF]/30">
           <div className="container mx-auto max-w-7xl">
-            <div className="p-6">
-              <div className="flex items-center gap-3 text-slate-300 mb-4">
-                <Terminal className="w-5 h-5" />
-                <span className="text-base font-bold uppercase tracking-wider">Audit Logs - Consola Técnica</span>
-                <span className="text-sm text-slate-400 ml-auto font-medium">{auditLogs.length} registros</span>
+            <div className="p-8">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-3 h-3 rounded-full bg-[#00D395] animate-pulse" />
+                <Terminal className="w-6 h-6 text-[#00BCFF]" />
+                <span className="text-xl font-black uppercase tracking-widest text-[#E6EDF3]">
+                  Audit Logs - Consola Técnica
+                </span>
+                <span className="text-base text-[#8B949E] ml-auto font-bold">{auditLogs.length} registros</span>
               </div>
               
               <div 
-                className="bg-slate-950 rounded-xl p-5 max-h-64 overflow-y-auto font-mono text-sm"
-                style={{ borderRadius: '12px' }}
+                className="bg-[#0D1117] rounded-2xl p-6 max-h-80 overflow-y-auto font-mono text-base border border-[#21262D]"
+                style={{ 
+                  boxShadow: 'inset 0 0 30px rgba(0, 188, 255, 0.05)',
+                  borderRadius: '16px'
+                }}
               >
                 {auditLogs.map((log, idx) => (
                   <div 
                     key={idx} 
                     className={cn(
-                      "py-2 flex gap-4",
-                      log.level === 'success' && "text-emerald-300",
-                      log.level === 'warning' && "text-amber-300",
-                      log.level === 'info' && "text-cyan-300",
-                      log.level === 'process' && "text-slate-300"
+                      "py-3 flex gap-4 border-b border-[#21262D]/50 last:border-0",
+                      log.level === 'success' && "text-[#00D395]",
+                      log.level === 'warning' && "text-[#F7B500]",
+                      log.level === 'info' && "text-[#00BCFF]",
+                      log.level === 'process' && "text-[#E6EDF3]"
                     )}
                   >
-                    <span className="text-slate-400 shrink-0 font-semibold">
+                    <span className="text-[#7D8590] shrink-0 font-bold text-lg">
                       [{log.timestamp.toLocaleTimeString()}]
                     </span>
-                    <span className="font-medium">{log.message}</span>
+                    <span className="font-semibold text-lg">{log.message}</span>
                   </div>
                 ))}
                 <div ref={logsEndRef} />
