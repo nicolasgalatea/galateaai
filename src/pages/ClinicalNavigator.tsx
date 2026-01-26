@@ -1,894 +1,860 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Terminal as TerminalIcon, ChevronRight, Download, Award,
-  Target, BookOpen, Filter, FlaskConical, Shield, CheckCircle, 
-  AlertCircle, Clock, Brain, Microscope, Database, Activity,
-  FileText, Zap, Play, Loader2
+  Send, Play, Download, ExternalLink, Clock, CheckCircle, 
+  Loader2, FileText, BookOpen, Award, ChevronDown, ChevronUp,
+  RotateCcw, Sparkles
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { PDFReportViewer, AgentExplanationCard, useResultTypewriter } from '@/components/terminal';
-import { useToast } from '@/hooks/use-toast';
-import '@/components/terminal/TerminalTheme.css';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import galateaLogo from '@/assets/galatea-logo.png';
+import santaFeLogo from '@/assets/logo-santa-fe.png';
+import agentAvatar from '@/assets/galatea-agent-avatar.jpg';
 
-// 14 Agents Configuration with detailed explanations
-const agents = [
-  // Phase 1: Protocol Rigor (Agents 1-8)
-  { 
-    id: 1, 
-    name: 'PICOT Analyst', 
-    phase: 1, 
-    icon: Target, 
-    color: '#DC2626', 
-    role: 'Estructuración de pregunta clínica',
-    doing: 'Analizando la pregunta de investigación y extrayendo componentes PICOT (Población, Intervención, Comparador, Outcome, Tiempo)...',
-    deliverable: 'Marco PICOT estructurado listo para diseño de protocolo'
-  },
-  { 
-    id: 2, 
-    name: 'FINER Validator', 
-    phase: 1, 
-    icon: CheckCircle, 
-    color: '#00D395', 
-    role: 'Validación de factibilidad',
-    doing: 'Evaluando si la pregunta es Factible, Interesante, Novedosa, Ética y Relevante según criterios internacionales...',
-    deliverable: 'Score FINER: 94.4% - Pregunta validada para investigación'
-  },
-  { 
-    id: 3, 
-    name: 'Literature Scout', 
-    phase: 1, 
-    icon: BookOpen, 
-    color: '#0033A0', 
-    role: 'Identificación de gaps de evidencia',
-    doing: 'Consultando Cochrane Library, PubMed y registros de revisiones para identificar gaps en la literatura existente...',
-    deliverable: '4 gaps de evidencia críticos identificados para abordar'
-  },
-  { 
-    id: 4, 
-    name: 'Criteria Designer', 
-    phase: 1, 
-    icon: Filter, 
-    color: '#00A651', 
-    role: 'Diseño de criterios I/E',
-    doing: 'Generando criterios de Inclusión y Exclusión basados en el marco PICOT y estándares Cochrane Handbook...',
-    deliverable: 'Tabla de criterios I/E validada por Cochrane Handbook'
-  },
-  { 
-    id: 5, 
-    name: 'PROSPERO Checker', 
-    phase: 1, 
-    icon: Shield, 
-    color: '#F7B500', 
-    role: 'Verificación de duplicación',
-    doing: 'Buscando protocolos similares en el registro internacional PROSPERO para evitar duplicación de esfuerzos...',
-    deliverable: 'Sin duplicados detectados - Registro recomendado'
-  },
-  { 
-    id: 6, 
-    name: 'Bias Assessor', 
-    phase: 1, 
-    icon: AlertCircle, 
-    color: '#FF4757', 
-    role: 'Evaluación de riesgo de sesgo',
-    doing: 'Evaluando riesgo de sesgo potencial en el diseño del estudio usando herramienta Cochrane RoB 2.0...',
-    deliverable: 'Riesgo global: Moderado - Requiere análisis de sensibilidad'
-  },
-  { 
-    id: 7, 
-    name: 'Yadav Strategist', 
-    phase: 1, 
-    icon: FlaskConical, 
-    color: '#6B21A8', 
-    role: 'Sintaxis de búsqueda multicapa',
-    doing: 'Aplicando método Yadav 2025 de dos capas: Capa 1 (términos MeSH/Emtree) + Capa 2 (texto libre)...',
-    deliverable: 'Query booleana optimizada para 5 bases de datos'
-  },
-  { 
-    id: 8, 
-    name: 'Protocol Architect', 
-    phase: 1, 
-    icon: FileText, 
-    color: '#00BCFF', 
-    role: 'Consolidación de protocolo final',
-    doing: 'Consolidando todos los outputs en un protocolo PROSPERO-ready de 17 secciones con cumplimiento ICH-GCP...',
-    deliverable: 'Protocolo final: 100% cumplimiento - LISTO PARA COMITÉ'
-  },
-  
-  // Phase 2: Scientific Action (Agents 9-14)
-  { 
-    id: 9, 
-    name: 'PRISMA Navigator', 
-    phase: 2, 
-    icon: Activity, 
-    color: '#00D395', 
-    role: 'Flujo de selección de estudios',
-    doing: 'Ejecutando búsqueda sistemática en 5 bases de datos y aplicando flujo PRISMA 2020...',
-    deliverable: '18 estudios incluidos para meta-análisis final'
-  },
-  { 
-    id: 10, 
-    name: 'Data Extractor', 
-    phase: 2, 
-    icon: Database, 
-    color: '#00BCFF', 
-    role: 'Extracción estructurada de datos',
-    doing: 'Extrayendo datos de los 18 estudios incluidos con verificación cruzada de PMIDs...',
-    deliverable: 'Tabla de extracción con 18 estudios y PMIDs verificados'
-  },
-  { 
-    id: 11, 
-    name: 'Quality Auditor', 
-    phase: 2, 
-    icon: Shield, 
-    color: '#F7B500', 
-    role: 'Evaluación de calidad metodológica',
-    doing: 'Aplicando herramienta Cochrane RoB 2.0 a cada estudio incluido...',
-    deliverable: '78% de estudios con bajo riesgo de sesgo'
-  },
-  { 
-    id: 12, 
-    name: 'Meta-Analyst', 
-    phase: 2, 
-    icon: Brain, 
-    color: '#9333EA', 
-    role: 'Síntesis cuantitativa',
-    doing: 'Ejecutando modelo de efectos aleatorios DerSimonian-Laird con análisis de heterogeneidad...',
-    deliverable: 'HR 0.80 (IC 95%: 0.73-0.87), p<0.001, I²=18%'
-  },
-  { 
-    id: 13, 
-    name: 'Evidence Grader', 
-    phase: 2, 
-    icon: Award, 
-    color: '#00D395', 
-    role: 'Clasificación GRADE de evidencia',
-    doing: 'Aplicando metodología GRADE para clasificar certeza de la evidencia en 5 dominios...',
-    deliverable: 'Certeza GRADE: ALTA ⭐⭐⭐⭐'
-  },
-  { 
-    id: 14, 
-    name: 'Report Generator', 
-    phase: 2, 
-    icon: Microscope, 
-    color: '#DC2626', 
-    role: 'Generación de dossier final',
-    doing: 'Compilando Dossier de Evidencia Científica con 12 secciones, figuras PRISMA y Forest Plot...',
-    deliverable: 'Dossier completo: 47 páginas, listo para descarga'
-  },
-];
+// =========================================
+// TYPES & INTERFACES
+// =========================================
+type DemoPhase = 'landing' | 'execution' | 'verification';
 
-// Demo Research Question
-const DEMO_QUESTION = "¿Cuál es la eficacia de los inhibidores SGLT2 en insuficiencia cardíaca con fracción de eyección preservada comparado con placebo?";
-
-// SGLT2 specific data for demo
-const sglt2PICOT = {
-  P: 'Adultos ≥18 años con IC-FEP (FEVI ≥50%)',
-  I: 'Inhibidores SGLT2 (Empagliflozina, Dapagliflozina)',
-  C: 'Placebo',
-  O: 'Hospitalización por IC, mortalidad CV, calidad de vida',
-  T: 'Seguimiento ≥12 meses'
-};
-
-const sglt2SearchEquations = {
-  pubmed: `("Sodium-Glucose Transporter 2 Inhibitors"[MeSH] OR "SGLT2 inhibitor*"[tw] OR "Empagliflozin"[tw] OR "Dapagliflozin"[tw] OR "Canagliflozin"[tw])
-AND ("Heart Failure"[MeSH] OR "heart failure"[tw] OR "cardiac failure"[tw])
-AND ("preserved ejection fraction"[tw] OR "HFpEF"[tw] OR "diastolic dysfunction"[tw])
-AND ("Randomized Controlled Trial"[pt] OR "Clinical Trial"[pt])
-Filters: Humans, English, 2018-2025`,
-  embase: `('sodium glucose cotransporter 2 inhibitor'/exp OR 'empagliflozin':ti,ab OR 'dapagliflozin':ti,ab)
-AND ('heart failure'/exp OR 'cardiac insufficiency':ti,ab)
-AND ('preserved ejection fraction':ti,ab OR 'HFpEF':ti,ab)
-AND ('randomized controlled trial'/exp OR 'clinical trial'/exp)
-AND [2018-2025]/py`,
-};
+interface Agent {
+  id: number;
+  name: string;
+  description: string;
+  status: 'pending' | 'processing' | 'completed';
+  latency?: number;
+  output?: string;
+}
 
 interface TerminalLog {
   id: string;
   timestamp: Date;
-  level: 'info' | 'success' | 'warning' | 'error' | 'process' | 'system';
-  agent?: string;
   message: string;
-  data?: Record<string, unknown>;
+  type: 'info' | 'success' | 'process' | 'data';
 }
 
-interface AgentState {
+interface Deliverable {
   id: number;
-  status: 'pending' | 'processing' | 'completed' | 'error';
-  output?: string;
-  latencyMs?: number;
+  agentId: number;
+  title: string;
+  content: string;
+  isExpanded: boolean;
 }
 
+// =========================================
+// CONSTANTS - SANTA FE COLORS
+// =========================================
+const COLORS = {
+  azulInstitucional: '#1B4D7A',
+  verdeMedico: '#2E7D6B',
+  azulClaro: '#4A90A4',
+  fondoTerminal: '#0A1628',
+  grisTexto: '#1A1A2E',
+};
+
+// =========================================
+// 14 AGENTS CONFIGURATION
+// =========================================
+const AGENTS_CONFIG: Omit<Agent, 'status' | 'latency'>[] = [
+  { id: 1, name: 'PICOT Builder', description: 'Estructura la pregunta clínica', output: '' },
+  { id: 2, name: 'FINER Validator', description: 'Valida viabilidad del estudio', output: '' },
+  { id: 3, name: 'Literature Scout', description: 'Busca revisiones previas', output: '' },
+  { id: 4, name: 'Criteria Designer', description: 'Define criterios I/E', output: '' },
+  { id: 5, name: 'PROSPERO Checker', description: 'Verifica registro previo', output: '' },
+  { id: 6, name: 'Bias Assessor', description: 'Evalúa riesgo de sesgos', output: '' },
+  { id: 7, name: 'Yadav Strategist', description: 'Genera ecuaciones de búsqueda', output: '' },
+  { id: 8, name: 'Protocol Architect', description: 'Estructura el protocolo', output: '' },
+  { id: 9, name: 'PRISMA Navigator', description: 'Ejecuta flujo PRISMA 2020', output: '' },
+  { id: 10, name: 'Data Extractor', description: 'Extrae datos de estudios', output: '' },
+  { id: 11, name: 'Quality Auditor', description: 'Evalúa calidad metodológica', output: '' },
+  { id: 12, name: 'Meta-Analyst', description: 'Ejecuta meta-análisis', output: '' },
+  { id: 13, name: 'Evidence Grader', description: 'Califica evidencia GRADE', output: '' },
+  { id: 14, name: 'Report Generator', description: 'Genera dossier final', output: '' },
+];
+
+// =========================================
+// AGENT OUTPUTS (Simulated)
+// =========================================
+const AGENT_OUTPUTS: Record<number, { title: string; content: string }> = {
+  1: {
+    title: 'Marco PICOT',
+    content: `**P (Población):** Adultos ≥18 años con insuficiencia cardíaca con fracción de eyección preservada (ICFEp, FEVI ≥50%)
+
+**I (Intervención):** Inhibidores SGLT2 (empagliflozina 10mg, dapagliflozina 10mg)
+
+**C (Comparador):** Placebo o tratamiento estándar
+
+**O (Outcomes):** 
+- Primario: Hospitalización por IC + muerte cardiovascular
+- Secundarios: Calidad de vida (KCCQ), función renal
+
+**T (Tiempo):** Seguimiento mínimo 12 meses`
+  },
+  2: {
+    title: 'Validación FINER',
+    content: `✅ **Factible:** Existen >15 RCTs publicados disponibles
+✅ **Interesante:** Alta relevancia clínica actual
+✅ **Novedoso:** Gaps en subpoblaciones específicas
+✅ **Ético:** No hay conflictos identificados
+✅ **Relevante:** Impacto directo en guías clínicas
+
+**Score FINER:** 5/5 - Pregunta altamente viable`
+  },
+  3: {
+    title: 'Gap Analysis',
+    content: `**Revisiones sistemáticas previas encontradas:** 8
+
+**Gaps identificados:**
+1. Ninguna RS incluye EMPEROR-Preserved completo
+2. Falta análisis por subgrupos de FEVI (50-60% vs >60%)
+3. Datos limitados en población latinoamericana
+4. No hay meta-análisis de seguridad renal
+
+**Conclusión:** Justificación sólida para nueva RS`
+  },
+  4: {
+    title: 'Criterios de Elegibilidad',
+    content: `**INCLUSIÓN:**
+- RCTs fase III
+- Adultos con ICFEp (FEVI ≥50%)
+- SGLT2i vs placebo/control
+- Seguimiento ≥6 meses
+- Outcomes CV reportados
+
+**EXCLUSIÓN:**
+- Estudios observacionales
+- ICFEr o ICFEmr
+- Dosis no estándar
+- Publicaciones duplicadas
+- Sin datos de mortalidad`
+  },
+  5: {
+    title: 'Verificación PROSPERO',
+    content: `**Búsqueda en PROSPERO:** Completada
+
+**Protocolos similares encontrados:** 3
+- CRD42023456789: Enfocado en ICFEr (diferente)
+- CRD42024123456: Solo empagliflozina (más limitado)
+- CRD42024789012: En progreso, diferente outcome primario
+
+**Recomendación:** ✅ Proceder con registro nuevo
+**ID sugerido:** CRD42025XXXXXX`
+  },
+  6: {
+    title: 'Evaluación de Sesgos',
+    content: `**Herramienta:** Cochrane RoB 2.0
+
+**Riesgos anticipados:**
+- Aleatorización: BAJO (RCTs grandes)
+- Cegamiento: BAJO (doble ciego típico)
+- Datos incompletos: MODERADO (pérdidas de seguimiento)
+- Reporte selectivo: BAJO (registros previos)
+- Otros sesgos: BAJO
+
+**Plan de mitigación:** Análisis de sensibilidad excluyendo alto riesgo`
+  },
+  7: {
+    title: 'Ecuaciones de Búsqueda',
+    content: `**PubMed:**
+("SGLT2 inhibitor"[MeSH] OR "empagliflozin"[tw] OR "dapagliflozin"[tw])
+AND ("Heart Failure"[MeSH] OR "HFpEF"[tw])
+AND ("randomized controlled trial"[pt])
+Filters: 2019-2025, English/Spanish
+
+**Embase:**
+('sodium glucose cotransporter 2 inhibitor'/exp)
+AND ('heart failure with preserved ejection fraction'/exp)
+AND [randomized controlled trial]/lim
+
+**Cochrane:** MeSH descriptors aplicados`
+  },
+  8: {
+    title: 'Estructura del Protocolo',
+    content: `**Secciones completadas:**
+1. ✅ Título y registro
+2. ✅ Antecedentes y justificación
+3. ✅ Objetivos e hipótesis
+4. ✅ Métodos (PRISMA 2020)
+5. ✅ Criterios de elegibilidad
+6. ✅ Estrategia de búsqueda
+7. ✅ Extracción de datos
+8. ✅ Evaluación de calidad
+9. ✅ Síntesis y análisis
+10. ✅ Cronograma
+
+**Estado:** Listo para registro PROSPERO`
+  },
+  9: {
+    title: 'Flujo PRISMA 2020',
+    content: `**Identificación:**
+- PubMed: 342 artículos
+- Embase: 289 artículos
+- Cochrane: 156 artículos
+- Otras fuentes: 60 artículos
+- **Total:** 847 artículos
+
+**Cribado:**
+- Duplicados removidos: 234
+- Título/Abstract excluidos: 489
+- Texto completo evaluados: 124
+
+**Incluidos:**
+- Estudios cualitativos: 18
+- **Meta-análisis final: 12 RCTs**`
+  },
+  10: {
+    title: 'Datos Extraídos',
+    content: `**12 estudios incluidos:**
+
+| Estudio | N | SGLT2i | Seguimiento |
+|---------|---|--------|-------------|
+| EMPEROR-Preserved | 5,988 | Empa | 26 meses |
+| DELIVER | 6,263 | Dapa | 28 meses |
+| PRESERVED-HF | 324 | Dapa | 12 semanas |
+| ... | ... | ... | ... |
+
+**Total participantes:** 14,234
+**Eventos primarios:** 2,847`
+  },
+  11: {
+    title: 'Evaluación de Calidad',
+    content: `**Cochrane RoB 2.0 - Resultados:**
+
+| Estudio | D1 | D2 | D3 | D4 | D5 | Overall |
+|---------|----|----|----|----|----|----|
+| EMPEROR-Preserved | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 | Bajo |
+| DELIVER | 🟢 | 🟢 | 🟡 | 🟢 | 🟢 | Bajo |
+| PRESERVED-HF | 🟢 | 🟢 | 🟢 | 🟡 | 🟢 | Bajo |
+
+**Calidad general:** 10/12 estudios con bajo riesgo
+**Publicación bias:** Funnel plot simétrico (p=0.34)`
+  },
+  12: {
+    title: 'Resultados Meta-análisis',
+    content: `**Outcome primario (Hospitalización IC + muerte CV):**
+- **HR: 0.80 (IC 95%: 0.73-0.87)**
+- p < 0.0001
+- **I²: 18%** (heterogeneidad baja)
+- Modelo: Efectos aleatorios
+
+**Outcomes secundarios:**
+- Muerte CV: HR 0.88 (0.77-1.00)
+- Hospitalización IC: HR 0.74 (0.67-0.83)
+- KCCQ-TSS: +1.8 puntos (1.2-2.4)
+
+**NNT:** 21 pacientes por 2 años`
+  },
+  13: {
+    title: 'Calificación GRADE',
+    content: `**Certeza de la evidencia:**
+
+| Outcome | Estudios | Calidad | Certeza |
+|---------|----------|---------|---------|
+| Hosp IC + muerte CV | 12 | ⭐⭐⭐⭐ | ALTA |
+| Muerte CV | 12 | ⭐⭐⭐ | MODERADA |
+| Calidad de vida | 8 | ⭐⭐⭐⭐ | ALTA |
+| Eventos adversos | 12 | ⭐⭐⭐⭐ | ALTA |
+
+**Recomendación:** FUERTE a favor de SGLT2i en ICFEp`
+  },
+  14: {
+    title: 'Dossier de Evidencia',
+    content: `**📋 DOSSIER COMPLETO GENERADO**
+
+**Documento:** Revisión Sistemática y Meta-análisis
+**Páginas:** 47
+**Formato:** PDF/Word
+
+**Contenido:**
+1. Resumen ejecutivo
+2. Protocolo PROSPERO
+3. Estrategia de búsqueda completa
+4. Flujo PRISMA 2020
+5. Tabla de características
+6. Forest plots
+7. Análisis de sensibilidad
+8. Evaluación GRADE
+9. Referencias (n=124)
+
+**Estado:** ✅ LISTO PARA DESCARGA`
+  },
+};
+
+// =========================================
+// DEFAULT DEMO QUESTION
+// =========================================
+const DEFAULT_QUESTION = "¿Cuál es la eficacia y seguridad de los inhibidores SGLT2 (empagliflozina, dapagliflozina) en pacientes con insuficiencia cardíaca con fracción de eyección preservada comparado con placebo, medido por hospitalización y mortalidad cardiovascular?";
+
+// =========================================
+// MAIN COMPONENT
+// =========================================
 export default function ClinicalNavigator() {
-  const { toast } = useToast();
-  const [terminalLogs, setTerminalLogs] = useState<TerminalLog[]>([]);
-  const [agentStates, setAgentStates] = useState<AgentState[]>(
-    agents.map(a => ({ id: a.id, status: 'pending' }))
+  const [phase, setPhase] = useState<DemoPhase>('landing');
+  const [question, setQuestion] = useState('');
+  const [agents, setAgents] = useState<Agent[]>(
+    AGENTS_CONFIG.map(a => ({ ...a, status: 'pending' as const, output: '' }))
   );
-  const [currentPhase, setCurrentPhase] = useState(1);
+  const [terminalLogs, setTerminalLogs] = useState<TerminalLog[]>([]);
+  const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [activeAgentId, setActiveAgentId] = useState<number | null>(null);
-  const [isOrchestrating, setIsOrchestrating] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [showDossierPDF, setShowDossierPDF] = useState(false);
+  
   const terminalRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
 
-  // Get active agent data
-  const activeAgent = activeAgentId ? agents.find(a => a.id === activeAgentId) : null;
-
-  // Add terminal log
-  const addTerminalLog = (
-    level: TerminalLog['level'],
-    message: string,
-    agent?: string,
-    data?: Record<string, unknown>,
-    latencyMs?: number
-  ) => {
-    const log: TerminalLog = {
-      id: crypto.randomUUID(),
-      timestamp: new Date(),
-      level,
-      agent: agent?.toUpperCase(),
-      message: latencyMs ? `${message} [Latency: ${latencyMs}ms]` : message,
-      data
-    };
-    setTerminalLogs(prev => [...prev, log]);
-  };
-
-  // Update agent state
-  const updateAgentState = (agentId: number, status: AgentState['status'], output?: string, latencyMs?: number) => {
-    setAgentStates(prev => prev.map(a => 
-      a.id === agentId ? { ...a, status, output, latencyMs } : a
-    ));
-  };
-
-  // Scroll terminal to bottom
+  // Auto-scroll terminal
   useEffect(() => {
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
   }, [terminalLogs]);
 
-  // Run the full 14-agent orchestration
+  // Add terminal log
+  const addLog = (message: string, type: TerminalLog['type'] = 'info') => {
+    const log: TerminalLog = {
+      id: crypto.randomUUID(),
+      timestamp: new Date(),
+      message,
+      type,
+    };
+    setTerminalLogs(prev => [...prev, log]);
+  };
+
+  // Format timestamp
+  const formatTime = (date: Date) => {
+    const ms = date.getMilliseconds().toString().padStart(3, '0');
+    return date.toLocaleTimeString('es-ES', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit'
+    }) + '.' + ms;
+  };
+
+  // Update agent status
+  const updateAgent = (id: number, updates: Partial<Agent>) => {
+    setAgents(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+  };
+
+  // Add deliverable
+  const addDeliverable = (agentId: number) => {
+    const output = AGENT_OUTPUTS[agentId];
+    if (output) {
+      setDeliverables(prev => [...prev, {
+        id: agentId,
+        agentId,
+        title: output.title,
+        content: output.content,
+        isExpanded: false,
+      }]);
+    }
+  };
+
+  // Toggle deliverable expansion
+  const toggleDeliverable = (id: number) => {
+    setDeliverables(prev => prev.map(d => 
+      d.id === id ? { ...d, isExpanded: !d.isExpanded } : d
+    ));
+  };
+
+  // =========================================
+  // MAIN ORCHESTRATION
+  // =========================================
   const runOrchestration = async () => {
-    if (isOrchestrating) return;
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+
+    const usedQuestion = question.trim() || DEFAULT_QUESTION;
     
-    setIsOrchestrating(true);
-    setTerminalLogs([]);
-    setIsComplete(false);
-    setCurrentPhase(1);
-    setActiveAgentId(null);
-
-    // System initialization
-    addTerminalLog('system', 'Galatea AI Clinical Navigator v2.1.0 initialized');
-    addTerminalLog('system', 'Multi-agent orchestration starting with 14 specialized agents...');
-    addTerminalLog('info', `Input: "${DEMO_QUESTION}"`, 'ORCHESTRATOR');
-    await new Promise(r => setTimeout(r, 800));
-
-    // === PHASE 1: PROTOCOL RIGOR (Agents 1-8) ===
-    addTerminalLog('info', '═══════════════════════════════════════════════════════════', 'ORCHESTRATOR');
-    addTerminalLog('info', 'FASE 1: RIGOR DEL PROTOCOLO - Iniciando Agentes 1-8', 'ORCHESTRATOR');
-    addTerminalLog('info', '═══════════════════════════════════════════════════════════', 'ORCHESTRATOR');
+    addLog('🚀 Iniciando orquestación de 14 agentes especializados...', 'info');
+    addLog(`📋 Pregunta: "${usedQuestion.substring(0, 80)}..."`, 'data');
+    
     await new Promise(r => setTimeout(r, 500));
 
-    // Agent 1: PICOT Analyst
-    setActiveAgentId(1);
-    updateAgentState(1, 'processing');
-    addTerminalLog('info', 'Activando Agente 01: PICOT Analyst...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Extrayendo componentes PICOT del texto de entrada...', 'PICOT', undefined, 245);
-    await new Promise(r => setTimeout(r, 2500));
-    addTerminalLog('success', 'Componentes PICOT extraídos correctamente', 'PICOT', sglt2PICOT, 340);
-    updateAgentState(1, 'completed', 'Marco PICOT estructurado para SGLT2/HFpEF', 340);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 2: FINER Validator
-    setActiveAgentId(2);
-    updateAgentState(2, 'processing');
-    addTerminalLog('info', 'Activando Agente 02: FINER Validator...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Evaluando criterios Feasible-Interesting-Novel-Ethical-Relevant...', 'FINER', undefined, 320);
-    await new Promise(r => setTimeout(r, 2000));
-    addTerminalLog('success', 'Pregunta validada: Alta relevancia clínica detectada', 'FINER', {
-      feasible: '92%',
-      interesting: '95%',
-      novel: '88%',
-      ethical: '100%',
-      relevant: '97%'
-    }, 280);
-    updateAgentState(2, 'completed', 'Puntuación FINER: 94.4%', 280);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 3: Literature Scout
-    setActiveAgentId(3);
-    updateAgentState(3, 'processing');
-    addTerminalLog('info', 'Activando Agente 03: Literature Scout...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Consultando Cochrane, PubMed y Embase para revisiones previas...', 'LITERATURE', undefined, 890);
-    await new Promise(r => setTimeout(r, 2500));
-    addTerminalLog('warning', 'Detectados 4 gaps de evidencia significativos', 'LITERATURE', {
-      gap_1: 'Subgrupos de edad >75 años poco representados',
-      gap_2: 'Comparación directa entre SGLT2i no disponible',
-      gap_3: 'Datos limitados en IC-FEP con FEVI 40-49%',
-      gap_4: 'Seguimiento a largo plazo (>3 años) escaso'
-    }, 1240);
-    updateAgentState(3, 'completed', '4 gaps de evidencia identificados', 1240);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 4: Criteria Designer
-    setActiveAgentId(4);
-    updateAgentState(4, 'processing');
-    addTerminalLog('info', 'Activando Agente 04: Criteria Designer...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Generando criterios de elegibilidad basados en PICOT...', 'CRITERIA', undefined, 445);
-    await new Promise(r => setTimeout(r, 2200));
-    addTerminalLog('success', 'Tabla de criterios I/E generada', 'CRITERIA', {
-      inclusion: ['Adultos ≥18 años', 'IC-FEP con FEVI ≥50%', 'SGLT2i ≥6 meses', 'RCT o cohortes', 'Seguimiento ≥12 meses'],
-      exclusion: ['IC-FEr previa', 'ERC estadio V', 'DM tipo 1', 'Ensayos no aleatorizados']
-    }, 380);
-    updateAgentState(4, 'completed', 'Criterios I/E validados por Cochrane Handbook', 380);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 5: PROSPERO Checker
-    setActiveAgentId(5);
-    updateAgentState(5, 'processing');
-    addTerminalLog('info', 'Activando Agente 05: PROSPERO Checker...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Buscando duplicados en registro PROSPERO...', 'PROSPERO', undefined, 1560);
-    await new Promise(r => setTimeout(r, 2200));
-    addTerminalLog('success', 'Sin duplicados detectados - Registro recomendado', 'PROSPERO', {
-      registrosAnalizados: 2847,
-      similares: 3,
-      duplicados: 0
-    }, 890);
-    updateAgentState(5, 'completed', 'No hay duplicados en PROSPERO', 890);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 6: Bias Assessor
-    setActiveAgentId(6);
-    updateAgentState(6, 'processing');
-    addTerminalLog('info', 'Activando Agente 06: Bias Assessor...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Evaluando riesgo de sesgo potencial en diseño...', 'BIAS', undefined, 520);
-    await new Promise(r => setTimeout(r, 2000));
-    addTerminalLog('warning', 'Riesgo moderado de sesgo de publicación identificado', 'BIAS', {
-      seleccion: 'Bajo',
-      desempeño: 'Bajo',
-      deteccion: 'Bajo',
-      desgaste: 'Moderado',
-      reporte: 'Moderado'
-    }, 680);
-    updateAgentState(6, 'completed', 'Riesgo global: Moderado (requiere análisis de sensibilidad)', 680);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 7: Yadav Strategist (THE KEY AGENT)
-    setActiveAgentId(7);
-    updateAgentState(7, 'processing');
-    addTerminalLog('info', 'Activando Agente 07: Yadav Strategist...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Iniciando mapeo de descriptores MeSH/Emtree...', 'YADAV', undefined, 520);
-    await new Promise(r => setTimeout(r, 1200));
-    addTerminalLog('process', 'Aplicando método Yadav 2025 de dos capas...', 'YADAV', undefined, 380);
-    addTerminalLog('process', 'Capa 1: Términos controlados (thesaurus) → [MeSH]/[Emtree]', 'YADAV', undefined, 290);
-    addTerminalLog('process', 'Capa 2: Términos de texto libre → [tw]/[ti,ab]', 'YADAV', undefined, 310);
-    await new Promise(r => setTimeout(r, 2000));
-    addTerminalLog('success', 'Query PubMed generada (Método Yadav 2025):', 'YADAV', {
-      database: 'PubMed/MEDLINE',
-      query: sglt2SearchEquations.pubmed,
-      operators: ['MeSH', 'tw', 'pt', 'AND', 'OR']
-    }, 680);
-    await new Promise(r => setTimeout(r, 800));
-    addTerminalLog('success', 'Query Embase generada:', 'YADAV', {
-      database: 'Embase',
-      query: sglt2SearchEquations.embase
-    }, 520);
-    updateAgentState(7, 'completed', 'Sintaxis validada - 5 bases de datos configuradas', 680);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 8: Protocol Architect
-    setActiveAgentId(8);
-    updateAgentState(8, 'processing');
-    addTerminalLog('info', 'Activando Agente 08: Protocol Architect...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Consolidando protocolo final con 17 secciones...', 'ARCHITECT', undefined, 890);
-    await new Promise(r => setTimeout(r, 2500));
-    addTerminalLog('success', 'Protocolo PROSPERO-ready generado', 'ARCHITECT', {
-      secciones: 17,
-      cumplimiento: '100%',
-      estado: 'LISTO PARA COMITÉ'
-    }, 1120);
-    updateAgentState(8, 'completed', 'Protocolo final: 17 secciones, 100% cumplimiento ICH-GCP', 1120);
-    await new Promise(r => setTimeout(r, 800));
-
-    // Phase 1 Complete
-    setActiveAgentId(null);
-    addTerminalLog('success', '═══════════════════════════════════════════════════════════', 'ORCHESTRATOR');
-    addTerminalLog('success', 'FASE 1 COMPLETADA - Protocolo aprobado automáticamente', 'ORCHESTRATOR');
-    await new Promise(r => setTimeout(r, 1000));
-
-    // === PHASE 2: SCIENTIFIC ACTION (Agents 9-14) ===
-    setCurrentPhase(2);
-    addTerminalLog('info', '═══════════════════════════════════════════════════════════', 'ORCHESTRATOR');
-    addTerminalLog('info', 'FASE 2: EJECUCIÓN CIENTÍFICA - Iniciando Agentes 9-14', 'ORCHESTRATOR');
-    addTerminalLog('info', '═══════════════════════════════════════════════════════════', 'ORCHESTRATOR');
-    await new Promise(r => setTimeout(r, 500));
-
-    // Agent 9: PRISMA Navigator
-    setActiveAgentId(9);
-    updateAgentState(9, 'processing');
-    addTerminalLog('info', 'Activando Agente 09: PRISMA Navigator...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Ejecutando búsqueda en 5 bases de datos...', 'PRISMA', undefined, 2340);
-    await new Promise(r => setTimeout(r, 2500));
-    addTerminalLog('process', 'Filtrando 2,847 registros iniciales...', 'PRISMA', undefined, 1560);
-    await new Promise(r => setTimeout(r, 2000));
-    addTerminalLog('success', 'Flujo PRISMA completado', 'PRISMA', {
-      identificados: 2847,
-      duplicados: 892,
-      cribados: 1955,
-      textoCompleto: 127,
-      incluidos: 24,
-      metaAnalisis: 18
-    }, 890);
-    updateAgentState(9, 'completed', '18 estudios incluidos en meta-análisis final', 890);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 10: Data Extractor
-    setActiveAgentId(10);
-    updateAgentState(10, 'processing');
-    addTerminalLog('info', 'Activando Agente 10: Data Extractor...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Extrayendo datos de 18 estudios incluidos...', 'EXTRACTOR', undefined, 3200);
-    await new Promise(r => setTimeout(r, 3000));
-    addTerminalLog('success', 'Datos extraídos con referencias PMID', 'EXTRACTOR', {
-      estudios: [
-        { pmid: '32456127', autor: 'Anker SD et al.', estudio: 'EMPEROR-Preserved', n: 5988, hr: 0.79 },
-        { pmid: '34170564', autor: 'Solomon SD et al.', estudio: 'DELIVER', n: 6263, hr: 0.82 },
-        { pmid: '35363499', autor: 'Vaduganathan M et al.', estudio: 'Pooled Analysis', n: 12251, hr: 0.80 }
-      ]
-    }, 1680);
-    updateAgentState(10, 'completed', '18 estudios extraídos con PMIDs verificados', 1680);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 11: Quality Auditor
-    setActiveAgentId(11);
-    updateAgentState(11, 'processing');
-    addTerminalLog('info', 'Activando Agente 11: Quality Auditor...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Aplicando herramienta Cochrane RoB 2.0...', 'QUALITY', undefined, 1890);
-    await new Promise(r => setTimeout(r, 2500));
-    addTerminalLog('success', 'Evaluación de calidad completada', 'QUALITY', {
-      bajoRiesgo: 14,
-      moderadoRiesgo: 3,
-      altoRiesgo: 1,
-      promedioGeneral: 'Bajo riesgo de sesgo'
-    }, 920);
-    updateAgentState(11, 'completed', '78% de estudios con bajo riesgo de sesgo', 920);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 12: Meta-Analyst
-    setActiveAgentId(12);
-    updateAgentState(12, 'processing');
-    addTerminalLog('info', 'Activando Agente 12: Meta-Analyst...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Ejecutando modelo de efectos aleatorios (DerSimonian-Laird)...', 'META', undefined, 2450);
-    await new Promise(r => setTimeout(r, 3000));
-    addTerminalLog('success', 'Meta-análisis completado', 'META', {
-      efectoCombinado: 'HR 0.80 (IC 95%: 0.73-0.87)',
-      heterogeneidad: 'I² = 18% (baja)',
-      pValor: 'p < 0.001',
-      NNT: 21
-    }, 1340);
-    updateAgentState(12, 'completed', 'HR 0.80 (0.73-0.87), p<0.001, I²=18%', 1340);
-    await new Promise(r => setTimeout(r, 600));
-
-    // Agent 13: Evidence Grader
-    setActiveAgentId(13);
-    updateAgentState(13, 'processing');
-    addTerminalLog('info', 'Activando Agente 13: Evidence Grader...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Aplicando metodología GRADE...', 'GRADE', undefined, 1560);
-    await new Promise(r => setTimeout(r, 2500));
-    addTerminalLog('success', 'Clasificación GRADE completada', 'GRADE', {
-      certeza: 'ALTA',
-      dominios: {
-        riesgoSesgo: 'Sin downgrade',
-        inconsistencia: 'Sin downgrade',
-        imprecision: 'Sin downgrade',
-        indirectness: 'Sin downgrade',
-        publicationBias: 'Sin downgrade'
+    for (let i = 0; i < AGENTS_CONFIG.length; i++) {
+      const agent = AGENTS_CONFIG[i];
+      const latency = 800 + Math.random() * 1200; // 800-2000ms
+      
+      // Start processing
+      setActiveAgentId(agent.id);
+      updateAgent(agent.id, { status: 'processing' });
+      addLog(`🔄 Agente ${agent.id}: ${agent.name} iniciando...`, 'process');
+      
+      await new Promise(r => setTimeout(r, latency));
+      
+      // Complete
+      updateAgent(agent.id, { status: 'completed', latency: Math.round(latency) });
+      addLog(`✅ ${agent.name} completado (${Math.round(latency)}ms)`, 'success');
+      
+      // Add specific output log
+      const output = AGENT_OUTPUTS[agent.id];
+      if (output) {
+        addLog(`📄 Entregable: ${output.title}`, 'data');
       }
-    }, 890);
-    updateAgentState(13, 'completed', 'Certeza GRADE: ALTA ⭐⭐⭐⭐', 890);
-    await new Promise(r => setTimeout(r, 600));
+      
+      // Add to deliverables library
+      addDeliverable(agent.id);
+      
+      await new Promise(r => setTimeout(r, 200));
+    }
 
-    // Agent 14: Report Generator
-    setActiveAgentId(14);
-    updateAgentState(14, 'processing');
-    addTerminalLog('info', 'Activando Agente 14: Report Generator...', 'ORCHESTRATOR');
-    addTerminalLog('process', 'Compilando Dossier de Evidencia Científica...', 'REPORT', undefined, 2890);
-    await new Promise(r => setTimeout(r, 3000));
-    addTerminalLog('success', 'Dossier de Evidencia generado exitosamente', 'REPORT', {
-      paginas: 47,
-      secciones: 12,
-      figuras: 8,
-      tablas: 15,
-      referencias: 127
-    }, 1890);
-    updateAgentState(14, 'completed', 'Dossier listo: 47 páginas, 12 secciones', 1890);
-    await new Promise(r => setTimeout(r, 800));
-
-    // Final completion
-    setActiveAgentId(null);
-    addTerminalLog('success', '═══════════════════════════════════════════════════════════', 'ORCHESTRATOR');
-    addTerminalLog('success', '★ ORQUESTACIÓN COMPLETADA - 14/14 AGENTES EXITOSOS ★', 'ORCHESTRATOR');
-    addTerminalLog('success', '═══════════════════════════════════════════════════════════', 'ORCHESTRATOR');
-    addTerminalLog('info', 'Dossier de Evidencia listo para descarga', 'ORCHESTRATOR');
+    addLog('═══════════════════════════════════════════════════════════', 'info');
+    addLog('🎉 ORQUESTACIÓN COMPLETADA - 14/14 agentes ejecutados', 'success');
+    addLog('📊 Resultados del meta-análisis listos para revisión', 'data');
     
-    setIsOrchestrating(false);
+    setActiveAgentId(null);
     setIsComplete(true);
     
-    toast({
-      title: '✅ Orquestación Completada',
-      description: 'Los 14 agentes han procesado exitosamente. Dossier disponible.',
-    });
+    // Transition to verification after 1.5s
+    setTimeout(() => {
+      setPhase('verification');
+    }, 1500);
   };
 
-  // =========================================
-  // AUTO-START ORCHESTRATION ON PAGE LOAD
-  // =========================================
-  useEffect(() => {
-    // Only run once - prevent double execution
-    if (hasStartedRef.current) {
-      console.log('[ClinicalNavigator] Already started, skipping...');
-      return;
-    }
-    
-    console.log('[ClinicalNavigator] Auto-starting 14-agent orchestration in 500ms...');
-    hasStartedRef.current = true;
-    
-    const timer = setTimeout(() => {
-      console.log('[ClinicalNavigator] Triggering runOrchestration()');
+  // Start demo
+  const handleStartDemo = () => {
+    setPhase('execution');
+    hasStartedRef.current = false;
+    setTimeout(() => {
       runOrchestration();
     }, 500);
-    
-    return () => clearTimeout(timer);
-  }, []); // Empty dependency array = run once on mount
-
-  const getLogColor = (level: TerminalLog['level']) => {
-    switch (level) {
-      case 'success': return '#00D395';
-      case 'warning': return '#F7B500';
-      case 'error': return '#FF4757';
-      case 'process': return '#00BCFF';
-      case 'system': return '#8B949E';
-      default: return '#E6EDF3';
-    }
   };
 
-  return (
-    <div className="min-h-screen terminal-theme" style={{ background: '#0A0E14' }}>
-      {/* Top Bar with Galatea Branding */}
-      <div className="h-16 flex items-center justify-between px-6 bg-[#161B22] border-b border-[#21262D]">
-        <div className="flex items-center gap-6">
-          <img src={galateaLogo} alt="Galatea AI" className="h-10" />
-          <div className="h-8 w-px bg-[#21262D]" />
-          <div className="flex items-center gap-4">
-            <TerminalIcon className="w-6 h-6" style={{ color: 'hsl(177 55% 35%)' }} />
-            <span className="text-2xl font-bold text-[#E6EDF3]">
-              Clinical Guideline Navigator
-            </span>
-            <span className="px-3 py-1 bg-[#00BCFF]/20 text-[#00BCFF] rounded-full text-sm font-bold">
-              14-AGENT ORCHESTRATION
-            </span>
+  // Reset demo
+  const handleReset = () => {
+    setPhase('landing');
+    setQuestion('');
+    setAgents(AGENTS_CONFIG.map(a => ({ ...a, status: 'pending' as const, output: '' })));
+    setTerminalLogs([]);
+    setDeliverables([]);
+    setActiveAgentId(null);
+    setIsComplete(false);
+    hasStartedRef.current = false;
+  };
+
+  // =========================================
+  // RENDER: LANDING PHASE
+  // =========================================
+  const renderLanding = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen flex flex-col"
+      style={{
+        background: `linear-gradient(135deg, ${COLORS.azulInstitucional} 0%, ${COLORS.verdeMedico} 100%)`,
+      }}
+    >
+      {/* Header with logos */}
+      <header className="flex justify-between items-center p-6">
+        <img src={galateaLogo} alt="Galatea AI" className="h-16" />
+        <img src={santaFeLogo} alt="Fundación Santa Fe de Bogotá" className="h-20 bg-white rounded-lg p-2" />
+      </header>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-12 px-8 pb-12">
+        {/* Agent Avatar */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="relative"
+        >
+          <div className="w-72 h-72 lg:w-96 lg:h-96 rounded-full overflow-hidden border-4 border-white/30 shadow-2xl">
+            <img 
+              src={agentAvatar} 
+              alt="Galatea AI Agent" 
+              className="w-full h-full object-cover"
+            />
           </div>
-        </div>
-        
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-[#0D1117] border border-[#21262D]">
-            <div className={cn(
-              "w-3 h-3 rounded-full",
-              isOrchestrating ? "bg-[#F7B500] animate-pulse" : isComplete ? "bg-[#00D395]" : "bg-[#8B949E]"
-            )} />
-            <span className="text-lg font-semibold text-[#E6EDF3]">
-              {isOrchestrating ? 'PROCESANDO...' : isComplete ? 'COMPLETADO' : 'LISTO'}
-            </span>
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="absolute -bottom-2 -right-2 bg-white rounded-full p-3 shadow-lg"
+          >
+            <Sparkles className="w-8 h-8" style={{ color: COLORS.verdeMedico }} />
+          </motion.div>
+        </motion.div>
+
+        {/* Input section */}
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+          className="max-w-2xl w-full"
+        >
+          <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
+            Clinical Guideline Navigator
+          </h1>
+          <p className="text-xl text-white/80 mb-8">
+            Soy tu asistente de investigación clínica. Cuéntame tu pregunta y orquestaré 
+            14 agentes especializados para generar evidencia científica de alta calidad.
+          </p>
+
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+            <label className="block text-white/90 font-medium mb-3">
+              Tu pregunta de investigación:
+            </label>
+            <textarea
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="Cuéntame tu pregunta de investigación clínica..."
+              className="w-full h-32 p-4 rounded-xl bg-white/90 text-gray-800 placeholder-gray-500 
+                         focus:outline-none focus:ring-2 focus:ring-white/50 resize-none text-lg"
+            />
+            <p className="text-white/60 text-sm mt-2 mb-4">
+              O deja vacío para usar la pregunta demo: SGLT2 en insuficiencia cardíaca
+            </p>
+            
+            <Button
+              onClick={handleStartDemo}
+              size="lg"
+              className="w-full h-14 text-lg font-semibold rounded-xl shadow-lg transition-all hover:scale-[1.02]"
+              style={{ 
+                backgroundColor: COLORS.verdeMedico,
+                color: 'white',
+              }}
+            >
+              <Play className="w-5 h-5 mr-2" />
+              Iniciar Análisis con Galatea
+            </Button>
           </div>
-        </div>
+        </motion.div>
       </div>
+    </motion.div>
+  );
 
-      {/* Main Content */}
-      <div className="flex h-[calc(100vh-64px)]">
-        {/* Left Panel - Agent Status */}
-        <div className="w-96 border-r border-[#21262D] overflow-y-auto p-5">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-[#E6EDF3] uppercase tracking-wider mb-3">
-              Fase {currentPhase}: {currentPhase === 1 ? 'Rigor del Protocolo' : 'Ejecución Científica'}
-            </h2>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-3 bg-[#21262D] rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ background: 'linear-gradient(90deg, hsl(177 55% 35%), #00D395)' }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(agentStates.filter(a => a.status === 'completed').length / 14) * 100}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-              <span className="text-xl font-bold text-[#00D395]">
-                {agentStates.filter(a => a.status === 'completed').length}/14
-              </span>
-            </div>
-          </div>
+  // =========================================
+  // RENDER: EXECUTION PHASE (3 Columns)
+  // =========================================
+  const renderExecution = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: COLORS.fondoTerminal }}
+    >
+      {/* Header */}
+      <header className="flex justify-between items-center px-6 py-3 border-b border-white/10">
+        <div className="flex items-center gap-4">
+          <img src={galateaLogo} alt="Galatea AI" className="h-10" />
+          <div className="h-6 w-px bg-white/20" />
+          <span className="text-white font-medium">Clinical Guideline Navigator</span>
+          <span 
+            className="px-2 py-1 rounded text-xs font-bold"
+            style={{ backgroundColor: COLORS.verdeMedico, color: 'white' }}
+          >
+            14-AGENT ORCHESTRATION
+          </span>
+        </div>
+        <img src={santaFeLogo} alt="Santa Fe" className="h-12 bg-white rounded p-1" />
+      </header>
 
-          <div className="space-y-3">
-            {agents.map(agent => {
-              const state = agentStates.find(s => s.id === agent.id);
-              const Icon = agent.icon;
-              const isActive = agent.id === activeAgentId;
-              
-              return (
-                <motion.div
-                  key={agent.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: agent.id * 0.03 }}
-                  className={cn(
-                    "p-4 rounded-xl border-2 transition-all duration-300",
-                    isActive 
-                      ? "border-[#00BCFF] bg-[#00BCFF]/10 shadow-[0_0_30px_rgba(0,188,255,0.3)] scale-[1.02]"
-                      : state?.status === 'completed'
-                      ? "border-[#00D395]/50 bg-[#00D395]/5"
-                      : "border-[#21262D] bg-[#0D1117]"
-                  )}
-                >
-                  <div className="flex items-start gap-4">
-                    <div 
-                      className={cn(
-                        "p-3 rounded-xl",
-                        isActive ? "animate-pulse" : ""
-                      )}
-                      style={{ 
-                        backgroundColor: `${agent.color}20`,
-                        color: agent.color 
-                      }}
-                    >
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="text-lg font-bold" style={{ color: agent.color }}>
-                          {String(agent.id).padStart(2, '0')}
-                        </span>
-                        <span className="text-lg font-bold text-[#E6EDF3] truncate">
-                          {agent.name}
-                        </span>
-                      </div>
-                      <div className="text-base text-[#8B949E] mb-2">
-                        {agent.role}
-                      </div>
-                      
-                      {/* Status Badge */}
-                      <div className="flex items-center gap-2">
-                        {state?.status === 'pending' && (
-                          <span className="text-sm text-[#484F58] uppercase font-medium">Pendiente</span>
-                        )}
-                        {state?.status === 'processing' && (
-                          <span className="text-base text-[#00BCFF] uppercase font-bold flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" /> Procesando...
-                          </span>
-                        )}
-                        {state?.status === 'completed' && (
-                          <span className="text-base text-[#00D395] uppercase font-bold flex items-center gap-2">
-                            <CheckCircle className="w-5 h-5" /> Completado
-                            {state.latencyMs && (
-                              <span className="text-[#8B949E] text-sm">({state.latencyMs}ms)</span>
-                            )}
-                          </span>
-                        )}
-                      </div>
-                      
-                      {/* Output preview */}
-                      {state?.output && (
-                        <div className="mt-2 text-base text-[#8B949E] line-clamp-2">
-                          → {state.output}
-                        </div>
-                      )}
-                    </div>
+      {/* 3-Column Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* LEFT: Agent List (25%) */}
+        <div className="w-1/4 border-r border-white/10 overflow-y-auto p-4">
+          <h2 className="text-white font-bold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            Orquestación de 14 Agentes
+          </h2>
+          
+          <div className="space-y-2">
+            {agents.map((agent) => (
+              <motion.div
+                key={agent.id}
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: agent.id * 0.05 }}
+                className={`p-3 rounded-lg border transition-all ${
+                  agent.status === 'processing' 
+                    ? 'border-blue-400 bg-blue-400/10' 
+                    : agent.status === 'completed'
+                    ? 'border-green-400/50 bg-green-400/5'
+                    : 'border-white/10 bg-white/5'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {agent.status === 'pending' && (
+                      <Clock className="w-4 h-4 text-gray-500" />
+                    )}
+                    {agent.status === 'processing' && (
+                      <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                    )}
+                    {agent.status === 'completed' && (
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                    )}
+                    <span className={`text-sm font-medium ${
+                      agent.status === 'completed' ? 'text-green-400' :
+                      agent.status === 'processing' ? 'text-blue-400' : 'text-gray-400'
+                    }`}>
+                      {agent.id}. {agent.name}
+                    </span>
                   </div>
-                </motion.div>
-              );
-            })}
+                  {agent.latency && (
+                    <span className="text-xs text-gray-500">{agent.latency}ms</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1 ml-6">{agent.description}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
 
-        {/* Center Panel - Agent Explanation + Terminal */}
-        <div className="flex-1 flex flex-col">
-          {/* Agent Explanation Card - Dynamic */}
-          <AnimatePresence mode="wait">
-            {activeAgent && (
-              <motion.div 
-                key={activeAgent.id}
-                className="p-6 border-b border-[#21262D]"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <AgentExplanationCard
-                  agentName={`${String(activeAgent.id).padStart(2, '0')} - ${activeAgent.name}`}
-                  agentColor={activeAgent.color}
-                  isActive={true}
-                  isProcessing={agentStates.find(a => a.id === activeAgent.id)?.status === 'processing'}
-                  doing={activeAgent.doing}
-                  deliverable={activeAgent.deliverable}
-                  icon={<activeAgent.icon className="w-7 h-7" />}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Terminal Header */}
-          <div className="h-12 flex items-center px-5 bg-[#161B22] border-b border-[#21262D]">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-              <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
-              <div className="w-3 h-3 rounded-full bg-[#28C840]" />
+        {/* CENTER: Terminal (50%) */}
+        <div className="w-1/2 flex flex-col border-r border-white/10">
+          <div className="px-4 py-2 border-b border-white/10 flex items-center gap-2">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500" />
+              <div className="w-3 h-3 rounded-full bg-yellow-500" />
+              <div className="w-3 h-3 rounded-full bg-green-500" />
             </div>
-            <div className="ml-4 flex items-center gap-3">
-              <TerminalIcon className="w-5 h-5 text-[#00BCFF]" />
-              <span className="text-lg font-bold text-[#E6EDF3]">Audit Log Terminal</span>
-            </div>
-            <span className="ml-auto text-base text-[#8B949E] font-mono">
-              {terminalLogs.length} entries
-            </span>
+            <span className="text-gray-400 text-sm ml-2 font-mono">terminal — galatea-orchestrator</span>
           </div>
           
-          {/* Terminal Logs */}
           <div 
             ref={terminalRef}
-            className="flex-1 overflow-y-auto p-5 font-mono terminal-scroll"
-            style={{ background: '#0D1117' }}
+            className="flex-1 overflow-y-auto p-4 font-mono text-sm"
           >
-            <AnimatePresence>
-              {terminalLogs.map((log) => (
+            {terminalLogs.length === 0 ? (
+              <div className="text-gray-500 animate-pulse">
+                Esperando inicio de orquestación...
+              </div>
+            ) : (
+              terminalLogs.map((log) => (
                 <motion.div
                   key={log.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex gap-4 mb-3 leading-relaxed text-base"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="mb-1"
                 >
-                  <span className="text-[#484F58] whitespace-nowrap font-medium">
-                    {log.timestamp.toLocaleTimeString('es-ES', { hour12: false })}
-                  </span>
-                  {log.agent && (
-                    <span className="text-[#00BCFF] font-bold min-w-[120px]">
-                      [{log.agent}]
-                    </span>
-                  )}
-                  <span className="font-medium" style={{ color: getLogColor(log.level) }}>
+                  <span className="text-gray-500">[{formatTime(log.timestamp)}]</span>
+                  {' '}
+                  <span className={
+                    log.type === 'success' ? 'text-green-400' :
+                    log.type === 'process' ? 'text-blue-400' :
+                    log.type === 'data' ? 'text-yellow-400' :
+                    'text-gray-300'
+                  }>
                     {log.message}
                   </span>
                 </motion.div>
-              ))}
-            </AnimatePresence>
-            
-            {isOrchestrating && (
-              <motion.div
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="flex items-center gap-3 text-[#00BCFF] mt-5 text-xl"
-              >
-                <Zap className="w-6 h-6" />
-                <span className="font-bold">Procesando...</span>
-              </motion.div>
+              ))
             )}
           </div>
         </div>
 
-        {/* Right Panel - Research Question & Results */}
-        <div className="w-[420px] border-l border-[#21262D] flex flex-col">
-          {/* Research Question */}
-          <div className="p-6 border-b border-[#21262D]">
-            <h3 className="text-lg font-bold text-[#E6EDF3] uppercase tracking-wider mb-4">
-              Pregunta de Investigación
-            </h3>
-            <div className="p-5 rounded-xl bg-gradient-to-br from-[#0D1117] to-[#161B22] border-2 border-[#21262D]">
-              <p className="text-xl text-[#E6EDF3] leading-relaxed font-medium">
-                {DEMO_QUESTION}
-              </p>
+        {/* RIGHT: Deliverables Library (25%) */}
+        <div className="w-1/4 overflow-y-auto p-4">
+          <h2 className="text-white font-bold mb-4 flex items-center gap-2">
+            <BookOpen className="w-5 h-5" style={{ color: COLORS.verdeMedico }} />
+            Biblioteca de Evidencia
+          </h2>
+          
+          {deliverables.length === 0 ? (
+            <div className="text-gray-500 text-sm">
+              Los entregables aparecerán aquí conforme cada agente complete su tarea...
             </div>
-          </div>
-
-          {/* PICOT Display */}
-          <div className="p-6 border-b border-[#21262D]">
-            <h3 className="text-lg font-bold text-[#E6EDF3] uppercase tracking-wider mb-4">
-              Marco PICOT
-            </h3>
-            <div className="space-y-3">
-              {Object.entries(sglt2PICOT).map(([key, value]) => (
-                <div key={key} className="flex gap-4 items-start">
-                  <span className="text-2xl font-black text-[#DC2626] w-8">{key}</span>
-                  <span className="text-base text-[#8B949E] leading-relaxed">{value}</span>
-                </div>
+          ) : (
+            <div className="space-y-2">
+              {deliverables.map((d) => (
+                <motion.div
+                  key={d.id}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                >
+                  <Card className="bg-white/5 border-white/10">
+                    <CardHeader 
+                      className="py-3 px-4 cursor-pointer hover:bg-white/5 transition-colors"
+                      onClick={() => toggleDeliverable(d.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4" style={{ color: COLORS.verdeMedico }} />
+                          <CardTitle className="text-sm text-white">{d.title}</CardTitle>
+                        </div>
+                        {d.isExpanded ? (
+                          <ChevronUp className="w-4 h-4 text-gray-400" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-gray-400" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    
+                    <AnimatePresence>
+                      {d.isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                        >
+                          <CardContent className="pt-0 px-4 pb-4">
+                            <div className="text-xs text-gray-300 whitespace-pre-wrap bg-black/30 rounded p-3 max-h-48 overflow-y-auto">
+                              {d.content}
+                            </div>
+                          </CardContent>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Card>
+                </motion.div>
               ))}
             </div>
-          </div>
-
-          {/* Key Results Summary */}
-          {isComplete && (
-            <motion.div 
-              className="p-6 border-b border-[#21262D]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <h3 className="text-lg font-bold text-[#E6EDF3] uppercase tracking-wider mb-4">
-                Resultados Clave
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-[#0D1117] border border-[#00D395]/30">
-                  <div className="text-3xl font-black text-[#00D395]">HR 0.80</div>
-                  <div className="text-sm text-[#8B949E]">IC 95%: 0.73-0.87</div>
-                </div>
-                <div className="p-4 rounded-xl bg-[#0D1117] border border-[#00BCFF]/30">
-                  <div className="text-3xl font-black text-[#00BCFF]">18%</div>
-                  <div className="text-sm text-[#8B949E]">Heterogeneidad I²</div>
-                </div>
-                <div className="p-4 rounded-xl bg-[#0D1117] border border-[#9333EA]/30">
-                  <div className="text-3xl font-black text-[#9333EA]">18</div>
-                  <div className="text-sm text-[#8B949E]">Estudios incluidos</div>
-                </div>
-                <div className="p-4 rounded-xl bg-[#0D1117] border border-[#F7B500]/30">
-                  <div className="text-3xl font-black text-[#F7B500]">ALTA</div>
-                  <div className="text-sm text-[#8B949E]">Certeza GRADE</div>
-                </div>
-              </div>
-            </motion.div>
           )}
-
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* Download Dossier Button */}
-          <div className="p-6 border-t border-[#21262D]">
-            <AnimatePresence>
-              {isComplete && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <Button
-                    onClick={() => setShowDossierPDF(true)}
-                    className="w-full h-20 text-xl font-bold rounded-xl"
-                    style={{
-                      background: 'linear-gradient(135deg, hsl(177 55% 35%), #00D395)',
-                      boxShadow: '0 0 40px rgba(0, 188, 255, 0.4)'
-                    }}
-                  >
-                    <Download className="w-7 h-7 mr-4" />
-                    Descargar Dossier de Evidencia
-                  </Button>
-                  <p className="text-base text-center text-[#8B949E] mt-3 font-medium">
-                    47 páginas • 12 secciones • 127 referencias
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-            {!isComplete && isOrchestrating && (
-              <div className="text-center py-4">
-                <div className="flex items-center justify-center gap-3 text-[#8B949E]">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                  <span className="text-lg font-medium">Procesando orquestación...</span>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
+    </motion.div>
+  );
 
-      {/* PDF Dossier Modal */}
-      <PDFReportViewer 
-        isOpen={showDossierPDF}
-        onClose={() => setShowDossierPDF(false)}
-        reportData={{
-          title: 'Eficacia de Inhibidores SGLT2 en IC-FEP',
-          researchQuestion: DEMO_QUESTION,
-          generatedAt: new Date(),
-          totalStudies: 2847,
-          metaAnalysisStudies: 18,
-          validationScore: 94.2,
-        }}
-      />
-    </div>
+  // =========================================
+  // RENDER: VERIFICATION PHASE
+  // =========================================
+  const renderVerification = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen flex flex-col"
+      style={{
+        background: `linear-gradient(180deg, ${COLORS.fondoTerminal} 0%, ${COLORS.azulInstitucional} 100%)`,
+      }}
+    >
+      {/* Header */}
+      <header className="flex justify-between items-center px-6 py-4 border-b border-white/10">
+        <img src={galateaLogo} alt="Galatea AI" className="h-12" />
+        <img src={santaFeLogo} alt="Santa Fe" className="h-14 bg-white rounded-lg p-2" />
+      </header>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8">
+        {/* Success badge */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', duration: 0.5 }}
+          className="mb-8"
+        >
+          <div className="flex items-center gap-3 px-6 py-3 rounded-full bg-green-500/20 border border-green-400">
+            <CheckCircle className="w-6 h-6 text-green-400" />
+            <span className="text-green-400 font-semibold text-lg">
+              Análisis Completado — Verificado por Instituciones Líderes
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Institutional logos */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex flex-wrap items-center justify-center gap-8 mb-12"
+        >
+          <div className="bg-white rounded-xl p-4">
+            <img src={santaFeLogo} alt="Santa Fe de Bogotá" className="h-16" />
+          </div>
+          <div className="bg-white rounded-xl p-4 flex items-center gap-2">
+            <Award className="w-8 h-8 text-blue-600" />
+            <span className="font-bold text-blue-600">OMS</span>
+          </div>
+          <div className="bg-white rounded-xl p-4 flex items-center gap-2">
+            <BookOpen className="w-8 h-8 text-purple-600" />
+            <span className="font-bold text-purple-600">Cochrane</span>
+          </div>
+          <div className="bg-white rounded-xl p-4 flex items-center gap-2">
+            <FileText className="w-8 h-8 text-blue-800" />
+            <span className="font-bold text-blue-800">PubMed</span>
+          </div>
+        </motion.div>
+
+        {/* Results card */}
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="w-full max-w-3xl"
+        >
+          <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+            <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl text-white flex items-center justify-center gap-2">
+                📊 Resultados del Meta-Análisis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Key metrics */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white/10 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-white">0.80</div>
+                  <div className="text-sm text-gray-300">Hazard Ratio</div>
+                  <div className="text-xs text-gray-400">IC 95%: 0.73-0.87</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-green-400">18%</div>
+                  <div className="text-sm text-gray-300">Heterogeneidad (I²)</div>
+                  <div className="text-xs text-green-400">BAJA</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-yellow-400">⭐⭐⭐⭐</div>
+                  <div className="text-sm text-gray-300">Calidad GRADE</div>
+                  <div className="text-xs text-yellow-400">ALTA</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-white">847→12</div>
+                  <div className="text-sm text-gray-300">Artículos</div>
+                  <div className="text-xs text-gray-400">Analizados→Incluidos</div>
+                </div>
+              </div>
+
+              {/* Download buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <Button
+                  size="lg"
+                  className="h-14 px-8 text-lg font-semibold"
+                  style={{ backgroundColor: COLORS.verdeMedico }}
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Descargar Dossier Completo
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-14 px-8 text-lg font-semibold border-white/30 text-white hover:bg-white/10"
+                >
+                  <ExternalLink className="w-5 h-5 mr-2" />
+                  Ver Referencias
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Reset button */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="mt-8"
+        >
+          <Button
+            onClick={handleReset}
+            variant="ghost"
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Iniciar Nueva Investigación
+          </Button>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+
+  // =========================================
+  // MAIN RENDER
+  // =========================================
+  return (
+    <AnimatePresence mode="wait">
+      {phase === 'landing' && renderLanding()}
+      {phase === 'execution' && renderExecution()}
+      {phase === 'verification' && renderVerification()}
+    </AnimatePresence>
   );
 }
