@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import galateaLogo from '@/assets/galatea-logo.png';
-import santaFeLogo from '@/assets/logo-santa-fe.png';
+import galateaLogo from '@/assets/galatea-logo-clean.png';
+import santaFeLogo from '@/assets/santa-fe-logo-clean.png';
 import agentAvatar from '@/assets/galatea-agent-avatar.jpg';
 
 // =========================================
@@ -2078,10 +2078,10 @@ export default function ClinicalNavigator() {
     setCurrentExplanation(null);
     setIsComplete(true);
     
-    // Transition to verification after 2s
+    // Give user 10 seconds to navigate deliverables before verification
     setTimeout(() => {
       setPhase('verification');
-    }, 2000);
+    }, 10000);
   };
 
   // Start demo
@@ -2120,18 +2120,17 @@ export default function ClinicalNavigator() {
         background: `linear-gradient(135deg, ${COLORS.azulInstitucional} 0%, ${COLORS.verdeMedico} 100%)`,
       }}
     >
-      {/* Header with LARGE logos */}
+      {/* Header with LARGE logos - clean PNG with transparent backgrounds */}
       <header className="flex justify-between items-center p-6">
         <img 
           src={galateaLogo} 
           alt="Galatea AI" 
-          className="h-20 lg:h-24"
-          style={{ filter: 'brightness(0) invert(1)' }}
+          className="h-24 lg:h-32"
         />
         <img 
           src={santaFeLogo} 
           alt="Fundación Santa Fe de Bogotá" 
-          className="h-24 lg:h-32 bg-white rounded-xl p-3 shadow-lg" 
+          className="h-20 lg:h-28" 
         />
       </header>
 
@@ -2219,12 +2218,12 @@ export default function ClinicalNavigator() {
       className="min-h-screen flex flex-col"
       style={{ backgroundColor: COLORS.blanco }}
     >
-      {/* Header - White background with Santa Fe colors */}
+      {/* Header - White background with Santa Fe colors - LARGER LOGOS */}
       <header className="flex justify-between items-center px-6 py-4 border-b-2" style={{ borderColor: COLORS.azulInstitucional }}>
         <div className="flex items-center gap-4">
-          <img src={galateaLogo} alt="Galatea AI" className="h-14" />
-          <div className="h-8 w-px" style={{ backgroundColor: COLORS.azulInstitucional }} />
-          <span className="font-bold text-lg" style={{ color: COLORS.azulInstitucional }}>
+          <img src={galateaLogo} alt="Galatea AI" className="h-20" />
+          <div className="h-10 w-px" style={{ backgroundColor: COLORS.azulInstitucional }} />
+          <span className="font-bold text-xl" style={{ color: COLORS.azulInstitucional }}>
             Clinical Guideline Navigator
           </span>
           <span 
@@ -2234,7 +2233,7 @@ export default function ClinicalNavigator() {
             14-AGENT ORCHESTRATION
           </span>
         </div>
-        <img src={santaFeLogo} alt="Santa Fe" className="h-16" />
+        <img src={santaFeLogo} alt="Fundación Santa Fe de Bogotá" className="h-16" />
       </header>
 
       {/* 3-Column Layout: Left 20% | Center 60% | Right 20% */}
@@ -2560,10 +2559,10 @@ export default function ClinicalNavigator() {
       exit={{ opacity: 0 }}
       className="min-h-screen flex flex-col bg-white"
     >
-      {/* Header */}
+      {/* Header - LARGER LOGOS */}
       <header className="flex justify-between items-center px-8 py-6 border-b-2" style={{ borderColor: COLORS.azulInstitucional }}>
-        <img src={galateaLogo} alt="Galatea AI" className="h-16" />
-        <img src={santaFeLogo} alt="Santa Fe" className="h-20" />
+        <img src={galateaLogo} alt="Galatea AI" className="h-20" />
+        <img src={santaFeLogo} alt="Fundación Santa Fe de Bogotá" className="h-16" />
       </header>
 
       {/* Main content */}
