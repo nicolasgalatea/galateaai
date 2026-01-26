@@ -272,12 +272,12 @@ export default function AgentProtocolReview() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const logsEndRef = useRef<HTMLDivElement>(null);
   
-  // Terminal Mode State - NEW
-  const [isTerminalMode, setIsTerminalMode] = useState(false);
+  // Terminal Mode State - Auto-start in terminal mode
+  const [isTerminalMode, setIsTerminalMode] = useState(true);
   
-  // Medical Audit Station State - NEW
-  const [isAuditMode, setIsAuditMode] = useState(false);
-  const [viewMode, setViewMode] = useState<'terminal' | 'audit'>('audit');
+  // Medical Audit Station State - Auto-start in audit mode
+  const [isAuditMode, setIsAuditMode] = useState(true);
+  const [viewMode, setViewMode] = useState<'terminal' | 'audit'>('terminal');
   const [showDossierPDF, setShowDossierPDF] = useState(false);
   
   // Reproducibility Check State - Enhanced
