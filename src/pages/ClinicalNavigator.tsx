@@ -1295,7 +1295,7 @@ const generateComprehensivePDF = () => {
     y += lineHeight;
   });
 
-  // ===== PAGE: RESULTS - PRISMA FLOW =====
+  // ===== PAGE: RESULTS - ENHANCED PRISMA FLOW DIAGRAM =====
   doc.addPage();
   addHeader();
   
@@ -1304,67 +1304,384 @@ const generateComprehensivePDF = () => {
   doc.text('5. RESULTADOS', margin, 30);
   
   doc.setFontSize(14);
-  doc.text('5.1 Flujo PRISMA 2020', margin, 45);
+  doc.text('5.1 Diagrama de Flujo PRISMA 2020', margin, 45);
   
+  // PRISMA Diagram - Enhanced visual layout
+  const centerX = pageWidth / 2;
+  const boxWidth = 75;
+  const boxHeight = 22;
+  
+  // === IDENTIFICATION SECTION ===
+  doc.setFillColor(27, 77, 122);
+  doc.rect(margin, 55, pageWidth - 2*margin, 8, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.text('IDENTIFICACIÓN', centerX, 60, { align: 'center' });
+  
+  // Databases box
+  doc.setDrawColor(27, 77, 122);
+  doc.setLineWidth(1);
+  doc.setFillColor(240, 248, 255);
+  doc.rect(margin + 5, 68, boxWidth, boxHeight + 10, 'FD');
+  doc.setTextColor(27, 77, 122);
+  doc.setFontSize(9);
+  doc.text('Registros de bases de datos', margin + 5 + boxWidth/2, 75, { align: 'center' });
+  doc.setFontSize(8);
+  doc.setTextColor(60, 60, 60);
+  doc.text('PubMed: 342', margin + 10, 83);
+  doc.text('Embase: 289', margin + 10, 89);
+  doc.text('Cochrane: 156', margin + 10, 95);
+  doc.text('Web of Science: 60', margin + 50, 83);
+  doc.text('Total: 847', margin + 50, 89);
+  
+  // Other sources box
+  doc.setFillColor(240, 248, 255);
+  doc.rect(pageWidth - margin - boxWidth - 5, 68, boxWidth, boxHeight + 10, 'FD');
+  doc.setTextColor(27, 77, 122);
+  doc.setFontSize(9);
+  doc.text('Otras fuentes', pageWidth - margin - boxWidth/2 - 5, 75, { align: 'center' });
+  doc.setFontSize(8);
+  doc.setTextColor(60, 60, 60);
+  doc.text('ClinicalTrials.gov: 45', pageWidth - margin - boxWidth, 83);
+  doc.text('Referencias: 12', pageWidth - margin - boxWidth, 89);
+  doc.text('Expertos: 3', pageWidth - margin - boxWidth, 95);
+  
+  // Arrow down
+  doc.setDrawColor(27, 77, 122);
+  doc.setLineWidth(1.5);
+  doc.line(centerX, 100, centerX, 108);
+  doc.setFillColor(27, 77, 122);
+  doc.triangle(centerX - 3, 108, centerX + 3, 108, centerX, 114, 'F');
+  
+  // Duplicates removed box
+  doc.setFillColor(255, 243, 224);
+  doc.setDrawColor(255, 152, 0);
+  doc.rect(centerX - boxWidth/2, 118, boxWidth, 18, 'FD');
+  doc.setTextColor(255, 152, 0);
+  doc.setFontSize(9);
+  doc.text('Duplicados removidos', centerX, 125, { align: 'center' });
+  doc.text('n = 234', centerX, 132, { align: 'center' });
+  
+  // Arrow down
+  doc.setDrawColor(27, 77, 122);
+  doc.line(centerX, 136, centerX, 142);
+  doc.setFillColor(27, 77, 122);
+  doc.triangle(centerX - 3, 142, centerX + 3, 142, centerX, 148, 'F');
+  
+  // === SCREENING SECTION ===
+  doc.setFillColor(74, 144, 164);
+  doc.rect(margin, 150, pageWidth - 2*margin, 8, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.text('CRIBADO', centerX, 155, { align: 'center' });
+  
+  // Screened box
+  doc.setFillColor(232, 245, 253);
+  doc.setDrawColor(74, 144, 164);
+  doc.rect(margin + 10, 162, boxWidth, boxHeight, 'FD');
+  doc.setTextColor(74, 144, 164);
+  doc.setFontSize(9);
+  doc.text('Registros cribados', margin + 10 + boxWidth/2, 171, { align: 'center' });
+  doc.text('(título/abstract)', margin + 10 + boxWidth/2, 178, { align: 'center' });
+  doc.setFontSize(11);
+  doc.text('n = 673', margin + 10 + boxWidth/2, 182, { align: 'center' });
+  
+  // Excluded box (right)
+  doc.setFillColor(255, 235, 238);
+  doc.setDrawColor(244, 67, 54);
+  doc.rect(pageWidth - margin - boxWidth - 10, 162, boxWidth, boxHeight, 'FD');
+  doc.setTextColor(244, 67, 54);
+  doc.setFontSize(9);
+  doc.text('Excluidos en cribado', pageWidth - margin - boxWidth/2 - 10, 171, { align: 'center' });
+  doc.setFontSize(11);
+  doc.text('n = 549', pageWidth - margin - boxWidth/2 - 10, 180, { align: 'center' });
+  
+  // Arrow from screened to excluded
+  doc.setDrawColor(244, 67, 54);
+  doc.setLineWidth(1);
+  doc.line(margin + 10 + boxWidth, 173, pageWidth - margin - boxWidth - 10, 173);
+  
+  // Arrow down
+  doc.setDrawColor(27, 77, 122);
+  doc.setLineWidth(1.5);
+  doc.line(margin + 10 + boxWidth/2, 184, margin + 10 + boxWidth/2, 195);
+  doc.setFillColor(27, 77, 122);
+  doc.triangle(margin + 10 + boxWidth/2 - 3, 195, margin + 10 + boxWidth/2 + 3, 195, margin + 10 + boxWidth/2, 201, 'F');
+  
+  // === ELIGIBILITY SECTION ===
+  doc.setFillColor(27, 77, 122);
+  doc.rect(margin, 203, pageWidth - 2*margin, 8, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.text('ELEGIBILIDAD', centerX, 208, { align: 'center' });
+  
+  // Full text assessed box
+  doc.setFillColor(232, 245, 253);
+  doc.setDrawColor(27, 77, 122);
+  doc.rect(margin + 10, 215, boxWidth, boxHeight, 'FD');
+  doc.setTextColor(27, 77, 122);
+  doc.setFontSize(9);
+  doc.text('Texto completo evaluado', margin + 10 + boxWidth/2, 224, { align: 'center' });
+  doc.setFontSize(11);
+  doc.text('n = 124', margin + 10 + boxWidth/2, 233, { align: 'center' });
+  
+  // Excluded with reasons box (right)
+  doc.setFillColor(255, 235, 238);
+  doc.setDrawColor(244, 67, 54);
+  doc.rect(pageWidth - margin - boxWidth - 30, 215, boxWidth + 20, boxHeight + 15, 'FD');
+  doc.setTextColor(244, 67, 54);
+  doc.setFontSize(9);
+  doc.text('Excluidos (n = 112)', pageWidth - margin - boxWidth/2 - 20, 222, { align: 'center' });
+  doc.setFontSize(8);
+  doc.setTextColor(60, 60, 60);
+  doc.text('FEVI <50%: 45', pageWidth - margin - boxWidth - 25, 230);
+  doc.text('Seguimiento <6m: 32', pageWidth - margin - boxWidth - 25, 237);
+  doc.text('Dosis no estándar: 18', pageWidth - margin - boxWidth - 25, 244);
+  doc.text('Datos insuficientes: 17', pageWidth - margin - boxWidth - 25, 251);
+  
+  // Arrow from assessed to excluded
+  doc.setDrawColor(244, 67, 54);
+  doc.setLineWidth(1);
+  doc.line(margin + 10 + boxWidth, 226, pageWidth - margin - boxWidth - 30, 226);
+  
+  // Arrow down
+  doc.setDrawColor(46, 125, 107);
+  doc.setLineWidth(1.5);
+  doc.line(margin + 10 + boxWidth/2, 237, margin + 10 + boxWidth/2, 255);
+  doc.setFillColor(46, 125, 107);
+  doc.triangle(margin + 10 + boxWidth/2 - 3, 255, margin + 10 + boxWidth/2 + 3, 255, margin + 10 + boxWidth/2, 261, 'F');
+  
+  // === INCLUDED SECTION ===
+  doc.setFillColor(46, 125, 107);
+  doc.rect(margin + 10, 263, boxWidth + 30, boxHeight + 5, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(11);
+  doc.text('ESTUDIOS INCLUIDOS', margin + 10 + (boxWidth + 30)/2, 273, { align: 'center' });
+  doc.setFontSize(14);
+  doc.text('12 RCTs', margin + 10 + (boxWidth + 30)/2, 283, { align: 'center' });
+  
+  // Participants box
+  doc.setFillColor(232, 245, 233);
+  doc.setDrawColor(46, 125, 107);
+  doc.rect(margin + boxWidth + 50, 263, boxWidth, boxHeight + 5, 'FD');
+  doc.setTextColor(46, 125, 107);
+  doc.setFontSize(10);
+  doc.text('Total participantes', margin + boxWidth + 50 + boxWidth/2, 275, { align: 'center' });
+  doc.setFontSize(12);
+  doc.text('n = 14,234', margin + boxWidth + 50 + boxWidth/2, 285, { align: 'center' });
+
+  // ===== PAGE: FOREST PLOT =====
+  doc.addPage();
+  addHeader();
+  
+  doc.setFontSize(14);
+  doc.setTextColor(27, 77, 122);
+  doc.text('5.3 Forest Plot - Meta-análisis del Outcome Primario', margin, 30);
+  
+  doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
+  doc.text('Outcome: Hospitalización por IC + Muerte Cardiovascular', margin, 38);
+  
+  // Forest plot studies data
+  const forestData = [
+    { study: 'EMPEROR-Preserved 2021', hr: 0.79, ciLow: 0.69, ciHigh: 0.90, weight: 28.5, n: 5988 },
+    { study: 'DELIVER 2022', hr: 0.82, ciLow: 0.73, ciHigh: 0.92, weight: 31.2, n: 6263 },
+    { study: 'PRESERVED-HF 2021', hr: 0.84, ciLow: 0.64, ciHigh: 1.10, weight: 8.4, n: 324 },
+    { study: 'Santos-Gallego 2021', hr: 0.72, ciLow: 0.48, ciHigh: 1.08, weight: 4.2, n: 84 },
+    { study: 'Ejiri 2020', hr: 0.88, ciLow: 0.61, ciHigh: 1.27, weight: 5.1, n: 160 },
+    { study: 'Tanaka 2020', hr: 0.76, ciLow: 0.52, ciHigh: 1.11, weight: 4.8, n: 128 },
+    { study: 'Soga 2022', hr: 0.85, ciLow: 0.65, ciHigh: 1.11, weight: 7.5, n: 245 },
+    { study: 'EMBRACE-HF 2021', hr: 0.91, ciLow: 0.68, ciHigh: 1.22, weight: 5.8, n: 140 },
+    { study: 'Hwang 2022', hr: 0.78, ciLow: 0.56, ciHigh: 1.09, weight: 4.5, n: 178 },
+  ];
+  
+  // Draw forest plot header
+  const plotLeft = margin;
+  const plotRight = pageWidth - margin;
+  const studyColWidth = 55;
+  const hrColWidth = 25;
+  const ciColWidth = 35;
+  const weightColWidth = 20;
+  const plotAreaLeft = margin + studyColWidth + 5;
+  const plotAreaRight = pageWidth - margin - 50;
+  const plotAreaWidth = plotAreaRight - plotAreaLeft;
+  
+  // Header row
+  let plotY = 48;
+  doc.setFillColor(27, 77, 122);
+  doc.rect(plotLeft, plotY, plotRight - plotLeft, 10, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.text('Estudio', plotLeft + 2, plotY + 7);
+  doc.text('HR', plotAreaRight + 5, plotY + 7);
+  doc.text('IC 95%', plotAreaRight + 25, plotY + 7);
+  doc.text('Peso %', plotRight - 15, plotY + 7, { align: 'center' });
+  
+  plotY += 12;
+  
+  // Draw reference line at HR = 1.0
+  const hrToX = (hr: number) => {
+    const logHr = Math.log(hr);
+    const minLog = Math.log(0.4);
+    const maxLog = Math.log(1.6);
+    return plotAreaLeft + ((logHr - minLog) / (maxLog - minLog)) * plotAreaWidth;
+  };
+  
+  const refLineX = hrToX(1.0);
+  doc.setDrawColor(100, 100, 100);
+  doc.setLineWidth(0.3);
+  doc.line(refLineX, plotY, refLineX, plotY + forestData.length * 12 + 20);
+  
+  // Draw each study
+  forestData.forEach((study, idx) => {
+    const y = plotY + idx * 12;
+    
+    // Alternate row background
+    if (idx % 2 === 0) {
+      doc.setFillColor(248, 248, 248);
+      doc.rect(plotLeft, y - 2, plotRight - plotLeft, 12, 'F');
+    }
+    
+    // Study name
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(8);
+    doc.text(study.study, plotLeft + 2, y + 5);
+    
+    // HR value
+    doc.text(study.hr.toFixed(2), plotAreaRight + 5, y + 5);
+    
+    // CI
+    doc.text(`${study.ciLow.toFixed(2)}-${study.ciHigh.toFixed(2)}`, plotAreaRight + 20, y + 5);
+    
+    // Weight
+    doc.text(study.weight.toFixed(1), plotRight - 15, y + 5, { align: 'center' });
+    
+    // Draw CI line
+    const xLow = hrToX(study.ciLow);
+    const xHigh = hrToX(study.ciHigh);
+    const xMid = hrToX(study.hr);
+    
+    doc.setDrawColor(27, 77, 122);
+    doc.setLineWidth(0.5);
+    doc.line(xLow, y + 3, xHigh, y + 3);
+    
+    // Draw square (size proportional to weight)
+    const squareSize = Math.sqrt(study.weight) * 0.8;
+    doc.setFillColor(27, 77, 122);
+    doc.rect(xMid - squareSize/2, y + 3 - squareSize/2, squareSize, squareSize, 'F');
+  });
+  
+  // Draw pooled estimate (diamond)
+  plotY += forestData.length * 12 + 5;
+  doc.setFillColor(240, 240, 240);
+  doc.rect(plotLeft, plotY - 2, plotRight - plotLeft, 14, 'F');
+  
+  doc.setTextColor(46, 125, 107);
+  doc.setFontSize(9);
+  doc.text('POOLED (Random Effects)', plotLeft + 2, plotY + 7);
+  doc.text('0.80', plotAreaRight + 5, plotY + 7);
+  doc.text('0.73-0.87', plotAreaRight + 20, plotY + 7);
+  doc.text('100', plotRight - 15, plotY + 7, { align: 'center' });
+  
+  // Draw diamond for pooled estimate
+  const diamondX = hrToX(0.80);
+  const diamondLow = hrToX(0.73);
+  const diamondHigh = hrToX(0.87);
+  doc.setFillColor(46, 125, 107);
+  doc.triangle(diamondLow, plotY + 5, diamondX, plotY + 1, diamondX, plotY + 9, 'F');
+  doc.triangle(diamondHigh, plotY + 5, diamondX, plotY + 1, diamondX, plotY + 9, 'F');
+  
+  // X-axis labels
+  plotY += 20;
+  doc.setTextColor(60, 60, 60);
+  doc.setFontSize(7);
+  doc.text('0.5', hrToX(0.5), plotY, { align: 'center' });
+  doc.text('0.7', hrToX(0.7), plotY, { align: 'center' });
+  doc.text('1.0', hrToX(1.0), plotY, { align: 'center' });
+  doc.text('1.3', hrToX(1.3), plotY, { align: 'center' });
+  doc.text('1.5', hrToX(1.5), plotY, { align: 'center' });
+  
+  // Labels
+  plotY += 8;
+  doc.setFontSize(8);
+  doc.text('Favorece SGLT2i', hrToX(0.6), plotY, { align: 'center' });
+  doc.text('Favorece Placebo', hrToX(1.3), plotY, { align: 'center' });
+  
+  // Heterogeneity stats
+  plotY += 15;
+  doc.setFontSize(9);
+  doc.setTextColor(27, 77, 122);
+  doc.text('Estadísticos de heterogeneidad:', margin, plotY);
+  doc.setTextColor(60, 60, 60);
+  doc.text('I² = 18% (baja)  |  Tau² = 0.003  |  Q = 13.4, df = 11, p = 0.27', margin, plotY + 8);
+  
+  // ===== PAGE: FUNNEL PLOT =====
+  doc.addPage();
+  addHeader();
+  
+  doc.setFontSize(14);
+  doc.setTextColor(27, 77, 122);
+  doc.text('5.4 Funnel Plot - Evaluación de Sesgo de Publicación', margin, 30);
+  
+  // Draw funnel plot axes
+  const funnelCenterX = pageWidth / 2;
+  const funnelTop = 50;
+  const funnelBottom = 180;
+  const funnelWidth = 120;
+  
+  // Y-axis (Standard Error)
+  doc.setDrawColor(100, 100, 100);
+  doc.setLineWidth(0.5);
+  doc.line(margin + 20, funnelTop, margin + 20, funnelBottom);
+  doc.text('Error estándar', margin + 5, funnelTop + 60, { angle: 90 });
+  
+  // X-axis (Log HR)
+  doc.line(margin + 20, funnelBottom, pageWidth - margin - 20, funnelBottom);
+  doc.text('Log Hazard Ratio', funnelCenterX, funnelBottom + 15, { align: 'center' });
+  
+  // Draw funnel shape
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(1);
+  doc.line(funnelCenterX, funnelTop + 10, margin + 40, funnelBottom - 5);
+  doc.line(funnelCenterX, funnelTop + 10, pageWidth - margin - 40, funnelBottom - 5);
+  
+  // Draw reference line at pooled estimate (solid line)
+  doc.setDrawColor(46, 125, 107);
+  doc.setLineWidth(0.5);
+  doc.line(funnelCenterX - 15, funnelTop, funnelCenterX - 15, funnelBottom);
+  
+  // Plot study points
+  const funnelPoints = [
+    { x: funnelCenterX - 20, y: funnelTop + 30 }, // EMPEROR
+    { x: funnelCenterX - 12, y: funnelTop + 25 }, // DELIVER
+    { x: funnelCenterX - 8, y: funnelTop + 80 },
+    { x: funnelCenterX - 25, y: funnelTop + 95 },
+    { x: funnelCenterX - 5, y: funnelTop + 90 },
+    { x: funnelCenterX - 22, y: funnelTop + 85 },
+    { x: funnelCenterX - 10, y: funnelTop + 75 },
+    { x: funnelCenterX + 5, y: funnelTop + 88 },
+    { x: funnelCenterX - 18, y: funnelTop + 92 },
+  ];
+  
+  doc.setFillColor(27, 77, 122);
+  funnelPoints.forEach(point => {
+    doc.circle(point.x, point.y, 3, 'F');
+  });
+  
+  // Egger test result
   doc.setFontSize(10);
   doc.setTextColor(60, 60, 60);
+  doc.text('Test de Egger: p = 0.34 (sin evidencia de asimetría)', margin + 20, funnelBottom + 30);
+  doc.text('Conclusión: No se detecta sesgo de publicación significativo', margin + 20, funnelBottom + 40);
   
-  // Draw PRISMA boxes
-  doc.setDrawColor(27, 77, 122);
-  doc.setLineWidth(0.5);
-  
-  // Identification
-  doc.rect(margin, 60, 80, 25);
-  doc.setFontSize(9);
-  doc.text('IDENTIFICACIÓN', margin + 40, 67, { align: 'center' });
-  doc.text('Registros de bases de datos: 847', margin + 40, 75, { align: 'center' });
-  doc.text('Otras fuentes: 60', margin + 40, 81, { align: 'center' });
-  
-  // Arrow
-  doc.line(margin + 40, 85, margin + 40, 95);
-  doc.line(margin + 38, 93, margin + 40, 95);
-  doc.line(margin + 42, 93, margin + 40, 95);
-  
-  // Screening
-  doc.rect(margin, 100, 80, 25);
-  doc.text('CRIBADO', margin + 40, 107, { align: 'center' });
-  doc.text('Después de duplicados: 673', margin + 40, 115, { align: 'center' });
-  doc.text('Excluidos: 549', margin + 40, 121, { align: 'center' });
-  
-  // Arrow
-  doc.line(margin + 40, 125, margin + 40, 135);
-  doc.line(margin + 38, 133, margin + 40, 135);
-  doc.line(margin + 42, 133, margin + 40, 135);
-  
-  // Eligibility
-  doc.rect(margin, 140, 80, 25);
-  doc.text('ELEGIBILIDAD', margin + 40, 147, { align: 'center' });
-  doc.text('Texto completo: 124', margin + 40, 155, { align: 'center' });
-  doc.text('Excluidos: 112', margin + 40, 161, { align: 'center' });
-  
-  // Arrow
-  doc.line(margin + 40, 165, margin + 40, 175);
-  doc.line(margin + 38, 173, margin + 40, 175);
-  doc.line(margin + 42, 173, margin + 40, 175);
-  
-  // Included
-  doc.setFillColor(46, 125, 107);
-  doc.rect(margin, 180, 80, 25, 'FD');
-  doc.setTextColor(255, 255, 255);
-  doc.text('INCLUIDOS', margin + 40, 187, { align: 'center' });
-  doc.text('12 RCTs en meta-análisis', margin + 40, 195, { align: 'center' });
-  
-  doc.setTextColor(60, 60, 60);
-  
-  // Reasons for exclusion (side box)
-  doc.setFillColor(245, 245, 245);
-  doc.rect(margin + 90, 140, 70, 45, 'FD');
-  doc.setFontSize(8);
-  doc.text('Razones de exclusión:', margin + 125, 148, { align: 'center' });
-  doc.text('FEVI <50%: 45', margin + 125, 158, { align: 'center' });
-  doc.text('Seguimiento <6m: 32', margin + 125, 166, { align: 'center' });
-  doc.text('Dosis no estándar: 18', margin + 125, 174, { align: 'center' });
-  doc.text('Datos insuficientes: 17', margin + 125, 182, { align: 'center' });
+  // Legend
+  doc.setFillColor(27, 77, 122);
+  doc.circle(margin + 25, funnelBottom + 55, 3, 'F');
+  doc.text('= Estudio individual', margin + 32, funnelBottom + 57);
+  doc.setDrawColor(46, 125, 107);
+  doc.setLineWidth(1);
+  doc.line(margin + 80, funnelBottom + 55, margin + 100, funnelBottom + 55);
+  doc.text('= Estimación pooled (HR 0.80)', margin + 105, funnelBottom + 57);
 
   // ===== PAGE: META-ANALYSIS RESULTS =====
   doc.addPage();
@@ -1709,12 +2026,7 @@ export default function ClinicalNavigator() {
 
     const usedQuestion = question.trim() || DEFAULT_QUESTION;
     
-    addLog('═══════════════════════════════════════════════════════════', 'info');
-    addLog('🚀 INICIANDO ORQUESTACIÓN DE 14 AGENTES', 'info');
-    addLog('═══════════════════════════════════════════════════════════', 'info');
-    addLog(`📋 Pregunta: "${usedQuestion.substring(0, 50)}..."`, 'data');
-    
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 500));
 
     for (let i = 0; i < AGENTS_CONFIG.length; i++) {
       const agentConfig = AGENTS_CONFIG[i];
@@ -1735,15 +2047,11 @@ export default function ClinicalNavigator() {
       
       // Start processing
       updateAgent(agentConfig.id, { status: 'processing' });
-      addLog('', 'info');
-      addLog(`━━━ AGENTE ${agentConfig.id}: ${agentConfig.name.toUpperCase()} ━━━`, 'process');
-      addLog(`📚 ${agentConfig.sources.join(' | ')}`, 'source');
       
       // Execute each step with its specific delay
       for (let stepIdx = 0; stepIdx < agentConfig.steps.length; stepIdx++) {
         const step = agentConfig.steps[stepIdx];
         await new Promise(r => setTimeout(r, step.delay));
-        addLog(`${step.icon} ${step.message}`, step.type);
         
         // Update progress
         setCurrentExplanation(prev => prev ? {
@@ -1757,21 +2065,15 @@ export default function ClinicalNavigator() {
       
       // Complete agent
       updateAgent(agentConfig.id, { status: 'completed', latency: totalLatency });
-      addLog(`✅ ${agentConfig.name} COMPLETADO (${(totalLatency / 1000).toFixed(1)}s)`, 'success');
       
       // Add to deliverables library
       addDeliverable(agentConfig.id);
+      setCurrentExplanation(null);
       
-      // Small pause before next agent
-      await new Promise(r => setTimeout(r, 800));
+      // Show deliverable for 5 seconds before next agent
+      await new Promise(r => setTimeout(r, 5000));
     }
 
-    addLog('', 'info');
-    addLog('═══════════════════════════════════════════════════════════', 'info');
-    addLog('🎉 ORQUESTACIÓN COMPLETADA - 14/14 AGENTES', 'success');
-    addLog('📥 Dossier de evidencia listo para descarga', 'data');
-    addLog('═══════════════════════════════════════════════════════════', 'info');
-    
     setActiveAgentId(null);
     setCurrentExplanation(null);
     setIsComplete(true);
@@ -2021,9 +2323,9 @@ export default function ClinicalNavigator() {
           )}
         </div>
 
-        {/* CENTER COLUMN (60%): Main Content - Explanation or Deliverable */}
-        <div className="w-3/5 flex flex-col overflow-y-auto bg-white border-r" style={{ borderColor: COLORS.grisClaro }}>
-          <ScrollArea className="flex-1 p-6">
+        {/* CENTER COLUMN (80%): Main Content - Explanation or Deliverable - NO TERMINAL */}
+        <div className="w-4/5 flex flex-col overflow-y-auto bg-white">
+          <ScrollArea className="flex-1 p-8">
             <AnimatePresence mode="wait">
               {/* Show Agent Explanation while processing */}
               {currentExplanation && !selectedDeliverable && (
@@ -2032,153 +2334,178 @@ export default function ClinicalNavigator() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="space-y-6"
+                  className="max-w-4xl mx-auto"
                 >
-                  {/* Agent Header */}
-                  <div className="flex items-center gap-4 p-4 rounded-xl border-2" style={{ borderColor: COLORS.azulInstitucional, backgroundColor: `${COLORS.azulInstitucional}08` }}>
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{ backgroundColor: COLORS.azulInstitucional }}>
-                      <Brain className="w-7 h-7 text-white" />
+                  {/* Document-style header */}
+                  <div className="border-b-4 pb-6 mb-8" style={{ borderColor: COLORS.azulInstitucional }}>
+                    <div className="flex items-center gap-2 text-sm font-medium mb-2" style={{ color: COLORS.verdeMedico }}>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      PROCESANDO
                     </div>
-                    <div className="flex-1">
-                      <h2 className="text-2xl font-bold" style={{ color: COLORS.azulInstitucional }}>
-                        AGENTE {activeAgentId}: {currentExplanation.agentName}
+                    <h1 className="text-4xl font-bold mb-2" style={{ color: COLORS.azulInstitucional }}>
+                      Agente {activeAgentId}: {currentExplanation.agentName}
+                    </h1>
+                    <p className="text-lg" style={{ color: COLORS.grisTexto }}>
+                      {AGENTS_CONFIG.find(a => a.id === activeAgentId)?.description}
+                    </p>
+                  </div>
+
+                  {/* Document-style sections */}
+                  <div className="space-y-8">
+                    <section>
+                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: COLORS.azulInstitucional }}>
+                        <ClipboardList className="w-5 h-5" />
+                        Descripción del Proceso
                       </h2>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: COLORS.verdeMedico }} />
-                        <span className="font-medium" style={{ color: COLORS.verdeMedico }}>Procesando...</span>
+                      <div className="pl-7 border-l-4" style={{ borderColor: COLORS.azulInstitucional }}>
+                        <p className="text-lg leading-relaxed" style={{ color: COLORS.grisTexto }}>
+                          {currentExplanation.doing}
+                        </p>
                       </div>
-                    </div>
-                  </div>
+                    </section>
 
-                  {/* What is it doing? */}
-                  <div className="p-5 rounded-xl border bg-white" style={{ borderColor: COLORS.grisClaro }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <ClipboardList className="w-5 h-5" style={{ color: COLORS.azulInstitucional }} />
-                      <h3 className="text-lg font-bold" style={{ color: COLORS.azulInstitucional }}>
-                        ¿Qué está haciendo?
-                      </h3>
-                    </div>
-                    <p className="text-base leading-relaxed" style={{ color: COLORS.grisTexto }}>
-                      {currentExplanation.doing}
-                    </p>
-                  </div>
+                    <section>
+                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: COLORS.verdeMedico }}>
+                        <Lightbulb className="w-5 h-5" />
+                        Importancia Metodológica
+                      </h2>
+                      <div className="pl-7 border-l-4" style={{ borderColor: COLORS.verdeMedico }}>
+                        <p className="text-lg leading-relaxed" style={{ color: COLORS.grisTexto }}>
+                          {currentExplanation.why}
+                        </p>
+                      </div>
+                    </section>
 
-                  {/* Why is it important? */}
-                  <div className="p-5 rounded-xl border bg-white" style={{ borderColor: COLORS.grisClaro }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Lightbulb className="w-5 h-5" style={{ color: COLORS.verdeMedico }} />
-                      <h3 className="text-lg font-bold" style={{ color: COLORS.verdeMedico }}>
-                        ¿Por qué es importante?
-                      </h3>
-                    </div>
-                    <p className="text-base leading-relaxed" style={{ color: COLORS.grisTexto }}>
-                      {currentExplanation.why}
-                    </p>
-                  </div>
+                    <section>
+                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: COLORS.azulInstitucional }}>
+                        <Database className="w-5 h-5" />
+                        Fuentes Consultadas
+                      </h2>
+                      <div className="grid grid-cols-2 gap-3 pl-7">
+                        {currentExplanation.sources.map((source, idx) => (
+                          <div 
+                            key={idx}
+                            className="p-3 rounded-lg border flex items-center gap-2"
+                            style={{ borderColor: COLORS.grisClaro, backgroundColor: '#F9FAFB' }}
+                          >
+                            <ExternalLink className="w-4 h-4" style={{ color: COLORS.azulInstitucional }} />
+                            <span className="font-medium" style={{ color: COLORS.azulInstitucional }}>{source}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
 
-                  {/* Sources being consulted */}
-                  <div className="p-5 rounded-xl border bg-white" style={{ borderColor: COLORS.grisClaro }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Database className="w-5 h-5" style={{ color: COLORS.azulInstitucional }} />
-                      <h3 className="text-lg font-bold" style={{ color: COLORS.azulInstitucional }}>
-                        Fuentes consultadas
-                      </h3>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {currentExplanation.sources.map((source, idx) => (
-                        <span 
-                          key={idx}
-                          className="px-3 py-1.5 rounded-lg text-sm font-medium border"
-                          style={{ borderColor: COLORS.azulInstitucional, color: COLORS.azulInstitucional, backgroundColor: `${COLORS.azulInstitucional}08` }}
-                        >
-                          {source}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div className="p-5 rounded-xl border bg-white" style={{ borderColor: COLORS.grisClaro }}>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Timer className="w-5 h-5" style={{ color: COLORS.grisTexto }} />
-                        <span className="font-medium" style={{ color: COLORS.grisTexto }}>
-                          Tiempo estimado: {currentExplanation.estimatedTime}
+                    {/* Progress section */}
+                    <section className="pt-6 border-t" style={{ borderColor: COLORS.grisClaro }}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <Timer className="w-5 h-5" style={{ color: COLORS.grisTexto }} />
+                          <span className="font-medium text-lg" style={{ color: COLORS.grisTexto }}>
+                            Tiempo estimado: {currentExplanation.estimatedTime}
+                          </span>
+                        </div>
+                        <span className="font-bold text-2xl" style={{ color: COLORS.azulInstitucional }}>
+                          {currentExplanation.progress}%
                         </span>
                       </div>
-                      <span className="font-bold text-lg" style={{ color: COLORS.azulInstitucional }}>
-                        {currentExplanation.progress}%
-                      </span>
-                    </div>
-                    <div className="w-full h-4 rounded-full overflow-hidden" style={{ backgroundColor: COLORS.grisClaro }}>
-                      <motion.div 
-                        className="h-full rounded-full"
-                        style={{ backgroundColor: COLORS.azulInstitucional }}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${currentExplanation.progress}%` }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    </div>
+                      <div className="w-full h-6 rounded-full overflow-hidden" style={{ backgroundColor: COLORS.grisClaro }}>
+                        <motion.div 
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: COLORS.azulInstitucional }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${currentExplanation.progress}%` }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      </div>
+                    </section>
                   </div>
                 </motion.div>
               )}
 
-              {/* Show Selected Deliverable */}
+              {/* Show Selected Deliverable - DOCUMENT STYLE */}
               {selectedDeliverable && (
                 <motion.div
                   key={`deliverable-${selectedDeliverable.id}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="space-y-6"
+                  className="max-w-4xl mx-auto"
                 >
-                  {/* Deliverable Header */}
-                  <div className="flex items-center gap-4 p-4 rounded-xl border-2" style={{ borderColor: COLORS.verdeMedico, backgroundColor: `${COLORS.verdeMedico}08` }}>
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{ backgroundColor: COLORS.verdeMedico }}>
-                      <CheckCircle className="w-7 h-7 text-white" />
+                  {/* Document-style header */}
+                  <div className="border-b-4 pb-6 mb-8" style={{ borderColor: COLORS.verdeMedico }}>
+                    <div className="flex items-center gap-2 text-sm font-medium mb-2" style={{ color: COLORS.verdeMedico }}>
+                      <CheckCircle className="w-4 h-4" />
+                      ENTREGABLE COMPLETADO
                     </div>
-                    <div className="flex-1">
-                      <h2 className="text-2xl font-bold" style={{ color: COLORS.verdeMedico }}>
-                        ✅ ENTREGABLE: {selectedDeliverable.title}
-                      </h2>
-                      <span className="text-sm" style={{ color: COLORS.grisTexto }}>
-                        Agente {selectedDeliverable.agentId} completado
-                      </span>
-                    </div>
+                    <h1 className="text-4xl font-bold mb-2" style={{ color: COLORS.azulInstitucional }}>
+                      {selectedDeliverable.title}
+                    </h1>
+                    <p className="text-lg" style={{ color: COLORS.grisTexto }}>
+                      Generado por Agente {selectedDeliverable.agentId} • {AGENTS_CONFIG.find(a => a.id === selectedDeliverable.agentId)?.name}
+                    </p>
                   </div>
 
-                  {/* Deliverable Content */}
-                  <div className="p-6 rounded-xl border bg-white" style={{ borderColor: COLORS.grisClaro }}>
-                    <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed" style={{ color: COLORS.grisTexto }}>
-                      {selectedDeliverable.content}
-                    </pre>
+                  {/* Document content with structure */}
+                  <div className="prose prose-lg max-w-none mb-8">
+                    <div 
+                      className="p-8 rounded-xl border-2 bg-white shadow-sm"
+                      style={{ borderColor: COLORS.grisClaro }}
+                    >
+                      {/* Parse content and render with structure */}
+                      {selectedDeliverable.content.split('\n\n').map((paragraph, idx) => {
+                        // Check if it's a header-like line
+                        if (paragraph.startsWith('═══') || paragraph.includes('═══')) {
+                          const title = paragraph.replace(/═/g, '').trim();
+                          return (
+                            <h3 key={idx} className="text-xl font-bold mt-6 mb-4 flex items-center gap-2" style={{ color: COLORS.azulInstitucional }}>
+                              <div className="w-1 h-6 rounded-full" style={{ backgroundColor: COLORS.verdeMedico }} />
+                              {title}
+                            </h3>
+                          );
+                        }
+                        // Check if it starts with emoji
+                        if (/^[👥💊⚖️🎯⏱️✅❌📊📚📋🔍📎📄🟢🟡⭐💪🔬🎲👁️📝🛡️📈🌳🔤💾🔀🏗️🚀🔗📖🔎⚠️✨🔬✓🌎]/.test(paragraph)) {
+                          return (
+                            <div key={idx} className="mb-4 p-4 rounded-lg border" style={{ borderColor: COLORS.grisClaro, backgroundColor: '#F9FAFB' }}>
+                              <p className="text-base leading-relaxed whitespace-pre-wrap" style={{ color: COLORS.grisTexto }}>
+                                {paragraph}
+                              </p>
+                            </div>
+                          );
+                        }
+                        // Regular paragraph
+                        return (
+                          <p key={idx} className="text-base leading-relaxed mb-4 whitespace-pre-wrap" style={{ color: COLORS.grisTexto }}>
+                            {paragraph}
+                          </p>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Scientific Sources */}
                   {selectedDeliverable.sources.length > 0 && (
-                    <div className="p-5 rounded-xl border bg-white" style={{ borderColor: COLORS.grisClaro }}>
-                      <div className="flex items-center gap-2 mb-4">
-                        <Link className="w-5 h-5" style={{ color: COLORS.azulInstitucional }} />
-                        <h3 className="text-lg font-bold" style={{ color: COLORS.azulInstitucional }}>
-                          Referencias Científicas
-                        </h3>
-                      </div>
-                      <div className="space-y-2">
+                    <div className="mb-8">
+                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: COLORS.azulInstitucional }}>
+                        <Link className="w-5 h-5" />
+                        Referencias Científicas
+                      </h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {selectedDeliverable.sources.map((source, idx) => (
                           <a 
                             key={idx}
                             href={source.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                            className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition-colors"
                             style={{ borderColor: COLORS.grisClaro }}
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
                               <ExternalLink className="w-4 h-4" style={{ color: COLORS.azulInstitucional }} />
                               <span className="font-medium" style={{ color: COLORS.azulInstitucional }}>{source.name}</span>
                             </div>
                             {source.identifier && (
-                              <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: `${COLORS.verdeMedico}15`, color: COLORS.verdeMedico }}>
+                              <span className="text-xs px-3 py-1 rounded-full font-medium" style={{ backgroundColor: `${COLORS.verdeMedico}15`, color: COLORS.verdeMedico }}>
                                 {source.identifier}
                               </span>
                             )}
@@ -2189,18 +2516,14 @@ export default function ClinicalNavigator() {
                   )}
 
                   {/* Action buttons */}
-                  <div className="flex gap-3">
-                    <Button variant="outline" className="flex-1 h-12" style={{ borderColor: COLORS.azulInstitucional, color: COLORS.azulInstitucional }}>
-                      <Save className="w-4 h-4 mr-2" />
-                      Guardar en Biblioteca
+                  <div className="flex gap-4 pt-6 border-t" style={{ borderColor: COLORS.grisClaro }}>
+                    <Button variant="outline" className="flex-1 h-14 text-lg" style={{ borderColor: COLORS.azulInstitucional, color: COLORS.azulInstitucional }}>
+                      <Save className="w-5 h-5 mr-2" />
+                      Guardar
                     </Button>
-                    <Button variant="outline" className="flex-1 h-12" style={{ borderColor: COLORS.azulInstitucional, color: COLORS.azulInstitucional }}>
-                      <Download className="w-4 h-4 mr-2" />
+                    <Button variant="outline" className="flex-1 h-14 text-lg" style={{ borderColor: COLORS.azulInstitucional, color: COLORS.azulInstitucional }}>
+                      <Download className="w-5 h-5 mr-2" />
                       Descargar PDF
-                    </Button>
-                    <Button variant="outline" className="flex-1 h-12" style={{ borderColor: COLORS.azulInstitucional, color: COLORS.azulInstitucional }}>
-                      <Eye className="w-4 h-4 mr-2" />
-                      Ver Referencias
                     </Button>
                   </div>
                 </motion.div>
@@ -2209,60 +2532,19 @@ export default function ClinicalNavigator() {
               {/* Empty state */}
               {!currentExplanation && !selectedDeliverable && (
                 <div className="flex items-center justify-center h-full text-center p-12">
-                  <div>
-                    <Brain className="w-16 h-16 mx-auto mb-4" style={{ color: COLORS.grisClaro }} />
+                  <div className="max-w-md">
+                    <Brain className="w-20 h-20 mx-auto mb-6" style={{ color: COLORS.grisClaro }} />
+                    <h3 className="text-2xl font-bold mb-2" style={{ color: COLORS.azulInstitucional }}>
+                      Esperando Selección
+                    </h3>
                     <p className="text-lg" style={{ color: COLORS.grisTexto }}>
-                      Selecciona un agente o entregable para ver los detalles
+                      Selecciona un agente o entregable de la biblioteca para ver los detalles
                     </p>
                   </div>
                 </div>
               )}
             </AnimatePresence>
           </ScrollArea>
-        </div>
-
-        {/* RIGHT COLUMN (20%): Terminal */}
-        <div className="w-1/5 flex flex-col" style={{ backgroundColor: COLORS.fondoTerminal }}>
-          <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-700">
-            <div className="flex gap-1">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-            </div>
-            <span className="text-gray-500 text-xs font-mono ml-1">terminal</span>
-          </div>
-          
-          <div 
-            ref={terminalRef}
-            className="flex-1 overflow-y-auto p-3 font-mono text-xs"
-          >
-            {terminalLogs.length === 0 ? (
-              <div className="text-gray-500 animate-pulse text-xs">
-                Esperando inicio...
-              </div>
-            ) : (
-              terminalLogs.map((log) => (
-                <motion.div
-                  key={log.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="mb-0.5"
-                >
-                  <span className="text-gray-600">[{formatTime(log.timestamp).slice(0, 8)}]</span>
-                  {' '}
-                  <span className={
-                    log.type === 'success' ? 'text-green-400' :
-                    log.type === 'process' ? 'text-blue-400' :
-                    log.type === 'data' ? 'text-yellow-400' :
-                    log.type === 'source' ? 'text-purple-400' :
-                    'text-gray-400'
-                  }>
-                    {log.message}
-                  </span>
-                </motion.div>
-              ))
-            )}
-          </div>
         </div>
       </div>
     </motion.div>
