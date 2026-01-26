@@ -2349,13 +2349,6 @@ export default function ClinicalNavigator() {
         <img src={santaFeLogo} alt="Fundación Santa Fe de Bogotá" className="h-16" />
       </header>
 
-      {/* BANNER - Tiempo de revisión sistemática */}
-      <div 
-        className="px-8 py-3 text-center font-medium"
-        style={{ backgroundColor: COLORS.azulInstitucional + '10', color: COLORS.azulInstitucional }}
-      >
-        ⏱️ <strong>Revisión sistemática tradicional:</strong> 4-8 semanas | <strong>Con Galatea:</strong> Minutos
-      </div>
 
       {/* 3-Column Layout: Left 20% | Center 60% | Right 20% */}
       <div className="flex-1 flex overflow-hidden">
@@ -2868,12 +2861,9 @@ export default function ClinicalNavigator() {
           >
             <CheckCircle className="w-8 h-8 text-white" />
             <span className="text-2xl font-bold text-white">
-              ✅ ANÁLISIS COMPLETADO EN 3:47 MINUTOS
+              Galatea · Motor de Evidencia Científica
             </span>
           </motion.div>
-          <p className="text-white/80 mt-2 text-lg">
-            Estudios procesados: <strong>847 artículos</strong> | Incluidos en síntesis: <strong>12 estudios de alta calidad</strong>
-          </p>
         </div>
       </header>
 
@@ -3025,25 +3015,25 @@ export default function ClinicalNavigator() {
                 Este análisis cumple con los lineamientos de:
               </p>
               
-              {/* Logos Grid */}
-              <div className="grid grid-cols-4 gap-6 mb-8">
+              {/* Logos Grid - LARGER */}
+              <div className="grid grid-cols-4 gap-8 mb-8">
                 <div className="text-center">
-                  <img src={cochraneLogo} alt="Cochrane" className="h-16 mx-auto mb-2 object-contain" />
-                  <span className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>Cochrane Collaboration</span>
+                  <img src={cochraneLogo} alt="Cochrane" className="h-28 mx-auto mb-3 object-contain" />
+                  <span className="text-base font-medium" style={{ color: COLORS.grisTexto }}>Cochrane Collaboration</span>
                 </div>
                 <div className="text-center">
-                  <img src={prismaLogo} alt="PRISMA" className="h-16 mx-auto mb-2 object-contain" />
-                  <span className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>PRISMA 2020 Statement</span>
+                  <img src={prismaLogo} alt="PRISMA" className="h-28 mx-auto mb-3 object-contain" />
+                  <span className="text-base font-medium" style={{ color: COLORS.grisTexto }}>PRISMA 2020 Statement</span>
                 </div>
                 <div className="text-center">
-                  <div className="h-16 flex items-center justify-center">
-                    <span className="text-4xl">⭐</span>
+                  <div className="h-28 flex items-center justify-center">
+                    <span className="text-6xl">⭐</span>
                   </div>
-                  <span className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>GRADE Working Group</span>
+                  <span className="text-base font-medium" style={{ color: COLORS.grisTexto }}>GRADE Working Group</span>
                 </div>
                 <div className="text-center">
-                  <img src={equatorLogo} alt="EQUATOR" className="h-16 mx-auto mb-2 object-contain" />
-                  <span className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>EQUATOR Network</span>
+                  <img src={equatorLogo} alt="EQUATOR" className="h-28 mx-auto mb-3 object-contain" />
+                  <span className="text-base font-medium" style={{ color: COLORS.grisTexto }}>EQUATOR Network</span>
                 </div>
               </div>
 
@@ -3091,7 +3081,7 @@ export default function ClinicalNavigator() {
             <img 
               src={santaFeLogo} 
               alt="Fundación Santa Fe de Bogotá" 
-              className="h-24 mx-auto mb-4"
+              className="h-36 mx-auto mb-4"
             />
             <p className="text-xl font-bold" style={{ color: COLORS.azulInstitucional }}>
               Fundación Santa Fe de Bogotá
