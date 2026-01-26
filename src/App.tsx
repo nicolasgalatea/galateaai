@@ -32,6 +32,7 @@ import MethodologyDiagnosis from "./pages/MethodologyDiagnosis";
 import MethodologyIntegration from "./pages/MethodologyIntegration";
 import MethodologyDeployment from "./pages/MethodologyDeployment";
 import MethodologyControl from "./pages/MethodologyControl";
+import ClinicalNavigator from "./pages/ClinicalNavigator";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/methodology/integration" element={<MethodologyIntegration />} />
             <Route path="/methodology/deployment" element={<MethodologyDeployment />} />
             <Route path="/methodology/control" element={<MethodologyControl />} />
+            <Route path="/agent/clinical-navigator" element={<ClinicalNavigator />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
