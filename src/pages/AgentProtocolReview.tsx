@@ -369,6 +369,19 @@ export default function AgentProtocolReview() {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [auditLogs]);
 
+  // Auto-start orchestration on mount
+  const hasAutoStarted = useRef(false);
+  useEffect(() => {
+    if (!hasAutoStarted.current && isTerminalMode) {
+      hasAutoStarted.current = true;
+      // Small delay to ensure component is fully mounted
+      const timer = setTimeout(() => {
+        simulatePhase1Orchestration();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isTerminalMode]);
+
   const addAuditLog = (level: AuditLog['level'], message: string) => {
     setAuditLogs(prev => [...prev, { timestamp: new Date(), level, message }]);
   };
