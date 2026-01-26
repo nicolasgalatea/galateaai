@@ -5,7 +5,7 @@ import {
   Send, Play, Download, ExternalLink, Clock, CheckCircle, 
   Loader2, FileText, BookOpen, Award, ChevronDown, ChevronUp,
   RotateCcw, Sparkles, Database, Search, Brain, ClipboardList,
-  Target, Timer, Lightbulb, Link, Save, Eye
+  Target, Timer, Lightbulb, Link, Save, Eye, Hand, Users, Heart, Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1985,6 +1985,11 @@ export default function ClinicalNavigator() {
   } | null>(null);
   const [selectedDeliverable, setSelectedDeliverable] = useState<Deliverable | null>(null);
   
+  // Human-in-the-Loop modal state
+  const [showHumanValidationModal, setShowHumanValidationModal] = useState(false);
+  const [showProtocolReview, setShowProtocolReview] = useState(false);
+  const humanValidationResolveRef = useRef<(() => void) | null>(null);
+  
   const terminalRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
 
@@ -2094,6 +2099,17 @@ export default function ClinicalNavigator() {
       
       // Show deliverable for 5 seconds before next agent
       await new Promise(r => setTimeout(r, 5000));
+      
+      // ========== HUMAN-IN-THE-LOOP PAUSE AFTER AGENT 8 ==========
+      if (agentConfig.id === 8) {
+        setShowHumanValidationModal(true);
+        // Wait for user to click "Continue"
+        await new Promise<void>(resolve => {
+          humanValidationResolveRef.current = resolve;
+        });
+        setShowHumanValidationModal(false);
+        setShowProtocolReview(false);
+      }
     }
 
     setActiveAgentId(null);
@@ -2104,6 +2120,14 @@ export default function ClinicalNavigator() {
     setTimeout(() => {
       setPhase('verification');
     }, 10000);
+  };
+  
+  // Handle continue from Human-in-the-Loop modal
+  const handleContinueToPhase2 = () => {
+    if (humanValidationResolveRef.current) {
+      humanValidationResolveRef.current();
+      humanValidationResolveRef.current = null;
+    }
   };
 
   // Start demo
@@ -2126,8 +2150,13 @@ export default function ClinicalNavigator() {
     setCurrentExplanation(null);
     setSelectedDeliverable(null);
     setIsComplete(false);
+    setShowHumanValidationModal(false);
+    setShowProtocolReview(false);
     hasStartedRef.current = false;
   };
+  
+  // Phase 1 deliverables (for Human-in-the-Loop review)
+  const phase1Deliverables = deliverables.filter(d => d.agentId <= 8);
 
   // =========================================
   // RENDER: LANDING PHASE
@@ -2609,148 +2638,340 @@ export default function ClinicalNavigator() {
           />
         </motion.div>
       </motion.div>
+
+      {/* ========== HUMAN-IN-THE-LOOP MODAL ========== */}
+      <AnimatePresence>
+        {showHumanValidationModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden"
+              style={{ border: `3px solid ${COLORS.azulInstitucional}` }}
+            >
+              {/* Header */}
+              <div className="px-8 py-6 border-b" style={{ backgroundColor: COLORS.azulInstitucional + '08', borderColor: COLORS.grisClaro }}>
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-14 h-14 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: COLORS.azulInstitucional }}
+                  >
+                    <Hand className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold" style={{ color: COLORS.azulInstitucional }}>
+                      ✋ Punto de Validación Humana
+                    </h2>
+                    <p className="text-sm" style={{ color: COLORS.grisTexto }}>
+                      La Fase 1 (Protocolo) está completa
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="px-8 py-6">
+                <p className="text-lg mb-6" style={{ color: COLORS.grisTexto }}>
+                  Se han generado <strong>8 entregables</strong> del protocolo de investigación:
+                </p>
+
+                {/* Show Protocol Review or Deliverables List */}
+                {showProtocolReview ? (
+                  <div className="max-h-[40vh] overflow-y-auto space-y-3 mb-6">
+                    {phase1Deliverables.map((d) => (
+                      <div 
+                        key={d.id} 
+                        className="p-4 rounded-lg border-2 bg-white"
+                        style={{ borderColor: COLORS.verdeMedico }}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <CheckCircle className="w-5 h-5" style={{ color: COLORS.verdeMedico }} />
+                          <span className="font-bold" style={{ color: COLORS.azulInstitucional }}>
+                            {d.title}
+                          </span>
+                        </div>
+                        <pre className="text-xs whitespace-pre-wrap overflow-hidden" style={{ color: COLORS.grisTexto }}>
+                          {d.content.substring(0, 300)}...
+                        </pre>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    {[
+                      'Marco PICOT',
+                      'Validación FINER', 
+                      'Gap Analysis',
+                      'Criterios de Elegibilidad',
+                      'Verificación PROSPERO',
+                      'Plan de Evaluación de Sesgos',
+                      'Estrategia de Búsqueda',
+                      'Protocolo PRISMA-P'
+                    ].map((item, idx) => (
+                      <div 
+                        key={idx}
+                        className="flex items-center gap-2 p-3 rounded-lg"
+                        style={{ backgroundColor: COLORS.verdeMedico + '10' }}
+                      >
+                        <CheckCircle className="w-4 h-4" style={{ color: COLORS.verdeMedico }} />
+                        <span className="font-medium" style={{ color: COLORS.grisTexto }}>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-base mb-6" style={{ color: COLORS.grisTexto }}>
+                  ¿Desea revisar el protocolo antes de continuar con la búsqueda y el meta-análisis?
+                </p>
+
+                {/* Buttons */}
+                <div className="flex gap-4">
+                  <Button
+                    onClick={() => setShowProtocolReview(!showProtocolReview)}
+                    variant="outline"
+                    className="flex-1 h-14 text-lg font-semibold border-2"
+                    style={{ borderColor: COLORS.azulInstitucional, color: COLORS.azulInstitucional }}
+                  >
+                    <Eye className="w-5 h-5 mr-2" />
+                    {showProtocolReview ? 'Ocultar Protocolo' : 'Revisar Protocolo'}
+                  </Button>
+                  <Button
+                    onClick={handleContinueToPhase2}
+                    className="flex-1 h-14 text-lg font-semibold text-white"
+                    style={{ backgroundColor: COLORS.verdeMedico }}
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    Continuar con Fase 2
+                  </Button>
+                </div>
+
+                {/* Disclaimer */}
+                <div 
+                  className="mt-6 p-4 rounded-lg flex items-start gap-3"
+                  style={{ backgroundColor: COLORS.azulInstitucional + '08' }}
+                >
+                  <Lightbulb className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: COLORS.azulInstitucional }} />
+                  <p className="text-sm" style={{ color: COLORS.azulInstitucional }}>
+                    <strong>En un entorno real</strong>, el investigador revisaría y aprobaría el protocolo antes de ejecutar búsquedas costosas en bases de datos científicas.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 
   // =========================================
-  // RENDER: VERIFICATION PHASE
+  // RENDER: VERIFICATION PHASE - NEW DESIGN
   // =========================================
   const renderVerification = () => (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen flex flex-col bg-white"
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: COLORS.blanco }}
     >
-      {/* Header - LARGER LOGOS */}
-      <header className="flex justify-between items-center px-8 py-6 border-b-2" style={{ borderColor: COLORS.azulInstitucional }}>
-        <img src={galateaLogo} alt="Galatea AI" className="h-20" />
-        <img src={santaFeLogo} alt="Fundación Santa Fe de Bogotá" className="h-16" />
+      {/* Header with completion time */}
+      <header 
+        className="px-8 py-4"
+        style={{ background: `linear-gradient(135deg, ${COLORS.azulInstitucional} 0%, ${COLORS.verdeMedico} 100%)` }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <img src={galateaLogo} alt="Galatea AI" className="h-16" />
+          <img src={santaFeLogo} alt="Fundación Santa Fe de Bogotá" className="h-14" />
+        </div>
+        <div className="text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', duration: 0.5 }}
+            className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/20 backdrop-blur-sm"
+          >
+            <CheckCircle className="w-8 h-8 text-white" />
+            <span className="text-2xl font-bold text-white">
+              ✅ ANÁLISIS COMPLETADO EN 3:47 MINUTOS
+            </span>
+          </motion.div>
+          <p className="text-white/80 mt-2 text-lg">
+            Método tradicional: 3-6 meses | <strong>Ahorro: 99.9% del tiempo</strong>
+          </p>
+        </div>
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
-        {/* Success badge */}
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', duration: 0.5 }}
-          className="mb-8"
-        >
-          <div 
-            className="flex items-center gap-3 px-8 py-4 rounded-full shadow-lg"
-            style={{ backgroundColor: COLORS.verdeMedico + '15', border: `2px solid ${COLORS.verdeMedico}` }}
+      <div className="flex-1 p-8 overflow-y-auto">
+        <div className="max-w-6xl mx-auto">
+          
+          {/* 6 METRIC CARDS */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="grid grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
           >
-            <CheckCircle className="w-8 h-8" style={{ color: COLORS.verdeMedico }} />
-            <span className="font-bold text-xl" style={{ color: COLORS.verdeMedico }}>
-              Análisis Completado — Verificado por Instituciones Líderes
-            </span>
-          </div>
-        </motion.div>
+            {/* Card 1: Hazard Ratio */}
+            <div 
+              className="rounded-2xl p-6 text-center border-2 bg-white shadow-lg"
+              style={{ borderColor: COLORS.azulInstitucional }}
+            >
+              <div className="text-lg font-semibold mb-2" style={{ color: COLORS.grisTexto }}>📊 Hazard Ratio</div>
+              <div className="text-5xl font-bold mb-2" style={{ color: COLORS.azulInstitucional }}>0.80</div>
+              <div className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>(IC 95%: 0.73-0.87)</div>
+              <div className="mt-3 text-sm px-3 py-1 rounded-full inline-block" style={{ backgroundColor: COLORS.azulInstitucional + '15', color: COLORS.azulInstitucional }}>
+                Reducción 20% en eventos CV
+              </div>
+            </div>
 
-        {/* Institutional logos */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="flex flex-wrap items-center justify-center gap-8 mb-12"
-        >
-          <div className="bg-white rounded-xl p-4 shadow-lg border-2" style={{ borderColor: COLORS.azulInstitucional }}>
-            <img src={santaFeLogo} alt="Santa Fe de Bogotá" className="h-20" />
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-lg border flex items-center gap-3">
-            <Award className="w-10 h-10 text-blue-600" />
-            <span className="font-bold text-lg text-blue-600">OMS</span>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-lg border flex items-center gap-3">
-            <BookOpen className="w-10 h-10 text-purple-600" />
-            <span className="font-bold text-lg text-purple-600">Cochrane</span>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-lg border flex items-center gap-3">
-            <FileText className="w-10 h-10 text-blue-800" />
-            <span className="font-bold text-lg text-blue-800">PubMed</span>
-          </div>
-        </motion.div>
+            {/* Card 2: Heterogeneidad */}
+            <div 
+              className="rounded-2xl p-6 text-center border-2 bg-white shadow-lg"
+              style={{ borderColor: COLORS.verdeMedico }}
+            >
+              <div className="text-lg font-semibold mb-2" style={{ color: COLORS.grisTexto }}>📈 Heterogeneidad</div>
+              <div className="text-5xl font-bold mb-2" style={{ color: COLORS.verdeMedico }}>I² = 18%</div>
+              <div className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>(BAJA)</div>
+              <div className="mt-3 text-sm px-3 py-1 rounded-full inline-block" style={{ backgroundColor: COLORS.verdeMedico + '15', color: COLORS.verdeMedico }}>
+                Resultados consistentes
+              </div>
+            </div>
 
-        {/* Results card */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="w-full max-w-4xl"
-        >
-          <Card className="shadow-xl border-2" style={{ borderColor: COLORS.azulInstitucional }}>
-            <CardHeader className="text-center pb-4" style={{ backgroundColor: COLORS.azulInstitucional + '08' }}>
-              <CardTitle className="text-2xl flex items-center justify-center gap-2" style={{ color: COLORS.azulInstitucional }}>
-                📊 Resultados del Meta-Análisis
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-6">
-              {/* Key metrics */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="rounded-xl p-5 text-center border-2" style={{ borderColor: COLORS.azulInstitucional, backgroundColor: COLORS.azulInstitucional + '08' }}>
-                  <div className="text-4xl font-bold" style={{ color: COLORS.azulInstitucional }}>0.80</div>
-                  <div className="text-sm font-medium text-gray-600 mt-1">Hazard Ratio</div>
-                  <div className="text-xs text-gray-500">IC 95%: 0.73-0.87</div>
-                </div>
-                <div className="rounded-xl p-5 text-center border-2" style={{ borderColor: COLORS.verdeMedico, backgroundColor: COLORS.verdeMedico + '08' }}>
-                  <div className="text-4xl font-bold" style={{ color: COLORS.verdeMedico }}>18%</div>
-                  <div className="text-sm font-medium text-gray-600 mt-1">Heterogeneidad (I²)</div>
-                  <div className="text-xs" style={{ color: COLORS.verdeMedico }}>BAJA</div>
-                </div>
-                <div className="rounded-xl p-5 text-center border-2" style={{ borderColor: '#F59E0B', backgroundColor: '#FEF3C7' }}>
-                  <div className="text-3xl font-bold text-amber-600">⭐⭐⭐⭐</div>
-                  <div className="text-sm font-medium text-gray-600 mt-1">Calidad GRADE</div>
-                  <div className="text-xs text-amber-600">ALTA</div>
-                </div>
-                <div className="rounded-xl p-5 text-center border-2" style={{ borderColor: COLORS.azulInstitucional, backgroundColor: COLORS.azulInstitucional + '08' }}>
-                  <div className="text-4xl font-bold" style={{ color: COLORS.azulInstitucional }}>847→12</div>
-                  <div className="text-sm font-medium text-gray-600 mt-1">Artículos</div>
-                  <div className="text-xs text-gray-500">Analizados→Incluidos</div>
+            {/* Card 3: Calidad GRADE */}
+            <div 
+              className="rounded-2xl p-6 text-center border-2 bg-white shadow-lg"
+              style={{ borderColor: '#F59E0B' }}
+            >
+              <div className="text-lg font-semibold mb-2" style={{ color: COLORS.grisTexto }}>⭐ Calidad GRADE</div>
+              <div className="text-4xl font-bold mb-2 text-amber-500">⭐⭐⭐⭐</div>
+              <div className="text-2xl font-bold text-amber-600">ALTA</div>
+              <div className="mt-3 text-sm px-3 py-1 rounded-full inline-block bg-amber-100 text-amber-700">
+                Confianza alta en hallazgos
+              </div>
+            </div>
+
+            {/* Card 4: Artículos */}
+            <div 
+              className="rounded-2xl p-6 text-center border-2 bg-white shadow-lg"
+              style={{ borderColor: COLORS.azulInstitucional }}
+            >
+              <div className="text-lg font-semibold mb-2" style={{ color: COLORS.grisTexto }}>📚 Artículos</div>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-4xl font-bold" style={{ color: COLORS.grisTexto }}>847</span>
+                <span className="text-2xl" style={{ color: COLORS.verdeMedico }}>→</span>
+                <span className="text-4xl font-bold" style={{ color: COLORS.verdeMedico }}>12</span>
+              </div>
+              <div className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>identificados → incluidos</div>
+            </div>
+
+            {/* Card 5: Participantes */}
+            <div 
+              className="rounded-2xl p-6 text-center border-2 bg-white shadow-lg"
+              style={{ borderColor: COLORS.azulInstitucional }}
+            >
+              <div className="text-lg font-semibold mb-2" style={{ color: COLORS.grisTexto }}>👥 Participantes</div>
+              <div className="text-5xl font-bold mb-2" style={{ color: COLORS.azulInstitucional }}>14,234</div>
+              <div className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>pacientes en los análisis</div>
+            </div>
+
+            {/* Card 6: NNT */}
+            <div 
+              className="rounded-2xl p-6 text-center border-2 bg-white shadow-lg"
+              style={{ borderColor: COLORS.verdeMedico }}
+            >
+              <div className="text-lg font-semibold mb-2" style={{ color: COLORS.grisTexto }}>💊 NNT</div>
+              <div className="text-5xl font-bold mb-2" style={{ color: COLORS.verdeMedico }}>21</div>
+              <div className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>pacientes para prevenir 1 evento</div>
+            </div>
+          </motion.div>
+
+          {/* CLINICAL CONCLUSION CARD */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="rounded-2xl border-2 bg-white shadow-xl overflow-hidden mb-8"
+            style={{ borderColor: COLORS.verdeMedico }}
+          >
+            <div className="px-8 py-4" style={{ backgroundColor: COLORS.verdeMedico }}>
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Heart className="w-6 h-6" />
+                🏥 CONCLUSIÓN CLÍNICA
+              </h3>
+            </div>
+            <div className="p-8">
+              <p className="text-xl leading-relaxed mb-6" style={{ color: COLORS.grisTexto }}>
+                Los inhibidores SGLT2 (empagliflozina/dapagliflozina) <strong style={{ color: COLORS.verdeMedico }}>REDUCEN significativamente</strong> el riesgo de hospitalización por insuficiencia cardíaca y muerte cardiovascular en pacientes con ICFEp.
+              </p>
+              
+              <div className="p-5 rounded-xl mb-6" style={{ backgroundColor: COLORS.azulInstitucional + '08' }}>
+                <div className="flex items-start gap-3">
+                  <ClipboardList className="w-6 h-6 flex-shrink-0" style={{ color: COLORS.azulInstitucional }} />
+                  <div>
+                    <span className="font-bold text-lg" style={{ color: COLORS.azulInstitucional }}>RECOMENDACIÓN:</span>
+                    <p className="text-lg" style={{ color: COLORS.grisTexto }}>
+                      Considerar SGLT2i como tratamiento de primera línea en pacientes con ICFEp, independientemente de la presencia de diabetes.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Download buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-                <Button
-                  onClick={generateComprehensivePDF}
-                  size="lg"
-                  className="h-14 px-8 text-lg font-semibold shadow-lg hover:scale-[1.02] transition-transform"
-                  style={{ backgroundColor: COLORS.verdeMedico }}
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Descargar Dossier Completo (PDF)
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-14 px-8 text-lg font-semibold border-2"
-                  style={{ borderColor: COLORS.azulInstitucional, color: COLORS.azulInstitucional }}
-                >
-                  <ExternalLink className="w-5 h-5 mr-2" />
-                  Ver Referencias
-                </Button>
+              <div className="p-5 rounded-xl" style={{ backgroundColor: '#FEF3C7' }}>
+                <div className="flex items-start gap-3">
+                  <Activity className="w-6 h-6 flex-shrink-0 text-amber-600" />
+                  <div>
+                    <span className="font-bold text-lg text-amber-700">⚠️ ALERTA CLÍNICA:</span>
+                    <p className="text-base text-amber-800">
+                      Se identificó beneficio aún mayor en el subgrupo de pacientes diabéticos (HR 0.72). Considerar análisis estratificado.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+            </div>
+          </motion.div>
 
-        {/* Reset button */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="mt-8"
-        >
-          <Button
-            onClick={handleReset}
-            variant="ghost"
-            className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+          {/* DOWNLOAD BUTTON */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-center mb-8"
           >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Iniciar Nueva Investigación
-          </Button>
-        </motion.div>
+            <Button
+              onClick={generateComprehensivePDF}
+              size="lg"
+              className="h-16 px-12 text-xl font-bold shadow-xl hover:scale-[1.02] transition-transform text-white"
+              style={{ backgroundColor: COLORS.verdeMedico }}
+            >
+              <Download className="w-6 h-6 mr-3" />
+              📥 Descargar Dossier Completo (PDF 47 páginas)
+            </Button>
+          </motion.div>
+
+          {/* RESET BUTTON */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-center"
+          >
+            <Button
+              onClick={handleReset}
+              variant="ghost"
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Iniciar Nueva Investigación
+            </Button>
+          </motion.div>
+        </div>
       </div>
 
       {/* FLOATING VIRTUAL AGENT - Celebration Mode */}
