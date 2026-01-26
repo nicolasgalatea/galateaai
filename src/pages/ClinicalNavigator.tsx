@@ -59,6 +59,28 @@ interface SourceReference {
 }
 
 // =========================================
+// AGENT DIALOGUE MESSAGES
+// =========================================
+const AGENT_DIALOGUES: Record<number, string> = {
+  1: "Estoy estructurando tu pregunta con el marco PICOT...",
+  2: "Validando que tu investigación sea viable y ética...",
+  3: "Buscando revisiones previas en la literatura...",
+  4: "Definiendo criterios de inclusión y exclusión...",
+  5: "Verificando en PROSPERO si existe protocolo similar...",
+  6: "Planificando evaluación de riesgo de sesgo...",
+  7: "Construyendo ecuación de búsqueda MeSH...",
+  8: "Ensamblando protocolo PRISMA-P completo...",
+  9: "Ejecutando búsqueda en PubMed y Cochrane...",
+  10: "Extrayendo datos de los estudios incluidos...",
+  11: "Evaluando calidad metodológica...",
+  12: "Calculando meta-análisis...",
+  13: "Calificando evidencia con GRADE...",
+  14: "Generando dossier científico...",
+};
+
+const FINAL_DIALOGUE = "¡Listo! Analicé 847 artículos. Los SGLT2 reducen hospitalizaciones en 20%.";
+
+// =========================================
 // CONSTANTS - SANTA FE COLORS
 // =========================================
 const COLORS = {
@@ -2546,6 +2568,47 @@ export default function ClinicalNavigator() {
           </ScrollArea>
         </div>
       </div>
+
+      {/* FLOATING VIRTUAL AGENT - Bottom Right */}
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="fixed bottom-6 right-6 z-50 flex items-end gap-3"
+      >
+        {/* Dialogue Bubble */}
+        <motion.div
+          key={activeAgentId || 'idle'}
+          initial={{ opacity: 0, scale: 0.8, x: 20 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          className="bg-white rounded-2xl px-4 py-3 shadow-xl border-2 max-w-xs"
+          style={{ borderColor: COLORS.azulInstitucional }}
+        >
+          <p className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>
+            {activeAgentId ? AGENT_DIALOGUES[activeAgentId] : "Orquestando análisis científico..."}
+          </p>
+          {/* Triangle pointer */}
+          <div 
+            className="absolute right-0 bottom-4 w-3 h-3 bg-white border-r-2 border-b-2 transform translate-x-1.5 rotate-[-45deg]"
+            style={{ borderColor: COLORS.azulInstitucional }}
+          />
+        </motion.div>
+
+        {/* Agent Avatar */}
+        <motion.div
+          animate={{ scale: [1, 1.03, 1] }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          className="w-20 h-20 rounded-full overflow-hidden border-4 shadow-xl cursor-pointer"
+          style={{ borderColor: COLORS.verdeMedico }}
+        >
+          <img 
+            src={agentAvatar} 
+            alt="Galatea AI Agent" 
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
+      </motion.div>
     </motion.div>
   );
 
@@ -2689,6 +2752,52 @@ export default function ClinicalNavigator() {
           </Button>
         </motion.div>
       </div>
+
+      {/* FLOATING VIRTUAL AGENT - Celebration Mode */}
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1 }}
+        className="fixed bottom-6 right-6 z-50 flex items-end gap-3"
+      >
+        {/* Celebration Dialogue Bubble */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, x: 20 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          className="bg-white rounded-2xl px-5 py-4 shadow-xl border-2 max-w-sm"
+          style={{ borderColor: COLORS.verdeMedico }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="w-5 h-5" style={{ color: COLORS.verdeMedico }} />
+            <span className="font-bold" style={{ color: COLORS.verdeMedico }}>¡Análisis Completado!</span>
+          </div>
+          <p className="text-sm font-medium" style={{ color: COLORS.grisTexto }}>
+            {FINAL_DIALOGUE}
+          </p>
+          {/* Triangle pointer */}
+          <div 
+            className="absolute right-0 bottom-5 w-3 h-3 bg-white border-r-2 border-b-2 transform translate-x-1.5 rotate-[-45deg]"
+            style={{ borderColor: COLORS.verdeMedico }}
+          />
+        </motion.div>
+
+        {/* Agent Avatar - Celebrating */}
+        <motion.div
+          animate={{ 
+            scale: [1, 1.08, 1],
+            rotate: [0, 3, -3, 0]
+          }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="w-24 h-24 rounded-full overflow-hidden border-4 shadow-xl"
+          style={{ borderColor: COLORS.verdeMedico }}
+        >
+          <img 
+            src={agentAvatar} 
+            alt="Galatea AI Agent Celebrating" 
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
+      </motion.div>
     </motion.div>
   );
 
