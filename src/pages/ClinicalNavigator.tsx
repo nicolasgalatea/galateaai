@@ -523,15 +523,26 @@ export default function ClinicalNavigator() {
     });
   };
 
-  // Auto-start on mount
+  // =========================================
+  // AUTO-START ORCHESTRATION ON PAGE LOAD
+  // =========================================
   useEffect(() => {
-    if (!hasStartedRef.current) {
-      hasStartedRef.current = true;
-      setTimeout(() => {
-        runOrchestration();
-      }, 500);
+    // Only run once - prevent double execution
+    if (hasStartedRef.current) {
+      console.log('[ClinicalNavigator] Already started, skipping...');
+      return;
     }
-  }, []);
+    
+    console.log('[ClinicalNavigator] Auto-starting 14-agent orchestration in 500ms...');
+    hasStartedRef.current = true;
+    
+    const timer = setTimeout(() => {
+      console.log('[ClinicalNavigator] Triggering runOrchestration()');
+      runOrchestration();
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array = run once on mount
 
   const getLogColor = (level: TerminalLog['level']) => {
     switch (level) {
