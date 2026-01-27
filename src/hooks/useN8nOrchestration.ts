@@ -3,7 +3,7 @@ import { createClient, RealtimeChannel } from '@supabase/supabase-js';
 
 // Cliente Supabase para el proyecto externo (n8n outputs)
 const N8N_SUPABASE_URL = 'https://kwmfnysjxeqhgcdperkf.supabase.co';
-const N8N_SUPABASE_ANON_KEY = 'sb_publishable__cpB89JNYrooCZc2UedKvA_NawCVVp3';
+const N8N_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3bWZueXNqeGVxaGdjZHBlcmtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMjQ3NDcsImV4cCI6MjA4MzgwMDc0N30.iAXnCyNkeSqyfkj2CIBTpfJzaQbGIvUEYxRfitvb510';
 
 // N8N Webhook URL
 const N8N_WEBHOOK_URL = 'https://galatea89.app.n8n.cloud/webhook/galatea-protocol-start';
