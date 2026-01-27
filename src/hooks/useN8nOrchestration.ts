@@ -8,6 +8,9 @@ const N8N_SUPABASE_ANON_KEY = 'sb_publishable__cpB89JNYrooCZc2UedKvA_NawCVVp3';
 // N8N Webhook URL
 const N8N_WEBHOOK_URL = 'https://galatea89.app.n8n.cloud/webhook/galatea-protocol-start';
 
+// Create external Supabase client once
+const externalSupabase = createClient(N8N_SUPABASE_URL, N8N_SUPABASE_ANON_KEY);
+
 interface AgentOutput {
   id: number;
   project_id: string;
@@ -45,12 +48,48 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
   
   const channelRef = useRef<RealtimeChannel | null>(null);
   const fallbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const externalSupabaseRef = useRef(createClient(N8N_SUPABASE_URL, N8N_SUPABASE_ANON_KEY));
+  const optionsRef = useRef(options);
+  
+  // Keep options ref updated
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
+
+  // Fetch inicial de datos existentes
+  const fetchExistingOutputs = useCallback(async (projectIdToFetch: string) => {
+    console.log('[n8n] Fetching existing outputs for project:', projectIdToFetch);
+    try {
+      const { data, error } = await externalSupabase
+        .from('agent_outputs')
+        .select('*')
+        .eq('project_id', projectIdToFetch)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('[n8n] Error fetching existing outputs:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        console.log('[n8n] Found existing outputs:', data.length);
+        data.forEach((record: AgentOutput) => {
+          const { agent_name, output, status } = record;
+          const agentId = AGENT_NAME_TO_ID[agent_name];
+          if (agentId) {
+            setReceivedAgents(prev => new Set([...prev, agentId]));
+          }
+          optionsRef.current.onAgentOutput(agent_name, output, status);
+        });
+      }
+    } catch (err) {
+      console.error('[n8n] Error in fetchExistingOutputs:', err);
+    }
+  }, []);
 
   // Limpiar suscripción
   const cleanup = useCallback(() => {
     if (channelRef.current) {
-      externalSupabaseRef.current.removeChannel(channelRef.current);
+      externalSupabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
     if (fallbackTimeoutRef.current) {
@@ -72,7 +111,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
     try {
       // 1. Suscribirse a Supabase Realtime ANTES del POST
       const subscriptionPromise = new Promise<void>((resolve, reject) => {
-        channelRef.current = externalSupabaseRef.current
+        channelRef.current = externalSupabase
           .channel(`agent_outputs_${newProjectId}`)
           .on(
             'postgres_changes',
@@ -91,7 +130,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
                 setReceivedAgents(prev => new Set([...prev, agentId]));
               }
               
-              options.onAgentOutput(agent_name, output, status);
+              optionsRef.current.onAgentOutput(agent_name, output, status);
               
               // Reset fallback timeout on each output
               if (fallbackTimeoutRef.current) {
@@ -99,7 +138,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
               }
               fallbackTimeoutRef.current = setTimeout(() => {
                 console.log('[n8n] Timeout - no more outputs received');
-                options.onFallback();
+                optionsRef.current.onFallback();
               }, 180000); // 3 minutes
             }
           )
@@ -141,10 +180,13 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
 
       console.log('[n8n] Webhook POST successful');
 
-      // 3. Set fallback timeout (180 seconds = 3 minutes)
+      // 3. Fetch any existing outputs (in case some were already processed)
+      await fetchExistingOutputs(newProjectId);
+
+      // 4. Set fallback timeout (180 seconds = 3 minutes)
       fallbackTimeoutRef.current = setTimeout(() => {
         console.log('[n8n] Fallback timeout triggered - no outputs in 3 minutes');
-        options.onFallback();
+        optionsRef.current.onFallback();
       }, 180000);
 
       setIsLoading(false);
@@ -152,7 +194,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
       
     } catch (error) {
       console.error('[n8n] Error starting orchestration:', error);
-      options.onError(error instanceof Error ? error.message : 'Error desconocido');
+      optionsRef.current.onError(error instanceof Error ? error.message : 'Error desconocido');
       setConnectionStatus('fallback');
       setIsLoading(false);
       return { projectId: null, success: false };
@@ -176,6 +218,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
 
   return {
     startOrchestration,
+    fetchExistingOutputs,
     projectId,
     connectionStatus,
     setConnectionStatus,
