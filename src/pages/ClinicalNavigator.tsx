@@ -1,16 +1,20 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import jsPDF from 'jspdf';
+import ReactMarkdown from 'react-markdown';
 import { 
   Send, Play, Download, ExternalLink, Clock, CheckCircle, 
   Loader2, FileText, BookOpen, Award, ChevronDown, ChevronUp,
   RotateCcw, Sparkles, Database, Search, Brain, ClipboardList,
-  Target, Timer, Lightbulb, Link, Save, Eye, Hand, Users, Heart, Activity
+  Target, Timer, Lightbulb, Link, Save, Eye, Hand, Users, Heart, Activity,
+  AlertTriangle, Wifi, WifiOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { toast } from '@/hooks/use-toast';
+import { useN8nOrchestration, AGENT_NAME_TO_ID, ConnectionStatus } from '@/hooks/useN8nOrchestration';
 import galateaLogo from '@/assets/galatea-logo-clean.png';
 import santaFeLogo from '@/assets/santa-fe-logo-clean.png';
 import agentAvatar from '@/assets/galatea-agent-avatar.jpg';
@@ -2046,8 +2050,101 @@ export default function ClinicalNavigator() {
   const [showProtocolReview, setShowProtocolReview] = useState(false);
   const humanValidationResolveRef = useRef<(() => void) | null>(null);
   
+  // n8n Connection state
+  const [isN8nMode, setIsN8nMode] = useState(true);
+  const [realOutputs, setRealOutputs] = useState<Record<number, string>>({});
+  const phase1CompleteResolveRef = useRef<(() => void) | null>(null);
+  
   const terminalRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
+
+  // n8n Orchestration hook
+  const handleFallbackToSimulation = useCallback(() => {
+    n8nOrchestration.setConnectionStatus('fallback');
+    setIsN8nMode(false);
+    
+    toast({
+      title: 'Modo demo activado',
+      description: 'Usando datos de ejemplo mientras el servidor de IA no está disponible.',
+    });
+    
+    // Continue with simulated Phase 1
+    runSimulatedPhase1();
+  }, []);
+
+  const addRealDeliverable = useCallback((agentId: number, realOutput: string) => {
+    const agentConfig = AGENTS_CONFIG.find(a => a.id === agentId);
+    const sources = SCIENTIFIC_SOURCES[agentId] || [];
+    
+    if (agentConfig) {
+      const newDeliverable: Deliverable = {
+        id: agentId,
+        agentId,
+        title: AGENT_OUTPUTS[agentId]?.title || agentConfig.name,
+        content: realOutput, // ← OUTPUT REAL DE CLAUDE (Markdown)
+        sources,
+        isExpanded: false,
+      };
+      setDeliverables(prev => {
+        const existing = prev.findIndex(d => d.agentId === agentId);
+        if (existing >= 0) {
+          const updated = [...prev];
+          updated[existing] = newDeliverable;
+          return updated;
+        }
+        return [...prev, newDeliverable];
+      });
+      setSelectedDeliverable(newDeliverable);
+    }
+  }, []);
+
+  const n8nOrchestration = useN8nOrchestration({
+    onAgentOutput: (agentName, output, status) => {
+      const agentId = AGENT_NAME_TO_ID[agentName];
+      if (!agentId || agentId > 8) return; // Solo Fase 1
+
+      console.log(`[UI] Received agent ${agentId} (${agentName}) with status: ${status}`);
+      
+      if (status === 'success') {
+        updateAgent(agentId, { status: 'completed' });
+        setRealOutputs(prev => ({ ...prev, [agentId]: output }));
+        addRealDeliverable(agentId, output);
+        
+        // Check if Phase 1 is complete (all 8 agents)
+        const completedCount = Object.keys(realOutputs).length + 1; // +1 for current
+        console.log(`[UI] Completed agents: ${completedCount}/8`);
+        
+        if (completedCount >= 8 && phase1CompleteResolveRef.current) {
+          phase1CompleteResolveRef.current();
+          phase1CompleteResolveRef.current = null;
+        }
+      } else if (status === 'processing') {
+        updateAgent(agentId, { status: 'processing' });
+        setActiveAgentId(agentId);
+        setCurrentExplanation({
+          doing: AGENTS_CONFIG[agentId - 1]?.explanation.doing || 'Procesando...',
+          why: AGENTS_CONFIG[agentId - 1]?.explanation.why || '',
+          estimatedTime: AGENTS_CONFIG[agentId - 1]?.explanation.estimatedTime || '...',
+          sources: AGENTS_CONFIG[agentId - 1]?.sources || [],
+          agentName: agentName,
+          progress: 50
+        });
+      }
+    },
+    onError: (error) => {
+      console.error('[UI] n8n error:', error);
+      toast({
+        title: 'Error de conexión',
+        description: `No se pudo conectar con el servidor de IA: ${error}`,
+        variant: 'destructive',
+      });
+      handleFallbackToSimulation();
+    },
+    onFallback: () => {
+      console.log('[UI] Fallback triggered');
+      handleFallbackToSimulation();
+    },
+  });
 
   // Auto-scroll terminal
   useEffect(() => {
@@ -2101,22 +2198,14 @@ export default function ClinicalNavigator() {
   };
 
   // =========================================
-  // MAIN ORCHESTRATION - SLOW & DETAILED
+  // SIMULATED PHASE 1 (Fallback)
   // =========================================
-  const runOrchestration = async () => {
-    if (hasStartedRef.current) return;
-    hasStartedRef.current = true;
-
-    const usedQuestion = question.trim() || DEFAULT_QUESTION;
-    
-    await new Promise(r => setTimeout(r, 500));
-
-    for (let i = 0; i < AGENTS_CONFIG.length; i++) {
+  const runSimulatedPhase1 = async () => {
+    for (let i = 0; i < 8; i++) {
       const agentConfig = AGENTS_CONFIG[i];
       const startTime = Date.now();
       const totalSteps = agentConfig.steps.length;
       
-      // Set active agent and update explanation panel
       setActiveAgentId(agentConfig.id);
       setSelectedDeliverable(null);
       setCurrentExplanation({
@@ -2128,54 +2217,152 @@ export default function ClinicalNavigator() {
         progress: 0
       });
       
-      // Start processing
       updateAgent(agentConfig.id, { status: 'processing' });
       
-      // Execute each step with its specific delay
       for (let stepIdx = 0; stepIdx < agentConfig.steps.length; stepIdx++) {
         const step = agentConfig.steps[stepIdx];
         await new Promise(r => setTimeout(r, step.delay));
-        
-        // Update progress
         setCurrentExplanation(prev => prev ? {
           ...prev,
           progress: Math.round(((stepIdx + 1) / totalSteps) * 100)
         } : null);
       }
       
-      // Calculate total latency
       const totalLatency = Date.now() - startTime;
-      
-      // Complete agent
       updateAgent(agentConfig.id, { status: 'completed', latency: totalLatency });
-      
-      // Add to deliverables library
       addDeliverable(agentConfig.id);
       setCurrentExplanation(null);
       
-      // Show deliverable for 5 seconds before next agent
       await new Promise(r => setTimeout(r, 5000));
-      
-      // ========== HUMAN-IN-THE-LOOP PAUSE AFTER AGENT 8 ==========
-      if (agentConfig.id === 8) {
-        setShowHumanValidationModal(true);
-        // Wait for user to click "Continue"
-        await new Promise<void>(resolve => {
-          humanValidationResolveRef.current = resolve;
-        });
-        setShowHumanValidationModal(false);
-        setShowProtocolReview(false);
-      }
     }
+    
+    // Human-in-the-Loop after Phase 1
+    setShowHumanValidationModal(true);
+    await new Promise<void>(resolve => {
+      humanValidationResolveRef.current = resolve;
+    });
+    setShowHumanValidationModal(false);
+    setShowProtocolReview(false);
+    
+    await runSimulatedPhase2();
+  };
 
+  // =========================================
+  // SIMULATED PHASE 2 (Always simulated)
+  // =========================================
+  const runSimulatedPhase2 = async () => {
+    for (let i = 8; i < AGENTS_CONFIG.length; i++) {
+      const agentConfig = AGENTS_CONFIG[i];
+      const startTime = Date.now();
+      const totalSteps = agentConfig.steps.length;
+      
+      setActiveAgentId(agentConfig.id);
+      setSelectedDeliverable(null);
+      setCurrentExplanation({
+        doing: agentConfig.explanation.doing,
+        why: agentConfig.explanation.why,
+        estimatedTime: agentConfig.explanation.estimatedTime,
+        sources: agentConfig.sources,
+        agentName: agentConfig.name,
+        progress: 0
+      });
+      
+      updateAgent(agentConfig.id, { status: 'processing' });
+      
+      for (let stepIdx = 0; stepIdx < agentConfig.steps.length; stepIdx++) {
+        const step = agentConfig.steps[stepIdx];
+        await new Promise(r => setTimeout(r, step.delay));
+        setCurrentExplanation(prev => prev ? {
+          ...prev,
+          progress: Math.round(((stepIdx + 1) / totalSteps) * 100)
+        } : null);
+      }
+      
+      const totalLatency = Date.now() - startTime;
+      updateAgent(agentConfig.id, { status: 'completed', latency: totalLatency });
+      addDeliverable(agentConfig.id);
+      setCurrentExplanation(null);
+      
+      await new Promise(r => setTimeout(r, 5000));
+    }
+    
     setActiveAgentId(null);
     setCurrentExplanation(null);
     setIsComplete(true);
     
-    // Give user 10 seconds to navigate deliverables before verification
     setTimeout(() => {
       setPhase('verification');
     }, 10000);
+  };
+
+  // =========================================
+  // WAIT FOR PHASE 1 COMPLETION (n8n mode)
+  // =========================================
+  const waitForPhase1Completion = (): Promise<void> => {
+    return new Promise((resolve) => {
+      // Check if already complete
+      if (Object.keys(realOutputs).length >= 8) {
+        resolve();
+        return;
+      }
+      
+      // Set resolve ref for callback to trigger
+      phase1CompleteResolveRef.current = () => {
+        setShowHumanValidationModal(true);
+        // Wait for user to click "Continue"
+        humanValidationResolveRef.current = () => {
+          setShowHumanValidationModal(false);
+          setShowProtocolReview(false);
+          runSimulatedPhase2().then(resolve);
+        };
+      };
+
+      // Timeout of 180 seconds (3 minutes) for all Phase 1 agents
+      setTimeout(() => {
+        if (Object.keys(realOutputs).length < 8) {
+          console.log('[UI] Phase 1 timeout - falling back to simulation');
+          handleFallbackToSimulation();
+        }
+        resolve();
+      }, 180000);
+    });
+  };
+
+  // =========================================
+  // MAIN ORCHESTRATION - N8N + FALLBACK
+  // =========================================
+  const runOrchestration = async () => {
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+
+    const usedQuestion = question.trim() || DEFAULT_QUESTION;
+    
+    await new Promise(r => setTimeout(r, 500));
+
+    if (isN8nMode) {
+      // ========== PHASE 1: REAL N8N CONNECTION ==========
+      console.log('[UI] Starting n8n orchestration...');
+      
+      const result = await n8nOrchestration.startOrchestration(
+        'Revisión Sistemática SGLT2i en ICFEp',
+        usedQuestion
+      );
+      
+      if (result.success) {
+        console.log('[UI] n8n connection successful, waiting for Phase 1 outputs...');
+        
+        // Wait for all 8 Phase 1 agents to complete
+        await waitForPhase1Completion();
+        
+      } else {
+        console.log('[UI] n8n connection failed, falling back to simulation');
+        handleFallbackToSimulation();
+        return;
+      }
+    } else {
+      // ========== FALLBACK: FULL SIMULATION ==========
+      await runSimulatedPhase1();
+    }
   };
   
   // Handle continue from Human-in-the-Loop modal
@@ -2190,6 +2377,8 @@ export default function ClinicalNavigator() {
   const handleStartDemo = () => {
     setPhase('execution');
     hasStartedRef.current = false;
+    setRealOutputs({});
+    setIsN8nMode(true); // Try n8n first
     setTimeout(() => {
       runOrchestration();
     }, 500);
@@ -2208,6 +2397,9 @@ export default function ClinicalNavigator() {
     setIsComplete(false);
     setShowHumanValidationModal(false);
     setShowProtocolReview(false);
+    setRealOutputs({});
+    setIsN8nMode(true);
+    n8nOrchestration.cleanup();
     hasStartedRef.current = false;
   };
   
@@ -2345,6 +2537,29 @@ export default function ClinicalNavigator() {
           >
             14 Agentes Especializados
           </span>
+          
+          {/* Connection Status Indicator */}
+          {n8nOrchestration.connectionStatus === 'connecting' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
+              style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Conectando con IA...
+            </div>
+          )}
+          {n8nOrchestration.connectionStatus === 'connected' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
+              style={{ backgroundColor: '#D1FAE5', color: '#065F46' }}>
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: '#059669' }} />
+              Conectado a Claude
+            </div>
+          )}
+          {n8nOrchestration.connectionStatus === 'fallback' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
+              style={{ backgroundColor: '#FFEDD5', color: '#9A3412' }}>
+              <AlertTriangle className="w-4 h-4" />
+              Modo Demo
+            </div>
+          )}
         </div>
         <img src={santaFeLogo} alt="Fundación Santa Fe de Bogotá" className="h-16" />
       </header>
@@ -2564,35 +2779,83 @@ export default function ClinicalNavigator() {
                       className="p-8 rounded-xl border-2 bg-white shadow-sm"
                       style={{ borderColor: COLORS.grisClaro }}
                     >
-                      {/* Parse content and render with structure */}
-                      {selectedDeliverable.content.split('\n\n').map((paragraph, idx) => {
-                        // Check if it's a header-like line
-                        if (paragraph.startsWith('═══') || paragraph.includes('═══')) {
-                          const title = paragraph.replace(/═/g, '').trim();
-                          return (
-                            <h3 key={idx} className="text-xl font-bold mt-6 mb-4 flex items-center gap-2" style={{ color: COLORS.azulInstitucional }}>
-                              <div className="w-1 h-6 rounded-full" style={{ backgroundColor: COLORS.verdeMedico }} />
-                              {title}
-                            </h3>
-                          );
-                        }
-                        // Check if it starts with emoji
-                        if (/^[👥💊⚖️🎯⏱️✅❌📊📚📋🔍📎📄🟢🟡⭐💪🔬🎲👁️📝🛡️📈🌳🔤💾🔀🏗️🚀🔗📖🔎⚠️✨🔬✓🌎]/.test(paragraph)) {
-                          return (
-                            <div key={idx} className="mb-4 p-4 rounded-lg border" style={{ borderColor: COLORS.grisClaro, backgroundColor: '#F9FAFB' }}>
-                              <p className="text-base leading-relaxed whitespace-pre-wrap" style={{ color: COLORS.grisTexto }}>
+                      {/* Check if this is a real output from n8n (Markdown) or simulated */}
+                      {realOutputs[selectedDeliverable.agentId] ? (
+                        // Render real Claude output with ReactMarkdown
+                        <div className="prose prose-lg max-w-none" style={{ color: COLORS.grisTexto }}>
+                          <ReactMarkdown
+                            components={{
+                              h1: ({ children }) => (
+                                <h1 className="text-2xl font-bold mt-6 mb-4" style={{ color: COLORS.azulInstitucional }}>{children}</h1>
+                              ),
+                              h2: ({ children }) => (
+                                <h2 className="text-xl font-bold mt-5 mb-3 flex items-center gap-2" style={{ color: COLORS.azulInstitucional }}>
+                                  <div className="w-1 h-5 rounded-full" style={{ backgroundColor: COLORS.verdeMedico }} />
+                                  {children}
+                                </h2>
+                              ),
+                              h3: ({ children }) => (
+                                <h3 className="text-lg font-bold mt-4 mb-2" style={{ color: COLORS.azulInstitucional }}>{children}</h3>
+                              ),
+                              p: ({ children }) => (
+                                <p className="text-base leading-relaxed mb-4" style={{ color: COLORS.grisTexto }}>{children}</p>
+                              ),
+                              ul: ({ children }) => (
+                                <ul className="list-disc list-inside mb-4 space-y-2" style={{ color: COLORS.grisTexto }}>{children}</ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="list-decimal list-inside mb-4 space-y-2" style={{ color: COLORS.grisTexto }}>{children}</ol>
+                              ),
+                              li: ({ children }) => (
+                                <li className="text-base leading-relaxed">{children}</li>
+                              ),
+                              strong: ({ children }) => (
+                                <strong className="font-bold" style={{ color: COLORS.azulInstitucional }}>{children}</strong>
+                              ),
+                              code: ({ children }) => (
+                                <code className="px-2 py-1 rounded text-sm font-mono" style={{ backgroundColor: '#F3F4F6', color: COLORS.verdeMedico }}>{children}</code>
+                              ),
+                              blockquote: ({ children }) => (
+                                <blockquote className="border-l-4 pl-4 italic my-4" style={{ borderColor: COLORS.verdeMedico, color: COLORS.grisTexto }}>{children}</blockquote>
+                              ),
+                            }}
+                          >
+                            {selectedDeliverable.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        // Render simulated output with custom parsing
+                        <>
+                          {selectedDeliverable.content.split('\n\n').map((paragraph, idx) => {
+                            // Check if it's a header-like line
+                            if (paragraph.startsWith('═══') || paragraph.includes('═══')) {
+                              const title = paragraph.replace(/═/g, '').trim();
+                              return (
+                                <h3 key={idx} className="text-xl font-bold mt-6 mb-4 flex items-center gap-2" style={{ color: COLORS.azulInstitucional }}>
+                                  <div className="w-1 h-6 rounded-full" style={{ backgroundColor: COLORS.verdeMedico }} />
+                                  {title}
+                                </h3>
+                              );
+                            }
+                            // Check if it starts with emoji
+                            if (/^[👥💊⚖️🎯⏱️✅❌📊📚📋🔍📎📄🟢🟡⭐💪🔬🎲👁️📝🛡️📈🌳🔤💾🔀🏗️🚀🔗📖🔎⚠️✨🔬✓🌎]/.test(paragraph)) {
+                              return (
+                                <div key={idx} className="mb-4 p-4 rounded-lg border" style={{ borderColor: COLORS.grisClaro, backgroundColor: '#F9FAFB' }}>
+                                  <p className="text-base leading-relaxed whitespace-pre-wrap" style={{ color: COLORS.grisTexto }}>
+                                    {paragraph}
+                                  </p>
+                                </div>
+                              );
+                            }
+                            // Regular paragraph
+                            return (
+                              <p key={idx} className="text-base leading-relaxed mb-4 whitespace-pre-wrap" style={{ color: COLORS.grisTexto }}>
                                 {paragraph}
                               </p>
-                            </div>
-                          );
-                        }
-                        // Regular paragraph
-                        return (
-                          <p key={idx} className="text-base leading-relaxed mb-4 whitespace-pre-wrap" style={{ color: COLORS.grisTexto }}>
-                            {paragraph}
-                          </p>
-                        );
-                      })}
+                            );
+                          })}
+                        </>
+                      )}
                     </div>
                   </div>
 
