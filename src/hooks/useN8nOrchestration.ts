@@ -127,8 +127,12 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
     }
   }, [processRecord]);
 
-  // ── Subscribe to Realtime with reconnection ──
-  const subscribe = useCallback((pid: string): Promise<void> => {
+  // ── Reconnect with exponential backoff (ref-based to avoid circular deps) ──
+  const attemptReconnectRef = useRef<(pid: string) => Promise<void>>();
+
+  const subscribeRef = useRef<(pid: string) => Promise<void>>();
+
+  subscribeRef.current = (pid: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       const channelName = `agent_outputs_${pid}`;
       console.log(`[n8n-Realtime] SUBSCRIBE creating channel=${channelName} t=${elapsed()}`);
@@ -159,7 +163,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
             case 'CHANNEL_ERROR':
             case 'CLOSED':
               console.warn(`[n8n-Realtime] Channel ${status} — attempting reconnect t=${elapsed()}`);
-              attemptReconnect(pid).catch(() => reject(new Error(`Channel ${status} after max retries`)));
+              attemptReconnectRef.current?.(pid).catch(() => reject(new Error(`Channel ${status} after max retries`)));
               break;
             case 'TIMED_OUT':
               console.error(`[n8n-Realtime] SUBSCRIBE TIMED_OUT t=${elapsed()}`);
@@ -170,10 +174,9 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
 
       setTimeout(() => reject(new Error('Subscription timeout (60s)')), 60000);
     });
-  }, [processRecord]);
+  };
 
-  // ── Reconnect with exponential backoff ──
-  const attemptReconnect = useCallback(async (pid: string) => {
+  attemptReconnectRef.current = async (pid: string) => {
     if (reconnectAttemptsRef.current >= RECONNECT_MAX_ATTEMPTS) {
       console.error(`[n8n-Realtime] RECONNECT failed after ${RECONNECT_MAX_ATTEMPTS} attempts t=${elapsed()}`);
       setConnectionStatus('fallback');
@@ -190,12 +193,12 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
 
     await new Promise(r => setTimeout(r, backoff));
     try {
-      await subscribe(pid);
+      await subscribeRef.current?.(pid);
       console.log(`[n8n-Realtime] RECONNECT success on attempt ${reconnectAttemptsRef.current} t=${elapsed()}`);
     } catch {
-      await attemptReconnect(pid);
+      await attemptReconnectRef.current?.(pid);
     }
-  }, [subscribe]);
+  };
 
   // ── Main orchestration entry point ──
   const startOrchestration = async (title: string, researchQuestion: string): Promise<{ projectId: string | null; success: boolean }> => {
@@ -214,7 +217,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
 
     try {
       // 1. Subscribe
-      await subscribe(newProjectId);
+      await subscribeRef.current?.(newProjectId);
 
       // 2. Initial sync
       await fetchExistingOutputs(newProjectId);
