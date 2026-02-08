@@ -10,12 +10,11 @@ const corsHeaders = {
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 
-console.log('Environment check:', {
-  hasOpenAI: !!OPENAI_API_KEY,
-  hasSupabaseUrl: !!SUPABASE_URL,
-  hasSupabaseKey: !!SUPABASE_SERVICE_ROLE_KEY
-});
+// Validation helpers
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_MESSAGE_LENGTH = 5000;
 
 serve(async (req) => {
   const { headers } = req;
@@ -27,11 +26,11 @@ serve(async (req) => {
 
   const { socket, response } = Deno.upgradeWebSocket(req);
   
-  // Initialize Supabase client
   const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
   
   let conversationId: string | null = null;
   let userId: string | null = null;
+  let authenticated = false;
 
   socket.onopen = () => {
     console.log("WebSocket connection established");
@@ -45,84 +44,88 @@ serve(async (req) => {
   socket.onmessage = async (event) => {
     try {
       const data = JSON.parse(event.data);
-      console.log("Received message:", data);
 
       switch (data.type) {
-        case 'auth':
-          userId = data.userId;
-          conversationId = data.conversationId;
+        case 'auth': {
+          // Validate session token instead of trusting client-supplied userId
+          const sessionToken = data.sessionToken || data.token;
+          if (!sessionToken || typeof sessionToken !== 'string') {
+            socket.send(JSON.stringify({ type: 'error', message: 'Session token required' }));
+            return;
+          }
+
+          const supabaseAuth = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
+          const { data: userData, error: authError } = await supabaseAuth.auth.getUser(sessionToken);
+          
+          if (authError || !userData?.user) {
+            socket.send(JSON.stringify({ type: 'error', message: 'Invalid session' }));
+            socket.close();
+            return;
+          }
+
+          userId = userData.user.id;
+          authenticated = true;
+          
+          // Validate optional conversationId
+          if (data.conversationId && typeof data.conversationId === 'string' && UUID_REGEX.test(data.conversationId)) {
+            conversationId = data.conversationId;
+          }
+
           socket.send(JSON.stringify({ 
             type: 'auth_success', 
             message: 'Autenticación exitosa' 
           }));
           break;
+        }
 
-        case 'chat_message':
-          console.log('Processing chat message from user:', userId);
-          
-          if (!userId) {
-            console.error('No user ID provided for chat message');
-            socket.send(JSON.stringify({ 
-              type: 'error', 
-              message: 'Authentication required - please refresh and try again' 
-            }));
+        case 'chat_message': {
+          if (!authenticated || !userId) {
+            socket.send(JSON.stringify({ type: 'error', message: 'Authentication required' }));
             return;
           }
+
+          // Validate message
+          if (typeof data.message !== 'string' || data.message.trim().length === 0) {
+            socket.send(JSON.stringify({ type: 'error', message: 'Message is required' }));
+            return;
+          }
+
+          if (data.message.length > MAX_MESSAGE_LENGTH) {
+            socket.send(JSON.stringify({ type: 'error', message: `Message too long (max ${MAX_MESSAGE_LENGTH} chars)` }));
+            return;
+          }
+
+          const message = data.message.trim();
 
           if (!OPENAI_API_KEY) {
-            console.error('OpenAI API key not configured');
-            socket.send(JSON.stringify({ 
-              type: 'error', 
-              message: 'AI service temporarily unavailable' 
-            }));
+            socket.send(JSON.stringify({ type: 'error', message: 'AI service temporarily unavailable' }));
             return;
           }
 
-          // Send typing indicator
-          socket.send(JSON.stringify({ 
-            type: 'typing', 
-            message: 'Dr. Sofia is analyzing your case...' 
-          }));
-
-          console.log('Creating or getting conversation for user:', userId);
+          socket.send(JSON.stringify({ type: 'typing', message: 'Dr. Sofia is analyzing your case...' }));
 
           // Create or get conversation
           if (!conversationId) {
             const { data: conversation, error: convError } = await supabase
               .from('conversations')
-              .insert({
-                user_id: userId,
-                agent_type: 'sofia',
-                title: 'Consulta con Dra. Sofía'
-              })
+              .insert({ user_id: userId, agent_type: 'sofia', title: 'Consulta con Dra. Sofía' })
               .select()
               .single();
 
             if (convError) {
-              console.error('Error creating conversation:', convError);
-              socket.send(JSON.stringify({ 
-                type: 'error', 
-                message: 'Failed to initialize conversation - please try again' 
-              }));
+              socket.send(JSON.stringify({ type: 'error', message: 'Failed to initialize conversation' }));
               return;
             }
-            console.log('Created new conversation:', conversation.id);
             conversationId = conversation.id;
           }
 
           // Save user message
-          const { error: userMsgError } = await supabase
-            .from('messages')
-            .insert({
-              conversation_id: conversationId,
-              role: 'user',
-              content: data.message,
-              message_type: 'text'
-            });
-
-          if (userMsgError) {
-            console.error('Error saving user message:', userMsgError);
-          }
+          await supabase.from('messages').insert({
+            conversation_id: conversationId,
+            role: 'user',
+            content: message,
+            message_type: 'text'
+          });
 
           const systemPrompt = `You are Dr. Sofia Hernández, MD, PhD, a world-renowned interventional cardiologist with over 20 years of experience in cardiovascular diagnostics, specializing in aortic pathologies.
 
@@ -181,21 +184,14 @@ When providing a diagnosis, use this clinical format:
 
 CLINICAL GUIDELINES:
 - Never replace in-person clinical evaluation
-- Always recommend urgent medical attention for alarm symptoms (acute chest pain, syncope, severe dyspnea)
+- Always recommend urgent medical attention for alarm symptoms
 - Provide evidence-based medical education
 - Maintain professional but compassionate tone
-- Use NYHA classification for heart failure symptoms
-- Apply ESC/AHA criteria for acute coronary syndromes
-- Consider cardiovascular risk factors (diabetes, hypertension, dyslipidemia, smoking, family history)
 - Reference current clinical guidelines (ESC, AHA/ACC, ASE)
 
-MEDICAL CONTEXT: Standard cardiovascular consultation
+Respond in English as Dr. Sofia Hernández, MD, PhD.`;
 
-Respond in English as Dr. Sofia Hernández, MD, PhD, with the clinical precision of a specialist and the empathy of a physician committed to patient care.`;
-
-          console.log('Calling OpenAI API for medical consultation...');
-          
-          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${OPENAI_API_KEY}`,
@@ -205,7 +201,7 @@ Respond in English as Dr. Sofia Hernández, MD, PhD, with the clinical precision
               model: 'gpt-4o',
               messages: [
                 { role: 'system', content: systemPrompt },
-                { role: 'user', content: data.message }
+                { role: 'user', content: message }
               ],
               max_tokens: 1500,
               temperature: 0.7,
@@ -213,27 +209,17 @@ Respond in English as Dr. Sofia Hernández, MD, PhD, with the clinical precision
             }),
           });
 
-          if (!response.ok) {
-            const errorData = await response.text();
-            console.error('OpenAI API error:', response.status, errorData);
-            socket.send(JSON.stringify({ 
-              type: 'error', 
-              message: 'AI consultation temporarily unavailable - please try again in a moment' 
-            }));
+          if (!aiResponse.ok) {
+            console.error('OpenAI API error:', aiResponse.status);
+            socket.send(JSON.stringify({ type: 'error', message: 'AI consultation temporarily unavailable' }));
             return;
           }
 
-          // Stream response
-          const reader = response.body?.getReader();
+          const reader = aiResponse.body?.getReader();
           const decoder = new TextDecoder();
           let fullResponse = '';
 
-          socket.send(JSON.stringify({ 
-            type: 'response_start', 
-            message: 'Dr. Sofia is providing her medical analysis...' 
-          }));
-
-          console.log('Streaming OpenAI response...');
+          socket.send(JSON.stringify({ type: 'response_start', message: 'Dr. Sofia is providing her medical analysis...' }));
 
           while (reader) {
             const { done, value } = await reader.read();
@@ -244,76 +230,51 @@ Respond in English as Dr. Sofia Hernández, MD, PhD, with the clinical precision
 
             for (const line of lines) {
               if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') break;
+                const lineData = line.slice(6);
+                if (lineData === '[DONE]') break;
 
                 try {
-                  const parsed = JSON.parse(data);
+                  const parsed = JSON.parse(lineData);
                   const content = parsed.choices?.[0]?.delta?.content;
                   if (content) {
                     fullResponse += content;
-                    socket.send(JSON.stringify({ 
-                      type: 'response_chunk', 
-                      content: content,
-                      fullResponse: fullResponse
-                    }));
+                    socket.send(JSON.stringify({ type: 'response_chunk', content, fullResponse }));
                   }
-                } catch (e) {
+                } catch (_e) {
                   // Skip malformed JSON
                 }
               }
             }
           }
 
-          // Save assistant message
           if (fullResponse) {
-            console.log('Saving assistant response to database...');
-            const { error: assistantMsgError } = await supabase
-              .from('messages')
-              .insert({
-                conversation_id: conversationId,
-                role: 'assistant',
-                content: fullResponse,
-                message_type: 'text'
-              });
-
-            if (assistantMsgError) {
-              console.error('Error saving assistant message:', assistantMsgError);
-            } else {
-              console.log('Assistant message saved successfully');
-            }
+            await supabase.from('messages').insert({
+              conversation_id: conversationId,
+              role: 'assistant',
+              content: fullResponse,
+              message_type: 'text'
+            });
           }
 
-          console.log('Medical consultation completed successfully');
           socket.send(JSON.stringify({ 
             type: 'response_complete',
-            conversationId: conversationId,
-            message: 'Medical analysis completed - Dr. Sofia is ready for your next question'
+            conversationId,
+            message: 'Medical analysis completed'
           }));
           break;
+        }
 
         default:
-          socket.send(JSON.stringify({ 
-            type: 'error', 
-            message: 'Tipo de mensaje no reconocido' 
-          }));
+          socket.send(JSON.stringify({ type: 'error', message: 'Unknown message type' }));
       }
     } catch (error) {
       console.error('WebSocket error:', error);
-      socket.send(JSON.stringify({ 
-        type: 'error', 
-        message: 'Error interno del servidor' 
-      }));
+      socket.send(JSON.stringify({ type: 'error', message: 'Internal server error' }));
     }
   };
 
-  socket.onclose = () => {
-    console.log("WebSocket connection closed");
-  };
-
-  socket.onerror = (error) => {
-    console.error("WebSocket error:", error);
-  };
+  socket.onclose = () => { console.log("WebSocket connection closed"); };
+  socket.onerror = (error) => { console.error("WebSocket error:", error); };
 
   return response;
 });

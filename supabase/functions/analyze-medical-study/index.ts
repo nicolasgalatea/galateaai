@@ -9,7 +9,36 @@ const corsHeaders = {
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+// Validation
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB base64
+const ALLOWED_STUDY_TYPES = ['Ecocardiograma', 'Radiografía', 'Tomografía', 'Resonancia', 'Estudio de imagen', 'ECG', 'Holter', 'Ergometría'];
+
+function validateInput(body: unknown) {
+  if (!body || typeof body !== 'object') throw new Error('Invalid request body');
+  const { imageBase64, studyType, patientInfo, userId } = body as Record<string, unknown>;
+
+  if (typeof imageBase64 !== 'string' || imageBase64.length === 0) throw new Error('imageBase64 is required');
+  if (imageBase64.length > MAX_IMAGE_SIZE) throw new Error('Image too large (max 10MB)');
+  if (typeof userId !== 'string' || !UUID_REGEX.test(userId)) throw new Error('Invalid userId');
+  
+  const validStudyType = typeof studyType === 'string' && ALLOWED_STUDY_TYPES.includes(studyType)
+    ? studyType : 'Estudio de imagen';
+
+  // Sanitize patientInfo - only allow simple string values
+  let sanitizedPatientInfo: Record<string, string> | undefined;
+  if (patientInfo && typeof patientInfo === 'object') {
+    sanitizedPatientInfo = {};
+    for (const [key, val] of Object.entries(patientInfo as Record<string, unknown>)) {
+      if (typeof key === 'string' && typeof val === 'string' && key.length <= 50 && val.length <= 200) {
+        sanitizedPatientInfo[key.slice(0, 50)] = val.slice(0, 200);
+      }
+    }
+  }
+
+  return { imageBase64, studyType: validStudyType, patientInfo: sanitizedPatientInfo, userId };
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,20 +46,31 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, studyType, patientInfo, userId } = await req.json();
+    // JWT Authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    }
+
+    const supabaseAuth = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    }
+
+    const { imageBase64, studyType, patientInfo } = validateInput(await req.json());
     
-    console.log('Medical study analysis request:', { studyType, patientInfo });
+    console.log('Medical study analysis request:', { studyType, hasPatientInfo: !!patientInfo });
 
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Prepare specialized prompt based on study type
     let analysisPrompt = `Eres la Dra. Sofía, cardióloga especialista con más de 20 años de experiencia. Analiza esta imagen médica cardiovascular con el máximo rigor científico.
 
 INFORMACIÓN DEL PACIENTE:
 ${patientInfo ? JSON.stringify(patientInfo, null, 2) : 'No proporcionada'}
 
-TIPO DE ESTUDIO: ${studyType || 'No especificado'}
+TIPO DE ESTUDIO: ${studyType}
 
 INSTRUCCIONES DE ANÁLISIS:
 1. Describe detalladamente lo que observas en la imagen
@@ -62,7 +102,6 @@ ANÁLISIS ECOCARDIOGRÁFICO ESPECÍFICO:
 - Examina especialmente la aorta y sus segmentos`;
     }
 
-    // Call OpenAI Vision API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -75,17 +114,8 @@ ANÁLISIS ECOCARDIOGRÁFICO ESPECÍFICO:
           {
             role: 'user',
             content: [
-              {
-                type: 'text',
-                text: analysisPrompt
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${imageBase64}`,
-                  detail: 'high'
-                }
-              }
+              { type: 'text', text: analysisPrompt },
+              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: 'high' } }
             ]
           }
         ],
@@ -95,29 +125,22 @@ ANÁLISIS ECOCARDIOGRÁFICO ESPECÍFICO:
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI Vision API error:', errorText);
-      throw new Error(`OpenAI Vision API error: ${response.status}`);
+      console.error('OpenAI Vision API error:', response.status);
+      throw new Error('AI service temporarily unavailable');
     }
 
     const data = await response.json();
     const analysis = data.choices[0].message.content;
 
-    console.log('Medical analysis completed, length:', analysis.length);
-
-    // Extract key findings for structured storage
-    const analysisResult = {
-      fullAnalysis: analysis,
-      timestamp: new Date().toISOString(),
-      studyType: studyType,
-      patientInfo: patientInfo,
-      aiProvider: 'gpt-4o',
-      analysisVersion: '1.0'
-    };
-
     return new Response(JSON.stringify({
-      analysis: analysis,
-      analysisResult: analysisResult,
+      analysis,
+      analysisResult: {
+        fullAnalysis: analysis,
+        timestamp: new Date().toISOString(),
+        studyType,
+        aiProvider: 'gpt-4o',
+        analysisVersion: '1.0'
+      },
       success: true
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -126,7 +149,7 @@ ANÁLISIS ECOCARDIOGRÁFICO ESPECÍFICO:
   } catch (error) {
     console.error('Error in analyze-medical-study function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: 'An error occurred processing your request',
       success: false 
     }), {
       status: 500,

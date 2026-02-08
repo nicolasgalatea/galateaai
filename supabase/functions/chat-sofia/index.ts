@@ -11,30 +11,80 @@ const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Input validation helpers
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_MESSAGE_LENGTH = 5000;
+const MAX_CONTEXT_LENGTH = 2000;
+
+function validateInput(body: unknown): { message: string; conversationId?: string; userId: string; medicalContext?: string } {
+  if (!body || typeof body !== 'object') throw new Error('Invalid request body');
+  const { message, conversationId, userId, medicalContext } = body as Record<string, unknown>;
+
+  if (typeof message !== 'string' || message.trim().length === 0) throw new Error('Message is required');
+  if (message.length > MAX_MESSAGE_LENGTH) throw new Error(`Message too long (max ${MAX_MESSAGE_LENGTH} chars)`);
+  if (typeof userId !== 'string' || !UUID_REGEX.test(userId)) throw new Error('Invalid userId format');
+  if (conversationId !== undefined && conversationId !== null && (typeof conversationId !== 'string' || !UUID_REGEX.test(conversationId))) throw new Error('Invalid conversationId format');
+  if (medicalContext !== undefined && medicalContext !== null) {
+    if (typeof medicalContext !== 'string') throw new Error('Invalid medicalContext');
+    if (medicalContext.length > MAX_CONTEXT_LENGTH) throw new Error(`medicalContext too long (max ${MAX_CONTEXT_LENGTH} chars)`);
+  }
+
+  return {
+    message: message.trim(),
+    userId,
+    conversationId: conversationId as string | undefined,
+    medicalContext: typeof medicalContext === 'string' ? medicalContext.slice(0, MAX_CONTEXT_LENGTH) : undefined,
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { message, conversationId, userId, medicalContext } = await req.json();
-    
-    console.log('Chat Sofia request:', { message, conversationId, userId });
+    // JWT Authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    }
 
-    // Initialize Supabase client
+    const supabaseAuth = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    }
+    const authenticatedUserId = claimsData.claims.sub as string;
+
+    // Validate input
+    const { message, conversationId, medicalContext } = validateInput(await req.json());
+
+    // Use authenticated userId, not client-supplied
+    const userId = authenticatedUserId;
+
+    console.log('Chat Sofia request:', { messageLength: message.length, conversationId, userId });
+
+    // Initialize Supabase client with service role for DB operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     let conversation;
     let messages = [];
 
     if (conversationId) {
-      // Load existing conversation
+      // Load existing conversation - verify ownership
       const { data: conv } = await supabase
         .from('conversations')
         .select('*')
         .eq('id', conversationId)
+        .eq('user_id', userId)
         .single();
       
+      if (!conv) {
+        return new Response(JSON.stringify({ error: 'Conversation not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       conversation = conv;
 
       // Load conversation history
@@ -63,7 +113,6 @@ serve(async (req) => {
       }
 
       conversation = newConv;
-      console.log('Created new conversation:', conversation.id);
     }
 
     // Save user message
@@ -157,8 +206,6 @@ Responde siempre en español y como la Dra. Sofía Hernández, con la precisión
       { role: 'user', content: message }
     ];
 
-    console.log('Sending to OpenAI with', openAIMessages.length, 'messages');
-
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -176,14 +223,12 @@ Responde siempre en español y como la Dra. Sofía Hernández, con la precisión
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('OpenAI API error:', response.status);
+      throw new Error('AI service temporarily unavailable');
     }
 
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
-
-    console.log('OpenAI response received, length:', aiResponse.length);
 
     // Save AI response
     await supabase
@@ -206,7 +251,7 @@ Responde siempre en español y como la Dra. Sofía Hernández, con la precisión
   } catch (error) {
     console.error('Error in chat-sofia function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: 'An error occurred processing your request',
       success: false 
     }), {
       status: 500,
