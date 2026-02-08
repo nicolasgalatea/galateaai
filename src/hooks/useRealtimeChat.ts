@@ -54,18 +54,22 @@ export const useRealtimeChat = (): UseRealtimeChatReturn => {
       console.log('Connecting to WebSocket:', wsUrl);
       socketRef.current = new WebSocket(wsUrl);
 
-      socketRef.current.onopen = () => {
+      socketRef.current.onopen = async () => {
         console.log('WebSocket connected successfully');
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
         
-        // Authenticate
+        // Get session token for secure authentication
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Authenticate with session token (not client-supplied userId)
         const authMessage = {
           type: 'auth',
-          userId: user.id,
+          sessionToken: session?.access_token,
           conversationId: conversationId
         };
-        console.log('Sending authentication:', authMessage);
+        console.log('Sending authentication with session token');
         socketRef.current?.send(JSON.stringify(authMessage));
         
         toast({
