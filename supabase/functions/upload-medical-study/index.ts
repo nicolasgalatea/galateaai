@@ -9,31 +9,68 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Validation
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SAFE_FILENAME_REGEX = /^[a-zA-Z0-9_.\-\s]+$/;
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB base64
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/dicom', 'image/dicom'];
+
+function validateInput(body: unknown) {
+  if (!body || typeof body !== 'object') throw new Error('Invalid request body');
+  const { fileData, fileName, fileType, userId, medicalCaseId } = body as Record<string, unknown>;
+
+  if (typeof fileData !== 'string' || fileData.length === 0) throw new Error('fileData is required');
+  if (fileData.length > MAX_FILE_SIZE) throw new Error('File too large (max 50MB)');
+  if (typeof fileName !== 'string' || fileName.length === 0 || fileName.length > 255) throw new Error('Invalid fileName');
+  
+  // Sanitize filename - prevent path traversal
+  const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9_.\-]/g, '_');
+  if (sanitizedFileName.includes('..') || sanitizedFileName.startsWith('.')) throw new Error('Invalid fileName');
+  
+  if (typeof fileType !== 'string' || !ALLOWED_TYPES.includes(fileType)) throw new Error('Invalid fileType');
+  if (typeof userId !== 'string' || !UUID_REGEX.test(userId)) throw new Error('Invalid userId');
+  if (medicalCaseId !== undefined && medicalCaseId !== null && (typeof medicalCaseId !== 'string' || !UUID_REGEX.test(medicalCaseId))) throw new Error('Invalid medicalCaseId');
+
+  return { fileData, fileName: sanitizedFileName, fileType, userId, medicalCaseId: medicalCaseId as string | undefined };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { fileData, fileName, fileType, userId, medicalCaseId } = await req.json();
-    
-    console.log('Upload request:', { fileName, fileType, userId, medicalCaseId });
+    // JWT Authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    }
 
-    // Initialize Supabase client
+    const supabaseAuth = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    }
+    const authenticatedUserId = claimsData.claims.sub as string;
+
+    const { fileData, fileName, fileType, medicalCaseId } = validateInput(await req.json());
+
+    // Use authenticated userId
+    const userId = authenticatedUserId;
+
+    console.log('Upload request:', { fileName, fileType, userId: userId.slice(0, 8) + '...' });
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Decode base64 file data
     const binaryData = Uint8Array.from(atob(fileData), c => c.charCodeAt(0));
 
-    // Generate unique file path
     const timestamp = new Date().getTime();
-    const fileExtension = fileName.split('.').pop();
     const uniqueFileName = `${timestamp}_${fileName}`;
     const filePath = `${userId}/${uniqueFileName}`;
 
-    console.log('Uploading to path:', filePath);
-
-    // Upload file to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('medical-studies')
       .upload(filePath, binaryData, {
@@ -44,46 +81,39 @@ serve(async (req) => {
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
-      throw new Error(`Upload failed: ${uploadError.message}`);
+      throw new Error('Upload failed');
     }
 
-    console.log('File uploaded successfully:', uploadData.path);
-
-    // Get public URL (even though bucket is private, we need the path)
     const { data: urlData } = supabase.storage
       .from('medical-studies')
       .getPublicUrl(filePath);
 
     const fileUrl = urlData.publicUrl;
 
-    // If medicalCaseId provided, update the medical case
     if (medicalCaseId) {
-      // Get current study files
       const { data: caseData } = await supabase
         .from('medical_cases')
         .select('study_files')
         .eq('id', medicalCaseId)
+        .eq('user_id', userId)
         .single();
 
-      const currentFiles = caseData?.study_files || [];
-      const updatedFiles = [...currentFiles, fileUrl];
+      if (caseData) {
+        const currentFiles = caseData.study_files || [];
+        const updatedFiles = [...currentFiles, fileUrl];
 
-      // Update medical case with new file
-      const { error: updateError } = await supabase
-        .from('medical_cases')
-        .update({ study_files: updatedFiles })
-        .eq('id', medicalCaseId);
-
-      if (updateError) {
-        console.error('Error updating medical case:', updateError);
-        // Don't throw error here, file was uploaded successfully
+        await supabase
+          .from('medical_cases')
+          .update({ study_files: updatedFiles })
+          .eq('id', medicalCaseId)
+          .eq('user_id', userId);
       }
     }
 
     return new Response(JSON.stringify({
       success: true,
-      fileUrl: fileUrl,
-      filePath: filePath,
+      fileUrl,
+      filePath,
       fileName: uniqueFileName,
       message: 'File uploaded successfully'
     }), {
@@ -93,7 +123,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in upload-medical-study function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: 'An error occurred processing your request',
       success: false 
     }), {
       status: 500,
