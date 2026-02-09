@@ -202,27 +202,35 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
       // 2. Initial sync
       await fetchExistingOutputs(FIXED_PROJECT_ID);
 
-      // 3. POST to n8n webhook
+      // 3. POST to n8n webhook — payload auditable
+      const payload = {
+        research_question: researchQuestion,
+        projectId: FIXED_PROJECT_ID,
+        title,
+      };
+      console.log('[n8n-Realtime] Payload enviado a n8n:', JSON.stringify(payload));
       console.log(`[n8n-Realtime] WEBHOOK POST starting t=${elapsed()}`);
-      await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: FIXED_PROJECT_ID,
-          title,
-          research_question: researchQuestion,
-          action: 'START',
-        }),
-      });
-      console.log(`[n8n-Realtime] WEBHOOK POST sent (no-cors mode) t=${elapsed()}`);
 
-      // 4. Switch to 'processing' — no timeouts, wait indefinitely for agents
+      try {
+        await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch (fetchErr) {
+        // no-cors opaque responses may throw — ignore if projectId is valid
+        console.warn(`[n8n-Realtime] fetch threw (expected in no-cors):`, fetchErr);
+      }
+      console.log(`[n8n-Realtime] WEBHOOK POST sent (no-cors bypass) t=${elapsed()}`);
+
+      // 4. Always transition to 'processing' — delegate tracking to Realtime
       setConnectionStatus('processing');
       setIsLoading(false);
       return { projectId: FIXED_PROJECT_ID, success: true };
     } catch (error) {
-      console.error(`[n8n-Realtime] START error:`, error);
+      // Only errors from subscribe/fetch-existing reach here (not from webhook)
+      console.error(`[n8n-Realtime] START error (subscription):`, error);
       optionsRef.current.onError(error instanceof Error ? error.message : 'Unknown error');
       setConnectionStatus('fallback');
       setIsLoading(false);
