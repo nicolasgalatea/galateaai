@@ -56,8 +56,9 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
   const elapsed = () => `${((Date.now() - startTimeRef.current) / 1000).toFixed(1)}s`;
 
   // ── Centralized record processor with deduplication ──
-  const processRecord = useCallback((record: AgentExecution) => {
-    if (processedIdsRef.current.has(record.id)) {
+  const processRecord = useCallback((record: AgentExecution, isUpdate = false) => {
+    // For INSERTs, skip duplicates. For UPDATEs, always reprocess.
+    if (!isUpdate && processedIdsRef.current.has(record.id)) {
       console.log(`[n8n-Realtime] SKIP duplicate id=${record.id} agent=${record.agent_name} t=${elapsed()}`);
       return;
     }
@@ -70,8 +71,9 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
     }
 
     const outputText = record.content ?? record.output_markdown ?? JSON.stringify(record.output_result) ?? '';
-    console.log(`[n8n-Realtime] PROCESSED agent="${record.agent_name}" id=${record.id} status=${record.status} t=${elapsed()}`);
-    optionsRef.current.onAgentOutput(record.agent_name, outputText, record.status);
+    const effectiveStatus = record.status || (outputText ? 'completed' : 'in_progress');
+    console.log(`[n8n-Realtime] PROCESSED agent="${record.agent_name}" id=${record.id} status=${effectiveStatus} content-len=${outputText?.length ?? 0} t=${elapsed()}`);
+    optionsRef.current.onAgentOutput(record.agent_name, outputText, effectiveStatus);
   }, []);
 
   // ── Cleanup all resources ──
@@ -131,6 +133,23 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
           (payload) => {
             console.log(`[n8n-Realtime] INSERT received agent="${(payload.new as AgentExecution).agent_name}" t=${elapsed()}`);
             processRecord(payload.new as AgentExecution);
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'agent_executions',
+            filter: `project_id=eq.${pid}`,
+          },
+          (payload) => {
+            const record = payload.new as AgentExecution;
+            // Re-process on UPDATE when content becomes available
+            if (record.content && record.content.trim().length > 0) {
+              console.log(`[n8n-Realtime] UPDATE received agent="${record.agent_name}" content-len=${record.content.length} t=${elapsed()}`);
+              processRecord(record, true);
+            }
           }
         )
         .subscribe((status) => {
