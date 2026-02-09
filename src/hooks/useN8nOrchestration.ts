@@ -204,6 +204,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
 
       // 3. POST to n8n webhook — payload auditable
       const payload = {
+        action: 'START',
         research_question: researchQuestion,
         projectId: FIXED_PROJECT_ID,
         title,
