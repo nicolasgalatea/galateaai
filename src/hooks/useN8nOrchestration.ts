@@ -202,15 +202,14 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
       // 2. Initial sync
       await fetchExistingOutputs(FIXED_PROJECT_ID);
 
-      // 3. POST to n8n webhook — payload auditable
+      // 3. POST to n8n webhook — static payload, no complex validations
       const payload = {
         action: 'START',
-        research_question: researchQuestion,
         projectId: FIXED_PROJECT_ID,
-        title,
+        research_question: researchQuestion,
       };
+      console.log('🚀 Cohete lanzado con ID:', FIXED_PROJECT_ID);
       console.log('[n8n-Realtime] Payload enviado a n8n:', JSON.stringify(payload));
-      console.log(`[n8n-Realtime] WEBHOOK POST starting t=${elapsed()}`);
 
       try {
         await fetch(N8N_WEBHOOK_URL, {
