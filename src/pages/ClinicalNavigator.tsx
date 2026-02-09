@@ -2103,22 +2103,28 @@ export default function ClinicalNavigator() {
       const agentId = AGENT_NAME_TO_ID[agentName];
       if (!agentId || agentId > 8) return; // Solo Fase 1
 
-      console.log(`[UI] Received agent ${agentId} (${agentName}) with status: ${status}`);
+      console.log(`[UI] Received agent ${agentId} (${agentName}) status="${status}" content-length=${output?.length ?? 0}`);
       
-      if (status === 'success') {
+      // Accept both 'success' and 'completed' from backend
+      if (status === 'success' || status === 'completed') {
         updateAgent(agentId, { status: 'completed' });
-        setRealOutputs(prev => ({ ...prev, [agentId]: output }));
-        addRealDeliverable(agentId, output);
         
-        // Check if Phase 1 is complete (all 8 agents)
-        const completedCount = Object.keys(realOutputs).length + 1; // +1 for current
-        console.log(`[UI] Completed agents: ${completedCount}/8`);
-        
-        if (completedCount >= 8 && phase1CompleteResolveRef.current) {
-          phase1CompleteResolveRef.current();
-          phase1CompleteResolveRef.current = null;
+        // Only update if content is non-empty
+        if (output && output.trim().length > 0) {
+          setRealOutputs(prev => {
+            const updated = { ...prev, [agentId]: output };
+            const completedCount = Object.keys(updated).length;
+            console.log(`[UI] ✅ Agent ${agentId} completed. Total: ${completedCount}/8`);
+            
+            if (completedCount >= 8 && phase1CompleteResolveRef.current) {
+              phase1CompleteResolveRef.current();
+              phase1CompleteResolveRef.current = null;
+            }
+            return updated;
+          });
+          addRealDeliverable(agentId, output);
         }
-      } else if (status === 'processing') {
+      } else if (status === 'in_progress' || status === 'processing') {
         updateAgent(agentId, { status: 'processing' });
         setActiveAgentId(agentId);
         setCurrentExplanation({
@@ -2368,10 +2374,23 @@ export default function ClinicalNavigator() {
 
   // Start demo
   const handleStartDemo = () => {
+    // Clean start — reset all state before launching
+    setAgents(AGENTS_CONFIG.map(a => ({ id: a.id, name: a.name, description: a.description, status: 'pending' as const, output: '' })));
+    setTerminalLogs([]);
+    setDeliverables([]);
+    setActiveAgentId(null);
+    setCurrentExplanation(null);
+    setSelectedDeliverable(null);
+    setIsComplete(false);
+    setRealOutputs({});
+    setShowHumanValidationModal(false);
+    setShowProtocolReview(false);
+    n8nOrchestration.cleanup();
+
     setPhase('execution');
     hasStartedRef.current = false;
-    setRealOutputs({});
     setIsN8nMode(true); // Try n8n first
+    console.log('🧹 Interfaz limpia — esperando resultados del backend');
     setTimeout(() => {
       runOrchestration();
     }, 500);
