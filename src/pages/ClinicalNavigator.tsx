@@ -2317,14 +2317,7 @@ export default function ClinicalNavigator() {
         };
       };
 
-      // Timeout of 180 seconds (3 minutes) for all Phase 1 agents
-      setTimeout(() => {
-        if (Object.keys(realOutputs).length < 8) {
-          console.log('[UI] Phase 1 timeout - falling back to simulation');
-          handleFallbackToSimulation();
-        }
-        resolve();
-      }, 180000);
+      // No artificial timeout — wait indefinitely for all 8 agents
     });
   };
 
@@ -2551,6 +2544,13 @@ export default function ClinicalNavigator() {
               style={{ backgroundColor: '#D1FAE5', color: '#065F46' }}>
               <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: '#059669' }} />
               Conectado a Claude
+            </div>
+          )}
+          {n8nOrchestration.connectionStatus === 'processing' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
+              style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Procesando con IA... ({n8nOrchestration.getReceivedAgentsCount()}/8 agentes)
             </div>
           )}
           {n8nOrchestration.connectionStatus === 'fallback' && (
