@@ -9,16 +9,14 @@ const N8N_WEBHOOK_URL = 'https://nicolasgalatea.app.n8n.cloud/webhook/galatea-pr
 
 const externalSupabase = createClient(N8N_SUPABASE_URL, N8N_SUPABASE_ANON_KEY);
 
-// ── Industrial-grade constants ──
-const RECONNECT_MAX_ATTEMPTS = 3;
+// ── Production constants (no artificial timeouts) ──
+const RECONNECT_MAX_ATTEMPTS = 5;
 const RECONNECT_BACKOFF_MS = 2000;
-const FALLBACK_UI_TIMEOUT_MS = 60000;
-const GLOBAL_TIMEOUT_MS = 180000;
-const PER_AGENT_TIMEOUT_MS = 45000;
+const FIXED_PROJECT_ID = 'e8233417-9ddf-4453-8372-c5b6797da8aa';
 
 // AgentExecution type imported from @/types/domain
 
-export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'fallback';
+export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'processing' | 'fallback';
 
 interface UseN8nOrchestrationOptions {
   onAgentOutput: (agentName: string, output: string, status: string) => void;
@@ -49,9 +47,6 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
   const processedIdsRef = useRef<Set<string>>(new Set());
   const receivedAgentsRef = useRef<Set<number>>(new Set());
   const reconnectAttemptsRef = useRef(0);
-  const fallbackUITimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const globalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const perAgentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
@@ -77,12 +72,6 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
     const outputText = record.output_markdown ?? JSON.stringify(record.output_result) ?? '';
     console.log(`[n8n-Realtime] PROCESSED agent="${record.agent_name}" id=${record.id} status=${record.status} t=${elapsed()}`);
     optionsRef.current.onAgentOutput(record.agent_name, outputText, record.status);
-
-    // Reset per-agent timeout
-    if (perAgentTimeoutRef.current) clearTimeout(perAgentTimeoutRef.current);
-    perAgentTimeoutRef.current = setTimeout(() => {
-      console.log(`[n8n-Realtime] WARNING no new agent output in ${PER_AGENT_TIMEOUT_MS / 1000}s t=${elapsed()}`);
-    }, PER_AGENT_TIMEOUT_MS);
   }, []);
 
   // ── Cleanup all resources ──
@@ -92,9 +81,6 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
       externalSupabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
-    [fallbackUITimeoutRef, globalTimeoutRef, perAgentTimeoutRef].forEach(ref => {
-      if (ref.current) { clearTimeout(ref.current); ref.current = null; }
-    });
     processedIdsRef.current = new Set();
     receivedAgentsRef.current = new Set();
     reconnectAttemptsRef.current = 0;
@@ -202,53 +188,39 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
     setConnectionStatus('connecting');
     startTimeRef.current = Date.now();
 
-    const newProjectId = crypto.randomUUID();
-    setProjectId(newProjectId);
+    setProjectId(FIXED_PROJECT_ID);
     processedIdsRef.current = new Set();
     receivedAgentsRef.current = new Set();
     reconnectAttemptsRef.current = 0;
 
-    console.log(`[n8n-Realtime] START project=${newProjectId} t=0.0s`);
+    console.log(`[n8n-Realtime] START project=${FIXED_PROJECT_ID} t=0.0s`);
 
     try {
       // 1. Subscribe
-      await subscribeRef.current?.(newProjectId);
+      await subscribeRef.current?.(FIXED_PROJECT_ID);
 
       // 2. Initial sync
-      await fetchExistingOutputs(newProjectId);
+      await fetchExistingOutputs(FIXED_PROJECT_ID);
 
       // 3. POST to n8n webhook
       console.log(`[n8n-Realtime] WEBHOOK POST starting t=${elapsed()}`);
-      const response = await fetch(N8N_WEBHOOK_URL, {
+      await fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectId: newProjectId,
+          projectId: FIXED_PROJECT_ID,
           title,
           research_question: researchQuestion,
           action: 'START',
         }),
       });
-      // With no-cors, response is opaque — we can't check status, so we trust it was sent
       console.log(`[n8n-Realtime] WEBHOOK POST sent (no-cors mode) t=${elapsed()}`);
 
-      // 4. Fallback UI timeout (60s) — non-blocking
-      fallbackUITimeoutRef.current = setTimeout(() => {
-        console.log(`[n8n-Realtime] FALLBACK triggered after ${FALLBACK_UI_TIMEOUT_MS / 1000}s — UI switching to demo t=${elapsed()}`);
-        setConnectionStatus('fallback');
-        optionsRef.current.onFallback();
-        // Subscription stays active — late outputs still processed
-      }, FALLBACK_UI_TIMEOUT_MS);
-
-      // 5. Global timeout (180s) — hard stop
-      globalTimeoutRef.current = setTimeout(() => {
-        console.log(`[n8n-Realtime] GLOBAL TIMEOUT ${GLOBAL_TIMEOUT_MS / 1000}s — closing connection t=${elapsed()}`);
-        cleanup();
-      }, GLOBAL_TIMEOUT_MS);
-
+      // 4. Switch to 'processing' — no timeouts, wait indefinitely for agents
+      setConnectionStatus('processing');
       setIsLoading(false);
-      return { projectId: newProjectId, success: true };
+      return { projectId: FIXED_PROJECT_ID, success: true };
     } catch (error) {
       console.error(`[n8n-Realtime] START error:`, error);
       optionsRef.current.onError(error instanceof Error ? error.message : 'Unknown error');
