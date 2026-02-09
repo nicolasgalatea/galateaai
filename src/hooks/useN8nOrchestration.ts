@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createClient, RealtimeChannel } from '@supabase/supabase-js';
+import type { AgentExecution } from '@/types/domain';
 
 // ── External Supabase config (n8n outputs) ──
 const N8N_SUPABASE_URL = 'https://kwmfnysjxeqhgcdperkf.supabase.co';
@@ -15,14 +16,7 @@ const FALLBACK_UI_TIMEOUT_MS = 60000;
 const GLOBAL_TIMEOUT_MS = 180000;
 const PER_AGENT_TIMEOUT_MS = 45000;
 
-interface AgentOutput {
-  id: number;
-  project_id: string;
-  agent_name: string;
-  output: string;
-  status: 'success' | 'error' | 'processing';
-  created_at: string;
-}
+// AgentExecution type imported from @/types/domain
 
 export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'fallback';
 
@@ -52,7 +46,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
   // ── Refs for sync logic & deduplication ──
   const channelRef = useRef<RealtimeChannel | null>(null);
   const optionsRef = useRef(options);
-  const processedIdsRef = useRef<Set<number>>(new Set());
+  const processedIdsRef = useRef<Set<string>>(new Set());
   const receivedAgentsRef = useRef<Set<number>>(new Set());
   const reconnectAttemptsRef = useRef(0);
   const fallbackUITimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -67,21 +61,22 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
   const elapsed = () => `${((Date.now() - startTimeRef.current) / 1000).toFixed(1)}s`;
 
   // ── Centralized record processor with deduplication ──
-  const processRecord = useCallback((record: AgentOutput) => {
+  const processRecord = useCallback((record: AgentExecution) => {
     if (processedIdsRef.current.has(record.id)) {
       console.log(`[n8n-Realtime] SKIP duplicate id=${record.id} agent=${record.agent_name} t=${elapsed()}`);
       return;
     }
     processedIdsRef.current.add(record.id);
 
-    const agentId = AGENT_NAME_TO_ID[record.agent_name];
+    const agentId = AGENT_NAME_TO_ID[record.agent_name] ?? record.agent_number;
     if (agentId) {
       receivedAgentsRef.current = new Set([...receivedAgentsRef.current, agentId]);
       setReceivedAgents(new Set(receivedAgentsRef.current));
     }
 
+    const outputText = record.output_markdown ?? JSON.stringify(record.output_result) ?? '';
     console.log(`[n8n-Realtime] PROCESSED agent="${record.agent_name}" id=${record.id} status=${record.status} t=${elapsed()}`);
-    optionsRef.current.onAgentOutput(record.agent_name, record.output, record.status);
+    optionsRef.current.onAgentOutput(record.agent_name, outputText, record.status);
 
     // Reset per-agent timeout
     if (perAgentTimeoutRef.current) clearTimeout(perAgentTimeoutRef.current);
@@ -111,7 +106,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
     console.log(`[n8n-Realtime] FETCH starting for project=${pid} t=${elapsed()}`);
     try {
       const { data, error } = await externalSupabase
-        .from('agent_outputs')
+        .from('agent_executions')
         .select('*')
         .eq('project_id', pid)
         .order('created_at', { ascending: true });
@@ -120,8 +115,8 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
         console.error(`[n8n-Realtime] FETCH error:`, error.message);
         return;
       }
-      console.log(`[n8n-Realtime] FETCH found ${data?.length ?? 0} existing outputs t=${elapsed()}`);
-      data?.forEach((r: AgentOutput) => processRecord(r));
+      console.log(`[n8n-Realtime] FETCH found ${data?.length ?? 0} existing executions t=${elapsed()}`);
+      data?.forEach((r: AgentExecution) => processRecord(r as AgentExecution));
     } catch (err) {
       console.error(`[n8n-Realtime] FETCH exception:`, err);
     }
@@ -134,7 +129,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
 
   subscribeRef.current = (pid: string): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const channelName = `agent_outputs_${pid}`;
+      const channelName = `agent_executions_${pid}`;
       console.log(`[n8n-Realtime] SUBSCRIBE creating channel=${channelName} t=${elapsed()}`);
 
       channelRef.current = externalSupabase
@@ -144,12 +139,12 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'agent_outputs',
+            table: 'agent_executions',
             filter: `project_id=eq.${pid}`,
           },
           (payload) => {
-            console.log(`[n8n-Realtime] INSERT received agent="${(payload.new as AgentOutput).agent_name}" t=${elapsed()}`);
-            processRecord(payload.new as AgentOutput);
+            console.log(`[n8n-Realtime] INSERT received agent="${(payload.new as AgentExecution).agent_name}" t=${elapsed()}`);
+            processRecord(payload.new as AgentExecution);
           }
         )
         .subscribe((status) => {
