@@ -40,6 +40,7 @@ export interface AgentExecution {
   input_payload: Record<string, unknown> | null;
   output_result: Record<string, unknown> | null;
   output_markdown: string | null;
+  content: string | null;
   started_at: string | null;
   completed_at: string | null;
   duration_ms: number | null;
