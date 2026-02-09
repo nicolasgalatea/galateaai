@@ -69,7 +69,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
       setReceivedAgents(new Set(receivedAgentsRef.current));
     }
 
-    const outputText = record.output_markdown ?? JSON.stringify(record.output_result) ?? '';
+    const outputText = record.content ?? record.output_markdown ?? JSON.stringify(record.output_result) ?? '';
     console.log(`[n8n-Realtime] PROCESSED agent="${record.agent_name}" id=${record.id} status=${record.status} t=${elapsed()}`);
     optionsRef.current.onAgentOutput(record.agent_name, outputText, record.status);
   }, []);
