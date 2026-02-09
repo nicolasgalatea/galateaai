@@ -5,7 +5,7 @@ import type { AgentExecution } from '@/types/domain';
 // ── External Supabase config (n8n outputs) ──
 const N8N_SUPABASE_URL = 'https://kwmfnysjxeqhgcdperkf.supabase.co';
 const N8N_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3bWZueXNqeGVxaGdjZHBlcmtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyMjQ3NDcsImV4cCI6MjA4MzgwMDc0N30.iAXnCyNkeSqyfkj2CIBTpfJzaQbGIvUEYxRfitvb510';
-const N8N_WEBHOOK_URL = 'https://galatea89.app.n8n.cloud/webhook/galatea-protocol-start';
+const N8N_WEBHOOK_URL = 'https://nicolasgalatea.app.n8n.cloud/webhook/galatea-protocol-start';
 
 const externalSupabase = createClient(N8N_SUPABASE_URL, N8N_SUPABASE_ANON_KEY);
 
@@ -221,6 +221,7 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
       console.log(`[n8n-Realtime] WEBHOOK POST starting t=${elapsed()}`);
       const response = await fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId: newProjectId,
@@ -229,8 +230,8 @@ export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
           action: 'START',
         }),
       });
-      if (!response.ok) throw new Error(`n8n responded ${response.status}`);
-      console.log(`[n8n-Realtime] WEBHOOK POST success t=${elapsed()}`);
+      // With no-cors, response is opaque — we can't check status, so we trust it was sent
+      console.log(`[n8n-Realtime] WEBHOOK POST sent (no-cors mode) t=${elapsed()}`);
 
       // 4. Fallback UI timeout (60s) — non-blocking
       fallbackUITimeoutRef.current = setTimeout(() => {
