@@ -15,6 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { useN8nOrchestration, AGENT_NAME_TO_ID, ConnectionStatus } from '@/hooks/useN8nOrchestration';
+import { Phase2Execution } from '@/components/terminal/Phase2Execution';
 import galateaLogo from '@/assets/galatea-logo-clean.png';
 import santaFeLogo from '@/assets/santa-fe-logo-clean.png';
 import agentAvatar from '@/assets/galatea-agent-avatar.jpg';
@@ -2053,6 +2054,10 @@ export default function ClinicalNavigator() {
   // n8n Connection state
   const [isN8nMode, setIsN8nMode] = useState(true);
   const [realOutputs, setRealOutputs] = useState<Record<number, string>>({});
+  const [phase2Active, setPhase2Active] = useState(false);
+  const [phase2CompletedAgents, setPhase2CompletedAgents] = useState<Set<number>>(new Set());
+  const [phase2Outputs, setPhase2Outputs] = useState<Record<number, string>>({});
+  const [phase2Metadata, setPhase2Metadata] = useState<Record<number, Record<string, unknown>>>({});
   const phase1CompleteResolveRef = useRef<(() => void) | null>(null);
   
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -2101,7 +2106,7 @@ export default function ClinicalNavigator() {
   const n8nOrchestration = useN8nOrchestration({
     onAgentOutput: (agentName, output, status) => {
       const agentId = AGENT_NAME_TO_ID[agentName];
-      if (!agentId || agentId > 8) return; // Solo Fase 1
+      if (!agentId) return;
 
       console.log(`[UI] Received agent ${agentId} (${agentName}) status="${status}" content-length=${output?.length ?? 0}`);
       
@@ -2111,30 +2116,54 @@ export default function ClinicalNavigator() {
         
         // Only update if content is non-empty
         if (output && output.trim().length > 0) {
-          setRealOutputs(prev => {
-            const updated = { ...prev, [agentId]: output };
-            const completedCount = Object.keys(updated).length;
-            console.log(`[UI] ✅ Agent ${agentId} completed. Total: ${completedCount}/8`);
+          if (agentId <= 8) {
+            // Phase 1
+            setRealOutputs(prev => {
+              const updated = { ...prev, [agentId]: output };
+              const completedCount = Object.keys(updated).length;
+              console.log(`[UI] ✅ Agent ${agentId} completed. Total: ${completedCount}/8`);
+              
+              if (completedCount >= 8 && phase1CompleteResolveRef.current) {
+                phase1CompleteResolveRef.current();
+                phase1CompleteResolveRef.current = null;
+              }
+              return updated;
+            });
+            addRealDeliverable(agentId, output);
+          } else {
+            // Phase 2 (agents 9-14)
+            setPhase2Outputs(prev => ({ ...prev, [agentId]: output }));
+            setPhase2CompletedAgents(prev => new Set([...prev, agentId]));
+            addRealDeliverable(agentId, output);
             
-            if (completedCount >= 8 && phase1CompleteResolveRef.current) {
-              phase1CompleteResolveRef.current();
-              phase1CompleteResolveRef.current = null;
+            // Try to parse metadata from output for Forest Plot
+            if (agentId === 13) {
+              try {
+                // Attempt to extract metadata if output contains JSON
+                const jsonMatch = output.match(/```json\n([\s\S]*?)\n```/);
+                if (jsonMatch) {
+                  const parsed = JSON.parse(jsonMatch[1]);
+                  setPhase2Metadata(prev => ({ ...prev, [agentId]: parsed }));
+                }
+              } catch {
+                // Use default Forest Plot data
+              }
             }
-            return updated;
-          });
-          addRealDeliverable(agentId, output);
+          }
         }
       } else if (status === 'in_progress' || status === 'processing') {
         updateAgent(agentId, { status: 'processing' });
         setActiveAgentId(agentId);
-        setCurrentExplanation({
-          doing: AGENTS_CONFIG[agentId - 1]?.explanation.doing || 'Procesando...',
-          why: AGENTS_CONFIG[agentId - 1]?.explanation.why || '',
-          estimatedTime: AGENTS_CONFIG[agentId - 1]?.explanation.estimatedTime || '...',
-          sources: AGENTS_CONFIG[agentId - 1]?.sources || [],
-          agentName: agentName,
-          progress: 50
-        });
+        if (agentId <= 8) {
+          setCurrentExplanation({
+            doing: AGENTS_CONFIG[agentId - 1]?.explanation.doing || 'Procesando...',
+            why: AGENTS_CONFIG[agentId - 1]?.explanation.why || '',
+            estimatedTime: AGENTS_CONFIG[agentId - 1]?.explanation.estimatedTime || '...',
+            sources: AGENTS_CONFIG[agentId - 1]?.sources || [],
+            agentName: agentName,
+            progress: 50
+          });
+        }
       }
     },
     onError: (error) => {
@@ -2319,7 +2348,9 @@ export default function ClinicalNavigator() {
         humanValidationResolveRef.current = () => {
           setShowHumanValidationModal(false);
           setShowProtocolReview(false);
-          runSimulatedPhase2().then(resolve);
+          // Activate Phase 2 with real-time tracking instead of simulation
+          setPhase2Active(true);
+          resolve();
         };
       };
 
@@ -2383,6 +2414,10 @@ export default function ClinicalNavigator() {
     setSelectedDeliverable(null);
     setIsComplete(false);
     setRealOutputs({});
+    setPhase2Active(false);
+    setPhase2CompletedAgents(new Set());
+    setPhase2Outputs({});
+    setPhase2Metadata({});
     setShowHumanValidationModal(false);
     setShowProtocolReview(false);
     n8nOrchestration.cleanup();
@@ -2410,6 +2445,10 @@ export default function ClinicalNavigator() {
     setShowHumanValidationModal(false);
     setShowProtocolReview(false);
     setRealOutputs({});
+    setPhase2Active(false);
+    setPhase2CompletedAgents(new Set());
+    setPhase2Outputs({});
+    setPhase2Metadata({});
     setIsN8nMode(true);
     n8nOrchestration.cleanup();
     hasStartedRef.current = false;
@@ -2924,8 +2963,30 @@ export default function ClinicalNavigator() {
                 </motion.div>
               )}
 
+              {/* Phase 2 Execution View */}
+              {phase2Active && !selectedDeliverable && !currentExplanation && (
+                <motion.div
+                  key="phase2"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="max-w-4xl mx-auto"
+                >
+                  <Phase2Execution
+                    isActive={phase2Active}
+                    completedAgents={phase2CompletedAgents}
+                    agentOutputs={phase2Outputs}
+                    agentMetadata={phase2Metadata}
+                    onComplete={() => {
+                      setIsComplete(true);
+                      setTimeout(() => setPhase('verification'), 5000);
+                    }}
+                  />
+                </motion.div>
+              )}
+
               {/* Empty state */}
-              {!currentExplanation && !selectedDeliverable && (
+              {!currentExplanation && !selectedDeliverable && !phase2Active && (
                 <div className="flex items-center justify-center h-full text-center p-12">
                   <div className="max-w-md">
                     <Brain className="w-20 h-20 mx-auto mb-6" style={{ color: COLORS.grisClaro }} />
