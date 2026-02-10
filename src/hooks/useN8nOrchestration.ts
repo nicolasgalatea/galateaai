@@ -33,6 +33,13 @@ export const AGENT_NAME_TO_ID: Record<string, number> = {
   'Objectives Generator': 6,
   'Criteria Definer': 7,
   'Protocol Synthesizer': 8,
+  // Phase 2 agents
+  'PRISMA Navigator': 9,
+  'Data Extractor': 10,
+  'Quality Auditor': 11,
+  'Meta-Analyst': 12,
+  'Evidence Grader': 13,
+  'Report Generator': 14,
 };
 
 export function useN8nOrchestration(options: UseN8nOrchestrationOptions) {
