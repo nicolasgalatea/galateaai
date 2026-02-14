@@ -26,7 +26,7 @@ const PHASE_NAMES = [
 
 export default function ResearchLab() {
   const [question, setQuestion] = useState('');
-  const { progress, labStatus, isLoading, startResearch, processPhase23 } = useResearchLab();
+  const { progress, labStatus, isLoading, startResearch, processPhase23, processPhase45 } = useResearchLab();
 
   const faseActual = progress?.fase_actual ?? 0;
   const progressPercent = Math.min((faseActual / 10) * 100, 100);
@@ -211,6 +211,8 @@ export default function ResearchLab() {
               <MethodologyDisplay
                 data={progress?.fase_2_3_output as Record<string, unknown> | null}
                 isProcessing={isPhase2Processing && !progress?.fase_2_3_output}
+                showApproveButton={!!progress?.fase_2_3_output && !progress?.fase_4_5_output}
+                onApprove={processPhase45}
               />
             </motion.div>
           )}

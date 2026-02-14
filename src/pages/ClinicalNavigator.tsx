@@ -2905,6 +2905,8 @@ export default function ClinicalNavigator() {
                       <MethodologyDisplay
                         data={researchLab.progress?.fase_2_3_output as Record<string, unknown> | null}
                         isProcessing={researchLab.labStatus === 'phase2_processing' && !researchLab.progress?.fase_2_3_output}
+                        showApproveButton={!!researchLab.progress?.fase_2_3_output && !researchLab.progress?.fase_4_5_output}
+                        onApprove={researchLab.processPhase45}
                       />
                     </motion.div>
                   )}
