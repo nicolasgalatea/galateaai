@@ -7,7 +7,7 @@ import {
   Loader2, FileText, BookOpen, Award, ChevronDown, ChevronUp,
   RotateCcw, Sparkles, Database, Search, Brain, ClipboardList,
   Target, Timer, Lightbulb, Link, Save, Eye, Hand, Users, Heart, Activity,
-  AlertTriangle, Wifi, WifiOff
+  AlertTriangle, Wifi, WifiOff, FlaskConical, ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { useN8nOrchestration, AGENT_NAME_TO_ID, ConnectionStatus } from '@/hooks/useN8nOrchestration';
+import { useResearchLab } from '@/hooks/useResearchLab';
 import { Phase2Execution } from '@/components/terminal/Phase2Execution';
+import { IdeadorPhase } from '@/components/research-lab/IdeadorPhase';
+import { MethodologyDisplay } from '@/components/research-lab/MethodologyDisplay';
 import galateaLogo from '@/assets/galatea-logo-clean.png';
 import santaFeLogo from '@/assets/santa-fe-logo-clean.png';
 import agentAvatar from '@/assets/galatea-agent-avatar.jpg';
@@ -2060,8 +2063,14 @@ export default function ClinicalNavigator() {
   const [phase2Metadata, setPhase2Metadata] = useState<Record<number, Record<string, unknown>>>({});
   const phase1CompleteResolveRef = useRef<(() => void) | null>(null);
   
+  // Research Mode state
+  const [researchMode, setResearchMode] = useState(false);
+  
   const terminalRef = useRef<HTMLDivElement>(null);
   const hasStartedRef = useRef(false);
+
+  // Research Lab hook — reads from research_lab_progress using the same fixed projectId
+  const researchLab = useResearchLab();
 
   // n8n Orchestration hook
   const handleFallbackToSimulation = useCallback(() => {
@@ -2619,11 +2628,26 @@ export default function ClinicalNavigator() {
             </div>
           )}
         </div>
-        <img src={santaFeLogo} alt="Fundación Santa Fe de Bogotá" className="h-16" />
+        <div className="flex items-center gap-3">
+          <img src={santaFeLogo} alt="Fundación Santa Fe de Bogotá" className="h-16" />
+          {/* Research Mode Toggle */}
+          <Button
+            onClick={() => setResearchMode(!researchMode)}
+            variant={researchMode ? 'default' : 'outline'}
+            size="sm"
+            className="gap-2 font-semibold"
+            style={researchMode 
+              ? { backgroundColor: COLORS.verdeMedico, color: 'white' }
+              : { borderColor: COLORS.verdeMedico, color: COLORS.verdeMedico }
+            }
+          >
+            <FlaskConical className="w-4 h-4" />
+            Research Mode
+          </Button>
+        </div>
       </header>
 
-
-      {/* 3-Column Layout: Left 20% | Center 60% | Right 20% */}
+      {/* 3-Column Layout: Left 20% | Center 80% */}
       <div className="flex-1 flex overflow-hidden">
         
         {/* LEFT COLUMN (20%): Agent List */}
@@ -2709,9 +2733,202 @@ export default function ClinicalNavigator() {
           )}
         </div>
 
-        {/* CENTER COLUMN (80%): Main Content - Explanation or Deliverable - NO TERMINAL */}
+        {/* CENTER COLUMN (80%): Main Content */}
         <div className="w-4/5 flex flex-col overflow-y-auto bg-white">
           <ScrollArea className="flex-1 p-8">
+            {/* ── RESEARCH MODE VIEW ── */}
+            {researchMode ? (
+              <div className="max-w-4xl mx-auto space-y-6">
+                {/* Research Mode Header */}
+                <div className="border-b-4 pb-4 mb-6" style={{ borderColor: COLORS.verdeMedico }}>
+                  <div className="flex items-center gap-2 text-sm font-medium mb-2" style={{ color: COLORS.verdeMedico }}>
+                    <FlaskConical className="w-4 h-4" />
+                    RESEARCH MODE — 10 Fases
+                  </div>
+                  <h1 className="text-3xl font-bold" style={{ color: COLORS.azulInstitucional }}>
+                    The Research Lab v2
+                  </h1>
+                  <p className="text-base mt-1" style={{ color: COLORS.grisTexto }}>
+                    Orquestación de 10 fases conectada a n8n y Supabase Realtime
+                  </p>
+                </div>
+
+                {/* Research Input (only when idle) */}
+                {researchLab.labStatus === 'idle' && (
+                  <Card className="border-2" style={{ borderColor: COLORS.azulInstitucional }}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2" style={{ color: COLORS.azulInstitucional }}>
+                        <FlaskConical className="w-5 h-5" />
+                        Pregunta de Investigación
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex gap-3">
+                        <textarea
+                          value={question}
+                          onChange={(e) => setQuestion(e.target.value)}
+                          placeholder="Ej: ¿Son efectivos los inhibidores SGLT2 en insuficiencia cardíaca con fracción de eyección preservada?"
+                          className="flex-1 min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                        />
+                        <Button
+                          onClick={() => {
+                            const q = question.trim() || DEFAULT_QUESTION;
+                            researchLab.startResearch(q);
+                          }}
+                          disabled={researchLab.isLoading}
+                          className="self-end"
+                          style={{ backgroundColor: COLORS.verdeMedico, color: 'white' }}
+                        >
+                          {researchLab.isLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Send className="w-4 h-4" />
+                              Iniciar
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Progress Bar */}
+                {researchLab.labStatus !== 'idle' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium" style={{ color: COLORS.azulInstitucional }}>
+                        Progreso General
+                      </span>
+                      <span style={{ color: COLORS.grisTexto }}>
+                        Fase {researchLab.progress?.fase_actual ?? 0}/10
+                      </span>
+                    </div>
+                    <Progress value={Math.min(((researchLab.progress?.fase_actual ?? 0) / 10) * 100, 100)} className="h-2" />
+
+                    {/* Phase indicators */}
+                    <div className="flex gap-1">
+                      {['Ideación', 'Análisis', 'PICO', 'Metodología', 'Diseño', 'Protocolo', 'Búsqueda', 'Extracción', 'Calidad', 'Síntesis'].map((name, i) => (
+                        <div
+                          key={name}
+                          className="flex-1 h-1.5 rounded-full transition-colors duration-500"
+                          style={{
+                            backgroundColor:
+                              i < (researchLab.progress?.fase_actual ?? 0)
+                                ? COLORS.verdeMedico
+                                : i === (researchLab.progress?.fase_actual ?? 0) && researchLab.labStatus !== 'idle'
+                                ? COLORS.azulInstitucional
+                                : COLORS.grisClaro,
+                          }}
+                          title={name}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Processing Indicator */}
+                <AnimatePresence>
+                  {(researchLab.labStatus === 'processing' || researchLab.labStatus === 'phase2_processing') && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center gap-3 p-4 rounded-lg border"
+                      style={{ backgroundColor: '#EBF5FF', borderColor: COLORS.azulInstitucional + '30' }}
+                    >
+                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: COLORS.azulInstitucional }} />
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: COLORS.azulInstitucional }}>
+                          Procesando con IA...
+                        </p>
+                        <p className="text-xs" style={{ color: COLORS.grisTexto }}>
+                          {researchLab.labStatus === 'processing'
+                            ? 'Analizando el problema clínico, la literatura y el contexto científico.'
+                            : 'Construyendo la tabla PICO y la metodología del estudio.'}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Phase 1: Ideador */}
+                <AnimatePresence>
+                  {((researchLab.progress?.fase_actual ?? 0) >= 1 || researchLab.labStatus === 'processing') && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <IdeadorPhase
+                        data={researchLab.progress?.fase_0_1_output as Record<string, unknown> | null}
+                        isProcessing={researchLab.labStatus === 'processing' && !researchLab.progress?.fase_0_1_output}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Advance to Phase 2-3 Button */}
+                <AnimatePresence>
+                  {researchLab.labStatus === 'phase1_done' && !researchLab.progress?.fase_2_3_output && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex justify-center"
+                    >
+                      <Button
+                        onClick={researchLab.processPhase23}
+                        size="lg"
+                        className="gap-2 px-8"
+                        style={{ backgroundColor: COLORS.verdeMedico, color: 'white' }}
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                        Avanzar a Fase 2: Metodología PICO
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Phase 2-3: PICO Table */}
+                <AnimatePresence>
+                  {((researchLab.progress?.fase_actual ?? 0) >= 2 || researchLab.labStatus === 'phase2_processing') && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <MethodologyDisplay
+                        data={researchLab.progress?.fase_2_3_output as Record<string, unknown> | null}
+                        isProcessing={researchLab.labStatus === 'phase2_processing' && !researchLab.progress?.fase_2_3_output}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Completed */}
+                <AnimatePresence>
+                  {researchLab.labStatus === 'completed' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center gap-3 p-4 rounded-lg border"
+                      style={{ backgroundColor: '#ECFDF5', borderColor: COLORS.verdeMedico + '50' }}
+                    >
+                      <CheckCircle className="w-5 h-5" style={{ color: COLORS.verdeMedico }} />
+                      <p className="text-sm font-medium" style={{ color: COLORS.verdeMedico }}>
+                        Análisis completado exitosamente.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+            /* ── ORIGINAL NAVIGATOR VIEW ── */
             <AnimatePresence mode="wait">
               {/* Show Agent Explanation while processing */}
               {currentExplanation && !selectedDeliverable && (
@@ -2839,7 +3056,6 @@ export default function ClinicalNavigator() {
                     >
                       {/* Check if this is a real output from n8n (Markdown) or simulated */}
                       {realOutputs[selectedDeliverable.agentId] ? (
-                        // Render real Claude output with ReactMarkdown
                         <div className="prose prose-lg max-w-none" style={{ color: COLORS.grisTexto }}>
                           <ReactMarkdown
                             components={{
@@ -2882,10 +3098,8 @@ export default function ClinicalNavigator() {
                           </ReactMarkdown>
                         </div>
                       ) : (
-                        // Render simulated output with custom parsing
                         <>
                           {selectedDeliverable.content.split('\n\n').map((paragraph, idx) => {
-                            // Check if it's a header-like line
                             if (paragraph.startsWith('═══') || paragraph.includes('═══')) {
                               const title = paragraph.replace(/═/g, '').trim();
                               return (
@@ -2895,7 +3109,6 @@ export default function ClinicalNavigator() {
                                 </h3>
                               );
                             }
-                            // Check if it starts with emoji
                             if (/^[👥💊⚖️🎯⏱️✅❌📊📚📋🔍📎📄🟢🟡⭐💪🔬🎲👁️📝🛡️📈🌳🔤💾🔀🏗️🚀🔗📖🔎⚠️✨🔬✓🌎]/.test(paragraph)) {
                               return (
                                 <div key={idx} className="mb-4 p-4 rounded-lg border" style={{ borderColor: COLORS.grisClaro, backgroundColor: '#F9FAFB' }}>
@@ -2905,7 +3118,6 @@ export default function ClinicalNavigator() {
                                 </div>
                               );
                             }
-                            // Regular paragraph
                             return (
                               <p key={idx} className="text-base leading-relaxed mb-4 whitespace-pre-wrap" style={{ color: COLORS.grisTexto }}>
                                 {paragraph}
@@ -3000,6 +3212,7 @@ export default function ClinicalNavigator() {
                 </div>
               )}
             </AnimatePresence>
+            )}
           </ScrollArea>
         </div>
       </div>
