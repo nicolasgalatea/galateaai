@@ -53,6 +53,51 @@ export type Database = {
         }
         Relationships: []
       }
+      research_lab_progress: {
+        Row: {
+          created_at: string
+          fase_0_1_output: Json | null
+          fase_2_3_output: Json | null
+          fase_4_5_output: Json | null
+          fase_6_7_output: Json | null
+          fase_8_9_output: Json | null
+          fase_actual: number
+          id: string
+          project_id: string
+          research_question: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fase_0_1_output?: Json | null
+          fase_2_3_output?: Json | null
+          fase_4_5_output?: Json | null
+          fase_6_7_output?: Json | null
+          fase_8_9_output?: Json | null
+          fase_actual?: number
+          id?: string
+          project_id: string
+          research_question?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fase_0_1_output?: Json | null
+          fase_2_3_output?: Json | null
+          fase_4_5_output?: Json | null
+          fase_6_7_output?: Json | null
+          fase_8_9_output?: Json | null
+          fase_actual?: number
+          id?: string
+          project_id?: string
+          research_question?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
