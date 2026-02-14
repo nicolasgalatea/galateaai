@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useResearchLab } from '@/hooks/useResearchLab';
 import { IdeadorPhase } from '@/components/research-lab/IdeadorPhase';
 import { MethodologyDisplay } from '@/components/research-lab/MethodologyDisplay';
+import { FinerAnalysis } from '@/components/research-lab/FinerAnalysis';
 import galateaLogo from '@/assets/galatea-logo-clean.png';
 import santaFeLogo from '@/assets/santa-fe-logo-clean.png';
 
@@ -213,6 +214,22 @@ export default function ResearchLab() {
                 isProcessing={isPhase2Processing && !progress?.fase_2_3_output}
                 showApproveButton={!!progress?.fase_2_3_output && !progress?.fase_4_5_output}
                 onApprove={processPhase45}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Phase 4-5: FINER Analysis ── */}
+        <AnimatePresence>
+          {(faseActual >= 4 || (isPhase2Processing && progress?.fase_2_3_output)) && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <FinerAnalysis
+                data={progress?.fase_4_5_output as Record<string, unknown> | null}
+                isProcessing={!progress?.fase_4_5_output}
               />
             </motion.div>
           )}

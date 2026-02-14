@@ -19,6 +19,7 @@ import { useResearchLab } from '@/hooks/useResearchLab';
 import { Phase2Execution } from '@/components/terminal/Phase2Execution';
 import { IdeadorPhase } from '@/components/research-lab/IdeadorPhase';
 import { MethodologyDisplay } from '@/components/research-lab/MethodologyDisplay';
+import { FinerAnalysis } from '@/components/research-lab/FinerAnalysis';
 import galateaLogo from '@/assets/galatea-logo-clean.png';
 import santaFeLogo from '@/assets/santa-fe-logo-clean.png';
 import agentAvatar from '@/assets/galatea-agent-avatar.jpg';
@@ -2907,6 +2908,22 @@ export default function ClinicalNavigator() {
                         isProcessing={researchLab.labStatus === 'phase2_processing' && !researchLab.progress?.fase_2_3_output}
                         showApproveButton={!!researchLab.progress?.fase_2_3_output && !researchLab.progress?.fase_4_5_output}
                         onApprove={researchLab.processPhase45}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Phase 4-5: FINER Analysis */}
+                <AnimatePresence>
+                  {(researchLab.progress?.fase_actual >= 4 || (researchLab.labStatus === 'phase2_processing' && researchLab.progress?.fase_2_3_output)) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <FinerAnalysis
+                        data={researchLab.progress?.fase_4_5_output as Record<string, unknown> | null}
+                        isProcessing={!researchLab.progress?.fase_4_5_output}
                       />
                     </motion.div>
                   )}
