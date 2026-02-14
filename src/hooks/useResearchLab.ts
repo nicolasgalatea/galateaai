@@ -151,6 +151,30 @@ export function useResearchLab() {
     }
   };
 
+  // ── Process Phase 4-5 (FINER / next phase after methodology approval) ──
+  const processPhase45 = async () => {
+    setLabStatus('phase2_processing');
+
+    try {
+      const payload = {
+        action: 'PHASE_4_5',
+        projectId: FIXED_PROJECT_ID,
+      };
+
+      console.log('[ResearchLab] Advancing to Phase 4-5:', payload);
+
+      const response = await fetch(N8N_WEBHOOK_PHASE_1, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      console.log('[ResearchLab] Phase 4-5 response status:', response.status);
+    } catch (err) {
+      console.error('[ResearchLab] Phase 4-5 webhook error:', err);
+    }
+  };
+
   // ── Cleanup ──
   const cleanup = useCallback(() => {
     if (channelRef.current) {
@@ -171,6 +195,7 @@ export function useResearchLab() {
     isLoading,
     startResearch,
     processPhase23,
+    processPhase45,
     fetchProgress,
     cleanup,
     projectId: FIXED_PROJECT_ID,
