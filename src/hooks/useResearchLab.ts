@@ -106,23 +106,22 @@ export function useResearchLab() {
 
     try {
       const payload = {
-        action: 'START',
+        action: 'START_RESEARCH_LAB',
         projectId: FIXED_PROJECT_ID,
-        research_question: researchQuestion,
+        inputData: { research_question: researchQuestion },
       };
 
       console.log('[ResearchLab] Starting research:', payload);
 
-      await fetch(N8N_WEBHOOK_PHASE_1, {
+      const response = await fetch(N8N_WEBHOOK_PHASE_1, {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      console.log('[ResearchLab] Webhook sent (no-cors)');
+      console.log('[ResearchLab] Webhook response status:', response.status);
     } catch (err) {
-      console.warn('[ResearchLab] Webhook fetch error (expected in no-cors):', err);
+      console.error('[ResearchLab] Webhook fetch error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -140,14 +139,15 @@ export function useResearchLab() {
 
       console.log('[ResearchLab] Advancing to Phase 2-3:', payload);
 
-      await fetch(N8N_WEBHOOK_PHASE_1, {
+      const response = await fetch(N8N_WEBHOOK_PHASE_1, {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
+      console.log('[ResearchLab] Phase 2-3 response status:', response.status);
     } catch (err) {
-      console.warn('[ResearchLab] Phase 2-3 webhook error:', err);
+      console.error('[ResearchLab] Phase 2-3 webhook error:', err);
     }
   };
 
