@@ -98,6 +98,45 @@ export type Database = {
         }
         Relationships: []
       }
+      research_projects: {
+        Row: {
+          created_at: string
+          current_phase: number
+          id: string
+          phase_data: Json
+          project_id: string
+          research_question: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_edits: Json
+        }
+        Insert: {
+          created_at?: string
+          current_phase?: number
+          id?: string
+          phase_data?: Json
+          project_id?: string
+          research_question?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_edits?: Json
+        }
+        Update: {
+          created_at?: string
+          current_phase?: number
+          id?: string
+          phase_data?: Json
+          project_id?: string
+          research_question?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_edits?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
