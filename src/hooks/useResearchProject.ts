@@ -4,6 +4,7 @@ import { toast } from '@/hooks/use-toast';
 
 // ── Constants ──
 const N8N_WEBHOOK_URL = 'https://nicolasgalatea.app.n8n.cloud/webhook/galatea-protocol-start';
+const N8N_WEBHOOK_LAB_V2 = 'https://nicolasgalatea.app.n8n.cloud/webhook/galatea-research-lab-v2';
 const FIXED_PROJECT_ID = 'e8233417-9ddf-4453-8372-c5b6797da8aa';
 
 // ── Phase configuration ──
@@ -125,6 +126,7 @@ export function useResearchProject() {
   const createProject = async (title: string, researchQuestion: string) => {
     setIsLoading(true);
     try {
+      // 1. Create record in research_projects
       const { data, error } = await (supabase as any)
         .from('research_projects')
         .insert({
@@ -143,8 +145,20 @@ export function useResearchProject() {
       setProject(data as ResearchProject);
       setStatus('executing');
 
-      // Fire webhook to n8n
-      await triggerWebhook(data.id, 1, 'START');
+      // 2. Fire webhook to n8n lab v2
+      const payload = {
+        projectId: data.id,
+        research_question: researchQuestion,
+        action: 'START',
+        phaseNumber: 1,
+      };
+      console.log('[ResearchProject] Firing lab v2 webhook:', payload);
+
+      await fetch(N8N_WEBHOOK_LAB_V2, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
       return data as ResearchProject;
     } catch (err: any) {
