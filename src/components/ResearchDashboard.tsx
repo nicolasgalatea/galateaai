@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -18,6 +18,8 @@ import {
   AGENT_NAMES,
   type ResearchProject,
 } from '@/hooks/useResearchProject';
+import { useResearchLab, type ResearchLabProgress } from '@/hooks/useResearchLab';
+import { supabase } from '@/integrations/supabase/client';
 
 // Phase-specific renderers
 import PhaseDefinition from '@/components/research/PhaseDefinition';
@@ -347,6 +349,45 @@ export default function ResearchDashboard() {
     createProject, saveUserEdit, approvePhase, syncWithAI, getPhaseData, getPhaseEdits,
   } = useResearchProject();
 
+  const { progress: labProgress, labStatus } = useResearchLab();
+
+  // ── Realtime subscription to research_lab_progress ──
+  const [realtimeLabProgress, setRealtimeLabProgress] = useState<ResearchLabProgress | null>(null);
+  const labChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  useEffect(() => {
+    const FIXED_PROJECT_ID = 'e8233417-9ddf-4453-8372-c5b6797da8aa';
+
+    labChannelRef.current = supabase
+      .channel('dashboard_lab_progress_rt')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'research_lab_progress',
+          filter: `project_id=eq.${FIXED_PROJECT_ID}`,
+        },
+        (payload) => {
+          console.log('[Dashboard] research_lab_progress realtime:', payload.eventType);
+          const record = payload.new as ResearchLabProgress;
+          if (record) setRealtimeLabProgress(record);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (labChannelRef.current) {
+        supabase.removeChannel(labChannelRef.current);
+      }
+    };
+  }, []);
+
+  // Merge: prefer realtime over initial fetch
+  const currentLab = realtimeLabProgress || labProgress;
+  const labIsActive = currentLab?.status === 'active' || currentLab?.status === 'processing';
+  const labIsPaused = currentLab?.status === 'paused';
+
   const [question, setQuestion] = useState('');
   const [title, setTitle] = useState('');
   const DEFAULT_QUESTION = '¿Cuál es la eficacia y seguridad de los inhibidores SGLT2 en pacientes con insuficiencia cardíaca con fracción de eyección preservada comparado con placebo?';
@@ -399,13 +440,29 @@ export default function ResearchDashboard() {
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {status === 'executing' && (
+          {/* Lab-level realtime status */}
+          {labIsActive && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20"
+            >
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="animate-pulse">El Agente Estratega está analizando tu pregunta...</span>
+            </motion.div>
+          )}
+          {labIsPaused && !labIsActive && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-accent text-accent-foreground border border-accent">
+              <Edit3 className="w-4 h-4" /> Fase lista para revisión — Aprueba para continuar
+            </div>
+          )}
+          {!labIsActive && !labIsPaused && status === 'executing' && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-accent text-accent-foreground">
               <Loader2 className="w-4 h-4 animate-spin" />
               {PHASE_SPINNER_MESSAGES[project.current_phase] || `Agentes de IA procesando Fase ${project.current_phase}...`}
             </div>
           )}
-          {status === 'paused' && (
+          {!labIsActive && !labIsPaused && status === 'paused' && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-muted text-muted-foreground">
               <Edit3 className="w-4 h-4" /> Esperando revisión del investigador
             </div>
@@ -416,12 +473,12 @@ export default function ResearchDashboard() {
             </div>
           )}
         </div>
-        {status === 'paused' && (
+        {(status === 'paused' || labIsPaused) && (
           <Button onClick={handleApproval} disabled={isSaving} className="gap-2">
             <CheckCircle className="w-4 h-4" /> Aprobar Fase
           </Button>
         )}
-        {status !== 'executing' && status !== 'completed' && status !== 'paused' && (
+        {!labIsActive && status !== 'executing' && status !== 'completed' && status !== 'paused' && !labIsPaused && (
           <Button onClick={syncWithAI} disabled={isSaving} className="gap-2">
             <RefreshCw className={`w-4 h-4 ${isSaving ? 'animate-spin' : ''}`} /> Sincronizar con IA
           </Button>
