@@ -217,19 +217,40 @@ export function useResearchProject() {
     }
   };
 
+  // ── Approve current phase (paused → active → triggers next agent) ──
+  const approvePhase = async () => {
+    if (!project) return;
+    setStatus('executing');
+
+    try {
+      await (supabase as any)
+        .from('research_projects')
+        .update({ status: 'active' })
+        .eq('id', project.id);
+
+      await triggerWebhook(project.id, project.current_phase, 'APPROVE');
+
+      toast({
+        title: 'Fase aprobada',
+        description: `Disparando agente para la Fase ${project.current_phase + 1}...`,
+      });
+    } catch (err: any) {
+      console.error('[ResearchProject] Approve error:', err);
+      setStatus('error');
+    }
+  };
+
   // ── Sync with IA (the action button) ──
   const syncWithAI = async () => {
     if (!project) return;
     setStatus('executing');
 
     try {
-      // Update status in DB
       await (supabase as any)
         .from('research_projects')
         .update({ status: 'executing' })
         .eq('id', project.id);
 
-      // Fire webhook
       await triggerWebhook(project.id, project.current_phase, 'APPROVE');
 
       toast({
@@ -277,6 +298,7 @@ export function useResearchProject() {
     isSaving,
     createProject,
     saveUserEdit,
+    approvePhase,
     syncWithAI,
     getPhaseData,
     getPhaseEdits,

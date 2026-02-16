@@ -69,14 +69,29 @@ function PhaseStepper({ currentPhase, status }: { currentPhase: number; status: 
   );
 }
 
+// ── Phase-specific spinner messages ──
+const PHASE_SPINNER_MESSAGES: Record<number, string> = {
+  1: 'PICOT Builder estructurando pregunta clínica...',
+  2: 'Validador FINER evaluando viabilidad...',
+  3: 'Literature Scout buscando revisiones previas...',
+  4: 'Criteria Designer definiendo criterios I/E...',
+  5: 'PROSPERO Checker verificando registros...',
+  6: 'Bias Assessor planificando evaluación de sesgos...',
+  7: 'Bibliotecario buscando MeSH y ecuaciones de búsqueda...',
+  8: 'Protocol Architect ensamblando protocolo PRISMA-P...',
+  9: 'PRISMA Navigator ejecutando búsqueda sistemática...',
+  10: 'Data Extractor procesando manuscrito final...',
+};
+
 // ── Medical Skeleton Loader ──
-function MedicalSkeleton() {
+function MedicalSkeleton({ phaseNumber }: { phaseNumber?: number }) {
+  const message = phaseNumber ? PHASE_SPINNER_MESSAGES[phaseNumber] : 'Procesando...';
   return (
     <Card className="border-2 border-dashed border-primary/30">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           <Loader2 className="w-5 h-5 animate-spin text-primary" />
-          <Skeleton className="h-5 w-48" />
+          <span className="text-sm font-medium text-primary animate-pulse">{message}</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -169,7 +184,7 @@ function PhaseCard({
     setHasLocalChanges(true);
   }, []);
 
-  if (isExecuting && !phaseData) return <MedicalSkeleton />;
+  if (isExecuting && !phaseData) return <MedicalSkeleton phaseNumber={phaseNumber} />;
   if (!phaseData) return null;
 
   // ── Route to phase-specific renderer ──
@@ -329,12 +344,16 @@ function PhaseCard({
 export default function ResearchDashboard() {
   const {
     project, status, isLoading, isSaving,
-    createProject, saveUserEdit, syncWithAI, getPhaseData, getPhaseEdits,
+    createProject, saveUserEdit, approvePhase, syncWithAI, getPhaseData, getPhaseEdits,
   } = useResearchProject();
 
   const [question, setQuestion] = useState('');
   const [title, setTitle] = useState('');
   const DEFAULT_QUESTION = '¿Cuál es la eficacia y seguridad de los inhibidores SGLT2 en pacientes con insuficiencia cardíaca con fracción de eyección preservada comparado con placebo?';
+
+  const handleApproval = async () => {
+    await approvePhase();
+  };
 
   const handleStart = async () => {
     const q = question.trim() || DEFAULT_QUESTION;
@@ -382,7 +401,8 @@ export default function ResearchDashboard() {
         <div className="flex items-center gap-2">
           {status === 'executing' && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-accent text-accent-foreground">
-              <Loader2 className="w-4 h-4 animate-spin" /> Agentes de IA procesando Fase {project.current_phase}...
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {PHASE_SPINNER_MESSAGES[project.current_phase] || `Agentes de IA procesando Fase ${project.current_phase}...`}
             </div>
           )}
           {status === 'paused' && (
@@ -391,12 +411,17 @@ export default function ResearchDashboard() {
             </div>
           )}
           {status === 'completed' && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
               <CheckCircle className="w-4 h-4" /> Investigación completada
             </div>
           )}
         </div>
-        {status !== 'executing' && status !== 'completed' && (
+        {status === 'paused' && (
+          <Button onClick={handleApproval} disabled={isSaving} className="gap-2">
+            <CheckCircle className="w-4 h-4" /> Aprobar Fase
+          </Button>
+        )}
+        {status !== 'executing' && status !== 'completed' && status !== 'paused' && (
           <Button onClick={syncWithAI} disabled={isSaving} className="gap-2">
             <RefreshCw className={`w-4 h-4 ${isSaving ? 'animate-spin' : ''}`} /> Sincronizar con IA
           </Button>
@@ -426,9 +451,9 @@ export default function ResearchDashboard() {
 
       {status === 'paused' && project.current_phase < 10 && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex justify-center pt-4">
-          <Button size="lg" onClick={syncWithAI} className="gap-2 px-8">
-            <ArrowRight className="w-4 h-4" />
-            Avanzar a Fase {project.current_phase + 1}: {PHASE_CONFIG[project.current_phase]?.name}
+          <Button size="lg" onClick={handleApproval} className="gap-2 px-8">
+            <CheckCircle className="w-4 h-4" />
+            Aprobar y Avanzar a Fase {project.current_phase + 1}: {PHASE_CONFIG[project.current_phase]?.name}
           </Button>
         </motion.div>
       )}
