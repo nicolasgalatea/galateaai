@@ -388,6 +388,29 @@ export default function ResearchDashboard() {
   const labIsActive = currentLab?.status === 'active' || currentLab?.status === 'processing';
   const labIsPaused = currentLab?.status === 'paused';
 
+  // ── Bridge lab progress data into PhaseCard-compatible format ──
+  const getLabPhaseData = useCallback((phaseNumber: number): Record<string, unknown> | null => {
+    // First check research_projects.phase_data (primary source)
+    const projectData = getPhaseData(phaseNumber);
+    if (projectData && Object.keys(projectData).length > 0) return projectData;
+
+    // Fallback: map from research_lab_progress outputs
+    if (!currentLab) return null;
+    const labOutputMap: Record<number, keyof ResearchLabProgress> = {
+      1: 'fase_0_1_output', 2: 'fase_0_1_output',
+      3: 'fase_2_3_output', 4: 'fase_2_3_output',
+      5: 'fase_4_5_output', 6: 'fase_4_5_output',
+      7: 'fase_6_7_output', 8: 'fase_6_7_output',
+      9: 'fase_8_9_output', 10: 'fase_8_9_output',
+    };
+    const outputKey = labOutputMap[phaseNumber];
+    if (outputKey) {
+      const labData = currentLab[outputKey] as Record<string, unknown> | null;
+      if (labData && Object.keys(labData).length > 0) return labData;
+    }
+    return null;
+  }, [getPhaseData, currentLab]);
+
   const [question, setQuestion] = useState('');
   const [title, setTitle] = useState('');
   const DEFAULT_QUESTION = '¿Cuál es la eficacia y seguridad de los inhibidores SGLT2 en pacientes con insuficiencia cardíaca con fracción de eyección preservada comparado con placebo?';
@@ -505,7 +528,7 @@ export default function ResearchDashboard() {
             <PhaseCard
               key={phase.id}
               phaseNumber={phase.id}
-              phaseData={getPhaseData(phase.id)}
+              phaseData={getLabPhaseData(phase.id)}
               userEdits={getPhaseEdits(phase.id)}
               isActive={isCurrentPhase}
               isExecuting={isExecutingPhase}
