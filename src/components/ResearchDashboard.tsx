@@ -402,6 +402,16 @@ export default function ResearchDashboard() {
     await createProject(t, q);
   };
 
+  // Auto-scroll to Phase 1 results when status transitions to 'paused'
+  const prevStatusRef = useRef(status);
+  useEffect(() => {
+    if (prevStatusRef.current === 'executing' && status === 'paused' && project?.current_phase === 1) {
+      // Phase 1 done — results are now visible via PhaseCard
+      console.log('[Dashboard] Phase 1 paused — showing results');
+    }
+    prevStatusRef.current = status;
+  }, [status, project?.current_phase]);
+
   // ── Idle ──
   if (!project) {
     return (
