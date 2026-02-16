@@ -156,13 +156,22 @@ export function useResearchProject() {
     }
   };
 
-  // ── Save user edit (JSON merge) ──
+  // ── Save user edit via RPC (deep merge on server) ──
   const saveUserEdit = async (phaseKey: string, field: string, value: unknown) => {
     if (!project) return;
     setIsSaving(true);
 
     try {
-      // Deep merge: preserve existing edits
+      const { error } = await (supabase as any).rpc('set_user_edits_for_phase', {
+        p_project_id: project.id,
+        p_phase_key: phaseKey,
+        p_field: field,
+        p_value: JSON.stringify(value),
+      });
+
+      if (error) throw error;
+
+      // Optimistic local update
       const currentEdits = (project.user_edits || {}) as Record<string, any>;
       const phaseEdits = currentEdits[phaseKey] || {};
       const mergedEdits = {
@@ -173,14 +182,6 @@ export function useResearchProject() {
           _updated_at: new Date().toISOString(),
         },
       };
-
-      const { error } = await (supabase as any)
-        .from('research_projects')
-        .update({ user_edits: mergedEdits })
-        .eq('id', project.id);
-
-      if (error) throw error;
-
       setProject(prev => prev ? { ...prev, user_edits: mergedEdits } : prev);
 
       toast({ title: 'Guardado', description: `Campo "${field}" actualizado en fase ${phaseKey}.` });

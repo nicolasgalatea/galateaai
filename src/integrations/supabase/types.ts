@@ -142,7 +142,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      set_user_edits_for_phase: {
+        Args: {
+          p_field: string
+          p_phase_key: string
+          p_project_id: string
+          p_value: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
