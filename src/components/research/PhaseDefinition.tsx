@@ -209,6 +209,67 @@ export default function PhaseDefinition({
     );
   }
 
+  // Check if PICOT fields exist in phase 1 data (from n8n output)
+  const hasPICOT = phaseNumber === 1 && (
+    merged.population || merged.intervention || merged.comparison || merged.outcome ||
+    merged.Población || merged.Intervención || merged.Comparación || merged.Outcome ||
+    merged.P || merged.I || merged.C || merged.O
+  );
+
+  if (hasPICOT) {
+    const pico: Record<string, string> = {
+      population: (merged.population || merged.Población || merged.P || '') as string,
+      intervention: (merged.intervention || merged.Intervención || merged.I || '') as string,
+      comparison: (merged.comparison || merged.Comparación || merged.C || '') as string,
+      outcome: (merged.outcome || merged.Outcome || merged.O || '') as string,
+      time: (merged.time || merged.Tiempo || merged.T || '') as string,
+    };
+
+    return (
+      <div className="space-y-6">
+        {merged.research_question && (
+          <EditableRichField
+            label="Pregunta de Investigación"
+            value={(merged.research_question || '') as string}
+            fieldKey="research_question"
+            phaseKey={phaseKey}
+            onSave={onSave}
+            onLocalChange={onLocalChange}
+          />
+        )}
+        <PICOTable pico={pico} phaseKey={phaseKey} onSave={onSave} onLocalChange={onLocalChange} />
+        {(merged.problem || merged.justification) && (
+          <>
+            <EditableRichField
+              label="Problema Clínico"
+              value={(merged.problem || '') as string}
+              fieldKey="problem"
+              phaseKey={phaseKey}
+              onSave={onSave}
+              onLocalChange={onLocalChange}
+            />
+            <EditableRichField
+              label="Justificación"
+              value={(merged.justification || '') as string}
+              fieldKey="justification"
+              phaseKey={phaseKey}
+              onSave={onSave}
+              onLocalChange={onLocalChange}
+            />
+          </>
+        )}
+        <EditableRichField
+          label="Notas del Investigador"
+          value={(merged.notes || '') as string}
+          fieldKey="notes"
+          phaseKey={phaseKey}
+          onSave={onSave}
+          onLocalChange={onLocalChange}
+        />
+      </div>
+    );
+  }
+
   // Phase 1-2: Rich text fields
   const fieldMap: Record<number, { key: string; label: string }[]> = {
     1: [
