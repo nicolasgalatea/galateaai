@@ -71,6 +71,19 @@ export function useResearchProject() {
     else setStatus('idle');
   }, []);
 
+  // ── Safe JSON parser ──
+  const safeParse = (value: unknown): unknown => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        console.warn('[ResearchProject] Failed to parse JSON string, using raw value');
+        return value;
+      }
+    }
+    return value;
+  };
+
   // ── Subscribe to realtime changes ──
   const subscribe = useCallback(() => {
     if (channelRef.current) {
@@ -88,11 +101,30 @@ export function useResearchProject() {
           filter: `project_id=eq.${FIXED_PROJECT_ID}`,
         },
         (payload) => {
-          console.log('[ResearchProject] Realtime event:', payload.eventType);
-          const record = payload.new as ResearchProject;
-          if (record) {
+          try {
+            console.log('[ResearchProject] Realtime event:', payload.eventType);
+            const record = payload.new as ResearchProject;
+            if (!record) return;
+
+            // Parse phase_data values that may arrive as JSON strings
+            if (record.phase_data && typeof record.phase_data === 'object') {
+              const parsed = { ...record.phase_data } as Record<string, unknown>;
+              for (const key of Object.keys(parsed)) {
+                parsed[key] = safeParse(parsed[key]);
+              }
+              record.phase_data = parsed;
+            }
+
+            console.log('[ResearchProject] Record status:', record.status, '| Phase:', record.current_phase);
             setProject(record);
             deriveStatus(record);
+
+            // Auto-notify when status becomes paused (approve button enabled)
+            if (record.status === 'paused') {
+              console.log('[ResearchProject] ✅ Status is paused — Aprobar button enabled');
+            }
+          } catch (err) {
+            console.error('[ResearchProject] Error processing realtime payload:', err);
           }
         }
       )
