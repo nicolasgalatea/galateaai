@@ -142,23 +142,32 @@ export function useResearchProject() {
         .single();
 
       if (error) throw error;
+      if (!data || !data.id) {
+        throw new Error('Insert exitoso pero no se recibió el ID del proyecto. Verifica que .select().single() esté funcionando.');
+      }
+
+      const projectId = data.id as string;
+      console.log('[ResearchProject] ✅ Proyecto creado en Supabase con ID:', projectId);
+
       setProject(data as ResearchProject);
       setStatus('executing');
 
-      // 2. Fire webhook to n8n lab v2
+      // 2. Fire webhook to n8n lab v2 ONLY after confirmed ID
       const payload = {
-        projectId: data.id,
+        projectId,
         research_question: researchQuestion,
         action: 'START',
         phaseNumber: 1,
       };
-      console.log('[ResearchProject] Firing lab v2 webhook:', payload);
+      console.log('[ResearchProject] 🚀 Disparando n8n con ID:', projectId);
+      console.log('[ResearchProject] Payload completo:', JSON.stringify(payload));
 
-      await fetch(N8N_WEBHOOK_LAB_V2, {
+      const response = await fetch(N8N_WEBHOOK_LAB_V2, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      console.log('[ResearchProject] Webhook response status:', response.status);
 
       return data as ResearchProject;
     } catch (err: any) {
