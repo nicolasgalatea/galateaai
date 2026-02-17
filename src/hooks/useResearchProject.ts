@@ -102,7 +102,7 @@ export function useResearchProject() {
         },
         (payload) => {
           try {
-            console.log('[ResearchProject] Realtime event:', payload.eventType);
+            console.log('[ResearchProject] Realtime event:', payload.eventType, '| Full payload.new:', JSON.stringify(payload.new, null, 2));
             const record = payload.new as ResearchProject;
             if (!record) return;
 
