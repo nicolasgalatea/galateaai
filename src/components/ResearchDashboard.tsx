@@ -389,10 +389,32 @@ export default function ResearchDashboard() {
   const labIsPaused = currentLab?.status === 'paused';
 
   // ── Bridge lab progress data into PhaseCard-compatible format ──
+  // Helper: safely parse JSON that might be a string
+  const safeParse = (val: unknown): Record<string, unknown> | null => {
+    if (!val) return null;
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+          return parsed as Record<string, unknown>;
+        }
+      } catch {
+        // Not valid JSON string
+      }
+      return null;
+    }
+    if (typeof val === 'object' && !Array.isArray(val)) {
+      return val as Record<string, unknown>;
+    }
+    return null;
+  };
+
   const getLabPhaseData = useCallback((phaseNumber: number): Record<string, unknown> | null => {
     // First check research_projects.phase_data (primary source)
     const projectData = getPhaseData(phaseNumber);
-    if (projectData && Object.keys(projectData).length > 0) return projectData;
+    if (projectData && Object.keys(projectData).length > 0) {
+      return safeParse(projectData) || projectData;
+    }
 
     // Fallback: map from research_lab_progress outputs
     if (!currentLab) return null;
@@ -405,8 +427,12 @@ export default function ResearchDashboard() {
     };
     const outputKey = labOutputMap[phaseNumber];
     if (outputKey) {
-      const labData = currentLab[outputKey] as Record<string, unknown> | null;
-      if (labData && Object.keys(labData).length > 0) return labData;
+      const raw = currentLab[outputKey];
+      const labData = safeParse(raw);
+      if (labData && Object.keys(labData).length > 0) {
+        console.log(`[Dashboard] Phase ${phaseNumber} data from ${outputKey}:`, labData);
+        return labData;
+      }
     }
     return null;
   }, [getPhaseData, currentLab]);
