@@ -252,7 +252,7 @@ export function useResearchProject() {
         .update({ status: 'active' })
         .eq('id', project.id);
 
-      await triggerWebhook(project.id, project.current_phase, 'APPROVE');
+      await triggerWebhook(project.id, project.current_phase, 'continue');
 
       toast({
         title: 'Fase aprobada',
@@ -275,7 +275,7 @@ export function useResearchProject() {
         .update({ status: 'executing' })
         .eq('id', project.id);
 
-      await triggerWebhook(project.id, project.current_phase, 'APPROVE');
+      await triggerWebhook(project.id, project.current_phase, 'continue');
 
       toast({
         title: 'Sincronización iniciada',
