@@ -29,6 +29,7 @@ import PhaseArticles from '@/components/research/PhaseArticles';
 import PhasePRISMA from '@/components/research/PhasePRISMA';
 import PhaseManuscript from '@/components/research/PhaseManuscript';
 import SaveIndicator from '@/components/research/SaveIndicator';
+import EvidenceLibrary from '@/components/research/EvidenceLibrary';
 
 // ── Phase Stepper ──
 function PhaseStepper({ currentPhase, status }: { currentPhase: number; status: string }) {
@@ -168,7 +169,7 @@ function formatLabel(key: string): string {
 
 // ── Phase Card Renderer ──
 function PhaseCard({
-  phaseNumber, phaseData, userEdits, isActive, isExecuting, onSave, isSaving,
+  phaseNumber, phaseData, userEdits, isActive, isExecuting, onSave, isSaving, projectId,
 }: {
   phaseNumber: number;
   phaseData: Record<string, unknown> | null;
@@ -177,6 +178,7 @@ function PhaseCard({
   isExecuting: boolean;
   onSave: (phaseKey: string, field: string, value: unknown) => Promise<void>;
   isSaving: boolean;
+  projectId?: string;
 }) {
   const [expanded, setExpanded] = useState(isActive);
   const [hasLocalChanges, setHasLocalChanges] = useState(false);
@@ -225,16 +227,27 @@ function PhaseCard({
       );
     }
 
-    // Phase 7: Article table with inclusion/exclusion
+    // Phase 7: Article table with inclusion/exclusion + EvidenceLibrary (Realtime)
     if (phaseNumber === 7) {
       return (
-        <PhaseArticles
-          data={data}
-          userEdits={edits}
-          phaseKey={phaseKey}
-          onSave={onSave}
-          onLocalChange={handleLocalChange}
-        />
+        <div className="space-y-6">
+          <PhaseArticles
+            data={data}
+            userEdits={edits}
+            phaseKey={phaseKey}
+            onSave={onSave}
+            onLocalChange={handleLocalChange}
+          />
+          {projectId && (
+            <div className="border-t border-[hsl(var(--border))] pt-5">
+              <EvidenceLibrary
+                projectId={projectId}
+                currentPhase={7}
+                isExecuting={isExecuting}
+              />
+            </div>
+          )}
+        </div>
       );
     }
 
@@ -591,6 +604,7 @@ export default function ResearchDashboard() {
               isExecuting={isExecutingPhase}
               onSave={saveUserEdit}
               isSaving={isSaving}
+              projectId={project.id}
             />
           );
         })}
