@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import {
   Send, CheckCircle, Loader2, ChevronDown, ChevronUp,
   Sparkles, Brain, Edit3, Save, RefreshCw, FileText,
-  FlaskConical, ArrowRight,
+  FlaskConical, ArrowRight, BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -256,7 +256,7 @@ function PhaseCard({
       return <PhasePRISMA data={data} userEdits={edits} />;
     }
 
-    // Phase 10: Manuscript viewer
+    // Phase 10: Manuscript viewer (handled separately as full-width)
     if (phaseNumber === 10) {
       return <PhaseManuscript data={data} userEdits={edits} />;
     }
@@ -524,8 +524,11 @@ export default function ResearchDashboard() {
   }
 
   // ── Active ──
+  // Phases 8-10 get a full-width, non-collapsible manuscript layout
+  const isLatePhase = project.current_phase >= 8;
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className={`mx-auto space-y-6 ${isLatePhase ? 'max-w-7xl' : 'max-w-4xl'}`}>
       <DashboardHeader />
       <PhaseStepper currentPhase={project.current_phase} status={status} />
 
@@ -588,8 +591,10 @@ export default function ResearchDashboard() {
         )}
       </div>
 
+      {/* ── Phase Cards (phases 1-7) ── */}
       <div className="space-y-4">
         {PHASE_CONFIG.map((phase) => {
+          if (phase.id > 7) return null; // handled separately below
           const isCurrentPhase = phase.id === project.current_phase;
           const isPastPhase = phase.id < project.current_phase;
           const isExecutingPhase = isCurrentPhase && status === 'executing';
@@ -609,6 +614,83 @@ export default function ResearchDashboard() {
           );
         })}
       </div>
+
+      {/* ── Full-Width Manuscript Block (phases 8-10) ── */}
+      <AnimatePresence>
+        {project.current_phase >= 8 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="space-y-4"
+          >
+            {/* Phase label strip */}
+            <div className="flex items-center gap-3 border-t border-border pt-4">
+              <BookOpen className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-primary text-sm tracking-wide uppercase">
+                Fases 8–10 · Protocolo PRISMA-P, Manuscrito &amp; Dossier Final
+              </span>
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground">Fase actual: {project.current_phase}/10</span>
+            </div>
+
+            {/* Phases 8, 9, 10 as collapsible phase cards for 8&9, full-width for 10 */}
+            {[8, 9].map((phaseId) => {
+              if (phaseId > project.current_phase) return null;
+              const isCurrentPhase = phaseId === project.current_phase;
+              const isExecutingPhase = isCurrentPhase && status === 'executing';
+              return (
+                <PhaseCard
+                  key={phaseId}
+                  phaseNumber={phaseId}
+                  phaseData={getLabPhaseData(phaseId)}
+                  userEdits={getPhaseEdits(phaseId)}
+                  isActive={isCurrentPhase}
+                  isExecuting={isExecutingPhase}
+                  onSave={saveUserEdit}
+                  isSaving={isSaving}
+                  projectId={project.id}
+                />
+              );
+            })}
+
+            {/* Phase 10: full-width manuscript editor */}
+            {project.current_phase >= 10 && (() => {
+              const phaseData10 = getLabPhaseData(10);
+              const userEdits10 = getPhaseEdits(10);
+              if (!phaseData10 && status !== 'executing') return null;
+              return (
+                <motion.div
+                  key="phase-10-manuscript"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="border-2 border-primary rounded-xl p-6 shadow-md bg-card"
+                >
+                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+                    <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
+                      10
+                    </div>
+                    <span className="font-semibold text-primary">Manuscrito Final</span>
+                    <span className="text-xs text-muted-foreground">— Dossier completo listo para publicación</span>
+                    <div className="ml-auto">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent text-accent-foreground">
+                        Data Extractor
+                      </span>
+                    </div>
+                  </div>
+                  <PhaseManuscript
+                    data={phaseData10 || {}}
+                    userEdits={userEdits10 || {}}
+                    projectId={project.id}
+                    onValidate={approvePhase}
+                    isSaving={isSaving}
+                  />
+                </motion.div>
+              );
+            })()}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {status === 'paused' && project.current_phase < 10 && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-2 pt-4">
