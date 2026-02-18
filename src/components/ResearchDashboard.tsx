@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -258,7 +258,7 @@ function PhaseCard({
 
     // Phase 10: Manuscript viewer (handled separately as full-width)
     if (phaseNumber === 10) {
-      return <PhaseManuscript data={data} userEdits={edits} />;
+      return <PhaseManuscript data={data} userEdits={edits} projectId={projectId} />;
     }
 
     // ── Default: generic structured renderer for phases 5, 6, 8 ──
@@ -361,6 +361,77 @@ function PhaseCard({
           )}
         </AnimatePresence>
       </Card>
+    </motion.div>
+  );
+}
+
+// ── Chat-focused view for early phases (< 4) ──
+function EarlyPhaseView({
+  children,
+  currentPhase,
+}: {
+  children: ReactNode;
+  currentPhase: number;
+}) {
+  return (
+    <motion.div
+      key="early-phase"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.35 }}
+      className="max-w-3xl mx-auto space-y-6"
+    >
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/5 border border-primary/20">
+        <Brain className="w-4 h-4 text-primary shrink-0 animate-pulse" />
+        <span className="text-sm text-primary font-medium">
+          Fase {currentPhase} — Refinamiento Clínico activo
+        </span>
+        <span className="text-xs text-muted-foreground ml-auto">
+          Avanza a Fase 4 para ver el análisis FINER completo
+        </span>
+      </div>
+      {children}
+    </motion.div>
+  );
+}
+
+// ── Mid-phase view (phases 4-7): FINER radar + evidence ──
+function MidPhaseView({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <motion.div
+      key="mid-phase"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.35 }}
+      className="max-w-5xl mx-auto space-y-6"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ── Late-phase view (phases 8+): full-width manuscript ──
+function LatePhaseView({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <motion.div
+      key="late-phase"
+      initial={{ opacity: 0, scale: 0.99 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.99 }}
+      transition={{ duration: 0.4 }}
+      className="max-w-7xl mx-auto space-y-4"
+    >
+      {children}
     </motion.div>
   );
 }
@@ -493,7 +564,7 @@ export default function ResearchDashboard() {
     prevStatusRef.current = status;
   }, [status, project?.current_phase]);
 
-  // ── Idle ──
+  // ── Idle: no project yet ──
   if (!project) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
@@ -523,78 +594,234 @@ export default function ResearchDashboard() {
     );
   }
 
-  // ── Active ──
-  // Phases 8-10 get a full-width, non-collapsible manuscript layout
-  const isLatePhase = project.current_phase >= 8;
-
-  return (
-    <div className={`mx-auto space-y-6 ${isLatePhase ? 'max-w-7xl' : 'max-w-4xl'}`}>
-      <DashboardHeader />
-      <PhaseStepper currentPhase={project.current_phase} status={status} />
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* Lab-level realtime status */}
-          {labIsActive && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20"
-            >
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="animate-pulse">El Agente Estratega está analizando tu pregunta...</span>
-            </motion.div>
-          )}
-          {labIsPaused && !labIsActive && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-accent text-accent-foreground border border-accent">
-              <Edit3 className="w-4 h-4" /> Fase lista para revisión — Aprueba para continuar
-            </div>
-          )}
-          {!labIsActive && !labIsPaused && status === 'executing' && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-accent text-accent-foreground">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              {PHASE_SPINNER_MESSAGES[project.current_phase] || `Agentes de IA procesando Fase ${project.current_phase}...`}
-            </div>
-          )}
-          {!labIsActive && !labIsPaused && status === 'paused' && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-muted text-muted-foreground">
-              <Edit3 className="w-4 h-4" /> Esperando revisión del investigador
-            </div>
-          )}
-          {status === 'completed' && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
-              <CheckCircle className="w-4 h-4" /> Investigación completada
-            </div>
-          )}
-        </div>
-        {(status === 'paused' || labIsPaused) && (
-          <div className="flex flex-col items-end gap-1">
-            <Button
-              onClick={handleApproval}
-              disabled={isSaving || finerBlocking}
-              className="gap-2"
-              title={finerBlocking ? 'El Test FINER falló. Debes refinar la pregunta antes de continuar.' : undefined}
-            >
-              <CheckCircle className="w-4 h-4" /> Aprobar Fase
-            </Button>
-            {finerBlocking && (
-              <span className="text-[11px] text-destructive font-medium">
-                ⛔ Bloqueado por Test FINER
-              </span>
-            )}
+  // ── Shared: status bar + approval buttons ──
+  const statusBar = (
+    <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        {labIsActive && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20"
+          >
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="animate-pulse">El Agente Estratega está analizando tu pregunta...</span>
+          </motion.div>
+        )}
+        {labIsPaused && !labIsActive && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-accent text-accent-foreground border border-accent">
+            <Edit3 className="w-4 h-4" /> Fase lista para revisión — Aprueba para continuar
           </div>
         )}
-        {!labIsActive && status !== 'executing' && status !== 'completed' && status !== 'paused' && !labIsPaused && (
-          <Button onClick={syncWithAI} disabled={isSaving} className="gap-2">
-            <RefreshCw className={`w-4 h-4 ${isSaving ? 'animate-spin' : ''}`} /> Sincronizar con IA
-          </Button>
+        {!labIsActive && !labIsPaused && status === 'executing' && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-accent text-accent-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            {PHASE_SPINNER_MESSAGES[project.current_phase] || `Agentes de IA procesando Fase ${project.current_phase}...`}
+          </div>
+        )}
+        {!labIsActive && !labIsPaused && status === 'paused' && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-muted text-muted-foreground">
+            <Edit3 className="w-4 h-4" /> Esperando revisión del investigador
+          </div>
+        )}
+        {status === 'completed' && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
+            <CheckCircle className="w-4 h-4" /> Investigación completada
+          </div>
         )}
       </div>
+      {(status === 'paused' || labIsPaused) && (
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            onClick={handleApproval}
+            disabled={isSaving || finerBlocking}
+            className="gap-2"
+            title={finerBlocking ? 'El Test FINER falló. Debes refinar la pregunta antes de continuar.' : undefined}
+          >
+            <CheckCircle className="w-4 h-4" /> Aprobar Fase
+          </Button>
+          {finerBlocking && (
+            <span className="text-[11px] text-destructive font-medium">⛔ Bloqueado por Test FINER</span>
+          )}
+        </div>
+      )}
+      {!labIsActive && status !== 'executing' && status !== 'completed' && status !== 'paused' && !labIsPaused && (
+        <Button onClick={syncWithAI} disabled={isSaving} className="gap-2">
+          <RefreshCw className={`w-4 h-4 ${isSaving ? 'animate-spin' : ''}`} /> Sincronizar con IA
+        </Button>
+      )}
+    </div>
+  );
 
-      {/* ── Phase Cards (phases 1-7) ── */}
+  const approvalFooter = status === 'paused' && project.current_phase < 10 ? (
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-2 pt-4">
+      <Button size="lg" onClick={handleApproval} disabled={finerBlocking || isSaving} className="gap-2 px-8">
+        <CheckCircle className="w-4 h-4" />
+        Aprobar y Avanzar a Fase {project.current_phase + 1}: {PHASE_CONFIG[project.current_phase]?.name}
+      </Button>
+      {finerBlocking && (
+        <p className="text-sm text-destructive font-medium">
+          ⛔ El Test FINER no pasó — refina tu pregunta de investigación antes de continuar.
+        </p>
+      )}
+    </motion.div>
+  ) : null;
+
+  // ══════════════════════════════════════════════════
+  // VISTA A: Fases < 4 — Chat enfocado (Refinamiento)
+  // ══════════════════════════════════════════════════
+  if (project.current_phase < 4) {
+    return (
+      <EarlyPhaseView currentPhase={project.current_phase}>
+        <DashboardHeader />
+        <PhaseStepper currentPhase={project.current_phase} status={status} />
+        {statusBar}
+        <div className="space-y-4">
+          {PHASE_CONFIG.filter(p => p.id <= 3).map((phase) => {
+            const isCurrentPhase = phase.id === project.current_phase;
+            const isPastPhase = phase.id < project.current_phase;
+            const isExecutingPhase = isCurrentPhase && status === 'executing';
+            if (!isPastPhase && !isCurrentPhase) return null;
+            return (
+              <PhaseCard
+                key={phase.id}
+                phaseNumber={phase.id}
+                phaseData={getLabPhaseData(phase.id)}
+                userEdits={getPhaseEdits(phase.id)}
+                isActive={isCurrentPhase}
+                isExecuting={isExecutingPhase}
+                onSave={saveUserEdit}
+                isSaving={isSaving}
+                projectId={project.id}
+              />
+            );
+          })}
+        </div>
+        {approvalFooter}
+      </EarlyPhaseView>
+    );
+  }
+
+  // ══════════════════════════════════════════════════
+  // VISTA B: Fases >= 8 — ManuscriptEditor a pantalla completa
+  // ══════════════════════════════════════════════════
+  if (project.current_phase >= 8) {
+    const phaseData10 = getLabPhaseData(10);
+    const userEdits10 = getPhaseEdits(10);
+    const showManuscript = project.current_phase >= 10 && (phaseData10 || status === 'executing');
+
+    return (
+      <LatePhaseView>
+        <DashboardHeader />
+        <PhaseStepper currentPhase={project.current_phase} status={status} />
+        {statusBar}
+
+        {/* Header strip fases 8-10 */}
+        <div className="flex items-center gap-3 border-t border-border pt-4">
+          <BookOpen className="w-5 h-5 text-primary" />
+          <span className="font-semibold text-primary text-sm tracking-wide uppercase">
+            Fases 8–10 · Protocolo PRISMA-P, Manuscrito &amp; Dossier Final
+          </span>
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground">Fase actual: {project.current_phase}/10</span>
+        </div>
+
+        {/* Phases 1-7 summary (collapsed) */}
+        {[1, 2, 3, 4, 5, 6, 7].map((phaseId) => {
+          const phaseData = getLabPhaseData(phaseId);
+          if (!phaseData) return null;
+          const config = PHASE_CONFIG.find(p => p.id === phaseId)!;
+          return (
+            <PhaseCard
+              key={phaseId}
+              phaseNumber={phaseId}
+              phaseData={phaseData}
+              userEdits={getPhaseEdits(phaseId)}
+              isActive={false}
+              isExecuting={false}
+              onSave={saveUserEdit}
+              isSaving={isSaving}
+              projectId={project.id}
+            />
+          );
+        })}
+
+        {/* Phases 8 & 9 */}
+        {[8, 9].map((phaseId) => {
+          if (phaseId > project.current_phase) return null;
+          const isCurrentPhase = phaseId === project.current_phase;
+          const isExecutingPhase = isCurrentPhase && status === 'executing';
+          return (
+            <PhaseCard
+              key={phaseId}
+              phaseNumber={phaseId}
+              phaseData={getLabPhaseData(phaseId)}
+              userEdits={getPhaseEdits(phaseId)}
+              isActive={isCurrentPhase}
+              isExecuting={isExecutingPhase}
+              onSave={saveUserEdit}
+              isSaving={isSaving}
+              projectId={project.id}
+            />
+          );
+        })}
+
+        {/* Phase 10: Manuscript full-width con ReferencesPanel integrado */}
+        {showManuscript && (
+          <motion.div
+            key="phase-10-manuscript"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="border-2 border-primary rounded-xl shadow-lg bg-card overflow-hidden"
+          >
+            {/* Phase header */}
+            <div className="flex items-center gap-2 px-6 py-4 border-b border-border bg-primary/5">
+              <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
+                10
+              </div>
+              <span className="font-semibold text-primary">Manuscrito Final</span>
+              <span className="text-xs text-muted-foreground">— Dossier completo listo para publicación</span>
+              <div className="ml-auto">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent text-accent-foreground">
+                  Data Extractor
+                </span>
+              </div>
+            </div>
+            {/* Editor con ReferencesPanel (projectId siempre presente) */}
+            <div className="p-6">
+              <PhaseManuscript
+                data={phaseData10 || {}}
+                userEdits={userEdits10 || {}}
+                projectId={project.id}
+                onValidate={approvePhase}
+                isSaving={isSaving}
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {/* Phase 10 skeleton while executing */}
+        {project.current_phase >= 10 && !phaseData10 && status === 'executing' && (
+          <MedicalSkeleton phaseNumber={10} />
+        )}
+
+        {approvalFooter}
+      </LatePhaseView>
+    );
+  }
+
+  // ══════════════════════════════════════════════════
+  // VISTA C: Fases 4-7 — Dashboard con radar FINER
+  // ══════════════════════════════════════════════════
+  return (
+    <MidPhaseView>
+      <DashboardHeader />
+      <PhaseStepper currentPhase={project.current_phase} status={status} />
+      {statusBar}
+
+      {/* All phases up to current */}
       <div className="space-y-4">
-        {PHASE_CONFIG.map((phase) => {
-          if (phase.id > 7) return null; // handled separately below
+        {PHASE_CONFIG.filter(p => p.id <= 7).map((phase) => {
           const isCurrentPhase = phase.id === project.current_phase;
           const isPastPhase = phase.id < project.current_phase;
           const isExecutingPhase = isCurrentPhase && status === 'executing';
@@ -615,102 +842,8 @@ export default function ResearchDashboard() {
         })}
       </div>
 
-      {/* ── Full-Width Manuscript Block (phases 8-10) ── */}
-      <AnimatePresence>
-        {project.current_phase >= 8 && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="space-y-4"
-          >
-            {/* Phase label strip */}
-            <div className="flex items-center gap-3 border-t border-border pt-4">
-              <BookOpen className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-primary text-sm tracking-wide uppercase">
-                Fases 8–10 · Protocolo PRISMA-P, Manuscrito &amp; Dossier Final
-              </span>
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-muted-foreground">Fase actual: {project.current_phase}/10</span>
-            </div>
-
-            {/* Phases 8, 9, 10 as collapsible phase cards for 8&9, full-width for 10 */}
-            {[8, 9].map((phaseId) => {
-              if (phaseId > project.current_phase) return null;
-              const isCurrentPhase = phaseId === project.current_phase;
-              const isExecutingPhase = isCurrentPhase && status === 'executing';
-              return (
-                <PhaseCard
-                  key={phaseId}
-                  phaseNumber={phaseId}
-                  phaseData={getLabPhaseData(phaseId)}
-                  userEdits={getPhaseEdits(phaseId)}
-                  isActive={isCurrentPhase}
-                  isExecuting={isExecutingPhase}
-                  onSave={saveUserEdit}
-                  isSaving={isSaving}
-                  projectId={project.id}
-                />
-              );
-            })}
-
-            {/* Phase 10: full-width manuscript editor */}
-            {project.current_phase >= 10 && (() => {
-              const phaseData10 = getLabPhaseData(10);
-              const userEdits10 = getPhaseEdits(10);
-              if (!phaseData10 && status !== 'executing') return null;
-              return (
-                <motion.div
-                  key="phase-10-manuscript"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="border-2 border-primary rounded-xl p-6 shadow-md bg-card"
-                >
-                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
-                    <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
-                      10
-                    </div>
-                    <span className="font-semibold text-primary">Manuscrito Final</span>
-                    <span className="text-xs text-muted-foreground">— Dossier completo listo para publicación</span>
-                    <div className="ml-auto">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent text-accent-foreground">
-                        Data Extractor
-                      </span>
-                    </div>
-                  </div>
-                  <PhaseManuscript
-                    data={phaseData10 || {}}
-                    userEdits={userEdits10 || {}}
-                    projectId={project.id}
-                    onValidate={approvePhase}
-                    isSaving={isSaving}
-                  />
-                </motion.div>
-              );
-            })()}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {status === 'paused' && project.current_phase < 10 && (
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-2 pt-4">
-          <Button
-            size="lg"
-            onClick={handleApproval}
-            disabled={finerBlocking || isSaving}
-            className="gap-2 px-8"
-          >
-            <CheckCircle className="w-4 h-4" />
-            Aprobar y Avanzar a Fase {project.current_phase + 1}: {PHASE_CONFIG[project.current_phase]?.name}
-          </Button>
-          {finerBlocking && (
-            <p className="text-sm text-destructive font-medium">
-              ⛔ El Test FINER no pasó — refina tu pregunta de investigación antes de continuar.
-            </p>
-          )}
-        </motion.div>
-      )}
-    </div>
+      {approvalFooter}
+    </MidPhaseView>
   );
 }
 
