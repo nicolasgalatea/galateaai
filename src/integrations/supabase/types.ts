@@ -53,6 +53,74 @@ export type Database = {
         }
         Relationships: []
       }
+      project_references: {
+        Row: {
+          abstract: string | null
+          authors: string | null
+          created_at: string
+          doi: string | null
+          exclusion_reason: string | null
+          id: string
+          inclusion_status: string | null
+          journal: string | null
+          phase_used: number | null
+          pmid: string
+          project_id: string
+          relevance_score: number | null
+          row_id: string | null
+          title: string
+          updated_at: string
+          url: string | null
+          year: number | null
+        }
+        Insert: {
+          abstract?: string | null
+          authors?: string | null
+          created_at?: string
+          doi?: string | null
+          exclusion_reason?: string | null
+          id?: string
+          inclusion_status?: string | null
+          journal?: string | null
+          phase_used?: number | null
+          pmid: string
+          project_id: string
+          relevance_score?: number | null
+          row_id?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+          year?: number | null
+        }
+        Update: {
+          abstract?: string | null
+          authors?: string | null
+          created_at?: string
+          doi?: string | null
+          exclusion_reason?: string | null
+          id?: string
+          inclusion_status?: string | null
+          journal?: string | null
+          phase_used?: number | null
+          pmid?: string
+          project_id?: string
+          relevance_score?: number | null
+          row_id?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_references_row_id_fkey"
+            columns: ["row_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       research_lab_progress: {
         Row: {
           created_at: string
