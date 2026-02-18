@@ -13,13 +13,14 @@ import { motion, AnimatePresence, useSpring, useTransform, useMotionValue } from
 import {
   BookOpen, ExternalLink, CheckCircle, Clock, Search,
   Users, Calendar, Microscope, AlertCircle, RefreshCw,
-  Copy, Check, X, Maximize2,
+  Copy, Check, X, Maximize2, Database,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -92,6 +93,100 @@ function getRelevanceColor(score?: number | null): string {
   if (score >= 0.8) return 'hsl(142 76% 36%)';
   if (score >= 0.6) return 'hsl(45 80% 38%)';
   return 'hsl(var(--destructive))';
+}
+
+// ── ProgressBar (Fase 7) ──────────────────────────────────────────────────────
+
+const ESTIMATED_TOTAL = 250;
+
+function EvidenceProgressBar({ verified }: { verified: number }) {
+  const pct = Math.min(Math.round((verified / ESTIMATED_TOTAL) * 100), 100);
+  const [displayPct, setDisplayPct] = useState(0);
+
+  const motionPct = useMotionValue(0);
+  const springPct = useSpring(motionPct, { damping: 28, stiffness: 100 });
+  const displayNum = useTransform(springPct, (v) => Math.round(v));
+  const [displayNumStr, setDisplayNumStr] = useState('0');
+
+  useEffect(() => {
+    motionPct.set(pct);
+    setDisplayPct(pct);
+  }, [pct, motionPct]);
+
+  useEffect(() => {
+    return displayNum.on('change', (v) => setDisplayNumStr(String(v)));
+  }, [displayNum]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.35 }}
+      className="rounded-xl border border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary)/0.04)] px-4 py-3 space-y-2"
+    >
+      {/* Label row */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Database className="w-3.5 h-3.5 text-[hsl(var(--primary))] animate-pulse" />
+          <span className="text-xs font-semibold text-[hsl(var(--primary))]">
+            Verificación PubMed en curso
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--muted-foreground))] animate-pulse">
+            <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+            Agente 7 activo
+          </span>
+        </div>
+        <div className="flex items-baseline gap-0.5">
+          <span className="text-sm font-bold tabular-nums text-[hsl(var(--primary))]">
+            {displayNumStr}%
+          </span>
+          <span className="text-[10px] text-[hsl(var(--muted-foreground))] ml-1.5">
+            {verified} / {ESTIMATED_TOTAL} PMIDs
+          </span>
+        </div>
+      </div>
+
+      {/* Progress bar with shimmer */}
+      <div className="relative">
+        <Progress
+          value={displayPct}
+          className="h-2 bg-[hsl(var(--primary)/0.12)]"
+        />
+        {pct < 100 && (
+          <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none">
+            <motion.div
+              className="h-full w-16 bg-gradient-to-r from-transparent via-[hsl(var(--primary)/0.35)] to-transparent"
+              animate={{ x: ['-4rem', '100%'] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'linear' }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Milestone badges */}
+      <div className="flex gap-1.5 flex-wrap">
+        {[
+          { threshold: 25,  label: '25 artículos' },
+          { threshold: 100, label: '100 artículos' },
+          { threshold: 175, label: '175 artículos' },
+          { threshold: 250, label: 'Búsqueda completa' },
+        ].map(({ threshold, label }) => (
+          <span
+            key={threshold}
+            className={cn(
+              'text-[9px] px-1.5 py-0.5 rounded-full border font-medium transition-all duration-500',
+              verified >= threshold
+                ? 'bg-[hsl(142_76%_36%/0.15)] text-[hsl(142,76%,28%)] border-[hsl(142_76%_36%/0.4)]'
+                : 'bg-[hsl(var(--muted)/0.4)] text-[hsl(var(--muted-foreground)/0.5)] border-transparent',
+            )}
+          >
+            {verified >= threshold ? '✓ ' : ''}{label}
+          </span>
+        ))}
+      </div>
+    </motion.div>
+  );
 }
 
 // ── Animated Counter ──────────────────────────────────────────────────────────
@@ -281,9 +376,11 @@ function CopyVancouverButton({ reference }: { reference: ProjectReference }) {
 function ReferenceCard({
   ref: reference,
   isNew,
+  isLoadingMeta = false,
 }: {
   ref: ProjectReference;
   isNew: boolean;
+  isLoadingMeta?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [pubmedOpen, setPubmedOpen] = useState(false);
@@ -307,12 +404,40 @@ function ReferenceCard({
           backgroundColor: { duration: 1.8, ease: 'easeOut' },
         }}
         className={cn(
-          'rounded-lg border transition-colors',
+          'rounded-lg border transition-colors relative overflow-hidden',
           'border-[hsl(var(--border))]',
           isNew && 'ring-1 ring-[hsl(142_76%_36%/0.45)]',
         )}
       >
+        {/* ── Pulse shimmer while loading metadata ── */}
+        {isLoadingMeta && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(var(--primary)/0.06)] to-transparent" />
+          </motion.div>
+        )}
+        {/* ── Loading metadata indicator strip ── */}
+        {isLoadingMeta && (
+          <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden rounded-t-lg">
+            <motion.div
+              className="h-full bg-[hsl(var(--primary))]"
+              animate={{ x: ['-100%', '100%'] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+            />
+          </div>
+        )}
         <div className="p-4">
+          {/* ── Loading metadata label ── */}
+          {isLoadingMeta && (
+            <div className="flex items-center gap-1.5 mb-2 text-[10px] text-[hsl(var(--primary))] animate-pulse">
+              <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+              Cargando metadatos PubMed…
+            </div>
+          )}
           {/* ── Badges row ── */}
           <div className="flex flex-wrap items-center gap-2">
             {/* PMID — opens modal */}
@@ -658,6 +783,13 @@ export default function EvidenceLibrary({
         </div>
       </div>
 
+      {/* ── Progress bar (Phase 7 + executing) ── */}
+      <AnimatePresence>
+        {isExecuting && currentPhase === 7 && (
+          <EvidenceProgressBar verified={references.length} />
+        )}
+      </AnimatePresence>
+
       {/* ── Animated counter ── */}
       {references.length > 0 && (
         <AnimatedCounter
@@ -700,7 +832,17 @@ export default function EvidenceLibrary({
         <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
           <AnimatePresence initial={false}>
             {filtered.map((ref) => (
-              <ReferenceCard key={ref.id} ref={ref} isNew={newIds.has(ref.id)} />
+              <ReferenceCard
+                key={ref.id}
+                ref={ref}
+                isNew={newIds.has(ref.id)}
+                isLoadingMeta={
+                  isExecuting &&
+                  currentPhase === 7 &&
+                  (!ref.authors || !ref.journal) &&
+                  ref.inclusion_status === 'pending'
+                }
+              />
             ))}
           </AnimatePresence>
         </div>
