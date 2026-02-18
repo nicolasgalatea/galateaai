@@ -1,25 +1,25 @@
 /**
  * EvidenceLibrary — Fase 7 (y cualquier fase que requiera referencias)
  * ─────────────────────────────────────────────────────────────────────
- * • Suscripción Realtime a `project_references` — los artículos aparecen
- *   uno a uno conforme el Agente n8n los inserta.
- * • Formato de citación Vancouver (Autores. Título. Revista. Año; PMID).
- * • Badge verde con PMID verificado + enlace a PubMed.
- * • Skeleton animado si la tabla está vacía y la fase activa es 7.
- * • Animación "slide-in" suave por cada nueva referencia (sin parpadeo).
+ * • Contador animado "X artículos verificados por IA" en la cabecera.
+ * • Modal PubMed con Iframe antes de salir a la web externa.
+ * • Botón "Copiar Citación Vancouver" para artículos con DOI.
+ * • Suscripción Realtime a `project_references`.
+ * • Formato Vancouver + badge PMID + highlight verde al insertar.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useSpring, useTransform, useMotionValue } from 'framer-motion';
 import {
-  BookOpen, ExternalLink, CheckCircle, Clock, Filter,
-  Search, Users, Calendar, Microscope, AlertCircle, RefreshCw,
+  BookOpen, ExternalLink, CheckCircle, Clock, Search,
+  Users, Calendar, Microscope, AlertCircle, RefreshCw,
+  Copy, Check, X, Maximize2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -44,9 +44,9 @@ export interface ProjectReference {
 type InclusionFilter = 'all' | 'pending' | 'included' | 'excluded';
 
 interface EvidenceLibraryProps {
-  projectId: string;        // ID del research_project (UUID)
-  currentPhase?: number;    // Para mostrar skeleton en fase 7
-  isExecuting?: boolean;    // n8n está corriendo → mostramos spinner
+  projectId: string;
+  currentPhase?: number;
+  isExecuting?: boolean;
   className?: string;
 }
 
@@ -60,12 +60,12 @@ const STATUS_CONFIG = {
   },
   excluded: {
     label: 'Excluido',
-    classes: 'bg-[hsl(0_72%_51%/0.1)] text-[hsl(0,72%,42%)] border-[hsl(0,72%,51%/0.3)]',
+    classes: 'bg-[hsl(var(--destructive)/0.1)] text-[hsl(0,72%,42%)] border-[hsl(var(--destructive)/0.3)]',
     icon: <AlertCircle className="w-3 h-3" />,
   },
   pending: {
     label: 'Pendiente',
-    classes: 'bg-[hsl(45_93%_47%/0.12)] text-[hsl(45,80%,30%)] border-[hsl(45,93%,47%/0.4)]',
+    classes: 'bg-[hsl(var(--warning)/0.12)] text-[hsl(45,80%,30%)] border-[hsl(var(--warning)/0.4)]',
     icon: <Clock className="w-3 h-3" />,
   },
 } as const;
@@ -76,13 +76,14 @@ function getStatusConfig(status?: string | null) {
   return STATUS_CONFIG.pending;
 }
 
-/** Format Vancouver citation: Authors. Title. Journal. Year. */
+/** Format Vancouver citation: Authors. Title. Journal. Year. DOI. */
 function formatVancouver(ref: ProjectReference): string {
   const parts: string[] = [];
   if (ref.authors) parts.push(ref.authors.trim().replace(/\.$/, '') + '.');
   if (ref.title)   parts.push(ref.title.trim().replace(/\.$/, '') + '.');
   if (ref.journal) parts.push(ref.journal.trim().replace(/\.$/, '') + '.');
   if (ref.year)    parts.push(String(ref.year) + '.');
+  if (ref.doi)     parts.push(`doi: ${ref.doi}`);
   return parts.join(' ');
 }
 
@@ -90,7 +91,189 @@ function getRelevanceColor(score?: number | null): string {
   if (!score) return 'hsl(var(--muted-foreground))';
   if (score >= 0.8) return 'hsl(142 76% 36%)';
   if (score >= 0.6) return 'hsl(45 80% 38%)';
-  return 'hsl(0 72% 51%)';
+  return 'hsl(var(--destructive))';
+}
+
+// ── Animated Counter ──────────────────────────────────────────────────────────
+
+function AnimatedCounter({ value, label }: { value: number; label: string }) {
+  const motionValue = useMotionValue(0);
+  const spring = useSpring(motionValue, { damping: 30, stiffness: 120 });
+  const display = useTransform(spring, (v) => Math.round(v).toString());
+  const [displayStr, setDisplayStr] = useState('0');
+
+  useEffect(() => {
+    motionValue.set(value);
+  }, [value, motionValue]);
+
+  useEffect(() => {
+    return display.on('change', (v) => setDisplayStr(v));
+  }, [display]);
+
+  return (
+    <motion.div
+      className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border bg-[hsl(var(--primary)/0.06)] border-[hsl(var(--primary)/0.2)]"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
+      {/* Pulse dot */}
+      <span className="relative flex h-2.5 w-2.5 shrink-0">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(var(--primary))] opacity-60" />
+        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[hsl(var(--primary))]" />
+      </span>
+
+      {/* Number */}
+      <span className="text-xl font-bold tabular-nums text-[hsl(var(--primary))]">
+        {displayStr}
+      </span>
+
+      {/* Label */}
+      <span className="text-xs font-medium text-[hsl(var(--muted-foreground))] leading-tight max-w-[130px]">
+        {label}
+      </span>
+
+      {/* AI badge */}
+      <span className="ml-auto text-[9px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded-full bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.25)]">
+        IA
+      </span>
+    </motion.div>
+  );
+}
+
+// ── PubMed Modal ──────────────────────────────────────────────────────────────
+
+function PubMedModal({
+  pmid,
+  title,
+  open,
+  onClose,
+}: {
+  pmid: string;
+  title: string;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const pubmedUrl = `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl w-full h-[80vh] flex flex-col p-0 gap-0 overflow-hidden rounded-xl">
+        <DialogHeader className="flex flex-row items-start justify-between gap-3 px-4 py-3 border-b border-[hsl(var(--border))] shrink-0">
+          <div className="flex-1 min-w-0">
+            <DialogTitle className="text-sm font-semibold text-[hsl(var(--foreground))] leading-snug line-clamp-2">
+              {title}
+            </DialogTitle>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge className="gap-1 font-mono text-[10px] px-2 py-0.5 bg-[hsl(142_76%_36%/0.12)] text-[hsl(142,76%,28%)] border border-[hsl(142_76%_36%/0.4)]">
+                <CheckCircle className="w-3 h-3" />
+                PMID: {pmid}
+              </Badge>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                Vista previa PubMed
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <a
+              href={pubmedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1.5 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.85)] transition-colors font-medium"
+              title="Abrir en PubMed"
+            >
+              <Maximize2 className="w-3 h-3" />
+              Abrir
+            </a>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-md hover:bg-[hsl(var(--muted))] transition-colors text-[hsl(var(--muted-foreground))]"
+              aria-label="Cerrar"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </DialogHeader>
+
+        {/* Iframe */}
+        <div className="flex-1 relative">
+          <iframe
+            src={pubmedUrl}
+            title={`PubMed PMID ${pmid}`}
+            className="w-full h-full border-0"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            loading="lazy"
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Copy Citation Button ──────────────────────────────────────────────────────
+
+function CopyVancouverButton({ reference }: { reference: ProjectReference }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const citation = formatVancouver(reference);
+    try {
+      await navigator.clipboard.writeText(citation);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback: textarea
+      const ta = document.createElement('textarea');
+      ta.value = citation;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <motion.button
+      onClick={handleCopy}
+      whileTap={{ scale: 0.93 }}
+      className={cn(
+        'inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border transition-all',
+        copied
+          ? 'bg-[hsl(142_76%_36%/0.15)] text-[hsl(142,76%,28%)] border-[hsl(142_76%_36%/0.4)]'
+          : 'bg-[hsl(var(--muted)/0.6)] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--primary)/0.08)] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.3)]',
+      )}
+      title="Copiar citación Vancouver al portapapeles"
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        {copied ? (
+          <motion.span
+            key="ok"
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.7 }}
+            className="flex items-center gap-1"
+          >
+            <Check className="w-2.5 h-2.5" />
+            ¡Copiado!
+          </motion.span>
+        ) : (
+          <motion.span
+            key="copy"
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.7 }}
+            className="flex items-center gap-1"
+          >
+            <Copy className="w-2.5 h-2.5" />
+            Citar Vancouver
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  );
 }
 
 // ── Reference Card ────────────────────────────────────────────────────────────
@@ -103,150 +286,171 @@ function ReferenceCard({
   isNew: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [pubmedOpen, setPubmedOpen] = useState(false);
   const statusCfg = getStatusConfig(reference.inclusion_status);
   const vancouver = formatVancouver(reference);
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, x: -16, backgroundColor: 'hsl(142 76% 36% / 0.08)' }}
-      animate={{
-        opacity: 1,
-        x: 0,
-        backgroundColor: isNew
-          ? ['hsl(142 76% 36% / 0.12)', 'hsl(142 76% 36% / 0)', 'hsl(var(--card))']
-          : 'hsl(var(--card))',
-      }}
-      transition={{
-        duration: 0.45,
-        backgroundColor: { duration: 1.6, ease: 'easeOut' },
-      }}
-      className={cn(
-        'rounded-lg border transition-colors group',
-        'border-[hsl(var(--border))]',
-        isNew && 'ring-1 ring-[hsl(142_76%_36%/0.4)]',
-      )}
-    >
-      {/* ── Card Header ── */}
-      <div className="p-4">
-        <div className="flex items-start gap-3">
-          {/* PMID Badge */}
-          <a
-            href={`https://pubmed.ncbi.nlm.nih.gov/${reference.pmid}/`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="shrink-0 mt-0.5"
-            aria-label={`Abrir PMID ${reference.pmid} en PubMed`}
-          >
-            <Badge className="gap-1 font-mono text-[11px] px-2 py-0.5 bg-[hsl(142_76%_36%/0.12)] text-[hsl(142,76%,28%)] border border-[hsl(142_76%_36%/0.4)] hover:bg-[hsl(142_76%_36%/0.22)] transition-colors cursor-pointer">
-              <CheckCircle className="w-3 h-3" />
-              PMID: {reference.pmid}
-              <ExternalLink className="w-2.5 h-2.5 ml-0.5 opacity-70" />
-            </Badge>
-          </a>
-
-          {/* Inclusion Status Badge */}
-          <Badge
-            className={cn(
-              'shrink-0 mt-0.5 gap-1 text-[10px] border',
-              statusCfg.classes,
-            )}
-          >
-            {statusCfg.icon}
-            {statusCfg.label}
-          </Badge>
-
-          {/* Relevance Score */}
-          {reference.relevance_score != null && (
-            <span
-              className="shrink-0 mt-0.5 text-[10px] font-semibold tabular-nums"
-              style={{ color: getRelevanceColor(reference.relevance_score) }}
-              title="Puntuación de relevancia (0–1)"
+    <>
+      <motion.div
+        layout
+        initial={{ opacity: 0, x: -16 }}
+        animate={{
+          opacity: 1,
+          x: 0,
+          backgroundColor: isNew
+            ? ['hsl(142 76% 36% / 0.10)', 'hsl(142 76% 36% / 0)', 'hsl(var(--card))']
+            : 'hsl(var(--card))',
+        }}
+        transition={{
+          duration: 0.45,
+          backgroundColor: { duration: 1.8, ease: 'easeOut' },
+        }}
+        className={cn(
+          'rounded-lg border transition-colors',
+          'border-[hsl(var(--border))]',
+          isNew && 'ring-1 ring-[hsl(142_76%_36%/0.45)]',
+        )}
+      >
+        <div className="p-4">
+          {/* ── Badges row ── */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* PMID — opens modal */}
+            <button
+              onClick={() => setPubmedOpen(true)}
+              className="shrink-0"
+              aria-label={`Ver PMID ${reference.pmid} en PubMed`}
             >
-              {Math.round(reference.relevance_score * 100)}% rel.
-            </span>
-          )}
+              <Badge className="gap-1 font-mono text-[11px] px-2 py-0.5 bg-[hsl(142_76%_36%/0.12)] text-[hsl(142,76%,28%)] border border-[hsl(142_76%_36%/0.4)] hover:bg-[hsl(142_76%_36%/0.22)] transition-colors cursor-pointer">
+                <CheckCircle className="w-3 h-3" />
+                PMID: {reference.pmid}
+                <ExternalLink className="w-2.5 h-2.5 ml-0.5 opacity-70" />
+              </Badge>
+            </button>
 
-          {/* Phase badge */}
-          {reference.phase_used && (
-            <span className="shrink-0 mt-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-[hsl(var(--accent)/0.15)] text-[hsl(var(--accent-foreground))] border border-[hsl(var(--accent)/0.25)] font-medium">
-              Fase {reference.phase_used}
-            </span>
-          )}
-        </div>
+            {/* Inclusion status */}
+            <Badge className={cn('shrink-0 gap-1 text-[10px] border', statusCfg.classes)}>
+              {statusCfg.icon}
+              {statusCfg.label}
+            </Badge>
 
-        {/* Title */}
-        <h4 className="mt-3 text-sm font-semibold text-[hsl(var(--foreground))] leading-snug">
-          {reference.title}
-        </h4>
+            {/* Relevance score */}
+            {reference.relevance_score != null && (
+              <span
+                className="shrink-0 text-[10px] font-semibold tabular-nums"
+                style={{ color: getRelevanceColor(reference.relevance_score) }}
+                title="Puntuación de relevancia (0–1)"
+              >
+                {Math.round(reference.relevance_score * 100)}% rel.
+              </span>
+            )}
 
-        {/* Vancouver citation line */}
-        <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))] leading-relaxed italic">
-          {vancouver}
-        </p>
+            {/* Phase badge */}
+            {reference.phase_used && (
+              <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-[hsl(var(--accent)/0.15)] text-[hsl(var(--accent-foreground))] border border-[hsl(var(--accent)/0.25)] font-medium">
+                Fase {reference.phase_used}
+              </span>
+            )}
 
-        {/* Meta row */}
-        <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[hsl(var(--muted-foreground))]">
-          {reference.authors && (
-            <span className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              {reference.authors.split(',').slice(0, 2).join(',').trim()}
-              {reference.authors.split(',').length > 2 && ' et al.'}
-            </span>
-          )}
-          {reference.year && (
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {reference.year}
-            </span>
-          )}
-          {reference.journal && (
-            <span className="flex items-center gap-1">
-              <Microscope className="w-3 h-3" />
-              {reference.journal}
-            </span>
-          )}
-        </div>
+            {/* Copy Vancouver — only if DOI exists */}
+            {reference.doi && (
+              <CopyVancouverButton reference={reference} />
+            )}
+          </div>
 
-        {/* Exclusion reason */}
-        {reference.exclusion_reason && (
-          <p className="mt-2 text-[11px] text-[hsl(0,72%,42%)] flex items-center gap-1">
-            <AlertCircle className="w-3 h-3 shrink-0" />
-            {reference.exclusion_reason}
+          {/* Title */}
+          <h4 className="mt-3 text-sm font-semibold text-[hsl(var(--foreground))] leading-snug">
+            {reference.title}
+          </h4>
+
+          {/* Vancouver citation */}
+          <p className="mt-1.5 text-xs text-[hsl(var(--muted-foreground))] leading-relaxed italic">
+            {vancouver}
           </p>
-        )}
 
-        {/* Abstract toggle */}
-        {reference.abstract && (
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="mt-2 text-[11px] text-[hsl(var(--primary))] hover:underline underline-offset-2 font-medium"
-          >
-            {expanded ? 'Ocultar abstract ↑' : 'Ver abstract ↓'}
-          </button>
-        )}
-      </div>
+          {/* Meta row */}
+          <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[hsl(var(--muted-foreground))]">
+            {reference.authors && (
+              <span className="flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                {reference.authors.split(',').slice(0, 2).join(',').trim()}
+                {reference.authors.split(',').length > 2 && ' et al.'}
+              </span>
+            )}
+            {reference.year && (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {reference.year}
+              </span>
+            )}
+            {reference.journal && (
+              <span className="flex items-center gap-1">
+                <Microscope className="w-3 h-3" />
+                {reference.journal}
+              </span>
+            )}
+            {/* DOI text link */}
+            {reference.doi && (
+              <a
+                href={`https://doi.org/${reference.doi}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-[hsl(var(--primary))] hover:underline underline-offset-2"
+              >
+                <ExternalLink className="w-2.5 h-2.5" />
+                DOI
+              </a>
+            )}
+          </div>
 
-      {/* Abstract panel */}
-      <AnimatePresence>
-        {expanded && reference.abstract && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 border-t border-[hsl(var(--border))]">
-              <p className="pt-3 text-xs text-[hsl(var(--foreground))] leading-relaxed">
-                {reference.abstract}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+          {/* Exclusion reason */}
+          {reference.exclusion_reason && (
+            <p className="mt-2 text-[11px] text-[hsl(0,72%,42%)] flex items-center gap-1">
+              <AlertCircle className="w-3 h-3 shrink-0" />
+              {reference.exclusion_reason}
+            </p>
+          )}
+
+          {/* Abstract toggle */}
+          {reference.abstract && (
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-2 text-[11px] text-[hsl(var(--primary))] hover:underline underline-offset-2 font-medium"
+            >
+              {expanded ? 'Ocultar abstract ↑' : 'Ver abstract ↓'}
+            </button>
+          )}
+        </div>
+
+        {/* Abstract panel */}
+        <AnimatePresence>
+          {expanded && reference.abstract && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 pb-4 border-t border-[hsl(var(--border))]">
+                <p className="pt-3 text-xs text-[hsl(var(--foreground))] leading-relaxed">
+                  {reference.abstract}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* PubMed Modal */}
+      <PubMedModal
+        pmid={reference.pmid}
+        title={reference.title}
+        open={pubmedOpen}
+        onClose={() => setPubmedOpen(false)}
+      />
+    </>
   );
 }
 
@@ -278,7 +482,7 @@ function EvidenceSkeleton() {
       ))}
       <div className="flex items-center gap-2 pt-1 text-xs text-[hsl(var(--muted-foreground))] animate-pulse">
         <RefreshCw className="w-3 h-3 animate-spin" />
-        Agente buscando artículos en PubMed...
+        Agente buscando artículos en PubMed…
       </div>
     </div>
   );
@@ -302,7 +506,7 @@ export default function EvidenceLibrary({
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const newIdTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  // ── Mark a reference as "new" for 2.5s then remove highlight ──────────────
+  // ── Mark a reference as "new" for 2.5s ────────────────────────────────────
   const markAsNew = useCallback((id: string) => {
     setNewIds((prev) => new Set(prev).add(id));
     const existing = newIdTimers.current.get(id);
@@ -322,16 +526,13 @@ export default function EvidenceLibrary({
   useEffect(() => {
     if (!projectId) return;
     setIsLoading(true);
-
     supabase
       .from('project_references')
       .select('*')
       .eq('project_id', projectId)
       .order('created_at', { ascending: true })
       .then(({ data, error }) => {
-        if (!error && data) {
-          setReferences(data as ProjectReference[]);
-        }
+        if (!error && data) setReferences(data as ProjectReference[]);
         setIsLoading(false);
       });
   }, [projectId]);
@@ -339,21 +540,14 @@ export default function EvidenceLibrary({
   // ── Realtime subscription ─────────────────────────────────────────────────
   useEffect(() => {
     if (!projectId) return;
-
     channelRef.current = supabase
       .channel(`evidence_library_${projectId}`)
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'project_references',
-          filter: `project_id=eq.${projectId}`,
-        },
+        { event: 'INSERT', schema: 'public', table: 'project_references', filter: `project_id=eq.${projectId}` },
         (payload) => {
           const newRef = payload.new as ProjectReference;
           setReferences((prev) => {
-            // Avoid duplicates
             if (prev.some((r) => r.id === newRef.id)) return prev;
             return [...prev, newRef];
           });
@@ -362,17 +556,10 @@ export default function EvidenceLibrary({
       )
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'project_references',
-          filter: `project_id=eq.${projectId}`,
-        },
+        { event: 'UPDATE', schema: 'public', table: 'project_references', filter: `project_id=eq.${projectId}` },
         (payload) => {
           const updated = payload.new as ProjectReference;
-          setReferences((prev) =>
-            prev.map((r) => (r.id === updated.id ? updated : r)),
-          );
+          setReferences((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
           markAsNew(updated.id);
         },
       )
@@ -383,23 +570,20 @@ export default function EvidenceLibrary({
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
-      // Clear all highlight timers
       newIdTimers.current.forEach((t) => clearTimeout(t));
       newIdTimers.current.clear();
     };
   }, [projectId, markAsNew]);
 
-  // ── Derived: filtered list ────────────────────────────────────────────────
+  // ── Derived ───────────────────────────────────────────────────────────────
   const filtered = references.filter((r) => {
     const matchesFilter =
       filter === 'all' ||
       (filter === 'pending'  && (!r.inclusion_status || r.inclusion_status === 'pending')) ||
       (filter === 'included' && r.inclusion_status === 'included') ||
       (filter === 'excluded' && r.inclusion_status === 'excluded');
-
     if (!matchesFilter) return false;
     if (!search.trim()) return true;
-
     const q = search.toLowerCase();
     return (
       r.title?.toLowerCase().includes(q) ||
@@ -409,7 +593,6 @@ export default function EvidenceLibrary({
     );
   });
 
-  // Stats
   const stats = {
     total:    references.length,
     included: references.filter((r) => r.inclusion_status === 'included').length,
@@ -417,7 +600,6 @@ export default function EvidenceLibrary({
     pending:  references.filter((r) => !r.inclusion_status || r.inclusion_status === 'pending').length,
   };
 
-  // ── Empty + loading state for phase 7 ────────────────────────────────────
   const showSkeleton =
     isLoading || (references.length === 0 && currentPhase === 7 && isExecuting);
 
@@ -454,52 +636,39 @@ export default function EvidenceLibrary({
 
         {/* Stats pills */}
         <div className="flex gap-1.5 flex-wrap">
-          <button
-            onClick={() => setFilter('all')}
-            className={cn(
-              'text-[10px] px-2.5 py-1 rounded-full border font-medium transition-colors',
-              filter === 'all'
-                ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]'
-                : 'bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)]',
-            )}
-          >
-            Todos ({stats.total})
-          </button>
-          <button
-            onClick={() => setFilter('included')}
-            className={cn(
-              'text-[10px] px-2.5 py-1 rounded-full border font-medium transition-colors',
-              filter === 'included'
-                ? 'bg-[hsl(142_76%_36%)] text-white border-[hsl(142,76%,36%)]'
-                : 'bg-[hsl(142_76%_36%/0.1)] text-[hsl(142,76%,28%)] border-[hsl(142_76%_36%/0.3)] hover:bg-[hsl(142_76%_36%/0.2)]',
-            )}
-          >
-            ✓ Incluidos ({stats.included})
-          </button>
-          <button
-            onClick={() => setFilter('pending')}
-            className={cn(
-              'text-[10px] px-2.5 py-1 rounded-full border font-medium transition-colors',
-              filter === 'pending'
-                ? 'bg-[hsl(45_93%_47%)] text-[hsl(210,11%,15%)] border-[hsl(45,93%,47%)]'
-                : 'bg-[hsl(45_93%_47%/0.1)] text-[hsl(45,80%,30%)] border-[hsl(45_93%_47%/0.3)] hover:bg-[hsl(45_93%_47%/0.2)]',
-            )}
-          >
-            ⏳ Pendientes ({stats.pending})
-          </button>
-          <button
-            onClick={() => setFilter('excluded')}
-            className={cn(
-              'text-[10px] px-2.5 py-1 rounded-full border font-medium transition-colors',
-              filter === 'excluded'
-                ? 'bg-[hsl(0_72%_51%)] text-white border-[hsl(0,72%,51%)]'
-                : 'bg-[hsl(0_72%_51%/0.1)] text-[hsl(0,72%,42%)] border-[hsl(0_72%_51%/0.3)] hover:bg-[hsl(0_72%_51%/0.2)]',
-            )}
-          >
-            ✗ Excluidos ({stats.excluded})
-          </button>
+          {(
+            [
+              { key: 'all',      label: `Todos (${stats.total})`,          active: 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]',        inactive: 'bg-[hsl(var(--card))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))]' },
+              { key: 'included', label: `✓ Incluidos (${stats.included})`, active: 'bg-[hsl(142_76%_36%)] text-white border-[hsl(142,76%,36%)]',                                          inactive: 'bg-[hsl(142_76%_36%/0.1)] text-[hsl(142,76%,28%)] border-[hsl(142_76%_36%/0.3)]' },
+              { key: 'pending',  label: `⏳ Pendientes (${stats.pending})`, active: 'bg-[hsl(45_93%_47%)] text-[hsl(210,11%,15%)] border-[hsl(45,93%,47%)]',                               inactive: 'bg-[hsl(45_93%_47%/0.1)] text-[hsl(45,80%,30%)] border-[hsl(45_93%_47%/0.3)]' },
+              { key: 'excluded', label: `✗ Excluidos (${stats.excluded})`, active: 'bg-[hsl(var(--destructive))] text-white border-[hsl(var(--destructive))]',                             inactive: 'bg-[hsl(var(--destructive)/0.1)] text-[hsl(0,72%,42%)] border-[hsl(var(--destructive)/0.3)]' },
+            ] as const
+          ).map(({ key, label, active, inactive }) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              className={cn(
+                'text-[10px] px-2.5 py-1 rounded-full border font-medium transition-colors',
+                filter === key ? active : inactive,
+              )}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* ── Animated counter ── */}
+      {references.length > 0 && (
+        <AnimatedCounter
+          value={stats.included > 0 ? stats.included : stats.total}
+          label={
+            stats.included > 0
+              ? 'artículos verificados por IA'
+              : 'artículos recuperados por IA'
+          }
+        />
+      )}
 
       {/* ── Search ── */}
       <div className="relative">
@@ -513,7 +682,7 @@ export default function EvidenceLibrary({
       </div>
 
       {/* ── Reference list ── */}
-      {filtered.length === 0 && !showSkeleton ? (
+      {filtered.length === 0 ? (
         <div className="py-10 flex flex-col items-center gap-3 text-center text-[hsl(var(--muted-foreground))]">
           <BookOpen className="w-8 h-8 opacity-30" />
           <p className="text-sm">
@@ -531,11 +700,7 @@ export default function EvidenceLibrary({
         <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
           <AnimatePresence initial={false}>
             {filtered.map((ref) => (
-              <ReferenceCard
-                key={ref.id}
-                ref={ref}
-                isNew={newIds.has(ref.id)}
-              />
+              <ReferenceCard key={ref.id} ref={ref} isNew={newIds.has(ref.id)} />
             ))}
           </AnimatePresence>
         </div>
