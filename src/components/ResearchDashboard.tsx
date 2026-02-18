@@ -22,6 +22,7 @@ import { useResearchLab, type ResearchLabProgress } from '@/hooks/useResearchLab
 import { supabase } from '@/integrations/supabase/client';
 
 // Phase-specific renderers
+import N8nResearchChat from '@/components/research/N8nResearchChat';
 import PhaseDefinition from '@/components/research/PhaseDefinition';
 import PhaseFINER, { isFinerPassed } from '@/components/research/PhaseFINER';
 import PhaseVariableMapping from '@/components/research/PhaseVariableMapping';
@@ -443,6 +444,7 @@ export default function ResearchDashboard() {
   const {
     project, status, isLoading, isSaving,
     createProject, saveUserEdit, approvePhase, syncWithAI, getPhaseData, getPhaseEdits,
+    fetchProject,
   } = useResearchProject();
 
   const { progress: labProgress, labStatus } = useResearchLab();
@@ -676,6 +678,15 @@ export default function ResearchDashboard() {
         <DashboardHeader />
         <PhaseStepper currentPhase={project.current_phase} status={status} />
         {statusBar}
+
+        {/* Chat prominente para fases de refinamiento */}
+        <N8nResearchChat
+          projectId={project.id}
+          projectFixedId={project.project_id}
+          onRefetch={fetchProject}
+          currentPhase={project.current_phase}
+        />
+
         <div className="space-y-4">
           {PHASE_CONFIG.filter(p => p.id <= 3).map((phase) => {
             const isCurrentPhase = phase.id === project.current_phase;
@@ -806,6 +817,14 @@ export default function ResearchDashboard() {
         )}
 
         {approvalFooter}
+
+        {/* Chat disponible en fases avanzadas */}
+        <N8nResearchChat
+          projectId={project.id}
+          projectFixedId={project.project_id}
+          onRefetch={fetchProject}
+          currentPhase={project.current_phase}
+        />
       </LatePhaseView>
     );
   }
@@ -843,6 +862,14 @@ export default function ResearchDashboard() {
       </div>
 
       {approvalFooter}
+
+      {/* Chat disponible en fases intermedias */}
+      <N8nResearchChat
+        projectId={project.id}
+        projectFixedId={project.project_id}
+        onRefetch={fetchProject}
+        currentPhase={project.current_phase}
+      />
     </MidPhaseView>
   );
 }
@@ -858,3 +885,4 @@ function DashboardHeader() {
     </div>
   );
 }
+
