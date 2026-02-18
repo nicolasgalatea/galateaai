@@ -1,33 +1,115 @@
+/**
+ * ResearchLab — The Research Lab (10-Phase)
+ * ─────────────────────────────────────────
+ * Fuente de verdad: tabla `research_projects` (research_lab_progress = legacy, NO usar)
+ * Webhook unificado: galatea-research-lab-v2
+ * Formato de agentes: JSON estricto → columna phase_data
+ * Realtime: escucha cambios en research_projects.phase_data y research_projects.status
+ */
+
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import {
   Send, Loader2, FlaskConical, ArrowRight, CheckCircle,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, BookOpen, AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useResearchLab, LAB_PHASES } from '@/hooks/useResearchLab';
+import { Badge } from '@/components/ui/badge';
+import { useResearchProject, PHASE_CONFIG } from '@/hooks/useResearchProject';
 import galateaLogo from '@/assets/galatea-logo-clean.png';
 import santaFeLogo from '@/assets/santa-fe-logo-clean.png';
 
-// ── Phase-specific spinner messages ──
+// ── Phase-specific spinner messages ──────────────────────────
 const PHASE_SPINNER: Record<number, string> = {
   1: 'Ideador analizando el problema clínico...',
-  2: 'Analizando contexto y literatura existente...',
-  3: 'Construyendo tabla PICOT estructurada...',
-  4: 'Diseñando la metodología del estudio...',
-  5: 'Evaluando viabilidad con análisis FINER...',
-  6: 'Definiendo criterios de inclusión y exclusión...',
-  7: 'Generando ecuaciones de búsqueda MeSH...',
-  8: 'Ensamblando protocolo PRISMA-P...',
-  9: 'Ejecutando PRISMA flow y extracción de datos...',
-  10: 'Generando manuscrito y meta-análisis final...',
+  2: 'Construyendo pregunta PICOT estructurada...',
+  3: 'Validando con FINER y gap analysis...',
+  4: 'Definiendo criterios de inclusión y exclusión...',
+  5: 'Verificando PROSPERO y evaluando sesgos...',
+  6: 'Generando ecuaciones de búsqueda MeSH...',
+  7: 'Ensamblando protocolo PRISMA-P completo...',
+  8: 'Ejecutando PRISMA flow y extracción de datos...',
+  9: 'Auditoría de calidad y meta-análisis...',
+  10: 'Generando GRADE y dossier final...',
 };
 
-// ── Phase Output Renderer ──
+// ── PICOT table renderer ──────────────────────────────────────
+function PICOTTable({ data }: { data: Record<string, unknown> }) {
+  const rows = [
+    { label: 'Población (P)', icon: '👥', keys: ['population', 'Población', 'P', 'poblacion'] },
+    { label: 'Intervención (I)', icon: '💊', keys: ['intervention', 'Intervención', 'I', 'intervencion'] },
+    { label: 'Comparación (C)', icon: '⚖️', keys: ['comparison', 'Comparación', 'C', 'comparacion'] },
+    { label: 'Desenlace (O)', icon: '🎯', keys: ['outcome', 'Outcome', 'O', 'desenlace'] },
+    { label: 'Tiempo (T)', icon: '⏱️', keys: ['time', 'Tiempo', 'T', 'tiempo'] },
+  ];
+  const getValue = (keys: string[]) =>
+    keys.map(k => data[k]).find(v => v && typeof v === 'string') as string | undefined;
+
+  return (
+    <div className="space-y-2">
+      <h4 className="text-sm font-semibold text-primary flex items-center gap-1.5">📋 Tabla PICOT</h4>
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-primary/5">
+              <th className="px-3 py-2 text-left w-10" />
+              <th className="px-3 py-2 text-left font-semibold text-xs text-muted-foreground uppercase tracking-wide">Componente</th>
+              <th className="px-3 py-2 text-left font-semibold text-xs text-muted-foreground uppercase tracking-wide">Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(r => (
+              <tr key={r.label} className="border-t hover:bg-muted/30 transition-colors">
+                <td className="px-3 py-2 text-center text-base">{r.icon}</td>
+                <td className="px-3 py-2 font-medium text-foreground">{r.label}</td>
+                <td className="px-3 py-2 text-muted-foreground">{getValue(r.keys) || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ── References list renderer ──────────────────────────────────
+function ReferencesList({ refs }: { refs: unknown[] }) {
+  if (!refs || refs.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <h4 className="text-sm font-semibold text-primary flex items-center gap-1.5">
+        <BookOpen className="w-4 h-4" /> Referencias PubMed ({refs.length})
+      </h4>
+      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+        {refs.map((ref: any, i: number) => (
+          <div key={i} className="p-2 rounded-md border bg-card text-xs space-y-0.5">
+            {ref.pmid && (
+              <a
+                href={`https://pubmed.ncbi.nlm.nih.gov/${ref.pmid}/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-primary underline-offset-2 hover:underline"
+              >
+                PMID: {ref.pmid}
+              </a>
+            )}
+            {ref.title && <p className="font-medium text-foreground leading-snug">{ref.title}</p>}
+            {ref.authors && <p className="text-muted-foreground">{ref.authors}</p>}
+            {ref.journal && ref.year && (
+              <p className="text-muted-foreground">{ref.journal} — {ref.year}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Phase Output Card ─────────────────────────────────────────
 function PhaseOutputCard({
   phaseId,
   data,
@@ -38,7 +120,8 @@ function PhaseOutputCard({
   isProcessing: boolean;
 }) {
   const [expanded, setExpanded] = useState(true);
-  const phase = LAB_PHASES.find(p => p.id === phaseId)!;
+  const phase = PHASE_CONFIG.find(p => p.id === phaseId);
+  if (!phase) return null;
 
   // Loading skeleton
   if (isProcessing && !data) {
@@ -66,9 +149,42 @@ function PhaseOutputCard({
 
   if (!data) return null;
 
-  // Render data based on phase type
   const renderContent = () => {
-    // If there's a markdown "content" field, render it
+    // ── Phase 2: PICOT table ──
+    const picotKeys = ['population', 'intervention', 'comparison', 'outcome', 'time', 'P', 'I', 'C', 'O', 'T'];
+    if (phaseId === 2 && picotKeys.some(k => data[k])) {
+      return <PICOTTable data={data} />;
+    }
+
+    // ── Phase 6: Search equations ──
+    if (phaseId === 6) {
+      const eq = data.search_equations || data.ecuaciones || data.equations;
+      if (eq && typeof eq === 'string') {
+        return (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-primary">🔍 Ecuaciones de Búsqueda MeSH</h4>
+            <pre className="text-xs bg-muted/50 p-4 rounded-lg border whitespace-pre-wrap font-mono">{eq}</pre>
+          </div>
+        );
+      }
+    }
+
+    // ── References (any phase that includes them) ──
+    const refs = data.references || data.referencias || data.pubmed_results;
+    if (Array.isArray(refs) && refs.length > 0) {
+      return (
+        <div className="space-y-4">
+          {data.content && typeof data.content === 'string' && (
+            <div className="prose prose-sm max-w-none text-foreground">
+              <ReactMarkdown>{data.content}</ReactMarkdown>
+            </div>
+          )}
+          <ReferencesList refs={refs} />
+        </div>
+      );
+    }
+
+    // ── Markdown content ──
     if (data.content && typeof data.content === 'string') {
       return (
         <div className="prose prose-sm max-w-none text-foreground">
@@ -77,65 +193,11 @@ function PhaseOutputCard({
       );
     }
 
-    // PICOT table for phase 3
-    if (phaseId === 3) {
-      const picotKeys = ['population', 'intervention', 'comparison', 'outcome', 'time',
-        'P', 'I', 'C', 'O', 'T', 'Población', 'Intervención', 'Comparación', 'Outcome', 'Tiempo'];
-      const hasPicot = picotKeys.some(k => data[k]);
-      if (hasPicot) {
-        const rows = [
-          { label: 'Población (P)', icon: '👥', value: (data.population || data.Población || data.P || '') as string },
-          { label: 'Intervención (I)', icon: '💊', value: (data.intervention || data.Intervención || data.I || '') as string },
-          { label: 'Comparación (C)', icon: '⚖️', value: (data.comparison || data.Comparación || data.C || '') as string },
-          { label: 'Desenlace (O)', icon: '🎯', value: (data.outcome || data.Outcome || data.O || '') as string },
-          { label: 'Tiempo (T)', icon: '⏱️', value: (data.time || data.Tiempo || data.T || '') as string },
-        ];
-        return (
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-primary">📋 Tabla PICOT</h4>
-            <div className="border rounded-lg overflow-hidden bg-card">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-primary/5">
-                    <th className="px-3 py-2 text-left w-12"></th>
-                    <th className="px-3 py-2 text-left font-semibold">Componente</th>
-                    <th className="px-3 py-2 text-left font-semibold">Descripción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(r => (
-                    <tr key={r.label} className="border-t">
-                      <td className="px-3 py-2 text-center text-lg">{r.icon}</td>
-                      <td className="px-3 py-2 font-medium">{r.label}</td>
-                      <td className="px-3 py-2">{r.value || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-    }
-
-    // Phase 7: Search equations
-    if (phaseId === 7) {
-      const equations = data.search_equations || data.ecuaciones || data.equations;
-      if (equations && typeof equations === 'string') {
-        return (
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-primary">🔍 Ecuaciones de Búsqueda</h4>
-            <pre className="text-xs bg-muted/50 p-4 rounded-lg border whitespace-pre-wrap font-mono">{equations}</pre>
-          </div>
-        );
-      }
-    }
-
-    // Generic key-value rendering
-    const entries = Object.entries(data).filter(([k]) => !k.startsWith('_') && k !== 'agent_name');
-    if (entries.length === 0) {
-      return <p className="text-sm text-muted-foreground italic">Sin datos aún.</p>;
-    }
+    // ── Generic key-value ──
+    const entries = Object.entries(data).filter(
+      ([k]) => !k.startsWith('_') && k !== 'agent_name' && k !== 'agent_number',
+    );
+    if (entries.length === 0) return <p className="text-sm text-muted-foreground italic">Sin datos aún.</p>;
 
     return (
       <div className="space-y-3">
@@ -156,7 +218,9 @@ function PhaseOutputCard({
               <div key={key}>
                 <label className="text-xs font-semibold text-primary">{label}</label>
                 <ul className="list-disc list-inside text-sm mt-1 space-y-0.5">
-                  {val.map((item, i) => <li key={i}>{typeof item === 'string' ? item : JSON.stringify(item)}</li>)}
+                  {val.map((item, i) => (
+                    <li key={i}>{typeof item === 'string' ? item : JSON.stringify(item)}</li>
+                  ))}
                 </ul>
               </div>
             );
@@ -175,18 +239,18 @@ function PhaseOutputCard({
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       <Card className="border-2 border-primary/40 shadow-sm">
-        <CardHeader className="pb-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => setExpanded(v => !v)}>
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-primary text-primary-foreground">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-primary text-primary-foreground shrink-0">
                 {phaseId}
               </div>
               <span className="text-primary">{phase.name}</span>
-              <span className="text-xs text-muted-foreground font-normal">— {phase.description}</span>
+              <span className="text-xs text-muted-foreground font-normal hidden sm:block">— {phase.description}</span>
             </CardTitle>
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-emerald-500" />
-              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
             </div>
           </div>
         </CardHeader>
@@ -196,7 +260,7 @@ function PhaseOutputCard({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.25 }}
             >
               <CardContent className="pt-0">{renderContent()}</CardContent>
             </motion.div>
@@ -212,52 +276,60 @@ function PhaseOutputCard({
 // ════════════════════════════════════════════
 export default function ResearchLab() {
   const [question, setQuestion] = useState('');
-  const { progress, labStatus, isLoading, startResearch, advanceToPhase, getPhaseOutput } = useResearchLab();
 
-  const faseActual = progress?.fase_actual ?? 0;
-  const progressPercent = Math.min((faseActual / 10) * 100, 100);
+  // ── ÚNICA fuente de verdad: research_projects ──
+  const {
+    project,
+    status,
+    isLoading,
+    createProject,
+    approvePhase,
+    getPhaseData,
+  } = useResearchProject();
 
+  const currentPhase = project?.current_phase ?? 0;
+  const progressPercent = Math.min((currentPhase / 10) * 100, 100);
+
+  const isIdle      = status === 'idle' && !project;
+  const isExecuting = status === 'executing';
+  const isPaused    = status === 'paused';
+  const isCompleted = status === 'completed';
+  const isError     = status === 'error';
+
+  // ── Iniciar investigación ──
   const handleStart = async () => {
     if (!question.trim()) return;
-    await startResearch(question.trim());
+    await createProject('Research Lab Session', question.trim());
   };
 
-  const handleNextPhase = async () => {
-    const nextPhase = faseActual + 1;
-    if (nextPhase > 10) return;
-    await advanceToPhase(nextPhase);
+  // ── Aprobar fase actual → dispara siguiente agente ──
+  const handleApprove = async () => {
+    await approvePhase();
   };
-
-  const isIdle = labStatus === 'idle';
-  const isProcessing = labStatus === 'processing';
-  const isPaused = labStatus === 'paused';
-  const isCompleted = labStatus === 'completed';
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'hsl(210, 20%, 98%)' }}>
+    <div className="min-h-screen bg-background">
       {/* ── Header ── */}
-      <header
-        className="sticky top-0 z-50 border-b"
-        style={{
-          background: 'linear-gradient(135deg, hsl(207, 60%, 30%), hsl(160, 45%, 35%))',
-          borderColor: 'hsl(207, 40%, 25%)',
-        }}
-      >
+      <header className="sticky top-0 z-50 border-b bg-gradient-to-r from-[hsl(207,60%,30%)] to-[hsl(160,45%,35%)] border-[hsl(207,40%,25%)]">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={galateaLogo} alt="Galatea" className="h-8 w-auto" />
             <div className="h-6 w-px bg-white/30" />
             <span className="text-white/90 font-semibold text-sm tracking-wide">The Research Lab</span>
+            <Badge variant="secondary" className="text-[10px] bg-white/20 text-white border-0">
+              research_projects
+            </Badge>
           </div>
           <img src={santaFeLogo} alt="Santa Fe" className="h-7 w-auto opacity-80" />
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+
         {/* ── Input Section ── */}
-        <Card className="border border-border shadow-subtle">
+        <Card className="border border-border shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2" style={{ color: 'hsl(207, 60%, 30%)' }}>
+            <CardTitle className="text-lg flex items-center gap-2 text-[hsl(207,60%,30%)]">
               <FlaskConical className="w-5 h-5" />
               Pregunta de Investigación
             </CardTitle>
@@ -266,7 +338,7 @@ export default function ResearchLab() {
             <div className="flex gap-3">
               <textarea
                 value={question}
-                onChange={(e) => setQuestion(e.target.value)}
+                onChange={e => setQuestion(e.target.value)}
                 placeholder="Ej: ¿Son efectivos los inhibidores SGLT2 en insuficiencia cardíaca con fracción de eyección preservada?"
                 className="flex-1 min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
                 disabled={!isIdle}
@@ -274,64 +346,60 @@ export default function ResearchLab() {
               <Button
                 onClick={handleStart}
                 disabled={!question.trim() || !isIdle || isLoading}
-                className="self-end"
-                style={{ backgroundColor: 'hsl(160, 45%, 35%)', color: 'white' }}
+                className="self-end bg-[hsl(160,45%,35%)] hover:bg-[hsl(160,45%,30%)] text-white"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Iniciar
-                  </>
+                  <><Send className="w-4 h-4 mr-1" /> Iniciar</>
                 )}
               </Button>
             </div>
+            {project?.research_question && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                <span className="font-medium">Pregunta activa:</span> {project.research_question}
+              </p>
+            )}
           </CardContent>
         </Card>
 
         {/* ── 10-Phase Stepper ── */}
-        {!isIdle && (
+        {project && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium" style={{ color: 'hsl(207, 60%, 30%)' }}>
-                Progreso General
-              </span>
+              <span className="font-medium text-[hsl(207,60%,30%)]">Progreso General</span>
               <span className="text-muted-foreground">
-                Fase {faseActual}/10 — {LAB_PHASES[faseActual - 1]?.name ?? 'Completado'}
+                Fase {currentPhase}/10 — {PHASE_CONFIG[currentPhase - 1]?.name ?? 'Completado'}
               </span>
             </div>
             <Progress value={progressPercent} className="h-2" />
 
-            {/* Phase indicators with labels */}
-            <div className="flex gap-1">
-              {LAB_PHASES.map((phase) => (
+            <div className="flex gap-1 mt-2">
+              {PHASE_CONFIG.map(phase => (
                 <div key={phase.id} className="flex-1 relative group">
                   <div
                     className="h-2 rounded-full transition-colors duration-500"
                     style={{
                       backgroundColor:
-                        phase.id < faseActual
-                          ? 'hsl(160, 45%, 40%)'
-                          : phase.id === faseActual && isProcessing
-                          ? 'hsl(207, 60%, 50%)'
-                          : phase.id === faseActual
-                          ? 'hsl(207, 60%, 40%)'
-                          : 'hsl(210, 10%, 88%)',
+                        phase.id < currentPhase
+                          ? 'hsl(160,45%,40%)'
+                          : phase.id === currentPhase && isExecuting
+                          ? 'hsl(207,60%,50%)'
+                          : phase.id === currentPhase
+                          ? 'hsl(207,60%,40%)'
+                          : 'hsl(210,10%,88%)',
                     }}
                   />
-                  <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-popover border rounded px-2 py-1 text-[10px] whitespace-nowrap z-10 shadow-sm">
+                  <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-popover border rounded px-2 py-1 text-[10px] whitespace-nowrap z-10 shadow-sm pointer-events-none">
                     {phase.id}. {phase.name}
                   </div>
                 </div>
               ))}
             </div>
             <div className="flex gap-1 pt-2">
-              {LAB_PHASES.map((phase) => (
+              {PHASE_CONFIG.map(phase => (
                 <div key={phase.id} className="flex-1 text-center">
-                  <span className={`text-[9px] font-medium ${
-                    phase.id <= faseActual ? 'text-primary' : 'text-muted-foreground'
-                  }`}>
+                  <span className={`text-[9px] font-medium ${phase.id <= currentPhase ? 'text-primary' : 'text-muted-foreground'}`}>
                     {phase.name}
                   </span>
                 </div>
@@ -342,37 +410,45 @@ export default function ResearchLab() {
 
         {/* ── Processing Indicator ── */}
         <AnimatePresence>
-          {isProcessing && (
+          {isExecuting && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-3 p-4 rounded-lg border border-border"
-              style={{ backgroundColor: 'hsl(207, 50%, 96%)' }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex items-center gap-3 p-4 rounded-lg border border-border bg-[hsl(207,50%,96%)]"
             >
-              <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'hsl(207, 60%, 45%)' }} />
+              <Loader2 className="w-5 h-5 animate-spin text-[hsl(207,60%,45%)]" />
               <div>
-                <p className="text-sm font-medium" style={{ color: 'hsl(207, 60%, 30%)' }}>
-                  Procesando con IA...
-                </p>
+                <p className="text-sm font-medium text-[hsl(207,60%,30%)]">Agente IA trabajando...</p>
                 <p className="text-xs text-muted-foreground">
-                  {PHASE_SPINNER[faseActual] || `Procesando Fase ${faseActual}...`}
+                  {PHASE_SPINNER[currentPhase] || `Procesando Fase ${currentPhase}...`}
                 </p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── Phase Output Cards (auto-rendered when data arrives) ── */}
-        <div className="space-y-4">
-          {LAB_PHASES.map((phase) => {
-            const data = getPhaseOutput(phase.id);
-            const isCurrentPhase = phase.id === faseActual;
-            const isPast = phase.id < faseActual;
-            const isCurrentProcessing = isCurrentPhase && isProcessing;
+        {/* ── Error Indicator ── */}
+        <AnimatePresence>
+          {isError && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex items-center gap-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5"
+            >
+              <AlertCircle className="w-5 h-5 text-destructive" />
+              <div>
+                <p className="text-sm font-medium text-destructive">Error en el flujo</p>
+                <p className="text-xs text-muted-foreground">Revisa los logs de n8n para más detalles.</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            // Only show past phases, current phase, or currently processing
-            if (!isPast && !isCurrentPhase) return null;
+        {/* ── Phase Output Cards ── */}
+        <div className="space-y-4">
+          {PHASE_CONFIG.map(phase => {
+            if (phase.id > currentPhase) return null;
+
+            const data = getPhaseData(phase.id);
+            const isCurrentProcessing = phase.id === currentPhase && isExecuting;
 
             return (
               <PhaseOutputCard
@@ -385,9 +461,9 @@ export default function ResearchLab() {
           })}
         </div>
 
-        {/* ── "Siguiente" Button (enabled when paused) ── */}
+        {/* ── Approve / Siguiente Button (enabled when paused) ── */}
         <AnimatePresence>
-          {isPaused && faseActual < 10 && (
+          {isPaused && currentPhase < 10 && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -395,13 +471,12 @@ export default function ResearchLab() {
               className="flex justify-center pt-4"
             >
               <Button
-                onClick={handleNextPhase}
+                onClick={handleApprove}
                 size="lg"
-                className="gap-2 px-8"
-                style={{ backgroundColor: 'hsl(160, 45%, 35%)', color: 'white' }}
+                className="gap-2 px-8 bg-[hsl(160,45%,35%)] hover:bg-[hsl(160,45%,30%)] text-white"
               >
                 <ArrowRight className="w-4 h-4" />
-                Siguiente: Fase {faseActual + 1} — {LAB_PHASES[faseActual]?.name}
+                Aprobar Fase {currentPhase} → Ejecutar Fase {currentPhase + 1}: {PHASE_CONFIG[currentPhase]?.name}
               </Button>
             </motion.div>
           )}
@@ -411,16 +486,11 @@ export default function ResearchLab() {
         <AnimatePresence>
           {isCompleted && (
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 p-4 rounded-lg border"
-              style={{
-                backgroundColor: 'hsl(160, 40%, 96%)',
-                borderColor: 'hsl(160, 40%, 80%)',
-              }}
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 p-4 rounded-lg border bg-[hsl(160,40%,96%)] border-[hsl(160,40%,80%)]"
             >
-              <CheckCircle className="w-5 h-5" style={{ color: 'hsl(160, 45%, 40%)' }} />
-              <p className="text-sm font-medium" style={{ color: 'hsl(160, 50%, 30%)' }}>
+              <CheckCircle className="w-5 h-5 text-[hsl(160,45%,40%)]" />
+              <p className="text-sm font-medium text-[hsl(160,50%,30%)]">
                 Investigación de 10 fases completada exitosamente.
               </p>
             </motion.div>
