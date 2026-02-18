@@ -44,27 +44,47 @@ export default function ReferencesPanel({ projectId, onInsertCitation }: Referen
   const [search, setSearch] = useState('');
   const [justInserted, setJustInserted] = useState<string | null>(null);
 
-  // Load references
+  // Load references — tries row_id first (UUID of the research_projects row),
+  // then falls back to project_id text field so both use-cases work.
   useEffect(() => {
     if (!projectId) return;
+    const FIXED_PROJECT_ID = 'e8233417-9ddf-4453-8372-c5b6797da8aa';
+
     const load = async () => {
-      const { data } = await supabase
+      // Primary: filter by row_id (UUID FK to research_projects.id)
+      const { data: byRow } = await supabase
         .from('project_references')
         .select('*')
-        .eq('project_id', projectId)
+        .eq('row_id', projectId)
         .neq('inclusion_status', 'excluded')
         .order('created_at', { ascending: false })
         .limit(200);
-      if (data) setReferences(data as ProjectReference[]);
+
+      if (byRow && byRow.length > 0) {
+        setReferences(byRow as ProjectReference[]);
+        return;
+      }
+
+      // Fallback: filter by fixed project_id text
+      const { data: byProject } = await supabase
+        .from('project_references')
+        .select('*')
+        .eq('project_id', FIXED_PROJECT_ID)
+        .neq('inclusion_status', 'excluded')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (byProject) setReferences(byProject as ProjectReference[]);
     };
+
     load();
 
-    // Realtime
+    // Realtime — subscribe using fixed project_id (text column is indexed)
     const channel = supabase
       .channel(`refs_panel_${projectId}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'project_references',
-        filter: `project_id=eq.${projectId}`,
+        filter: `project_id=eq.${FIXED_PROJECT_ID}`,
       }, () => { load(); })
       .subscribe();
 
