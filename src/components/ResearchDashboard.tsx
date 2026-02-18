@@ -23,7 +23,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Phase-specific renderers
 import PhaseDefinition from '@/components/research/PhaseDefinition';
-import PhaseFINER from '@/components/research/PhaseFINER';
+import PhaseFINER, { isFinerPassed } from '@/components/research/PhaseFINER';
+import PhaseVariableMapping from '@/components/research/PhaseVariableMapping';
 import PhaseArticles from '@/components/research/PhaseArticles';
 import PhasePRISMA from '@/components/research/PhasePRISMA';
 import PhaseManuscript from '@/components/research/PhaseManuscript';
@@ -208,9 +209,20 @@ function PhaseCard({
       );
     }
 
-    // Phase 4: FINER viability score
+    // Phase 4: FINER viability score — Radar Chart
     if (phaseNumber === 4) {
       return <PhaseFINER data={data} userEdits={edits} />;
+    }
+
+    // Phase 5: Variable Mapping
+    if (phaseNumber === 5) {
+      return (
+        <PhaseVariableMapping
+          data={data}
+          userEdits={edits}
+          isLiveUpdating={isExecuting}
+        />
+      );
     }
 
     // Phase 7: Article table with inclusion/exclusion
@@ -441,7 +453,14 @@ export default function ResearchDashboard() {
   const [title, setTitle] = useState('');
   const DEFAULT_QUESTION = '¿Cuál es la eficacia y seguridad de los inhibidores SGLT2 en pacientes con insuficiencia cardíaca con fracción de eyección preservada comparado con placebo?';
 
+  // ── FINER gate: block approval when Phase 4 output explicitly marks passed=false ──
+  const finerData = getLabPhaseData(4);
+  const finerPassed = isFinerPassed(finerData);
+  // Block only when we have data AND it clearly failed (null = no data yet → allow)
+  const finerBlocking = project?.current_phase === 4 && finerPassed === false;
+
   const handleApproval = async () => {
+    if (finerBlocking) return; // safety guard
     await approvePhase();
   };
 
@@ -533,9 +552,21 @@ export default function ResearchDashboard() {
           )}
         </div>
         {(status === 'paused' || labIsPaused) && (
-          <Button onClick={handleApproval} disabled={isSaving} className="gap-2">
-            <CheckCircle className="w-4 h-4" /> Aprobar Fase
-          </Button>
+          <div className="flex flex-col items-end gap-1">
+            <Button
+              onClick={handleApproval}
+              disabled={isSaving || finerBlocking}
+              className="gap-2"
+              title={finerBlocking ? 'El Test FINER falló. Debes refinar la pregunta antes de continuar.' : undefined}
+            >
+              <CheckCircle className="w-4 h-4" /> Aprobar Fase
+            </Button>
+            {finerBlocking && (
+              <span className="text-[11px] text-destructive font-medium">
+                ⛔ Bloqueado por Test FINER
+              </span>
+            )}
+          </div>
         )}
         {!labIsActive && status !== 'executing' && status !== 'completed' && status !== 'paused' && !labIsPaused && (
           <Button onClick={syncWithAI} disabled={isSaving} className="gap-2">
@@ -566,11 +597,21 @@ export default function ResearchDashboard() {
       </div>
 
       {status === 'paused' && project.current_phase < 10 && (
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex justify-center pt-4">
-          <Button size="lg" onClick={handleApproval} className="gap-2 px-8">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-2 pt-4">
+          <Button
+            size="lg"
+            onClick={handleApproval}
+            disabled={finerBlocking || isSaving}
+            className="gap-2 px-8"
+          >
             <CheckCircle className="w-4 h-4" />
             Aprobar y Avanzar a Fase {project.current_phase + 1}: {PHASE_CONFIG[project.current_phase]?.name}
           </Button>
+          {finerBlocking && (
+            <p className="text-sm text-destructive font-medium">
+              ⛔ El Test FINER no pasó — refina tu pregunta de investigación antes de continuar.
+            </p>
+          )}
         </motion.div>
       )}
     </div>
