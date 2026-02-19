@@ -33,6 +33,15 @@ interface ChatMessage {
   isError?: boolean;
 }
 
+// ── Tipo para datos estructurados de n8n ───────────────────────
+export interface StructuredUpdate {
+  type: 'PHASE_UPDATE' | 'FIELD_UPDATE';
+  current_phase?: number;
+  data?: Record<string, unknown>;
+  field?: string;
+  value?: unknown;
+}
+
 interface N8nResearchChatProps {
   /** UUID de la fila en research_projects (project.id) */
   projectId: string;
@@ -42,6 +51,8 @@ interface N8nResearchChatProps {
   onRefetch: () => void;
   /** Fase actual para contextualizar el placeholder */
   currentPhase?: number;
+  /** Callback opcional cuando n8n retorna datos estructurados (metadata/phase_data) */
+  onStructuredData?: (data: StructuredUpdate) => void;
 }
 
 // ── Mensajes de bienvenida por fase ────────────────────────────
@@ -86,6 +97,7 @@ export default function N8nResearchChat({
   projectFixedId,
   onRefetch,
   currentPhase = 1,
+  onStructuredData,
 }: N8nResearchChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -163,9 +175,30 @@ Estamos en la **Fase ${currentPhase}** de tu revisión sistemática. Puedes hace
 
       console.log('[N8nResearchChat] Respuesta de n8n:', responseBody);
 
+      // 4. Detectar datos estructurados antes de extraer el texto
+      if (typeof responseBody === 'object' && responseBody !== null) {
+        const obj = responseBody as Record<string, unknown>;
+        if (obj.metadata || obj.phase_data || typeof obj.current_phase === 'number') {
+          const structuredPayload: StructuredUpdate = {
+            type: 'PHASE_UPDATE',
+            current_phase:
+              typeof obj.current_phase === 'number'
+                ? obj.current_phase
+                : typeof (obj.metadata as Record<string, unknown>)?.current_phase === 'number'
+                ? (obj.metadata as Record<string, unknown>).current_phase as number
+                : undefined,
+            data: obj.phase_data as Record<string, unknown> | undefined,
+          };
+          console.log('[N8nResearchChat] Datos estructurados detectados:', structuredPayload);
+          onStructuredData?.(structuredPayload);
+          // Refetch prioritario cuando llegan datos estructurados
+          onRefetch();
+        }
+      }
+
       const assistantContent = extractResponseText(responseBody);
 
-      // 4. Agregar respuesta del asistente
+      // 5. Agregar respuesta del asistente
       const assistantMsg: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
@@ -174,7 +207,7 @@ Estamos en la **Fase ${currentPhase}** de tu revisión sistemática. Puedes hace
       };
       setMessages((prev) => [...prev, assistantMsg]);
 
-      // 5. Refetch de los datos de Supabase para actualizar radar, barra de progreso, etc.
+      // 6. Refetch de los datos de Supabase para actualizar radar, barra de progreso, etc.
       console.log('[N8nResearchChat] Disparando refetch de research_projects...');
       onRefetch();
 
@@ -203,7 +236,7 @@ Estamos en la **Fase ${currentPhase}** de tu revisión sistemática. Puedes hace
       // Refocus en el textarea
       setTimeout(() => textareaRef.current?.focus(), 50);
     }
-  }, [inputValue, isThinking, projectId, projectFixedId, currentPhase, onRefetch]);
+  }, [inputValue, isThinking, projectId, projectFixedId, currentPhase, onRefetch, onStructuredData]);
 
   // ── Enter para enviar (Shift+Enter = nueva línea) ──
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
