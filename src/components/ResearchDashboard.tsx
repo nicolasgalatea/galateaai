@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import {
   Send, CheckCircle, Loader2, ChevronDown, ChevronUp,
   Sparkles, Brain, Edit3, Save, RefreshCw, FileText,
-  FlaskConical, ArrowRight, BookOpen,
+  FlaskConical, ArrowRight, BookOpen, Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import {
   useResearchProject,
   PHASE_CONFIG,
@@ -20,9 +21,11 @@ import {
 } from '@/hooks/useResearchProject';
 import { useResearchLab, type ResearchLabProgress } from '@/hooks/useResearchLab';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 // Phase-specific renderers
 import N8nResearchChat from '@/components/research/N8nResearchChat';
+import type { StructuredUpdate } from '@/components/research/N8nResearchChat';
 import PhaseDefinition from '@/components/research/PhaseDefinition';
 import PhaseFINER, { isFinerPassed } from '@/components/research/PhaseFINER';
 import PhaseVariableMapping from '@/components/research/PhaseVariableMapping';
@@ -31,16 +34,34 @@ import PhasePRISMA from '@/components/research/PhasePRISMA';
 import PhaseManuscript from '@/components/research/PhaseManuscript';
 import SaveIndicator from '@/components/research/SaveIndicator';
 import EvidenceLibrary from '@/components/research/EvidenceLibrary';
+import { GoldenRulesModal } from '@/components/research/GoldenRulesModal';
 
 // ── Phase Stepper ──
 function PhaseStepper({ currentPhase, status }: { currentPhase: number; status: string }) {
+  const pct = Math.round((currentPhase / 10) * 100);
+  const currentConfig = PHASE_CONFIG.find(p => p.id === currentPhase);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-primary">Progreso de Investigación</span>
-        <span className="text-muted-foreground">Fase {currentPhase}/10</span>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground">Fase {currentPhase}/10</span>
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={pct}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.25 }}
+              className="font-bold text-primary tabular-nums"
+            >
+              {pct}%
+            </motion.span>
+          </AnimatePresence>
+        </div>
       </div>
-      <Progress value={(currentPhase / 10) * 100} className="h-2" />
+      <Progress value={pct} className="h-2" />
       <div className="flex gap-1">
         {PHASE_CONFIG.map((phase) => (
           <div key={phase.id} className="flex-1 relative group">
@@ -63,13 +84,23 @@ function PhaseStepper({ currentPhase, status }: { currentPhase: number; status: 
         {PHASE_CONFIG.map((phase) => (
           <div key={phase.id} className="flex-1 text-center">
             <span className={`text-[9px] font-medium ${
-              phase.id <= currentPhase ? 'text-primary' : 'text-muted-foreground'
+              phase.id === currentPhase
+                ? 'text-primary font-bold'
+                : phase.id < currentPhase
+                ? 'text-emerald-600'
+                : 'text-muted-foreground'
             }`}>
               {phase.name}
             </span>
           </div>
         ))}
       </div>
+      {currentConfig && (
+        <div className="text-xs text-center text-muted-foreground mt-1">
+          <span className="text-primary font-medium">{currentConfig.name}</span>
+          {' — '}{currentConfig.description}
+        </div>
+      )}
     </div>
   );
 }
@@ -537,7 +568,29 @@ export default function ResearchDashboard() {
 
   const [question, setQuestion] = useState('');
   const [title, setTitle] = useState('');
+  const [goldenRulesAccepted, setGoldenRulesAccepted] = useState(false);
   const DEFAULT_QUESTION = '¿Cuál es la eficacia y seguridad de los inhibidores SGLT2 en pacientes con insuficiencia cardíaca con fracción de eyección preservada comparado con placebo?';
+
+  // ── Guardar título / pregunta directamente en Supabase ──
+  const handleFieldUpdate = useCallback(async (
+    field: 'title' | 'research_question',
+    value: string,
+  ) => {
+    if (!project) return;
+    const { error } = await supabase
+      .from('research_projects')
+      .update({ [field]: value })
+      .eq('id', project.id);
+    if (error) {
+      toast({ title: 'Error al guardar', description: error.message, variant: 'destructive' });
+    }
+  }, [project]);
+
+  // ── Datos estructurados desde n8n → refetch inmediato ──
+  const handleStructuredData = useCallback((update: StructuredUpdate) => {
+    console.log('[Dashboard] Structured update from n8n:', update);
+    fetchProject();
+  }, [fetchProject]);
 
   // ── FINER gate: block approval when Phase 4 output explicitly marks passed=false ──
   const finerData = getLabPhaseData(4);
@@ -570,8 +623,12 @@ export default function ResearchDashboard() {
   if (!project) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
+        <GoldenRulesModal
+          isOpen={!goldenRulesAccepted}
+          onAccept={() => setGoldenRulesAccepted(true)}
+        />
         <DashboardHeader />
-        <Card className="border-2 border-primary">
+        <Card className={`border-2 border-primary transition-opacity duration-300 ${!goldenRulesAccepted ? 'opacity-40 pointer-events-none' : ''}`}>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2 text-primary">
               <FlaskConical className="w-5 h-5" /> Nueva Investigación
@@ -675,7 +732,7 @@ export default function ResearchDashboard() {
   if (project.current_phase < 4) {
     return (
       <EarlyPhaseView currentPhase={project.current_phase}>
-        <DashboardHeader />
+        <DashboardHeader project={project} onFieldUpdate={handleFieldUpdate} />
         <PhaseStepper currentPhase={project.current_phase} status={status} />
         {statusBar}
 
@@ -685,6 +742,7 @@ export default function ResearchDashboard() {
           projectFixedId={project.project_id}
           onRefetch={fetchProject}
           currentPhase={project.current_phase}
+          onStructuredData={handleStructuredData}
         />
 
         <div className="space-y-4">
@@ -723,7 +781,7 @@ export default function ResearchDashboard() {
 
     return (
       <LatePhaseView>
-        <DashboardHeader />
+        <DashboardHeader project={project} onFieldUpdate={handleFieldUpdate} />
         <PhaseStepper currentPhase={project.current_phase} status={status} />
         {statusBar}
 
@@ -824,6 +882,7 @@ export default function ResearchDashboard() {
           projectFixedId={project.project_id}
           onRefetch={fetchProject}
           currentPhase={project.current_phase}
+          onStructuredData={handleStructuredData}
         />
       </LatePhaseView>
     );
@@ -834,7 +893,7 @@ export default function ResearchDashboard() {
   // ══════════════════════════════════════════════════
   return (
     <MidPhaseView>
-      <DashboardHeader />
+      <DashboardHeader project={project} onFieldUpdate={handleFieldUpdate} />
       <PhaseStepper currentPhase={project.current_phase} status={status} />
       {statusBar}
 
@@ -869,20 +928,103 @@ export default function ResearchDashboard() {
         projectFixedId={project.project_id}
         onRefetch={fetchProject}
         currentPhase={project.current_phase}
+        onStructuredData={handleStructuredData}
       />
     </MidPhaseView>
   );
 }
 
-function DashboardHeader() {
+// ── DashboardHeader (editable inline) ──────────────────────────
+interface DashboardHeaderProps {
+  project?: ResearchProject | null;
+  onFieldUpdate?: (field: 'title' | 'research_question', value: string) => Promise<void>;
+}
+
+function DashboardHeader({ project, onFieldUpdate }: DashboardHeaderProps) {
+  const [titleValue, setTitleValue] = useState(project?.title ?? '');
+  const [questionValue, setQuestionValue] = useState(project?.research_question ?? '');
+  const [savedField, setSavedField] = useState<string | null>(null);
+  const [savingField, setSavingField] = useState<string | null>(null);
+
+  // Keep local state in sync when project updates from Supabase realtime
+  useEffect(() => {
+    if (project?.title) setTitleValue(project.title);
+  }, [project?.title]);
+  useEffect(() => {
+    if (project?.research_question) setQuestionValue(project.research_question ?? '');
+  }, [project?.research_question]);
+
+  const handleBlur = async (field: 'title' | 'research_question', value: string) => {
+    const original = field === 'title' ? project?.title : project?.research_question;
+    if (!onFieldUpdate || value === original || !project) return;
+    setSavingField(field);
+    await onFieldUpdate(field, value);
+    setSavingField(null);
+    setSavedField(field);
+    setTimeout(() => setSavedField(null), 2000);
+  };
+
+  if (!project || !onFieldUpdate) {
+    // Static header for idle state
+    return (
+      <div className="border-b-4 border-primary pb-4 mb-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-primary mb-2">
+          <FlaskConical className="w-4 h-4" /> RESEARCH DASHBOARD — 10 Fases · 14 Agentes
+        </div>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard de Investigación Médica</h1>
+        <p className="text-base mt-1 text-muted-foreground">Conectado a n8n + Claude · Sincronización bidireccional con Lovable Cloud</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="border-b-4 border-primary pb-4 mb-2">
-      <div className="flex items-center gap-2 text-sm font-medium text-primary mb-2">
+    <div className="border-b-4 border-primary pb-4 mb-2 space-y-2">
+      <div className="flex items-center gap-2 text-sm font-medium text-primary mb-1">
         <FlaskConical className="w-4 h-4" /> RESEARCH DASHBOARD — 10 Fases · 14 Agentes
       </div>
-      <h1 className="text-3xl font-bold text-foreground">Dashboard de Investigación Médica</h1>
-      <p className="text-base mt-1 text-muted-foreground">Conectado a n8n + Claude · Sincronización bidireccional con Lovable Cloud</p>
+
+      {/* Editable title */}
+      <div className="group relative">
+        <input
+          value={titleValue}
+          onChange={(e) => setTitleValue(e.target.value)}
+          onBlur={() => handleBlur('title', titleValue)}
+          className="text-3xl font-bold text-foreground bg-transparent border-0 border-b-2 border-transparent group-hover:border-primary/30 focus:border-primary focus:outline-none w-full transition-colors py-0.5"
+          aria-label="Título del proyecto"
+        />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+          {savingField === 'title' && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
+          {savedField === 'title' && (
+            <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+              Guardado ✓
+            </Badge>
+          )}
+          <Pencil className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-60 transition-opacity" />
+        </div>
+      </div>
+
+      {/* Editable research question */}
+      <div className="group relative">
+        <textarea
+          value={questionValue}
+          onChange={(e) => setQuestionValue(e.target.value)}
+          onBlur={() => handleBlur('research_question', questionValue)}
+          rows={2}
+          className="text-sm text-muted-foreground bg-transparent border-0 border-b border-transparent group-hover:border-primary/20 focus:border-primary/40 focus:outline-none w-full resize-none transition-colors leading-relaxed"
+          aria-label="Pregunta de investigación"
+        />
+        <div className="absolute right-0 top-1 flex items-center gap-1.5">
+          {savingField === 'research_question' && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
+          {savedField === 'research_question' && (
+            <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+              Guardado ✓
+            </Badge>
+          )}
+          <Pencil className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-60 transition-opacity" />
+        </div>
+      </div>
     </div>
   );
 }
+
 
