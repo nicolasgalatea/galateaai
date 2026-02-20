@@ -3,8 +3,45 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { createProject as createProjectService, fetchProjectById, triggerN8N } from '@/services/apiService';
-import type { Project } from '@/types/domain';
+import type { Project, ResearchProject as ResearchProjectType } from '@/types/domain';
 import type { ApiErrorDetail } from '@/services/apiService';
+
+// Re-export for consumers (ResearchDashboard.tsx)
+export type ResearchProject = ResearchProjectType;
+
+// ═══════════════════════════════════════════════════════════════
+// PHASE_CONFIG — Configuracion de las 11 fases (0-10)
+// ═══════════════════════════════════════════════════════════════
+export interface PhaseConfigEntry {
+  id: number;
+  name: string;
+  description: string;
+  agents: string[];
+}
+
+export const PHASE_CONFIG: PhaseConfigEntry[] = [
+  { id: 0, name: 'Inicio', description: 'Idea general de investigacion', agents: ['arquitecto'] },
+  { id: 1, name: 'Planteamiento', description: 'Definir pregunta de investigacion', agents: ['arquitecto'] },
+  { id: 2, name: 'Contexto Regional', description: 'Analisis de contexto y vacios', agents: ['arquitecto'] },
+  { id: 3, name: 'PICOT', description: 'Estructurar pregunta PICOT', agents: ['arquitecto'] },
+  { id: 4, name: 'Test FINER', description: 'Evaluar viabilidad y relevancia', agents: ['metodologo'] },
+  { id: 5, name: 'Hipotesis', description: 'Generar hipotesis de trabajo', agents: ['metodologo'] },
+  { id: 6, name: 'Estructura', description: 'Definir estructura y carpetas', agents: ['metodologo'] },
+  { id: 7, name: 'Ecuacion Booleana', description: 'Estrategia de busqueda sistematica', agents: ['evidencia'] },
+  { id: 8, name: 'Protocolo', description: 'Redactar protocolo de investigacion', agents: ['redactor'] },
+  { id: 9, name: 'Manuscrito', description: 'Redactar manuscrito cientifico', agents: ['redactor'] },
+  { id: 10, name: 'Completado', description: 'Revision y validacion final', agents: ['redactor'] },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// AGENT_NAMES — Nombres legibles de los agentes
+// ═══════════════════════════════════════════════════════════════
+export const AGENT_NAMES: Record<string, string> = {
+  arquitecto: 'Arquitecto',
+  metodologo: 'Metodologo',
+  evidencia: 'Evidencia',
+  redactor: 'Redactor',
+};
 
 export interface CreateProjectData {
   title: string;
@@ -276,14 +313,48 @@ export function useResearchProject(projectId?: string) {
     };
   }, [projectId, loadProject]);
 
+  // ── Stubs consumed by ResearchDashboard.tsx ──
+  const status = project?.phase ?? 'idle';
+  const isSaving = false;
+
+  const saveUserEdit = useCallback(async (_phaseKey: string, _field: string, _value: unknown) => {
+    // Stub — autosave handled by research-sync-service in the v2 flow
+  }, []);
+
+  const approvePhase = useCallback(async (_phaseId: number) => {
+    return approveProtocol();
+  }, [approveProtocol]);
+
+  const syncWithAI = useCallback(async () => {
+    // Stub — sync triggered by n8n webhooks in v2 flow
+  }, []);
+
+  const getPhaseData = useCallback((_phaseId: number): Record<string, unknown> | null => {
+    return null;
+  }, []);
+
+  const getPhaseEdits = useCallback((_phaseId: number): Record<string, unknown> => {
+    return {};
+  }, []);
+
+  const fetchProject = loadProject;
+
   return {
     project,
     isLoading,
     error,
+    status,
+    isSaving,
     createProject,
     updateProject,
     advanceToNextAgent,
     approveProtocol,
+    approvePhase,
+    saveUserEdit,
+    syncWithAI,
+    getPhaseData,
+    getPhaseEdits,
+    fetchProject,
     loadProject,
   };
 }
