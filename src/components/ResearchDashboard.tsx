@@ -589,8 +589,8 @@ export default function ResearchDashboard() {
   // ── Datos estructurados desde n8n → refetch inmediato ──
   const handleStructuredData = useCallback((update: StructuredUpdate) => {
     console.log('[Dashboard] Structured update from n8n:', update);
-    fetchProject();
-  }, [fetchProject]);
+    if (project?.id) fetchProject(project.id);
+  }, [fetchProject, project?.id]);
 
   // ── FINER gate: block approval when Phase 4 output explicitly marks passed=false ──
   const finerData = getLabPhaseData(4);
@@ -606,7 +606,7 @@ export default function ResearchDashboard() {
   const handleStart = async () => {
     const q = question.trim() || DEFAULT_QUESTION;
     const t = title.trim() || 'Revisión Sistemática SGLT2i en ICFEp';
-    await createProject(t, q);
+    await createProject({ title: t, research_question: q });
   };
 
   // Auto-scroll to Phase 1 results when status transitions to 'paused'
@@ -732,7 +732,7 @@ export default function ResearchDashboard() {
   if (project.current_phase < 4) {
     return (
       <EarlyPhaseView currentPhase={project.current_phase}>
-        <DashboardHeader project={project} onFieldUpdate={handleFieldUpdate} />
+        <DashboardHeader project={project as any} onFieldUpdate={handleFieldUpdate} />
         <PhaseStepper currentPhase={project.current_phase} status={status} />
         {statusBar}
 
@@ -740,7 +740,7 @@ export default function ResearchDashboard() {
         <N8nResearchChat
           projectId={project.id}
           projectFixedId={project.project_id}
-          onRefetch={fetchProject}
+          onRefetch={() => { if (project?.id) fetchProject(project.id); }}
           currentPhase={project.current_phase}
           onStructuredData={handleStructuredData}
         />
@@ -781,7 +781,7 @@ export default function ResearchDashboard() {
 
     return (
       <LatePhaseView>
-        <DashboardHeader project={project} onFieldUpdate={handleFieldUpdate} />
+        <DashboardHeader project={project as any} onFieldUpdate={handleFieldUpdate} />
         <PhaseStepper currentPhase={project.current_phase} status={status} />
         {statusBar}
 
@@ -880,7 +880,7 @@ export default function ResearchDashboard() {
         <N8nResearchChat
           projectId={project.id}
           projectFixedId={project.project_id}
-          onRefetch={fetchProject}
+          onRefetch={() => { if (project?.id) fetchProject(project.id); }}
           currentPhase={project.current_phase}
           onStructuredData={handleStructuredData}
         />
@@ -893,7 +893,7 @@ export default function ResearchDashboard() {
   // ══════════════════════════════════════════════════
   return (
     <MidPhaseView>
-      <DashboardHeader project={project} onFieldUpdate={handleFieldUpdate} />
+      <DashboardHeader project={project as any} onFieldUpdate={handleFieldUpdate} />
       <PhaseStepper currentPhase={project.current_phase} status={status} />
       {statusBar}
 
@@ -926,7 +926,7 @@ export default function ResearchDashboard() {
       <N8nResearchChat
         projectId={project.id}
         projectFixedId={project.project_id}
-        onRefetch={fetchProject}
+        onRefetch={() => { if (project?.id) fetchProject(project.id); }}
         currentPhase={project.current_phase}
         onStructuredData={handleStructuredData}
       />
@@ -942,7 +942,7 @@ interface DashboardHeaderProps {
 
 function DashboardHeader({ project, onFieldUpdate }: DashboardHeaderProps) {
   const [titleValue, setTitleValue] = useState(project?.title ?? '');
-  const [questionValue, setQuestionValue] = useState(project?.research_question ?? '');
+  const [questionValue, setQuestionValue] = useState(typeof project?.research_question === 'string' ? project.research_question : '');
   const [savedField, setSavedField] = useState<string | null>(null);
   const [savingField, setSavingField] = useState<string | null>(null);
 
@@ -951,7 +951,7 @@ function DashboardHeader({ project, onFieldUpdate }: DashboardHeaderProps) {
     if (project?.title) setTitleValue(project.title);
   }, [project?.title]);
   useEffect(() => {
-    if (project?.research_question) setQuestionValue(project.research_question ?? '');
+    if (project?.research_question && typeof project.research_question === 'string') setQuestionValue(project.research_question);
   }, [project?.research_question]);
 
   const handleBlur = async (field: 'title' | 'research_question', value: string) => {
