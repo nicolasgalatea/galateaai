@@ -3,12 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import { 
   ArrowRight, Users, Zap, Globe, CheckCircle, Star, Play, Brain, Stethoscope, 
   Building2, GraduationCap, MessageSquare, Mic, Shield, Sparkles, Bot, FileText, 
   Search, TrendingUp, Calendar, Mail, Heart, Award, Database, Cloud, Microscope, 
   Activity, Phone, Target, Lightbulb, Code, Cpu, UserPlus, Settings, ShoppingCart,
-  Upload, TestTube, Eye, Headphones, Lock, Globe2, Languages, AlertTriangle
+  Upload, TestTube, Eye, Headphones, Lock, Globe2, Languages, AlertTriangle, Send
 } from 'lucide-react';
 
 import { HowItWorks } from '@/components/HowItWorks';
@@ -60,9 +61,43 @@ const useTypingEffect = (texts: string[], typingSpeed = 80, deletingSpeed = 40, 
 export const GalateaHomepage = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [showAvatar, setShowAvatar] = useState(false);
+  const [userInput, setUserInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
   
   const typingWords = ['Agentic Web', 'AI Revolution', 'Automation Era', 'Digital Future'];
   const typedText = useTypingEffect(typingWords, 100, 50, 2500);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userInput.trim()) return;
+
+    setIsLoading(true);
+    setResult(null);
+
+    try {
+      const response = await fetch('https://nicolasgalatea.app.n8n.cloud/webhook/3b2ea962-6b27-456f-9566-1a9ed2385836', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          chatInput: userInput, 
+          sessionId: 'nicolas-bayer' 
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
+
+      const data = await response.json();
+      setResult(typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+    } catch (error) {
+      setResult(`Error: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const avatarSteps = [
     { 
@@ -175,6 +210,56 @@ export const GalateaHomepage = () => {
                     Create AI Agent
                   </a>
                 </Button>
+              </div>
+
+              {/* Input y Botón de Envío para n8n */}
+              <div className="mt-12 space-y-4">
+                <form onSubmit={handleSubmit} className="flex gap-4 items-end">
+                  <div className="flex-1">
+                    <Input
+                      type="text"
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      placeholder="Escribe tu consulta aquí..."
+                      className="h-12 text-base"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    size="lg" 
+                    className="h-12 px-8 bg-gradient-primary hover:opacity-90"
+                    disabled={!userInput.trim() || isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Activity className="w-5 h-5 mr-2 animate-spin" />
+                        Analizando con Galatea AI...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5 mr-2" />
+                        Enviar
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                {/* Mostrar resultado */}
+                {result && (
+                  <Card className="mt-6 p-6 bg-card border-primary/20">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Resultado de Galatea AI</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="prose prose-sm max-w-none">
+                        <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg overflow-auto">
+                          {result}
+                        </pre>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
               {/* Stakeholder Icons */}
