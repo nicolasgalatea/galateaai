@@ -14,6 +14,100 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_executions: {
+        Row: {
+          id: string
+          project_id: string
+          agent_number: number
+          agent_name: string
+          phase: number | null
+          status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped'
+          input_payload: Json | null
+          output_result: Json | null
+          output_markdown: string | null
+          started_at: string | null
+          completed_at: string | null
+          duration_ms: number | null
+          tokens_used: number | null
+          error_message: string | null
+          retry_count: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          agent_number: number
+          agent_name: string
+          phase?: number | null
+          status?: 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped'
+          input_payload?: Json | null
+          output_result?: Json | null
+          output_markdown?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          tokens_used?: number | null
+          error_message?: string | null
+          retry_count?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          agent_number?: number
+          agent_name?: string
+          phase?: number | null
+          status?: 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped'
+          input_payload?: Json | null
+          output_result?: Json | null
+          output_markdown?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          tokens_used?: number | null
+          error_message?: string | null
+          retry_count?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_executions_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "agent_projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      agent_projects: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          research_question: string | null
+          phase: 'PROTOCOL_GENERATION' | 'AWAITING_APPROVAL' | 'EXECUTING_REVIEW' | 'COMPLETED'
+          current_agent_step: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          research_question?: string | null
+          phase?: 'PROTOCOL_GENERATION' | 'AWAITING_APPROVAL' | 'EXECUTING_REVIEW' | 'COMPLETED'
+          current_agent_step?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          research_question?: string | null
+          phase?: 'PROTOCOL_GENERATION' | 'AWAITING_APPROVAL' | 'EXECUTING_REVIEW' | 'COMPLETED'
+          current_agent_step?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

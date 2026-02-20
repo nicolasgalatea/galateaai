@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { 
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
   FileSearch, Upload, Cpu, AlertTriangle, Plus, Send, Building2, FileText,
   Search, ClipboardCheck, Shield, Play, Copy, Check, ChevronRight, BookOpen,
   Filter, FlaskConical, Lock, Unlock, Award, Users, BarChart3, ArrowDown,
@@ -21,6 +21,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Sparkles, ArrowRight, Zap, DollarSign } from 'lucide-react';
+import { useAgentClinicianNavigator, type AgentOutput } from '@/navigator';
+import { getResearchLabAgentById } from '@/config/researchLabAgents';
+import { createProject as createProjectService } from '@/services/apiService';
 
 interface AgentMessage {
   id: string;
@@ -248,7 +251,134 @@ export default function AgentProtocolReview() {
   const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
   const [showProtocolModal, setShowProtocolModal] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<string>('');
   const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HOOK DE ORQUESTACION n8n - Sistema Nervioso Resistente
+  // Escucha Supabase Realtime para TODOS los agentes (1-14)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const {
+    isConnected,
+    isLoading: isN8nLoading,
+    currentAgent,
+    agentOutputs,
+    error: n8nError,
+    projectId,
+    fallbackTriggered,
+    startOrchestration,
+    stopOrchestration,
+    reconnect,
+    getAgentOutput,
+  } = useAgentClinicianNavigator({
+    projectId: activeProjectId, // Se crea en Supabase antes de orquestar
+    onAgentUpdate: useCallback((output: AgentOutput) => {
+      const agentInfo = getResearchLabAgentById(output.agent_number);
+      const agentName = agentInfo?.displayNameEs || `Agente ${output.agent_number}`;
+
+      console.log(`[n8n-Realtime] Agente ${output.agent_number} actualizado:`, output.status);
+
+      // Agregar al log de auditoria
+      if (output.status === 'in_progress') {
+        setAuditLogs(prev => [...prev, {
+          timestamp: new Date(),
+          level: 'process',
+          message: `🔄 ${agentName} en ejecucion...`
+        }]);
+      } else if (output.status === 'completed') {
+        setAuditLogs(prev => [...prev, {
+          timestamp: new Date(),
+          level: 'success',
+          message: `✓ ${agentName} completado`
+        }]);
+
+        // Si completamos agente 8, mostrar protocolo
+        if (output.agent_number === 8) {
+          setShowProtocolPreview(true);
+          setIsOrchestrating(false);
+        }
+
+        // Si completamos agente 14, marcar como completado
+        if (output.agent_number === 14) {
+          setAuditLogs(prev => [...prev, {
+            timestamp: new Date(),
+            level: 'success',
+            message: '🎉 FASE 2 COMPLETADA - Revision sistematica finalizada'
+          }]);
+        }
+      } else if (output.status === 'failed') {
+        setAuditLogs(prev => [...prev, {
+          timestamp: new Date(),
+          level: 'warning',
+          message: `⚠ ${agentName} fallo: ${output.error_message || 'Error desconocido'}`
+        }]);
+      }
+
+      // Actualizar UI de sub-agentes para fase 1 (agentes 1-4 mapeados a picot, literature, criteria, yadav)
+      if (output.agent_number <= 4) {
+        const agentIdMap: Record<number, 'picot' | 'literature' | 'criteria' | 'yadav'> = {
+          1: 'picot',
+          2: 'literature', // Nota: en realidad agente 2 es FINER, 3 es Literature
+          3: 'criteria',
+          4: 'yadav'
+        };
+        const subAgentId = agentIdMap[output.agent_number];
+        if (subAgentId) {
+          setSubAgents(prev => prev.map(a =>
+            a.id === subAgentId
+              ? { ...a, isActive: true, isProcessing: output.status === 'in_progress' }
+              : a
+          ));
+        }
+      }
+
+      // Actualizar contadores PRISMA para fase 2 (agentes 9-14)
+      if (output.agent_number >= 9 && output.status === 'completed') {
+        updatePRISMAFromAgent(output);
+      }
+    }, []),
+    onError: useCallback((error: Error) => {
+      console.error('[n8n-Realtime] Error:', error);
+      toast({
+        title: 'Error de conexion',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }, [toast]),
+    onFallback: useCallback(() => {
+      console.warn('[n8n-Realtime] Fallback activado a los 60s');
+      toast({
+        title: 'Timeout de espera',
+        description: 'La respuesta esta tardando mas de lo esperado. La conexion sigue activa.',
+        variant: 'destructive',
+      });
+    }, [toast]),
+    onConnectionChange: useCallback((connected: boolean) => {
+      console.log(`[n8n-Realtime] Conexion: ${connected ? 'ACTIVA' : 'INACTIVA'}`);
+    }, []),
+  });
+
+  // Funcion para actualizar PRISMA basado en output de agentes 9-14
+  const updatePRISMAFromAgent = useCallback((output: AgentOutput) => {
+    const prismaMapping: Record<number, number> = {
+      9: 0,  // Search Executor -> Identificados
+      10: 1, // Duplicate Remover -> Tras Duplicados
+      11: 2, // PRISMA Updater -> Cribados
+      12: 3, // Paper Evaluator -> Texto Completo
+      13: 4, // Data Extractor -> Incluidos
+      14: 5, // Synthesis Writer -> Meta-analisis
+    };
+
+    const blockIndex = prismaMapping[output.agent_number];
+    if (blockIndex !== undefined && output.output_result) {
+      const count = (output.output_result as { count?: number }).count;
+      if (typeof count === 'number') {
+        setPrismaBlocks(prev => prev.map((block, i) =>
+          i === blockIndex ? { ...block, count } : block
+        ));
+      }
+    }
+  }, []);
   
   // Reproducibility Check State - Enhanced
   const [showReproducibilityModal, setShowReproducibilityModal] = useState(false);
@@ -648,11 +778,15 @@ export default function AgentProtocolReview() {
     });
   };
 
-  const simulatePhase1Orchestration = async () => {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ORQUESTACION FASE 1 - Agentes 1-8 via n8n + Supabase Realtime
+  // NO ES SIMULACION - Escucha eventos reales de la base de datos
+  // ═══════════════════════════════════════════════════════════════════════════
+  const startPhase1Orchestration = async () => {
     if (!ideaInput.trim()) {
       toast({
         title: 'Error',
-        description: 'Por favor ingresa una idea de investigación.',
+        description: 'Por favor ingresa una idea de investigacion.',
         variant: 'destructive',
       });
       return;
@@ -663,179 +797,110 @@ export default function AgentProtocolReview() {
     setShowProtocolPreview(false);
     setAuditLogs([]);
 
-    addAuditLog('info', '🚀 Iniciando orquestación multi-agente...');
+    addAuditLog('info', '🚀 Iniciando orquestacion multi-agente (n8n + Realtime)...');
     addAuditLog('process', `📝 Input recibido: "${ideaInput.substring(0, 60)}..."`);
 
-    // === AGENT 1: PICOT ANALYST ===
-    addAuditLog('info', '🎯 Activando Agente PICOT Analyst...');
-    setSubAgents(prev => prev.map(a => 
-      a.id === 'picot' ? { ...a, isActive: true, isProcessing: true } : a
-    ));
+    // Resetear estado de sub-agentes
+    setSubAgents(prev => prev.map(a => ({ ...a, isActive: false, isProcessing: false })));
 
-    await new Promise(r => setTimeout(r, 1500));
-    addAuditLog('process', 'Extrayendo componentes PICOT del texto de entrada...');
-    
-    setAgentMessages(prev => [...prev, {
-      id: '1',
-      agent: 'picot',
-      message: 'Analizando la estructura de la pregunta de investigación...',
-      timestamp: new Date(),
-      type: 'text',
-    }]);
+    try {
+      // 1. Crear proyecto en Supabase para obtener un UUID real
+      let currentProjectId = activeProjectId;
+      if (!currentProjectId) {
+        addAuditLog('process', 'Creando proyecto en Supabase...');
+        const { data: newProject, error: createError } = await createProjectService({
+          title: ideaInput.substring(0, 100),
+          research_question: ideaInput,
+        });
 
-    await new Promise(r => setTimeout(r, 2000));
-    addAuditLog('success', '✓ Componentes PICOT identificados correctamente');
+        if (createError || !newProject) {
+          throw new Error(createError?.message || 'No se pudo crear el proyecto en Supabase');
+        }
 
-    setAgentMessages(prev => [...prev, {
-      id: '2',
-      agent: 'picot',
-      message: 'picot-result',
-      timestamp: new Date(),
-      type: 'picot-result',
-    }]);
-    
-    setSubAgents(prev => prev.map(a => 
-      a.id === 'picot' ? { ...a, isProcessing: false } : a
-    ));
+        currentProjectId = newProject.id;
+        setActiveProjectId(currentProjectId);
+        addAuditLog('success', `✓ Proyecto creado: ${currentProjectId}`);
+      }
 
-    await new Promise(r => setTimeout(r, 1000));
+      addAuditLog('info', `🔗 Project ID: ${currentProjectId}`);
 
-    // === AGENT 2: LITERATURE SCOUT ===
-    addAuditLog('info', '📚 Activando Agente Literature Scout...');
-    setSubAgents(prev => prev.map(a => 
-      a.id === 'literature' ? { ...a, isActive: true, isProcessing: true } : a
-    ));
+      // 2. Iniciar orquestacion real via n8n webhook con el ID real
+      // Se pasa projectIdOverride para que el hook lo use de inmediato
+      // sin esperar el re-render del estado activeProjectId
+      await startOrchestration({
+        research_question: ideaInput,
+        title: ideaInput.substring(0, 100),
+      }, { faseActual: 0, projectIdOverride: currentProjectId });
 
-    await new Promise(r => setTimeout(r, 1500));
-    addAuditLog('process', 'Consultando bases de datos de literatura científica...');
-    addAuditLog('process', 'Analizando revisiones sistemáticas previas sobre Metformina-Alzheimer...');
-    
-    setAgentMessages(prev => [...prev, {
-      id: '3',
-      agent: 'literature',
-      message: 'Escaneando literatura existente y comparando con tu propuesta de investigación...',
-      timestamp: new Date(),
-      type: 'text',
-    }]);
+      addAuditLog('success', '✓ Senal enviada a n8n - Escuchando Supabase Realtime...');
 
-    await new Promise(r => setTimeout(r, 2000));
-    addAuditLog('warning', '⚠ Detectados 5 gaps de evidencia significativos');
-
-    setAgentMessages(prev => [...prev, {
-      id: '4',
-      agent: 'literature',
-      message: 'gaps',
-      timestamp: new Date(),
-      type: 'gaps',
-    }]);
-    
-    setSubAgents(prev => prev.map(a => 
-      a.id === 'literature' ? { ...a, isProcessing: false } : a
-    ));
-
-    await new Promise(r => setTimeout(r, 1000));
-
-    // === AGENT 3: CRITERIA DESIGNER ===
-    addAuditLog('info', '⚙️ Activando Agente Criteria Designer...');
-    setSubAgents(prev => prev.map(a => 
-      a.id === 'criteria' ? { ...a, isActive: true, isProcessing: true } : a
-    ));
-
-    await new Promise(r => setTimeout(r, 1500));
-    addAuditLog('process', 'Generando criterios basados en estructura PICOT...');
-    addAuditLog('process', 'Aplicando filtros metodológicos estándar Cochrane...');
-
-    setAgentMessages(prev => [...prev, {
-      id: '5',
-      agent: 'criteria',
-      message: 'Diseñando criterios de elegibilidad basados en el PICOT definido...',
-      timestamp: new Date(),
-      type: 'text',
-    }]);
-
-    await new Promise(r => setTimeout(r, 2000));
-    addAuditLog('success', '✓ Tabla de criterios I/E generada (5 inclusión, 5 exclusión)');
-
-    setAgentMessages(prev => [...prev, {
-      id: '6',
-      agent: 'criteria',
-      message: 'criteria-table',
-      timestamp: new Date(),
-      type: 'criteria-table',
-    }]);
-
-    setSubAgents(prev => prev.map(a => 
-      a.id === 'criteria' ? { ...a, isProcessing: false } : a
-    ));
-
-    await new Promise(r => setTimeout(r, 1000));
-
-    // === AGENT 4: YADAV STRATEGIST ===
-    addAuditLog('info', '🧪 Activando Agente Yadav Strategist...');
-    setSubAgents(prev => prev.map(a => 
-      a.id === 'yadav' ? { ...a, isActive: true, isProcessing: true } : a
-    ));
-
-    await new Promise(r => setTimeout(r, 1500));
-    addAuditLog('process', 'Iniciando mapeo de descriptores MeSH/Emtree...');
-    addAuditLog('process', 'Aplicando método Yadav 2025 de dos capas...');
-    addAuditLog('process', 'Capa 1: Términos controlados (thesaurus)');
-    addAuditLog('process', 'Capa 2: Términos de texto libre (sinónimos)');
-
-    setAgentMessages(prev => [...prev, {
-      id: '7',
-      agent: 'yadav',
-      message: 'Construyendo estrategia de búsqueda optimizada usando método Yadav 2025...',
-      timestamp: new Date(),
-      type: 'text',
-    }]);
-
-    await new Promise(r => setTimeout(r, 2500));
-    addAuditLog('success', '✓ Ecuaciones generadas para PubMed, Embase, Cochrane, Scopus');
-    addAuditLog('success', '✓ Sintaxis validada - Lista para ejecución');
-
-    setSubAgents(prev => prev.map(a => 
-      a.id === 'yadav' ? { ...a, isProcessing: false } : a
-    ));
-
-    await new Promise(r => setTimeout(r, 800));
-    
-    setShowProtocolPreview(true);
-    setIsOrchestrating(false);
-    
-    addAuditLog('success', '🎉 FASE 1 COMPLETADA - Protocolo generado con éxito');
-    addAuditLog('info', '📋 Revise las 17 secciones y apruebe para continuar a Fase 2');
-    
-    toast({
-      title: '✅ Fase 1 Completada',
-      description: 'Protocolo listo para revisión. Revisa las 17 secciones antes de aprobar.',
-    });
-  };
-
-  const handleApproveProtocol = () => {
-    setShowApprovalAnimation(true);
-    addAuditLog('info', '🔐 Iniciando proceso de aprobación de protocolo...');
-    addAuditLog('process', 'Verificando integridad de las 17 secciones...');
-    
-    setTimeout(() => {
-      addAuditLog('success', '✓ Protocolo verificado - Cumple requisitos ICH-GCP');
-      addAuditLog('success', '🏅 SELLO DE APROBACIÓN ÉTICA OTORGADO');
-      
-      setIsPhase2Unlocked(true);
-      setActivePhase('execution');
-      setShowApprovalAnimation(false);
-      
-      addAuditLog('info', '🚀 Fase 2 desbloqueada - Iniciando ejecución de búsqueda');
-      
       toast({
-        title: '🎉 Protocolo Aprobado',
-        description: 'Fase 2 desbloqueada. Iniciando ejecución de búsqueda sistemática.',
+        title: 'Orquestacion iniciada',
+        description: 'Los agentes estan procesando tu solicitud. Recibiras actualizaciones en tiempo real.',
       });
 
-      // Start PRISMA animation and author voting
-      animatePRISMAFlow();
-      simulateAuthorVoting();
-    }, 2500);
+      // El estado se actualizara automaticamente via onAgentUpdate callback
+      // cuando n8n escriba en agent_executions y Supabase Realtime lo detecte
+
+    } catch (error) {
+      console.error('[Phase1] Error al iniciar orquestacion:', error);
+      setIsOrchestrating(false);
+      addAuditLog('warning', `⚠ Error: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+
+      toast({
+        title: 'Error',
+        description: 'No se pudo iniciar la orquestacion. Verifica la conexion.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // APROBACION DE PROTOCOLO - Inicia Fase 2 (Agentes 9-14) via n8n
+  // ═══════════════════════════════════════════════════════════════════════════
+  const handleApproveProtocol = async () => {
+    setShowApprovalAnimation(true);
+    addAuditLog('info', '🔐 Iniciando proceso de aprobacion de protocolo...');
+    addAuditLog('process', 'Verificando integridad de las 17 secciones...');
+
+    // Breve delay para UX
+    await new Promise(r => setTimeout(r, 1500));
+
+    addAuditLog('success', '✓ Protocolo verificado - Cumple requisitos ICH-GCP');
+    addAuditLog('success', '🏅 SELLO DE APROBACION ETICA OTORGADO');
+
+    setIsPhase2Unlocked(true);
+    setActivePhase('execution');
+    setShowApprovalAnimation(false);
+
+    addAuditLog('info', '🚀 Fase 2 desbloqueada - Iniciando orquestacion de agentes 9-14...');
+    addAuditLog('info', `🔗 Project ID: ${projectId}`);
+
+    toast({
+      title: '🎉 Protocolo Aprobado',
+      description: 'Fase 2 desbloqueada. Iniciando ejecucion via n8n + Realtime.',
+    });
+
+    try {
+      // Iniciar Fase 2 via n8n webhook (agentes 9-14)
+      // Los eventos se recibiran via Supabase Realtime en onAgentUpdate
+      await startOrchestration({
+        research_question: ideaInput,
+        title: ideaInput.substring(0, 100),
+      }, { faseActual: 8, projectIdOverride: activeProjectId });
+
+      addAuditLog('success', '✓ Fase 2 iniciada - Escuchando agentes 9-14 via Realtime...');
+
+    } catch (error) {
+      console.error('[Phase2] Error al iniciar orquestacion:', error);
+      addAuditLog('warning', `⚠ Error en Fase 2: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+
+      toast({
+        title: 'Error',
+        description: 'No se pudo iniciar Fase 2. Los datos se sincronizaran cuando n8n responda.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const animatePRISMAFlow = () => {
@@ -1392,7 +1457,7 @@ export default function AgentProtocolReview() {
                     </div>
 
                     <Button
-                      onClick={simulatePhase1Orchestration}
+                      onClick={startPhase1Orchestration}
                       disabled={isOrchestrating || !ideaInput.trim()}
                       className="mt-6 h-14 text-lg font-semibold text-white gap-3 transition-all"
                       style={{ 

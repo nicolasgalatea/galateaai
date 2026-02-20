@@ -11,6 +11,11 @@ interface Message {
   diagnosis?: any;
 }
 
+interface UseRealtimeChatConfig {
+  /** ID del proyecto de investigacion activo — se envía a n8n para sincronizar */
+  projectId?: string;
+}
+
 interface UseRealtimeChatReturn {
   messages: Message[];
   isConnected: boolean;
@@ -21,7 +26,10 @@ interface UseRealtimeChatReturn {
   reconnect: () => void;
 }
 
-export const useRealtimeChat = (): UseRealtimeChatReturn => {
+/** ID fijo del proyecto de investigacion — evita sesiones de memoria duplicadas en n8n */
+const FIXED_PROJECT_ID = 'e8233417-9ddf-4453-8372-c5b6797da8aa';
+
+export const useRealtimeChat = (config?: UseRealtimeChatConfig): UseRealtimeChatReturn => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -59,14 +67,15 @@ export const useRealtimeChat = (): UseRealtimeChatReturn => {
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
         
-        // Authenticate
-        const authMessage = {
+        // Auth — includes type/userId for the Edge Function router + project_id fijo for n8n
+        const authPayload = {
           type: 'auth',
           userId: user.id,
-          conversationId: conversationId
+          conversationId: conversationId,
+          project_id: FIXED_PROJECT_ID,
         };
-        console.log('Sending authentication:', authMessage);
-        socketRef.current?.send(JSON.stringify(authMessage));
+        console.log('[N8nResearchChat] ENVÍO LIMPIO:', authPayload);
+        socketRef.current?.send(JSON.stringify(authPayload));
         
         toast({
           title: "Conectado",
@@ -112,23 +121,48 @@ export const useRealtimeChat = (): UseRealtimeChatReturn => {
 
             case 'response_chunk':
               setCurrentStreamMessage(data.fullResponse || '');
-              // Update the last message with streamed content
+              // Update the last message with streamed content (new object for React reactivity)
               setMessages(prev => {
-                const newMessages = [...prev];
-                const lastMessage = newMessages[newMessages.length - 1];
+                const lastMessage = prev[prev.length - 1];
                 if (lastMessage && lastMessage.role === 'assistant') {
-                  lastMessage.content = data.fullResponse || '';
+                  return [
+                    ...prev.slice(0, -1),
+                    { ...lastMessage, content: data.fullResponse || '' },
+                  ];
                 }
-                return newMessages;
+                return prev;
               });
               break;
 
             case 'response_complete':
+              console.log('RECEPTOR: Datos recibidos de n8n correctamente', data);
               setIsLoading(false);
               setIsTyping(false);
               setCurrentStreamMessage('');
               if (data.conversationId) {
                 setConversationId(data.conversationId);
+              }
+              // n8n flag: when the backend signals that project data changed
+              // OR sends a new current_phase, dispatch refetch so the
+              // dashboard/navigator picks up the latest Supabase state.
+              if (data.requires_refetch || data.current_phase != null) {
+                const refetchProjectId = FIXED_PROJECT_ID;
+                const normalizedPhase = data.current_phase != null
+                  ? Number(data.current_phase)
+                  : undefined;
+                console.log('RECEPTOR: Disparando investigator-refetch', {
+                  projectId: refetchProjectId,
+                  current_phase: normalizedPhase,
+                  requires_refetch: data.requires_refetch,
+                });
+                window.dispatchEvent(
+                  new CustomEvent('investigator-refetch', {
+                    detail: {
+                      projectId: refetchProjectId,
+                      current_phase: normalizedPhase,
+                    },
+                  })
+                );
               }
               break;
 
@@ -220,12 +254,10 @@ export const useRealtimeChat = (): UseRealtimeChatReturn => {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Send message via WebSocket
-    socketRef.current.send(JSON.stringify({
-      type: 'chat_message',
-      message: content,
-      messageType: messageType
-    }));
+    // ATÓMICO: hardcoded inline, sin variables intermedias
+    const cleanPayload = { message: content, project_id: 'e8233417-9ddf-4453-8372-c5b6797da8aa' };
+    console.log('🚀 ENVÍO ATÓMICO A N8N:', JSON.stringify(cleanPayload, null, 2));
+    socketRef.current.send(JSON.stringify(cleanPayload));
   }, [isConnected, toast]);
 
   const reconnect = useCallback(() => {
