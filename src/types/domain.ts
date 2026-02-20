@@ -39,6 +39,7 @@ export interface AgentOutput {
   input_payload: Record<string, unknown> | null;
   output_result: Record<string, unknown> | null;
   output_markdown: string | null;
+  content: string | null;
   started_at: string | null;
   completed_at: string | null;
   duration_ms: number | null;
@@ -47,6 +48,11 @@ export interface AgentOutput {
   retry_count: number | null;
   created_at: string;
 }
+
+/** Alias for backward compatibility */
+export type AgentProject = Project;
+/** Alias for backward compatibility */
+export type AgentExecution = AgentOutput;
 
 /**
  * FinerScores - Puntuaciones individuales del test FINER (Agente 2, Fases 4-6)

@@ -1,0 +1,1897 @@
+{
+  "name": "Galatea Research Flow - 14 Agents Complete",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "galatea-research-flow",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-entry",
+      "name": "Webhook Entry",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "galatea-research-flow"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-start",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "START",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "switch-action",
+      "name": "Switch: START or APPROVE",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "agent_projects",
+        "id": "={{ $json.body.projectId }}"
+      },
+      "id": "get-project-phase1",
+      "name": "Get Project (Phase 1)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [650, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 4000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en metodología de investigación clínica especializado en el framework PICOT (Population, Intervention, Comparison, Outcome, Timeframe). Tu tarea es analizar una pregunta de investigación y extraer sus componentes PICOT de manera estructurada y precisa.\n\nINSTRUCCIONES:\n1. Analiza la pregunta de investigación proporcionada\n2. Identifica y extrae cada componente PICOT:\n   - P (Population): Características demográficas, condición médica, edad, género, etc.\n   - I (Intervention): Tratamiento, procedimiento, exposición o intervención de interés\n   - C (Comparison): Grupo control, placebo, tratamiento alternativo o estándar de cuidado\n   - O (Outcome): Medidas de resultado primarias y secundarias (mortalidad, morbilidad, calidad de vida, biomarcadores)\n   - T (Timeframe): Duración del seguimiento, período de observación\n3. Proporciona cada componente en formato JSON estructurado\n4. Asegúrate de que los términos sean específicos, medibles y alineados con MeSH terms cuando sea posible\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"population\": \"descripción detallada\",\n  \"intervention\": \"descripción detallada\",\n  \"comparison\": \"descripción detallada\",\n  \"outcome\": \"descripción detallada\",\n  \"timeframe\": \"descripción detallada\"\n}"
+            },
+            {
+              "role": "user",
+              "content": "Analiza la siguiente pregunta de investigación y extrae los componentes PICOT:\n\n{{ $json.body.idea }}\n\nProyecto ID: {{ $json.body.projectId }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-1-picot",
+      "name": "Agent 1: PICOT Builder",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [850, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "picot_population": "={{ JSON.parse($json.response).population }}",
+            "picot_intervention": "={{ JSON.parse($json.response).intervention }}",
+            "picot_comparison": "={{ JSON.parse($json.response).comparison }}",
+            "picot_outcome": "={{ JSON.parse($json.response).outcome }}",
+            "picot_timeframe": "={{ JSON.parse($json.response).timeframe }}",
+            "current_agent_step": 2
+          }
+        }
+      },
+      "id": "update-agent-1",
+      "name": "Update Project (Agent 1)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1050, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 1,
+            "agent_name": "picot_builder",
+            "output_data": "={{ JSON.parse($('Agent 1: PICOT Builder').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 1: PICOT Builder').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-1-output",
+      "name": "Save Agent 1 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1250, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 3000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un evaluador experto en viabilidad de proyectos de investigación clínica usando el framework FINER (Feasible, Interesting, Novel, Ethical, Relevant). Tu tarea es evaluar cada dimensión del proyecto y asignar un score de 0-10 para cada componente.\n\nCRITERIOS DE EVALUACIÓN:\n\n1. FEASIBLE (Factible) - 0-10:\n   - Recursos disponibles (financieros, humanos, tecnológicos)\n   - Tamaño de muestra alcanzable\n   - Tiempo de ejecución realista\n   - Acceso a datos/pacientes\n   - Infraestructura necesaria\n\n2. INTERESTING (Interesante) - 0-10:\n   - Relevancia científica\n   - Potencial de impacto en la práctica clínica\n   - Interés para la comunidad médica\n   - Publicabilidad potencial\n\n3. NOVEL (Novedoso) - 0-10:\n   - Originalidad del enfoque\n   - Gaps en la literatura identificados\n   - Contribución al conocimiento existente\n   - Innovación metodológica\n\n4. ETHICAL (Ético) - 0-10:\n   - Cumplimiento con principios éticos\n   - Riesgo-beneficio favorable\n   - Consentimiento informado apropiado\n   - Aprobación de comité ético factible\n\n5. RELEVANT (Relevante) - 0-10:\n   - Relevancia clínica\n   - Impacto en salud pública\n   - Alineación con prioridades de investigación\n   - Aplicabilidad práctica\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"feasible\": número 0-10,\n  \"interesting\": número 0-10,\n  \"novel\": número 0-10,\n  \"ethical\": número 0-10,\n  \"relevant\": número 0-10,\n  \"total_score\": suma de los 5 componentes,\n  \"recommendation\": \"proceed\" | \"revise\" | \"reject\",\n  \"rationale\": \"explicación breve\"\n}"
+            },
+            {
+              "role": "user",
+              "content": "Evalúa la viabilidad del siguiente proyecto usando FINER:\n\nPICOT:\nP: {{ $('Get Project (Phase 1)').item.json.picot_population }}\nI: {{ $('Get Project (Phase 1)').item.json.picot_intervention }}\nC: {{ $('Get Project (Phase 1)').item.json.picot_comparison }}\nO: {{ $('Get Project (Phase 1)').item.json.picot_outcome }}\nT: {{ $('Get Project (Phase 1)').item.json.picot_timeframe }}\n\nProyecto: {{ $('Get Project (Phase 1)').item.json.title }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-2-finer",
+      "name": "Agent 2: FINER Validator",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [1450, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "finer_feasible": "={{ JSON.parse($json.response).feasible }}",
+            "finer_interesting": "={{ JSON.parse($json.response).interesting }}",
+            "finer_novel": "={{ JSON.parse($json.response).novel }}",
+            "finer_ethical": "={{ JSON.parse($json.response).ethical }}",
+            "finer_relevant": "={{ JSON.parse($json.response).relevant }}",
+            "current_agent_step": 3
+          }
+        }
+      },
+      "id": "update-agent-2",
+      "name": "Update Project (Agent 2)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1650, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 2,
+            "agent_name": "finer_validator",
+            "output_data": "={{ JSON.parse($('Agent 2: FINER Validator').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 2: FINER Validator').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-2-output",
+      "name": "Save Agent 2 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1850, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.4,
+          "maxTokens": 5000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un bibliotecario médico experto en búsqueda de literatura científica. Tu tarea es buscar revisiones sistemáticas existentes sobre el tema de investigación y analizar gaps en la literatura.\n\nINSTRUCCIONES:\n1. Identifica revisiones sistemáticas, meta-análisis y revisiones Cochrane existentes\n2. Evalúa la relevancia de cada revisión (score 0-100)\n3. Calcula el porcentaje de solapamiento con el proyecto actual (0-100%)\n4. Identifica gaps específicos en la literatura\n5. Proporciona recomendaciones sobre si proceder con una nueva revisión\n\nBASES DE DATOS A CONSULTAR:\n- PubMed/MEDLINE\n- Cochrane Library\n- EMBASE\n- PROSPERO (registro de protocolos)\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"existing_reviews\": [\n    {\n      \"title\": \"título de la revisión\",\n      \"authors\": [\"autor1\", \"autor2\"],\n      \"publication_year\": año,\n      \"journal\": \"nombre del journal\",\n      \"doi\": \"DOI si disponible\",\n      \"pmid\": \"PubMed ID si disponible\",\n      \"review_type\": \"systematic_review\" | \"meta_analysis\" | \"cochrane_review\",\n      \"relevance_score\": 0-100,\n      \"overlap_percentage\": 0-100,\n      \"identified_gaps\": [\"gap1\", \"gap2\"],\n      \"abstract\": \"resumen\",\n      \"key_findings\": \"hallazgos clave\",\n      \"limitations\": \"limitaciones identificadas\",\n      \"source_database\": \"PubMed\" | \"Cochrane\" | \"EMBASE\",\n      \"recommendation\": \"proceed_new_review\" | \"update_existing\" | \"no_new_review_needed\" | \"narrow_scope\"\n    }\n  ]\n}"
+            },
+            {
+              "role": "user",
+              "content": "Busca revisiones sistemáticas existentes sobre:\n\nPICOT:\nP: {{ $('Get Project (Phase 1)').item.json.picot_population }}\nI: {{ $('Get Project (Phase 1)').item.json.picot_intervention }}\nC: {{ $('Get Project (Phase 1)').item.json.picot_comparison }}\nO: {{ $('Get Project (Phase 1)').item.json.picot_outcome }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-3-scout",
+      "name": "Agent 3: Literature Scout",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [2050, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "current_agent_step": 4
+          }
+        }
+      },
+      "id": "update-agent-3",
+      "name": "Update Project (Agent 3)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2250, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 3,
+            "agent_name": "literature_scout",
+            "output_data": "={{ JSON.parse($('Agent 3: Literature Scout').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 3: Literature Scout').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-3-output",
+      "name": "Save Agent 3 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2450, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 2000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un metodólogo experto en diseño de estudios clínicos. Tu tarea es recomendar el tipo de estudio más apropiado basado en la pregunta PICOT, las revisiones existentes y el score FINER.\n\nTIPOS DE ESTUDIO DISPONIBLES:\n- systematic_review: Para síntesis de evidencia existente\n- meta_analysis: Para análisis cuantitativo de múltiples estudios\n- rct: Randomized Controlled Trial\n- cohort: Estudio de cohortes prospectivo o retrospectivo\n- case_control: Estudio caso-control\n- cross_sectional: Estudio transversal\n- qualitative: Investigación cualitativa\n\nCRITERIOS DE SELECCIÓN:\n1. Tipo de pregunta (efectividad, diagnóstico, pronóstico, etiología)\n2. Evidencia existente (gaps identificados)\n3. Viabilidad (recursos, tiempo, muestra)\n4. Ética y factibilidad\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"study_type\": \"systematic_review\" | \"meta_analysis\" | \"rct\" | \"cohort\" | \"case_control\" | \"cross_sectional\" | \"qualitative\",\n  \"rationale\": \"justificación detallada de por qué este diseño es el más apropiado\",\n  \"expectedSampleSize\": número estimado,\n  \"statisticalApproach\": \"descripción del enfoque estadístico\"\n}"
+            },
+            {
+              "role": "user",
+              "content": "Recomienda el tipo de estudio más apropiado para:\n\nPICOT:\nP: {{ $('Get Project (Phase 1)').item.json.picot_population }}\nI: {{ $('Get Project (Phase 1)').item.json.picot_intervention }}\nC: {{ $('Get Project (Phase 1)').item.json.picot_comparison }}\nO: {{ $('Get Project (Phase 1)').item.json.picot_outcome }}\n\nScore FINER: {{ $('Get Project (Phase 1)').item.json.finer_total_score }}/50"
+            }
+          ]
+        }
+      },
+      "id": "agent-4-designer",
+      "name": "Agent 4: Study Designer",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [2650, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "study_type": "={{ JSON.parse($json.response).study_type }}",
+            "current_agent_step": 5
+          }
+        }
+      },
+      "id": "update-agent-4",
+      "name": "Update Project (Agent 4)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2850, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 4,
+            "agent_name": "study_designer",
+            "output_data": "={{ JSON.parse($('Agent 4: Study Designer').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 4: Study Designer').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-4-output",
+      "name": "Save Agent 4 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [3050, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 2500
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en redacción de objetivos de investigación siguiendo los estándares ICMJE (International Committee of Medical Journal Editors). Tu tarea es generar objetivos primarios y secundarios claros, medibles y específicos.\n\nREQUISITOS ICMJE:\n1. Objetivos deben ser SMART (Specific, Measurable, Achievable, Relevant, Time-bound)\n2. Objetivo primario: Uno solo, claramente definido\n3. Objetivos secundarios: Múltiples, relacionados pero distintos\n4. Deben estar alineados con los outcomes del PICOT\n5. Deben ser medibles y evaluables\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"primary\": \"objetivo primario detallado y medible\",\n  \"secondary\": [\n    \"objetivo secundario 1\",\n    \"objetivo secundario 2\",\n    \"objetivo secundario 3\"\n  ]\n}"
+            },
+            {
+              "role": "user",
+              "content": "Genera objetivos primarios y secundarios para:\n\nPICOT:\nP: {{ $('Get Project (Phase 1)').item.json.picot_population }}\nI: {{ $('Get Project (Phase 1)').item.json.picot_intervention }}\nC: {{ $('Get Project (Phase 1)').item.json.picot_comparison }}\nO: {{ $('Get Project (Phase 1)').item.json.picot_outcome }}\n\nTipo de estudio: {{ $('Get Project (Phase 1)').item.json.study_type }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-5-objectives",
+      "name": "Agent 5: Objectives Generator",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [3250, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "objectives_primary": "={{ JSON.parse($json.response).primary }}",
+            "objectives_secondary": "={{ JSON.parse($json.response).secondary }}",
+            "current_agent_step": 6
+          }
+        }
+      },
+      "id": "update-agent-5",
+      "name": "Update Project (Agent 5)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [3450, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 5,
+            "agent_name": "objectives_generator",
+            "output_data": "={{ JSON.parse($('Agent 5: Objectives Generator').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 5: Objectives Generator').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-5-output",
+      "name": "Save Agent 5 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [3650, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 4000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en definición de criterios de inclusión y exclusión para revisiones sistemáticas. Tu tarea es crear criterios estructurados, operacionalizables y basados en evidencia.\n\nCATEGORÍAS PICOS:\n- population: Características de la población\n- intervention: Tipo de intervención\n- comparator: Grupo de comparación\n- outcome: Medidas de resultado\n- study_design: Diseño del estudio\n- timeframe: Ventana temporal\n- language: Idioma de publicación\n- publication_type: Tipo de publicación\n\nREQUISITOS:\n1. Criterios deben ser específicos y medibles\n2. Incluir justificación científica (rationale)\n3. Proporcionar operacionalización (cómo se evaluará)\n4. Priorizar criterios (1-5, donde 5 es más importante)\n5. Separar claramente inclusión vs exclusión\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"criteria\": [\n    {\n      \"criteria_type\": \"inclusion\" | \"exclusion\",\n      \"category\": \"population\" | \"intervention\" | \"comparator\" | \"outcome\" | \"study_design\" | \"timeframe\" | \"language\" | \"publication_type\" | \"other\",\n      \"description\": \"descripción detallada del criterio\",\n      \"rationale\": \"justificación científica\",\n      \"operationalization\": \"cómo se evaluará este criterio\",\n      \"priority\": 1-5\n    }\n  ]\n}"
+            },
+            {
+              "role": "user",
+              "content": "Define criterios de inclusión y exclusión para:\n\nPICOT:\nP: {{ $('Get Project (Phase 1)').item.json.picot_population }}\nI: {{ $('Get Project (Phase 1)').item.json.picot_intervention }}\nC: {{ $('Get Project (Phase 1)').item.json.picot_comparison }}\nO: {{ $('Get Project (Phase 1)').item.json.picot_outcome }}\n\nTipo de estudio: {{ $('Get Project (Phase 1)').item.json.study_type }}\nObjetivos: {{ $('Get Project (Phase 1)').item.json.objectives_primary }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-6-criteria",
+      "name": "Agent 6: Criteria Definer",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [3850, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "current_agent_step": 7
+          }
+        }
+      },
+      "id": "update-agent-6",
+      "name": "Update Project (Agent 6)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [4050, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 6,
+            "agent_name": "criteria_definer",
+            "output_data": "={{ JSON.parse($('Agent 6: Criteria Definer').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 6: Criteria Definer').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-6-output",
+      "name": "Save Agent 6 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [4250, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 5000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un bibliotecario médico experto en construcción de estrategias de búsqueda usando la metodología Yadav. Tu tarea es generar strings de búsqueda optimizados para PubMed, Cochrane y EMBASE.\n\nMETODOLOGÍA YADAV:\n1. Identificar términos MeSH (Medical Subject Headings) relevantes\n2. Incluir sinónimos y variantes terminológicas\n3. Combinar términos con operadores booleanos (AND, OR, NOT)\n4. Aplicar filtros apropiados (fecha, idioma, tipo de estudio)\n5. Optimizar para sensibilidad vs especificidad según el tipo de revisión\n\nESTRUCTURA DE BÚSQUEDA:\n- Términos MeSH principales\n- Términos de texto libre\n- Sinónimos y variantes\n- Filtros metodológicos\n- Filtros temporales\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"pubmed\": \"string de búsqueda completo para PubMed\",\n  \"cochrane\": \"string de búsqueda completo para Cochrane Library\",\n  \"embase\": \"string de búsqueda completo para EMBASE\",\n  \"other\": {\n    \"database_name\": \"string de búsqueda\"\n  },\n  \"mesh_terms\": [\"término1\", \"término2\"],\n  \"expected_results\": \"estimación de resultados esperados\"\n}"
+            },
+            {
+              "role": "user",
+              "content": "Genera estrategias de búsqueda Yadav para:\n\nPICOT:\nP: {{ $('Get Project (Phase 1)').item.json.picot_population }}\nI: {{ $('Get Project (Phase 1)').item.json.picot_intervention }}\nC: {{ $('Get Project (Phase 1)').item.json.picot_comparison }}\nO: {{ $('Get Project (Phase 1)').item.json.picot_outcome }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-7-yadav",
+      "name": "Agent 7: Yadav Search Strategist",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [4450, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "search_strategy_pubmed": "={{ JSON.parse($json.response).pubmed }}",
+            "search_strategy_cochrane": "={{ JSON.parse($json.response).cochrane }}",
+            "search_strategy_embase": "={{ JSON.parse($json.response).embase }}",
+            "search_strategy_other": "={{ JSON.parse($json.response).other || {} }}",
+            "current_agent_step": 8
+          }
+        }
+      },
+      "id": "update-agent-7",
+      "name": "Update Project (Agent 7)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [4650, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 7,
+            "agent_name": "yadav_strategist",
+            "output_data": "={{ JSON.parse($('Agent 7: Yadav Search Strategist').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 7: Yadav Search Strategist').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-7-output",
+      "name": "Save Agent 7 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [4850, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.4,
+          "maxTokens": 8000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en síntesis de protocolos de investigación clínica siguiendo estándares PRISMA-P (Preferred Reporting Items for Systematic Reviews and Meta-Analyses - Protocols). Tu tarea es generar un protocolo completo de ~40 páginas en formato PDF listo para registro en PROSPERO.\n\nSECCIONES REQUERIDAS (PRISMA-P):\n1. Título y Resumen\n2. Introducción (Justificación, Objetivos)\n3. Métodos:\n   - Criterios de elegibilidad\n   - Estrategias de búsqueda\n   - Selección de estudios\n   - Extracción de datos\n   - Evaluación de riesgo de sesgo\n   - Síntesis de datos\n4. Plan de análisis\n5. Ética y divulgación\n6. Referencias\n\nREQUISITOS:\n- Formato académico profesional\n- Cumplimiento con PRISMA-P checklist\n- Listo para registro en PROSPERO\n- ~40 páginas\n- Incluir todos los datos recopilados de los agentes anteriores\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"pdf_url\": \"URL del PDF generado\",\n  \"sections\": [\"lista de secciones incluidas\"],\n  \"page_count\": número,\n  \"prospero_ready\": true\n}"
+            },
+            {
+              "role": "user",
+              "content": "Genera el protocolo completo PRISMA-P para:\n\nTítulo: {{ $('Get Project (Phase 1)').item.json.title }}\nPregunta: {{ $('Get Project (Phase 1)').item.json.research_question }}\n\nPICOT:\nP: {{ $('Get Project (Phase 1)').item.json.picot_population }}\nI: {{ $('Get Project (Phase 1)').item.json.picot_intervention }}\nC: {{ $('Get Project (Phase 1)').item.json.picot_comparison }}\nO: {{ $('Get Project (Phase 1)').item.json.picot_outcome }}\nT: {{ $('Get Project (Phase 1)').item.json.picot_timeframe }}\n\nFINER Score: {{ $('Get Project (Phase 1)').item.json.finer_total_score }}/50\nTipo de estudio: {{ $('Get Project (Phase 1)').item.json.study_type }}\nObjetivos: {{ $('Get Project (Phase 1)').item.json.objectives_primary }}\nEstrategias de búsqueda: {{ $('Get Project (Phase 1)').item.json.search_strategy_pubmed }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-8-protocol",
+      "name": "Agent 8: Protocol Synthesizer",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [5050, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "phase": "AWAITING_APPROVAL",
+            "protocol_pdf_url": "={{ JSON.parse($json.response).pdf_url }}",
+            "protocol_generated_at": "={{ $now }}",
+            "current_agent_step": 9
+          }
+        }
+      },
+      "id": "update-phase1-complete",
+      "name": "Update: AWAITING_APPROVAL",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [5250, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 8,
+            "agent_name": "protocol_synthesizer",
+            "output_data": "={{ JSON.parse($('Agent 8: Protocol Synthesizer').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 8: Protocol Synthesizer').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-8-output",
+      "name": "Save Agent 8 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [5450, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, projectId: $('Webhook Entry').item.json.body.projectId, phase: 'AWAITING_APPROVAL', message: 'Fase 1 completada. Protocolo generado y listo para aprobación.' } }}",
+        "options": {}
+      },
+      "id": "respond-phase1",
+      "name": "Respond to Webhook (Phase 1)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [5650, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-approve",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "APPROVE",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "switch-approve",
+      "name": "Switch: APPROVE Path",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "agent_projects",
+        "id": "={{ $json.body.projectId }}"
+      },
+      "id": "get-project-phase2",
+      "name": "Get Project (Phase 2)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [650, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "phase": "EXECUTING_REVIEW",
+            "current_agent_step": 9
+          }
+        }
+      },
+      "id": "update-phase2-start",
+      "name": "Update: EXECUTING_REVIEW",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [850, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 3000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en ejecución de búsquedas bibliográficas en bases de datos médicas. Tu tarea es ejecutar las estrategias de búsqueda generadas y recopilar todos los resultados.\n\nINSTRUCCIONES:\n1. Ejecuta las búsquedas en PubMed, Cochrane y EMBASE usando las estrategias proporcionadas\n2. Recopila metadatos completos de cada artículo (título, autores, año, DOI, PMID, abstract)\n3. Organiza los resultados por base de datos\n4. Genera el conteo inicial para el diagrama PRISMA\n\nNOTA: Como no tienes acceso directo a las APIs, simula la ejecución de búsquedas basándote en las estrategias proporcionadas y genera resultados realistas.\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"prisma_records\": {\n    \"identified\": {\n      \"pubmed\": número,\n      \"cochrane\": número,\n      \"embase\": número,\n      \"total\": número\n    },\n    \"records\": [\n      {\n        \"title\": \"título\",\n        \"authors\": [\"autor1\"],\n        \"year\": año,\n        \"doi\": \"DOI\",\n        \"pmid\": \"PMID\",\n        \"abstract\": \"resumen\",\n        \"source_database\": \"PubMed\" | \"Cochrane\" | \"EMBASE\"\n      }\n    ]\n  }\n}"
+            },
+            {
+              "role": "user",
+              "content": "Ejecuta las búsquedas bibliográficas:\n\nPubMed: {{ $('Get Project (Phase 2)').item.json.search_strategy_pubmed }}\nCochrane: {{ $('Get Project (Phase 2)').item.json.search_strategy_cochrane }}\nEMBASE: {{ $('Get Project (Phase 2)').item.json.search_strategy_embase }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-9-searcher",
+      "name": "Agent 9: Search Executor",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [1050, 400],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "prisma_data": "={{ $('Agent 9: Search Executor').item.json.response.prisma_records }}",
+            "current_agent_step": 10
+          }
+        }
+      },
+      "id": "update-agent-9",
+      "name": "Update Project (Agent 9)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1250, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 9,
+            "agent_name": "search_executor",
+            "output_data": "={{ JSON.parse($('Agent 9: Search Executor').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 9: Search Executor').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-9-output",
+      "name": "Save Agent 9 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1450, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.1,
+          "maxTokens": 2000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en detección de duplicados en búsquedas bibliográficas. Tu tarea es identificar y eliminar registros duplicados entre diferentes bases de datos.\n\nMÉTODOS DE DETECCIÓN:\n1. Comparación por DOI (más confiable)\n2. Comparación por PMID\n3. Comparación por título y autores (fuzzy matching)\n4. Comparación por año y journal\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"prisma_records\": {\n    \"after_duplicates\": {\n      \"total\": número,\n      \"duplicates_removed\": número\n    },\n    \"records\": [\"lista de registros únicos con estructura completa\"]\n  }\n}"
+            },
+            {
+              "role": "user",
+              "content": "Elimina duplicados de los siguientes registros:\n\n{{ JSON.stringify($('Agent 9: Search Executor').item.json.response.prisma_records.records) }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-10-duplicates",
+      "name": "Agent 10: Duplicate Remover",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [1650, 400],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "prisma_data": "={{ $('Agent 10: Duplicate Remover').item.json.response.prisma_records }}",
+            "current_agent_step": 11
+          }
+        }
+      },
+      "id": "update-agent-10",
+      "name": "Update Project (Agent 10)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1850, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 10,
+            "agent_name": "duplicate_remover",
+            "output_data": "={{ JSON.parse($('Agent 10: Duplicate Remover').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 10: Duplicate Remover').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-10-output",
+      "name": "Save Agent 10 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2050, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 1500
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en diagramas de flujo PRISMA. Tu tarea es actualizar el diagrama PRISMA en tiempo real con los números de cada etapa.\n\nETAPAS PRISMA:\n1. Identificación (búsquedas en bases de datos)\n2. Eliminación de duplicados\n3. Screening (títulos y resúmenes)\n4. Elegibilidad (texto completo)\n5. Inclusión (estudios finales)\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"prisma_data\": {\n    \"identified\": número,\n    \"after_duplicates\": número,\n    \"screened\": número,\n    \"assessed_for_eligibility\": número,\n    \"included\": número,\n    \"excluded\": {\n      \"reasons\": [\"razón1\", \"razón2\"]\n    }\n  }\n}"
+            },
+            {
+              "role": "user",
+              "content": "Actualiza el diagrama PRISMA:\n\nIdentificados: {{ $('Agent 9: Search Executor').item.json.response.prisma_records.identified.total }}\nDespués de duplicados: {{ $('Agent 10: Duplicate Remover').item.json.response.prisma_records.after_duplicates.total }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-11-prisma",
+      "name": "Agent 11: PRISMA Updater",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [2250, 400],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "prisma_data": "={{ $('Agent 11: PRISMA Updater').item.json.response.prisma_data }}",
+            "current_agent_step": 12
+          }
+        }
+      },
+      "id": "update-agent-11",
+      "name": "Update Project (Agent 11)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2450, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 11,
+            "agent_name": "prisma_updater",
+            "output_data": "={{ JSON.parse($('Agent 11: PRISMA Updater').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 11: PRISMA Updater').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-11-output",
+      "name": "Save Agent 11 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2650, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 4000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en evaluación de títulos y resúmenes para aplicación de criterios de inclusión/exclusión. Tu tarea es evaluar cada artículo y determinar si cumple los criterios.\n\nPROCESO:\n1. Lee título y resumen de cada artículo\n2. Evalúa contra cada criterio de inclusión\n3. Evalúa contra cada criterio de exclusión\n4. Toma decisión: INCLUIR, EXCLUIR, o NECESITA REVISIÓN DE TEXTO COMPLETO\n5. Documenta la razón de exclusión si aplica\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"prisma_records\": {\n    \"screened\": {\n      \"total\": número,\n      \"included\": número,\n      \"excluded\": número,\n      \"needs_fulltext\": número\n    },\n    \"decisions\": [\n      {\n        \"title\": \"título del artículo\",\n        \"decision\": \"INCLUDE\" | \"EXCLUDE\" | \"NEEDS_FULLTEXT\",\n        \"exclusion_reason\": \"razón si se excluye\",\n        \"criteria_violated\": [\"criterio1\", \"criterio2\"]\n      }\n    ]\n  }\n}"
+            },
+            {
+              "role": "user",
+              "content": "Evalúa los siguientes artículos aplicando los criterios:\n\nCriterios de inclusión/exclusión del proyecto (obtener desde Supabase)\n\nArtículos a evaluar: {{ JSON.stringify($('Agent 10: Duplicate Remover').item.json.response.prisma_records.records) }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-12-evaluator",
+      "name": "Agent 12: Paper Evaluator",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [2850, 400],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "prisma_data": "={{ $('Agent 12: Paper Evaluator').item.json.response.prisma_records }}",
+            "current_agent_step": 13
+          }
+        }
+      },
+      "id": "update-agent-12",
+      "name": "Update Project (Agent 12)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [3050, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 12,
+            "agent_name": "paper_evaluator",
+            "output_data": "={{ JSON.parse($('Agent 12: Paper Evaluator').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 12: Paper Evaluator').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-12-output",
+      "name": "Save Agent 12 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [3250, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 6000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en extracción de datos estructurados de estudios clínicos. Tu tarea es extraer datos cuantitativos y cualitativos de los estudios incluidos en formato estructurado.\n\nDATOS A EXTRAER:\n1. Características del estudio (diseño, país, año, duración)\n2. Características de participantes (n, edad, género, criterios)\n3. Intervención (tipo, dosis, frecuencia, duración)\n4. Comparador (placebo, tratamiento activo, etc.)\n5. Outcomes (medidas primarias y secundarias)\n6. Resultados numéricos (RR, OR, HR, IC95%, p-values)\n7. Evaluación de riesgo de sesgo (RoB 2.0)\n\nFORMATO DE SALIDA:\n- Excel/CSV con columnas estructuradas\n- JSON con datos anidados\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"extracted_data_url\": \"URL del archivo Excel/JSON generado\",\n  \"extracted_data\": [\n    {\n      \"study_id\": \"ID único\",\n      \"title\": \"título\",\n      \"design\": \"tipo de diseño\",\n      \"n_participants\": número,\n      \"intervention\": \"descripción\",\n      \"comparator\": \"descripción\",\n      \"outcomes\": {\n        \"primary\": {\n          \"name\": \"nombre del outcome\",\n          \"intervention_group\": {\n            \"n\": número,\n            \"value\": número o porcentaje\n          },\n          \"comparator_group\": {\n            \"n\": número,\n            \"value\": número o porcentaje\n          },\n          \"effect_measure\": {\n            \"type\": \"RR\" | \"OR\" | \"HR\",\n            \"value\": número,\n            \"ci_lower\": número,\n            \"ci_upper\": número,\n            \"p_value\": número\n          }\n        }\n      },\n      \"risk_of_bias\": {\n        \"overall\": \"low\" | \"some_concerns\" | \"high\",\n        \"domains\": {\"domain1\": \"rating\"}\n      }\n    }\n  ]\n}"
+            },
+            {
+              "role": "user",
+              "content": "Extrae datos estructurados de los estudios incluidos:\n\nEstudios incluidos: {{ JSON.stringify($('Agent 12: Paper Evaluator').item.json.response.prisma_records.decisions.filter(d => d.decision === 'INCLUDE')) }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-13-extractor",
+      "name": "Agent 13: Data Extractor",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [3450, 400],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "extracted_data_url": "={{ JSON.parse($json.response).extracted_data_url }}",
+            "current_agent_step": 14
+          }
+        }
+      },
+      "id": "update-agent-13",
+      "name": "Update Project (Agent 13)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [3650, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 13,
+            "agent_name": "data_extractor",
+            "output_data": "={{ JSON.parse($('Agent 13: Data Extractor').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 13: Data Extractor').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-13-output",
+      "name": "Save Agent 13 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [3850, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 8000
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en síntesis de evidencia y meta-análisis. Tu tarea es generar el reporte final de la revisión sistemática con meta-análisis cuantitativo cuando sea apropiado.\n\nSECCIONES DEL REPORTE:\n1. Resumen Ejecutivo\n2. Introducción y Antecedentes\n3. Métodos (PRISMA compliant)\n4. Resultados:\n   - Diagrama PRISMA\n   - Características de estudios incluidos\n   - Evaluación de riesgo de sesgo\n   - Resultados del meta-análisis (forest plots)\n   - Análisis de sensibilidad\n   - Análisis de subgrupos\n5. Discusión\n6. Conclusiones\n7. Referencias\n\nMETA-ANÁLISIS:\n- Calcular Risk Ratio (RR), Odds Ratio (OR) o Hazard Ratio (HR)\n- Intervalos de confianza al 95%\n- Valores p\n- I² para heterogeneidad\n- Forest plots en texto/ASCII\n- Análisis de sensibilidad\n\nFORMATO DE RESPUESTA (JSON estricto, sin markdown):\n{\n  \"final_report_url\": \"URL del PDF del reporte final\",\n  \"meta_analysis\": {\n    \"primary_outcome\": {\n      \"effect_measure\": \"RR\" | \"OR\" | \"HR\",\n      \"value\": número,\n      \"ci_95_lower\": número,\n      \"ci_95_upper\": número,\n      \"p_value\": número,\n      \"i_squared\": número (porcentaje),\n      \"studies_included\": número\n    },\n    \"forest_plot_ascii\": \"representación ASCII del forest plot\"\n  },\n  \"summary\": \"resumen ejecutivo\"\n}"
+            },
+            {
+              "role": "user",
+              "content": "Genera el reporte final con meta-análisis:\n\nDatos extraídos: {{ $('Agent 13: Data Extractor').item.json.response.extracted_data_url }}\nDiagrama PRISMA: {{ JSON.stringify($('Get Project (Phase 2)').item.json.prisma_data) }}\n\nPregunta de investigación: {{ $('Get Project (Phase 2)').item.json.research_question }}"
+            }
+          ]
+        }
+      },
+      "id": "agent-14-synthesis",
+      "name": "Agent 14: Synthesis Writer",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [4050, 400],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_projects",
+        "id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "phase": "COMPLETED",
+            "final_report_url": "={{ JSON.parse($json.response).final_report_url }}",
+            "current_agent_step": 15
+          }
+        }
+      },
+      "id": "update-phase2-complete",
+      "name": "Update: COMPLETED",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [4250, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "agent_outputs",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id": "={{ $('Webhook Entry').item.json.body.projectId }}",
+            "agent_number": 14,
+            "agent_name": "synthesis_writer",
+            "output_data": "={{ JSON.parse($('Agent 14: Synthesis Writer').item.json.response) }}",
+            "output_markdown": "={{ $('Agent 14: Synthesis Writer').item.json.response }}"
+          }
+        }
+      },
+      "id": "save-agent-14-output",
+      "name": "Save Agent 14 Output",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [4450, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, projectId: $('Webhook Entry').item.json.body.projectId, phase: 'COMPLETED', message: 'Revisión sistemática completada exitosamente' } }}",
+        "options": {}
+      },
+      "id": "respond-phase2",
+      "name": "Respond to Webhook (Phase 2)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [4650, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Entry": {
+      "main": [
+        [
+          {
+            "node": "Switch: START or APPROVE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: START or APPROVE": {
+      "main": [
+        [
+          {
+            "node": "Get Project (Phase 1)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch: APPROVE Path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project (Phase 1)": {
+      "main": [
+        [
+          {
+            "node": "Agent 1: PICOT Builder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 1: PICOT Builder": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 1)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 1 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 1 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 2: FINER Validator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 2: FINER Validator": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 2)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 2 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 2 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 3: Literature Scout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 3: Literature Scout": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 3)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 3 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 3 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 4: Study Designer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 4: Study Designer": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 4)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 4)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 4 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 4 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 5: Objectives Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 5: Objectives Generator": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 5)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 5)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 5 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 5 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 6: Criteria Definer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 6: Criteria Definer": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 6)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 6)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 6 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 6 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 7: Yadav Search Strategist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 7: Yadav Search Strategist": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 7)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 7)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 7 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 7 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 8: Protocol Synthesizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 8: Protocol Synthesizer": {
+      "main": [
+        [
+          {
+            "node": "Update: AWAITING_APPROVAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update: AWAITING_APPROVAL": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 8 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 8 Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook (Phase 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: APPROVE Path": {
+      "main": [
+        [
+          {
+            "node": "Get Project (Phase 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project (Phase 2)": {
+      "main": [
+        [
+          {
+            "node": "Update: EXECUTING_REVIEW",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update: EXECUTING_REVIEW": {
+      "main": [
+        [
+          {
+            "node": "Agent 9: Search Executor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 9: Search Executor": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 9)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 9)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 9 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 9 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 10: Duplicate Remover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 10: Duplicate Remover": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 10)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 10)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 10 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 10 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 11: PRISMA Updater",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 11: PRISMA Updater": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 11)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 11)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 11 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 11 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 12: Paper Evaluator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 12: Paper Evaluator": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 12)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 12)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 12 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 12 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 13: Data Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 13: Data Extractor": {
+      "main": [
+        [
+          {
+            "node": "Update Project (Agent 13)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Project (Agent 13)": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 13 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 13 Output": {
+      "main": [
+        [
+          {
+            "node": "Agent 14: Synthesis Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 14: Synthesis Writer": {
+      "main": [
+        [
+          {
+            "node": "Update: COMPLETED",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update: COMPLETED": {
+      "main": [
+        [
+          {
+            "node": "Save Agent 14 Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent 14 Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook (Phase 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-13T00:00:00.000Z",
+  "versionId": "1"
+}
