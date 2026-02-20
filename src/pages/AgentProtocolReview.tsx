@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { MultiAIConsensusLab } from '@/components/MultiAIConsensusLab';
 import { ScientificArchitect } from '@/components/ScientificArchitect';
+import { IntegratedTerminalView, MedicalAuditStation, PDFReportViewer, AgentExplanationCard } from '@/components/terminal';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,26 @@ import { Sparkles, ArrowRight, Zap, DollarSign } from 'lucide-react';
 import { useAgentClinicianNavigator, type AgentOutput } from '@/navigator';
 import { getResearchLabAgentById } from '@/config/researchLabAgents';
 import { createProject as createProjectService } from '@/services/apiService';
+
+// Agent explanation data for dynamic "What am I doing?" cards
+const agentExplanations = {
+  picot: {
+    doing: 'Extrayendo y estructurando los componentes PICOT de tu pregunta de investigación. Analizando población, intervención, comparación, outcome y tiempo...',
+    deliverable: 'Marco PICOT estructurado listo para diseño de protocolo.'
+  },
+  literature: {
+    doing: 'Escaneando revisiones sistemáticas previas en Cochrane, PubMed y Embase. Identificando brechas de conocimiento no cubiertas...',
+    deliverable: 'Lista priorizada de gaps de evidencia científica detectados.'
+  },
+  criteria: {
+    doing: 'Diseñando criterios de inclusión y exclusión basados en el marco PICOT. Aplicando estándares metodológicos Cochrane...',
+    deliverable: 'Tabla I/E validada para selección de estudios.'
+  },
+  yadav: {
+    doing: 'Mapeando términos MeSH y construyendo sintaxis booleana multicapa para máxima sensibilidad y especificidad...',
+    deliverable: 'Query booleana optimizada compatible con PubMed, Embase, Cochrane y Scopus.'
+  }
+};
 
 interface AgentMessage {
   id: string;
@@ -380,6 +401,14 @@ export default function AgentProtocolReview() {
     }
   }, []);
   
+  // Terminal Mode State - Auto-start in terminal mode
+  const [isTerminalMode, setIsTerminalMode] = useState(true);
+  
+  // Medical Audit Station State - Auto-start in audit mode
+  const [isAuditMode, setIsAuditMode] = useState(true);
+  const [viewMode, setViewMode] = useState<'terminal' | 'audit'>('terminal');
+  const [showDossierPDF, setShowDossierPDF] = useState(false);
+  
   // Reproducibility Check State - Enhanced
   const [showReproducibilityModal, setShowReproducibilityModal] = useState(false);
   const [reproducibilityInput, setReproducibilityInput] = useState('');
@@ -455,13 +484,32 @@ export default function AgentProtocolReview() {
     },
   ]);
 
-  const categoryColor = 'agent-pharma';
-  const bayerBlue = '#0033A0';
+  // Active agent explanation state
+  const [activeAgentExplanation, setActiveAgentExplanation] = useState<'picot' | 'literature' | 'criteria' | 'yadav' | null>(null);
+
+  // Galatea brand colors - synchronized with main site
+  const galateaTeal = 'hsl(177 55% 35%)';
+  const galateaTealLight = 'hsl(177 55% 45%)';
+  const categoryColor = 'primary';
+  const bayerBlue = '#0097A7'; // Using Galatea teal instead of Bayer blue
 
   // Scroll audit logs to bottom
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [auditLogs]);
+
+  // Auto-start orchestration on mount
+  const hasAutoStarted = useRef(false);
+  useEffect(() => {
+    if (!hasAutoStarted.current && isTerminalMode) {
+      hasAutoStarted.current = true;
+      // Small delay to ensure component is fully mounted
+      const timer = setTimeout(() => {
+        simulatePhase1Orchestration();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isTerminalMode]);
 
   const addAuditLog = (level: AuditLog['level'], message: string) => {
     setAuditLogs(prev => [...prev, { timestamp: new Date(), level, message }]);
@@ -819,7 +867,7 @@ export default function AgentProtocolReview() {
 
         currentProjectId = newProject.id;
         setActiveProjectId(currentProjectId);
-        addAuditLog('success', `✓ Proyecto creado: ${currentProjectId}`);
+        addAuditLog('success', `Proyecto creado: ${currentProjectId}`);
       }
 
       addAuditLog('info', `🔗 Project ID: ${currentProjectId}`);
@@ -832,7 +880,7 @@ export default function AgentProtocolReview() {
         title: ideaInput.substring(0, 100),
       }, { faseActual: 0, projectIdOverride: currentProjectId });
 
-      addAuditLog('success', '✓ Senal enviada a n8n - Escuchando Supabase Realtime...');
+      addAuditLog('success', 'Senal enviada a n8n - Escuchando Supabase Realtime...');
 
       toast({
         title: 'Orquestacion iniciada',
@@ -973,8 +1021,88 @@ export default function AgentProtocolReview() {
     return subAgents.find(a => a.id === agentId)!;
   };
 
+  // Handle terminal mode activation
+  const activateTerminalMode = () => {
+    if (!ideaInput.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Por favor ingresa una idea de investigación.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsTerminalMode(true);
+  };
+
+  // Handle audit mode activation - NEW
+  const activateAuditMode = () => {
+    if (!ideaInput.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Por favor ingresa una idea de investigación.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsAuditMode(true);
+  };
+
+  // Handle analysis based on view mode
+  const handleAnalyzeIdea = () => {
+    if (viewMode === 'terminal') {
+      activateTerminalMode();
+    } else {
+      activateAuditMode();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Terminal Mode Overlay */}
+      <AnimatePresence>
+        {isTerminalMode && (
+          <IntegratedTerminalView
+            isVisible={isTerminalMode}
+            ideaInput={ideaInput}
+            onClose={() => setIsTerminalMode(false)}
+            onPhase2Unlock={() => {
+              setIsPhase2Unlocked(true);
+              setActivePhase('execution');
+              toast({
+                title: '🎉 Fase 2 Desbloqueada',
+                description: 'PRISMA completado. Puede acceder al meta-análisis.',
+              });
+            }}
+            onComplete={() => {
+              setShowProtocolPreview(true);
+              toast({
+                title: '✅ Fase 1 Completada',
+                description: 'Multi-AI Consensus validado. Protocolo listo para aprobación.',
+              });
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Medical Audit Station Overlay - NEW */}
+      <AnimatePresence>
+        {isAuditMode && (
+          <MedicalAuditStation
+            isVisible={isAuditMode}
+            ideaInput={ideaInput}
+            onClose={() => {
+              setIsAuditMode(false);
+              setShowProtocolPreview(true);
+              setIsPhase2Unlocked(true);
+              toast({
+                title: '✅ Auditoría Completada',
+                description: 'Estación de Auditoría Médica finalizada. Protocolo listo.',
+              });
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <Header />
 
       {/* HERO SECTION */}
@@ -1013,37 +1141,37 @@ export default function AgentProtocolReview() {
             </div>
           </div>
 
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 tracking-tight">
+          <div className="text-center max-w-4xl mx-auto mb-12">
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-foreground mb-8 tracking-tight">
               Clinical Guideline Navigator
             </h1>
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold mb-4"
-              style={{ background: `${bayerBlue}15`, color: bayerBlue }}
+              className="inline-flex items-center gap-3 px-6 py-4 rounded-xl text-xl font-bold mb-8"
+              style={{ background: `hsl(177 55% 35% / 0.12)`, color: galateaTeal }}
             >
-              <Cpu className="w-4 h-4" />
+              <Cpu className="w-6 h-6" />
               ORCHESTRATOR MODE
             </div>
-            <p className="text-xl md:text-2xl text-muted-foreground font-light leading-relaxed">
-              A medical research assistant that helps structure clinical or academic projects through clear phases and institutional requirements.
+            <p className="text-2xl md:text-3xl lg:text-4xl text-muted-foreground font-light leading-relaxed">
+              Asistente de investigación médica para estructurar proyectos clínicos con rigor metodológico.
               <br />
-              <span className="text-lg">Designed for clean, scientific UX with a guided workflow.</span>
+              <span className="text-xl md:text-2xl mt-2 block">Diseñado para presentaciones ejecutivas y auditorías científicas.</span>
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 md:gap-6 max-w-2xl mx-auto mb-12">
+          <div className="grid grid-cols-3 gap-6 md:gap-8 max-w-3xl mx-auto mb-12">
             {kpiStats.map((stat, index) => (
               <div 
                 key={index}
-                className="bg-card border border-border rounded-xl p-4 md:p-6 text-center shadow-sm hover:shadow-md transition-shadow"
+                className="bg-card border-2 border-border rounded-2xl p-6 md:p-8 text-center shadow-md hover:shadow-xl transition-all hover:-translate-y-1"
               >
                 <div 
-                  className="text-2xl md:text-3xl font-bold mb-1"
-                  style={{ color: `hsl(var(--${categoryColor}))` }}
+                  className="text-4xl md:text-5xl font-black mb-2"
+                  style={{ color: galateaTeal }}
                 >
                   {stat.value}
                 </div>
-                <div className="text-xs md:text-sm text-muted-foreground font-medium uppercase tracking-wide">
+                <div className="text-sm md:text-base text-muted-foreground font-semibold uppercase tracking-wider">
                   {stat.label}
                 </div>
               </div>
@@ -1072,9 +1200,9 @@ export default function AgentProtocolReview() {
       <section className="py-20 px-4 bg-muted/30 border-y border-border">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">How It Works</h2>
-            <p className="text-muted-foreground text-lg">
-              Intelligent automation in three simple steps
+            <h2 className="text-5xl md:text-6xl font-bold text-foreground mb-6">Cómo Funciona</h2>
+            <p className="text-muted-foreground text-2xl">
+              Automatización inteligente en tres pasos simples
             </p>
           </div>
 
@@ -1134,10 +1262,10 @@ export default function AgentProtocolReview() {
       <section className="py-20 px-4 bg-background">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
               Seamlessly Integrated
             </h2>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+            <p className="text-muted-foreground text-xl max-w-xl mx-auto">
               Zero-Friction Integration via API/RPA. No disruption to your core system.
             </p>
           </div>
@@ -1169,10 +1297,10 @@ export default function AgentProtocolReview() {
       <section className="py-20 px-4 bg-muted/30 border-y border-border">
         <div className="container mx-auto max-w-3xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
               Calculate Your ROI
             </h2>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-xl">
               See the potential savings for your organization
             </p>
           </div>
@@ -1231,23 +1359,23 @@ export default function AgentProtocolReview() {
       {/* MULTI-AGENT ORCHESTRATION CENTER - 2 PHASES */}
       <section id="live-demo" className="py-20 px-4 bg-white">
         <div className="container mx-auto max-w-7xl">
-          {/* Dynamic Header */}
-          <div className="text-center mb-8">
+          {/* Dynamic Header - Enhanced for boardroom visibility */}
+          <div className="text-center mb-12">
             <div 
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold border-2 mb-4"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full text-xl font-bold border-3 mb-8"
               style={{
-                borderColor: bayerBlue,
-                background: `${bayerBlue}10`,
-                color: bayerBlue
+                borderColor: galateaTeal,
+                background: `hsl(177 55% 35% / 0.08)`,
+                color: galateaTeal
               }}
             >
-              <Zap className="w-4 h-4" />
-              Multi-Agent Orchestrator
+              <Zap className="w-6 h-6" />
+              Orquestador Multi-Agente Galatea
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-              Clinical Guideline Navigator: Orchestrator Mode
+            <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-foreground mb-6">
+              Navegador de Guías Clínicas
             </h2>
-            <p className="text-lg text-muted-foreground font-medium">
+            <p className="text-2xl md:text-3xl text-muted-foreground font-medium">
               Sistema de 2 Fases para Investigación Científica Rigurosa
             </p>
           </div>
@@ -1354,64 +1482,92 @@ export default function AgentProtocolReview() {
                 }}
               />
 
-              {/* Sub-Agents Panel */}
-              <div className="bg-white rounded-2xl p-6 border shadow-sm" style={{ borderRadius: '12px' }}>
-                <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                  <Users className="w-5 h-5" style={{ color: bayerBlue }} />
+              {/* Sub-Agents Panel - Enhanced for visibility */}
+              <div className="bg-white rounded-2xl p-8 border-2 shadow-lg" style={{ borderRadius: '16px', borderColor: 'hsl(177 55% 35% / 0.2)' }}>
+                <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+                  <Users className="w-7 h-7" style={{ color: galateaTeal }} />
                   Agentes en Servicio
                 </h3>
-                <div className="flex justify-center gap-4 md:gap-6 flex-wrap">
+                <div className="flex justify-center gap-6 md:gap-8 flex-wrap">
                   {subAgents.map((agent) => (
                     <div
                       key={agent.id}
                       className={cn(
-                        "relative flex flex-col items-center p-4 rounded-2xl border-2 transition-all duration-300 min-w-[140px]",
+                        "relative flex flex-col items-center p-6 rounded-2xl border-3 transition-all duration-300 min-w-[160px]",
                         agent.isActive 
-                          ? "bg-white shadow-lg scale-105" 
-                          : "bg-white/50 opacity-60"
+                          ? "bg-white shadow-2xl scale-110" 
+                          : "bg-white/50 opacity-50"
                       )}
                       style={{
                         borderColor: agent.isActive ? agent.color : 'transparent',
-                        boxShadow: agent.isActive ? `0 8px 30px -8px ${agent.color}40` : 'none',
-                        borderRadius: '12px'
+                        boxShadow: agent.isActive ? `0 15px 40px -10px ${agent.color}50` : 'none',
+                        borderRadius: '16px'
                       }}
                     >
                       {agent.isProcessing && (
                         <div 
-                          className="absolute inset-0 rounded-xl animate-pulse"
-                          style={{ background: `${agent.color}15` }}
+                          className="absolute inset-0 rounded-2xl animate-pulse"
+                          style={{ background: `${agent.color}20` }}
                         />
                       )}
                       
                       <div 
                         className={cn(
-                          "w-14 h-14 rounded-xl flex items-center justify-center text-white mb-3 transition-transform",
+                          "w-16 h-16 rounded-xl flex items-center justify-center text-white mb-4 transition-transform",
                           agent.isProcessing && "animate-bounce"
                         )}
-                        style={{ background: agent.color }}
+                        style={{ 
+                          background: agent.color,
+                          boxShadow: agent.isActive ? `0 8px 20px -5px ${agent.color}60` : 'none'
+                        }}
                       >
                         {agent.icon}
                       </div>
                       
-                      <h4 className="font-semibold text-sm text-foreground text-center leading-tight mb-1">
+                      <h4 className="font-black text-lg text-foreground text-center leading-tight mb-2">
                         {agent.name}
                       </h4>
                       
-                      <p className="text-xs text-muted-foreground text-center">
+                      <p className="text-base text-muted-foreground text-center font-medium">
                         {agent.role}
                       </p>
                       
+                      {/* Enhanced Status Badge */}
                       <div className={cn(
-                        "mt-2 w-2 h-2 rounded-full",
+                        "mt-4 px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide",
                         agent.isProcessing 
-                          ? "animate-ping" 
+                          ? "text-white animate-pulse" 
                           : agent.isActive 
-                            ? "bg-emerald-500" 
-                            : "bg-muted-foreground/30"
-                      )} style={agent.isProcessing ? { background: agent.color } : {}} />
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-muted text-muted-foreground"
+                      )} style={agent.isProcessing ? { background: agent.color } : {}}>
+                        {agent.isProcessing ? 'Procesando...' : agent.isActive ? 'Completado' : 'En Espera'}
+                      </div>
                     </div>
                   ))}
                 </div>
+
+                {/* Active Agent Explanation Card */}
+                <AnimatePresence mode="wait">
+                  {activeAgentExplanation && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-8"
+                    >
+                      <AgentExplanationCard
+                        agentName={subAgents.find(a => a.id === activeAgentExplanation)?.name || ''}
+                        agentColor={subAgents.find(a => a.id === activeAgentExplanation)?.color || galateaTeal}
+                        isActive={true}
+                        isProcessing={subAgents.find(a => a.id === activeAgentExplanation)?.isProcessing || false}
+                        doing={agentExplanations[activeAgentExplanation]?.doing || ''}
+                        deliverable={agentExplanations[activeAgentExplanation]?.deliverable || ''}
+                        icon={subAgents.find(a => a.id === activeAgentExplanation)?.icon}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Split Screen Workspace */}
@@ -1456,13 +1612,52 @@ export default function AgentProtocolReview() {
                       />
                     </div>
 
+                    {/* View Mode Toggle */}
+                    <div className="mt-4 flex items-center gap-4 p-3 bg-muted/30 rounded-xl">
+                      <span className="text-sm font-medium text-muted-foreground">Modo de vista:</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setViewMode('audit')}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                            viewMode === 'audit'
+                              ? "bg-[#0097A7] text-white shadow-md"
+                              : "bg-card hover:bg-muted text-muted-foreground"
+                          )}
+                        >
+                          <Microscope className="w-4 h-4" />
+                          Auditoría Médica
+                        </button>
+                        <button
+                          onClick={() => setViewMode('terminal')}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                            viewMode === 'terminal'
+                              ? "bg-[#0A0E14] text-[#00BCFF] shadow-md"
+                              : "bg-card hover:bg-muted text-muted-foreground"
+                          )}
+                        >
+                          <Terminal className="w-4 h-4" />
+                          Terminal Mode
+                        </button>
+                      </div>
+                    </div>
+
                     <Button
                       onClick={startPhase1Orchestration}
                       disabled={isOrchestrating || !ideaInput.trim()}
-                      className="mt-6 h-14 text-lg font-semibold text-white gap-3 transition-all"
+                      className="mt-4 h-14 text-lg font-semibold text-white gap-3 transition-all"
                       style={{ 
-                        background: isOrchestrating ? '#6b7280' : bayerBlue,
-                        boxShadow: isOrchestrating ? 'none' : `0 8px 25px -5px ${bayerBlue}40`,
+                        background: isOrchestrating 
+                          ? '#6b7280' 
+                          : viewMode === 'audit' 
+                            ? '#0097A7' 
+                            : bayerBlue,
+                        boxShadow: isOrchestrating 
+                          ? 'none' 
+                          : viewMode === 'audit'
+                            ? '0 8px 25px -5px rgba(0,151,167,0.4)'
+                            : `0 8px 25px -5px ${bayerBlue}40`,
                         borderRadius: '12px'
                       }}
                     >
@@ -1471,10 +1666,17 @@ export default function AgentProtocolReview() {
                           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           Orquestando Agentes...
                         </>
+                      ) : viewMode === 'audit' ? (
+                        <>
+                          <Microscope className="w-5 h-5" />
+                          Analizar Idea
+                          <span className="text-xs opacity-70 ml-1">→ Auditoría Médica</span>
+                        </>
                       ) : (
                         <>
-                          <Play className="w-5 h-5" />
+                          <Terminal className="w-5 h-5" />
                           Analizar Idea
+                          <span className="text-xs opacity-70 ml-1">→ Terminal Mode</span>
                         </>
                       )}
                     </Button>
@@ -1522,18 +1724,29 @@ export default function AgentProtocolReview() {
                               </div>
                               
                               {msg.type === 'text' && (
-                                <p className="text-sm text-foreground">{msg.message}</p>
+                                <p className="text-xl text-foreground leading-relaxed font-medium">{msg.message}</p>
                               )}
                               
                               {msg.type === 'picot-result' && (
-                                <div className="space-y-2 mt-3">
-                                  <div className="grid grid-cols-5 gap-2 text-xs">
+                                <div className="space-y-4 mt-6">
+                                  <div className="grid grid-cols-5 gap-4">
                                     {Object.entries(metforminPICOT).map(([key, value]) => (
-                                      <div key={key} className="p-2 rounded-lg" style={{ background: '#DC262615' }}>
-                                        <div className="font-bold uppercase mb-1" style={{ color: '#DC2626' }}>
+                                      <div 
+                                        key={key} 
+                                        className="p-5 rounded-2xl border-3 transition-all hover:scale-105 shadow-lg" 
+                                        style={{ 
+                                          background: '#DC262608', 
+                                          borderColor: '#DC262650',
+                                          boxShadow: '0 8px 25px -10px rgba(220, 38, 38, 0.3)'
+                                        }}
+                                      >
+                                        <div 
+                                          className="font-black text-3xl uppercase mb-3 tracking-wide" 
+                                          style={{ color: '#DC2626' }}
+                                        >
                                           {key.charAt(0)}
                                         </div>
-                                        <div className="text-foreground leading-tight">{value}</div>
+                                        <div className="text-base text-foreground leading-relaxed font-semibold">{value}</div>
                                       </div>
                                     ))}
                                   </div>
@@ -1541,50 +1754,50 @@ export default function AgentProtocolReview() {
                               )}
                               
                               {msg.type === 'gaps' && (
-                                <div className="space-y-2 mt-3">
+                                <div className="space-y-4 mt-6">
                                   {metforminEvidenceGaps.map((gap, idx) => (
                                     <div 
                                       key={idx}
                                       className={cn(
-                                        "p-2 rounded-lg text-xs flex items-start gap-2",
+                                        "p-5 rounded-xl text-lg flex items-start gap-4",
                                         gap.severity === 'high' ? "bg-red-50 border-l-4 border-red-500" : "bg-amber-50 border-l-4 border-amber-500"
                                       )}
                                     >
                                       <AlertTriangle className={cn(
-                                        "w-4 h-4 shrink-0",
+                                        "w-6 h-6 shrink-0 mt-0.5",
                                         gap.severity === 'high' ? "text-red-500" : "text-amber-500"
                                       )} />
-                                      <span className="text-foreground">{gap.gap}</span>
+                                      <span className="text-foreground font-semibold">{gap.gap}</span>
                                     </div>
                                   ))}
                                 </div>
                               )}
                               
                               {msg.type === 'criteria-table' && (
-                                <div className="grid grid-cols-2 gap-4 mt-3">
+                                <div className="grid grid-cols-2 gap-8 mt-6">
                                   <div>
-                                    <h5 className="font-semibold text-xs text-emerald-700 mb-2 flex items-center gap-1">
-                                      <CheckCircle2 className="w-3.5 h-3.5" />
+                                    <h5 className="font-black text-xl text-emerald-700 mb-4 flex items-center gap-3">
+                                      <CheckCircle2 className="w-6 h-6" />
                                       Criterios de Inclusión
                                     </h5>
-                                    <div className="space-y-1">
+                                    <div className="space-y-3">
                                       {metforminInclusionCriteria.map((c, idx) => (
-                                        <div key={idx} className="text-xs p-1.5 bg-emerald-50 rounded flex items-center gap-1.5">
-                                          <Check className="w-3 h-3 text-emerald-600" />
+                                        <div key={idx} className="text-base p-4 bg-emerald-50 rounded-xl flex items-center gap-3 font-semibold border border-emerald-200">
+                                          <Check className="w-5 h-5 text-emerald-600 shrink-0" />
                                           {c.criterion}
                                         </div>
                                       ))}
                                     </div>
                                   </div>
                                   <div>
-                                    <h5 className="font-semibold text-xs text-red-700 mb-2 flex items-center gap-1">
-                                      <XCircle className="w-3.5 h-3.5" />
+                                    <h5 className="font-black text-xl text-red-700 mb-4 flex items-center gap-3">
+                                      <XCircle className="w-6 h-6" />
                                       Criterios de Exclusión
                                     </h5>
-                                    <div className="space-y-1">
+                                    <div className="space-y-3">
                                       {metforminExclusionCriteria.map((c, idx) => (
-                                        <div key={idx} className="text-xs p-1.5 bg-red-50 rounded flex items-center gap-1.5">
-                                          <Minus className="w-3 h-3 text-red-600" />
+                                        <div key={idx} className="text-base p-4 bg-red-50 rounded-xl flex items-center gap-3 font-semibold border border-red-200">
+                                          <Minus className="w-5 h-5 text-red-600 shrink-0" />
                                           {c.criterion}
                                         </div>
                                       ))}
@@ -1659,41 +1872,41 @@ export default function AgentProtocolReview() {
               {showProtocolPreview && (
                 <div className="bg-white border-2 rounded-2xl overflow-hidden" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
                   <div 
-                    className="p-4 border-b font-bold flex items-center justify-between"
+                    className="p-5 border-b font-bold flex items-center justify-between"
                     style={{ background: `${bayerBlue}05` }}
                   >
-                    <div className="flex items-center gap-2" style={{ color: bayerBlue }}>
-                      <FileText className="w-5 h-5" />
+                    <div className="flex items-center gap-3 text-lg" style={{ color: bayerBlue }}>
+                      <FileText className="w-6 h-6" />
                       Protocol Preview - 17 Secciones Institucionales
                     </div>
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="gap-2"
+                      size="lg"
+                      className="gap-2 font-semibold"
                       onClick={() => setShowProtocolModal(true)}
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-5 h-5" />
                       Visualizar Borrador de Protocolo
                     </Button>
                   </div>
                   
-                  <div className="p-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+                  <div className="p-8">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
                       {protocolSections.map((section) => (
                         <div 
                           key={section.id}
                           className={cn(
-                            "p-3 rounded-xl border text-sm flex items-start gap-2",
-                            section.status === 'complete' && "bg-emerald-50 border-emerald-200",
-                            section.status === 'warning' && "bg-amber-50 border-amber-200",
-                            section.status === 'pending' && "bg-gray-50 border-gray-200"
+                            "p-4 rounded-xl border-2 text-sm flex items-start gap-3 transition-all hover:scale-105",
+                            section.status === 'complete' && "bg-emerald-50 border-emerald-300",
+                            section.status === 'warning' && "bg-amber-50 border-amber-300",
+                            section.status === 'pending' && "bg-gray-50 border-gray-300"
                           )}
                           style={{ borderRadius: '12px' }}
                         >
-                          {section.status === 'complete' && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />}
-                          {section.status === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />}
-                          {section.status === 'pending' && <div className="w-4 h-4 rounded-full border-2 border-gray-300 shrink-0 mt-0.5" />}
-                          <span className="text-xs font-medium">{section.title}</span>
+                          {section.status === 'complete' && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />}
+                          {section.status === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />}
+                          {section.status === 'pending' && <div className="w-5 h-5 rounded-full border-2 border-gray-400 shrink-0 mt-0.5" />}
+                          <span className="text-sm font-semibold">{section.title}</span>
                         </div>
                       ))}
                     </div>
@@ -1701,11 +1914,11 @@ export default function AgentProtocolReview() {
                     {/* Approval Button */}
                     <div className="flex justify-center relative">
                       {showApprovalAnimation && (
-                        <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/90 rounded-xl">
+                        <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/95 rounded-xl">
                           <div className="text-center animate-bounce">
-                            <Award className="w-20 h-20 mx-auto mb-2 text-emerald-500" />
-                            <p className="text-xl font-bold text-emerald-600">Sello de Aprobación Ética</p>
-                            <p className="text-sm text-muted-foreground">Protocolo validado - Desbloqueando Fase 2...</p>
+                            <Award className="w-24 h-24 mx-auto mb-3 text-emerald-500" />
+                            <p className="text-2xl font-bold text-emerald-600">Sello de Aprobación Ética</p>
+                            <p className="text-base text-muted-foreground">Protocolo validado - Desbloqueando Fase 2...</p>
                           </div>
                         </div>
                       )}
@@ -1713,21 +1926,21 @@ export default function AgentProtocolReview() {
                       <Button
                         onClick={handleApproveProtocol}
                         disabled={isPhase2Unlocked || showApprovalAnimation}
-                        className="h-16 px-12 text-lg font-bold text-white gap-3 transition-all"
+                        className="h-20 px-16 text-xl font-bold text-white gap-4 transition-all hover:scale-105"
                         style={{ 
                           background: isPhase2Unlocked ? '#10b981' : '#00A651',
-                          boxShadow: '0 8px 25px -5px rgba(0, 166, 81, 0.4)',
-                          borderRadius: '12px'
+                          boxShadow: '0 12px 35px -8px rgba(0, 166, 81, 0.5)',
+                          borderRadius: '16px'
                         }}
                       >
                         {isPhase2Unlocked ? (
                           <>
-                            <Unlock className="w-6 h-6" />
+                            <Unlock className="w-8 h-8" />
                             Protocolo Aprobado - Fase 2 Desbloqueada
                           </>
                         ) : (
                           <>
-                            <Award className="w-6 h-6" />
+                            <Award className="w-8 h-8" />
                             ✅ Aprobar Protocolo y Ejecutar Búsqueda
                           </>
                         )}
@@ -1744,30 +1957,30 @@ export default function AgentProtocolReview() {
             <div className="space-y-8">
               {/* Data Lab Header */}
               <div 
-                className="text-center py-6 rounded-2xl border-2"
+                className="text-center py-8 rounded-2xl border-2"
                 style={{ 
                   background: 'linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%)',
                   borderColor: bayerBlue,
-                  borderRadius: '12px'
+                  borderRadius: '16px'
                 }}
               >
-                <div className="flex items-center justify-center gap-3 mb-2">
-                  <BarChart3 className="w-6 h-6" style={{ color: bayerBlue }} />
-                  <h3 className="text-xl font-bold" style={{ color: bayerBlue, fontFamily: 'JetBrains Mono, monospace' }}>
+                <div className="flex items-center justify-center gap-4 mb-3">
+                  <BarChart3 className="w-8 h-8" style={{ color: bayerBlue }} />
+                  <h3 className="text-3xl font-bold" style={{ color: bayerBlue, fontFamily: 'JetBrains Mono, monospace' }}>
                     LABORATORIO DE DATOS
                   </h3>
                 </div>
-                <p className="text-sm text-blue-700/80 max-w-lg mx-auto font-mono">
+                <p className="text-lg text-blue-700/80 max-w-xl mx-auto font-mono">
                   Ejecución científica con gráficos, tablas y queries en tiempo real.
                   Validación cruzada multi-motor habilitada.
                 </p>
               </div>
 
               {/* PRISMA Flow Diagram with Verification */}
-              <div className="bg-white border-2 rounded-2xl p-6" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-                    <BarChart3 className="w-6 h-6" style={{ color: '#00A651' }} />
+              <div className="bg-white border-2 rounded-2xl p-8" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                    <BarChart3 className="w-8 h-8" style={{ color: '#00A651' }} />
                     Diagrama PRISMA - Flujo de Selección Dinámico
                   </h3>
                   <Button
@@ -1797,19 +2010,19 @@ export default function AgentProtocolReview() {
                         }}
                         onClick={() => setSelectedPRISMAPhase(selectedPRISMAPhase === block.label ? null : block.label)}
                       >
-                        <div className="text-3xl font-bold font-mono">{block.count.toLocaleString()}</div>
-                        <div className="font-semibold">{block.label}</div>
-                        <div className="text-xs opacity-80">{block.description}</div>
+                        <div className="text-4xl font-bold font-mono">{block.count.toLocaleString()}</div>
+                        <div className="text-lg font-bold">{block.label}</div>
+                        <div className="text-sm opacity-80">{block.description}</div>
                       </div>
                       
                       {/* Show excluded articles for this phase if verification is on */}
                       {showPRISMAVerification && selectedPRISMAPhase === block.label && index < prismaBlocks.length - 1 && (
-                        <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-xl" style={{ borderRadius: '12px' }}>
-                          <h4 className="text-sm font-bold text-red-700 mb-2 flex items-center gap-2">
-                            <XCircle className="w-4 h-4" />
+                        <div className="mt-4 p-5 bg-red-50 border-2 border-red-200 rounded-xl" style={{ borderRadius: '12px' }}>
+                          <h4 className="text-base font-bold text-red-700 mb-3 flex items-center gap-2">
+                            <XCircle className="w-5 h-5" />
                             Artículos Excluidos en: {block.label}
                           </h4>
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             {prismaExcludedArticles
                               .filter(a => 
                                 (block.label === 'Identificados' && a.phase === 'duplicados') ||
@@ -1817,9 +2030,9 @@ export default function AgentProtocolReview() {
                                 (block.label === 'Cribados' && a.phase === 'texto_completo')
                               )
                               .map((article) => (
-                                <div key={article.id} className="text-xs p-2 bg-white rounded-lg border border-red-100">
-                                  <p className="font-medium text-foreground">{article.title}</p>
-                                  <p className="text-red-600 mt-1">📋 Razón: {article.reason}</p>
+                                <div key={article.id} className="text-sm p-3 bg-white rounded-lg border-2 border-red-100">
+                                  <p className="font-semibold text-foreground">{article.title}</p>
+                                  <p className="text-red-600 mt-1.5">📋 Razón: {article.reason}</p>
                                 </div>
                               ))}
                           </div>
@@ -1827,9 +2040,9 @@ export default function AgentProtocolReview() {
                       )}
                       
                       {index < prismaBlocks.length - 1 && (
-                        <div className="flex justify-center py-2">
-                          <ArrowDown className="w-6 h-6 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground ml-2">
+                        <div className="flex justify-center items-center py-3">
+                          <ArrowDown className="w-8 h-8 text-muted-foreground" />
+                          <span className="text-sm font-medium text-muted-foreground ml-3">
                             -{(block.targetCount - prismaBlocks[index + 1].targetCount).toLocaleString()} excluidos
                           </span>
                         </div>
@@ -1840,9 +2053,9 @@ export default function AgentProtocolReview() {
               </div>
 
               {/* 3 Authors Consensus Widget */}
-              <div className="bg-white border-2 rounded-2xl p-6" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
-                <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
-                  <Users className="w-6 h-6" style={{ color: bayerBlue }} />
+              <div className="bg-white border-2 rounded-2xl p-8" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
+                <h3 className="text-2xl font-bold text-foreground mb-8 flex items-center gap-3">
+                  <Users className="w-8 h-8" style={{ color: bayerBlue }} />
                   Consenso de 3 Revisores IA - Artículo #{currentArticleIndex || 1}
                 </h3>
                 
@@ -1880,9 +2093,9 @@ export default function AgentProtocolReview() {
               </div>
 
               {/* Forest Plot SVG (Meta-analysis) */}
-              <div className="bg-white border-2 rounded-2xl p-6" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
-                <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
-                  <Diamond className="w-6 h-6" style={{ color: '#6B21A8' }} />
+              <div className="bg-white border-2 rounded-2xl p-8" style={{ borderColor: '#e5e7eb', borderRadius: '12px' }}>
+                <h3 className="text-2xl font-bold text-foreground mb-8 flex items-center gap-3">
+                  <Diamond className="w-8 h-8" style={{ color: '#6B21A8' }} />
                   Forest Plot - Meta-análisis de Resultados
                 </h3>
                 
@@ -2012,14 +2225,14 @@ export default function AgentProtocolReview() {
                   </svg>
                 </div>
                 
-                <div className="mt-6 p-4 bg-purple-50 rounded-xl text-sm" style={{ borderRadius: '12px' }}>
-                  <p className="font-semibold text-purple-900 mb-1">Resultado del Meta-análisis:</p>
-                  <p className="text-purple-800">
-                    <strong>OR combinado = 0.68 (IC 95%: 0.58-0.79), p &lt; 0.001.</strong> Heterogeneidad: I² = 28%, 
+                <div className="mt-8 p-6 bg-purple-50 rounded-xl text-base" style={{ borderRadius: '12px' }}>
+                  <p className="font-bold text-lg text-purple-900 mb-2">Resultado del Meta-análisis:</p>
+                  <p className="text-purple-800 leading-relaxed">
+                    <strong className="text-xl">OR combinado = 0.68 (IC 95%: 0.58-0.79), p &lt; 0.001.</strong> Heterogeneidad: I² = 28%, 
                     indicando resultados consistentes entre estudios. <strong>El uso de Metformina se asocia con una 
                     reducción del 32% en el riesgo de desarrollar Alzheimer</strong> comparado con otros antidiabéticos.
                     <br /><br />
-                    <span className="font-bold text-purple-900">→ Resultado a favor de la intervención (Diamante a la izquierda de la línea de no-efecto)</span>
+                    <span className="font-black text-lg text-purple-900">→ Resultado a favor de la intervención (Diamante a la izquierda de la línea de no-efecto)</span>
                   </p>
                 </div>
               </div>
@@ -2031,8 +2244,8 @@ export default function AgentProtocolReview() {
                   className="p-4 flex items-center justify-between"
                   style={{ background: `${bayerBlue}08` }}
                 >
-                  <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: bayerBlue }}>
-                    <Microscope className="w-6 h-6" />
+                  <h3 className="text-2xl font-bold flex items-center gap-3" style={{ color: bayerBlue }}>
+                    <Microscope className="w-8 h-8" />
                     Audit & Consistency Lab
                   </h3>
                   <div className="flex items-center gap-2">
@@ -2063,18 +2276,18 @@ export default function AgentProtocolReview() {
                         style={{ background: auditSummary?.volumeMatch ? '#10b981' : auditSummary ? '#f59e0b' : '#9ca3af' }}>
                         <BarChart3 className="w-6 h-6 text-white" />
                       </div>
-                      <h4 className="font-bold text-sm mb-1">Volumen de Artículos</h4>
+                      <h4 className="font-bold text-base mb-2">Volumen de Artículos</h4>
                       {auditSummary ? (
                         <>
-                          <p className={cn("text-2xl font-bold", auditSummary.volumeMatch ? "text-emerald-600" : "text-amber-600")}>
+                          <p className={cn("text-3xl font-bold", auditSummary.volumeMatch ? "text-emerald-600" : "text-amber-600")}>
                             {auditSummary.volumeDeviation.toFixed(1)}%
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-sm text-muted-foreground mt-1">
                             {auditSummary.volumeMatch ? 'Coincide con protocolo' : 'Desviación detectada'}
                           </p>
                         </>
                       ) : (
-                        <p className="text-xs text-muted-foreground">Ejecuta la prueba para ver resultados</p>
+                        <p className="text-sm text-muted-foreground mt-2">Ejecuta la prueba para ver resultados</p>
                       )}
                     </div>
 
@@ -2088,18 +2301,18 @@ export default function AgentProtocolReview() {
                         style={{ background: auditSummary?.keyStudiesMatch ? '#10b981' : auditSummary ? '#f59e0b' : '#9ca3af' }}>
                         <BookOpen className="w-6 h-6 text-white" />
                       </div>
-                      <h4 className="font-bold text-sm mb-1">Key Studies Match</h4>
+                      <h4 className="font-bold text-base mb-2">Key Studies Match</h4>
                       {auditSummary ? (
                         <>
-                          <p className={cn("text-2xl font-bold", auditSummary.keyStudiesMatch ? "text-emerald-600" : "text-amber-600")}>
+                          <p className={cn("text-3xl font-bold", auditSummary.keyStudiesMatch ? "text-emerald-600" : "text-amber-600")}>
                             {auditSummary.keyStudiesFound}/{auditSummary.keyStudiesTotal}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-sm text-muted-foreground mt-1">
                             {auditSummary.keyStudiesMatch ? 'Estudios clave detectados' : 'Estudios faltantes'}
                           </p>
                         </>
                       ) : (
-                        <p className="text-xs text-muted-foreground">5 estudios de referencia</p>
+                        <p className="text-sm text-muted-foreground mt-2">5 estudios de referencia</p>
                       )}
                     </div>
 
@@ -2113,26 +2326,26 @@ export default function AgentProtocolReview() {
                         style={{ background: auditSummary?.syntaxHealth.isValid ? '#10b981' : auditSummary ? '#ef4444' : '#9ca3af' }}>
                         <Shield className="w-6 h-6 text-white" />
                       </div>
-                      <h4 className="font-bold text-sm mb-1">Syntax Health</h4>
+                      <h4 className="font-bold text-base mb-2">Syntax Health</h4>
                       {auditSummary ? (
                         <>
-                          <div className="flex justify-center gap-2 mb-1">
-                            <span className={cn("text-xs px-2 py-0.5 rounded", auditSummary.syntaxHealth.parenthesesBalanced ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
+                          <div className="flex justify-center gap-3 mb-2">
+                            <span className={cn("text-sm px-3 py-1 rounded-lg font-medium", auditSummary.syntaxHealth.parenthesesBalanced ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
                               () {auditSummary.syntaxHealth.parenthesesBalanced ? '✓' : '✗'}
                             </span>
-                            <span className={cn("text-xs px-2 py-0.5 rounded", auditSummary.syntaxHealth.operatorsValid ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
+                            <span className={cn("text-sm px-3 py-1 rounded-lg font-medium", auditSummary.syntaxHealth.operatorsValid ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
                               AND/OR {auditSummary.syntaxHealth.operatorsValid ? '✓' : '✗'}
                             </span>
-                            <span className={cn("text-xs px-2 py-0.5 rounded", auditSummary.syntaxHealth.quotesBalanced ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
+                            <span className={cn("text-sm px-3 py-1 rounded-lg font-medium", auditSummary.syntaxHealth.quotesBalanced ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
                               "" {auditSummary.syntaxHealth.quotesBalanced ? '✓' : '✗'}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-sm text-muted-foreground">
                             {auditSummary.syntaxHealth.isValid ? 'Sintaxis válida' : auditSummary.syntaxHealth.issues[0]}
                           </p>
                         </>
                       ) : (
-                        <p className="text-xs text-muted-foreground">Verificación de operadores</p>
+                        <p className="text-sm text-muted-foreground mt-2">Verificación de operadores</p>
                       )}
                     </div>
                   </div>
@@ -2236,41 +2449,119 @@ export default function AgentProtocolReview() {
                 isVisible={true}
                 bayerBlue={bayerBlue}
               />
+
+              {/* FINAL DOSSIER DOWNLOAD - Bayer Evidence Package */}
+              <div 
+                className="p-10 rounded-2xl border-4 text-center relative overflow-hidden"
+                style={{ 
+                  background: 'linear-gradient(135deg, #0033A0 0%, #001a50 100%)',
+                  borderColor: '#00BCFF',
+                  borderRadius: '20px'
+                }}
+              >
+                {/* Decorative Background Pattern */}
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute top-4 left-4 w-40 h-40 border-4 border-white/30 rounded-full" />
+                  <div className="absolute bottom-4 right-4 w-32 h-32 border-4 border-white/30 rounded-full" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 border-2 border-white/20 rounded-full" />
+                </div>
+
+                <div className="relative z-10">
+                  <div className="flex justify-center mb-6">
+                    <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border-4 border-[#00BCFF] shadow-[0_0_40px_rgba(0,188,255,0.4)]">
+                      <FileText className="w-12 h-12 text-[#00BCFF]" />
+                    </div>
+                  </div>
+
+                  <h3 className="text-3xl font-bold text-white mb-3 tracking-tight">
+                    Dossier de Evidencia Científica
+                  </h3>
+                  <p className="text-lg text-blue-200 mb-2">
+                    Reporte Completo Bayer-Galatea
+                  </p>
+                  <p className="text-sm text-blue-300/70 max-w-lg mx-auto mb-8">
+                    Incluye: Protocolo validado, Diagrama PRISMA, Forest Plot, 
+                    Tabla de extracción de datos, Certificado de consenso Multi-IA
+                  </p>
+
+                  <div className="flex items-center justify-center gap-6 mb-8">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-[#00BCFF] font-mono">12</div>
+                      <div className="text-xs text-blue-300 uppercase tracking-wider">Estudios</div>
+                    </div>
+                    <div className="w-px h-12 bg-blue-400/30" />
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-[#00D395] font-mono">94.2%</div>
+                      <div className="text-xs text-blue-300 uppercase tracking-wider">Consenso IA</div>
+                    </div>
+                    <div className="w-px h-12 bg-blue-400/30" />
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-white font-mono">17</div>
+                      <div className="text-xs text-blue-300 uppercase tracking-wider">Secciones</div>
+                    </div>
+                  </div>
+
+                  <Button
+                    size="lg"
+                    className="h-16 px-12 text-xl font-bold gap-4 transition-all hover:scale-105"
+                    style={{ 
+                      background: 'linear-gradient(135deg, #00BCFF 0%, #00D395 100%)',
+                      color: '#0033A0',
+                      boxShadow: '0 15px 40px -10px rgba(0,188,255,0.5)',
+                      borderRadius: '16px'
+                    }}
+                    onClick={() => setShowDossierPDF(true)}
+                  >
+                    <Download className="w-7 h-7" />
+                    Descargar Dossier de Evidencia Galatea
+                  </Button>
+
+                  <p className="mt-6 text-sm text-primary/60">
+                    Formato: PDF Institucional · Generado por Galatea AI · Válido para auditorías científicas
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </section>
 
-      {/* AUDIT LOGS CONSOLE */}
+      {/* AUDIT LOGS CONSOLE - Enhanced Contrast for Visibility */}
       {auditLogs.length > 0 && (
-        <section className="bg-slate-900 border-t-2 border-slate-700">
+        <section className="bg-[#0A0E14] border-t-2 border-[#00BCFF]/30">
           <div className="container mx-auto max-w-7xl">
-            <div className="p-4">
-              <div className="flex items-center gap-2 text-slate-400 mb-3">
-                <Terminal className="w-4 h-4" />
-                <span className="text-sm font-medium uppercase tracking-wider">Audit Logs - Consola Técnica</span>
-                <span className="text-xs text-slate-500 ml-auto">{auditLogs.length} registros</span>
+            <div className="p-8">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-3 h-3 rounded-full bg-[#00D395] animate-pulse" />
+                <Terminal className="w-6 h-6 text-[#00BCFF]" />
+                <span className="text-xl font-black uppercase tracking-widest text-[#E6EDF3]">
+                  Audit Logs - Consola Técnica
+                </span>
+                <span className="text-base text-[#8B949E] ml-auto font-bold">{auditLogs.length} registros</span>
               </div>
               
               <div 
-                className="bg-slate-950 rounded-xl p-4 max-h-48 overflow-y-auto font-mono text-xs"
-                style={{ borderRadius: '8px' }}
+                className="bg-[#0D1117] rounded-2xl p-6 max-h-80 overflow-y-auto font-mono text-base border border-[#21262D]"
+                style={{ 
+                  boxShadow: 'inset 0 0 30px rgba(0, 188, 255, 0.05)',
+                  borderRadius: '16px'
+                }}
               >
                 {auditLogs.map((log, idx) => (
                   <div 
                     key={idx} 
                     className={cn(
-                      "py-1 flex gap-3",
-                      log.level === 'success' && "text-emerald-400",
-                      log.level === 'warning' && "text-amber-400",
-                      log.level === 'info' && "text-blue-400",
-                      log.level === 'process' && "text-slate-400"
+                      "py-3 flex gap-4 border-b border-[#21262D]/50 last:border-0",
+                      log.level === 'success' && "text-[#00D395]",
+                      log.level === 'warning' && "text-[#F7B500]",
+                      log.level === 'info' && "text-[#00BCFF]",
+                      log.level === 'process' && "text-[#E6EDF3]"
                     )}
                   >
-                    <span className="text-slate-600 shrink-0">
+                    <span className="text-[#7D8590] shrink-0 font-bold text-lg">
                       [{log.timestamp.toLocaleTimeString()}]
                     </span>
-                    <span>{log.message}</span>
+                    <span className="font-semibold text-lg">{log.message}</span>
                   </div>
                 ))}
                 <div ref={logsEndRef} />
@@ -2610,6 +2901,20 @@ export default function AgentProtocolReview() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* PDF Dossier Viewer */}
+      <PDFReportViewer
+        isOpen={showDossierPDF}
+        onClose={() => setShowDossierPDF(false)}
+        reportData={{
+          title: 'Metformina y Neuroprotección en Pacientes con DM2: Revisión Sistemática y Meta-análisis',
+          researchQuestion: ideaInput,
+          generatedAt: new Date(),
+          totalStudies: 1372,
+          metaAnalysisStudies: 12,
+          validationScore: 94.2
+        }}
+      />
 
       <Footer />
     </div>

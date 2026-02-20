@@ -62,15 +62,19 @@ export const useRealtimeChat = (config?: UseRealtimeChatConfig): UseRealtimeChat
       console.log('Connecting to WebSocket:', wsUrl);
       socketRef.current = new WebSocket(wsUrl);
 
-      socketRef.current.onopen = () => {
+      socketRef.current.onopen = async () => {
         console.log('WebSocket connected successfully');
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
         
-        // Auth — includes type/userId for the Edge Function router + project_id fijo for n8n
+        // Get session token for secure authentication
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: { session } } = await supabase.auth.getSession();
+
+        // Auth — uses sessionToken for secure auth + project_id fijo for n8n
         const authPayload = {
           type: 'auth',
-          userId: user.id,
+          sessionToken: session?.access_token,
           conversationId: conversationId,
           project_id: FIXED_PROJECT_ID,
         };

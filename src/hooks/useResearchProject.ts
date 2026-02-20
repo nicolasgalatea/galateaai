@@ -243,18 +243,18 @@ export function useResearchProject(projectId?: string) {
           filter: `id=eq.${projectId}`,
         },
         (payload) => {
-          console.log('🔄 Cambio detectado en proyecto (sincronización desde n8n):', payload.eventType);
+          console.log('Cambio detectado en proyecto (sincronizacion desde n8n):', payload.eventType);
           if (payload.eventType === 'UPDATE') {
             const updatedProject = payload.new as Project;
             const oldPhase = project?.phase;
             setProject(updatedProject);
-            console.log('✅ Proyecto actualizado:', {
+            console.log('Proyecto actualizado:', {
               phase: updatedProject.phase,
               current_agent_step: updatedProject.current_agent_step,
               status_changed: oldPhase !== updatedProject.phase,
             });
-            
-            // Si el status cambió a AWAITING_APPROVAL, el modal se mostrará automáticamente
+
+            // Si el status cambio a AWAITING_APPROVAL, el modal se mostrara automaticamente
             // mediante el useEffect en ResearchProjectDashboard
           } else if (payload.eventType === 'DELETE') {
             setProject(null);
@@ -263,7 +263,7 @@ export function useResearchProject(projectId?: string) {
       )
       .subscribe();
 
-    // También hacer polling cada 5 segundos como respaldo para asegurar sincronización
+    // Tambien hacer polling cada 5 segundos como respaldo para asegurar sincronizacion
     const pollInterval = setInterval(() => {
       if (projectId) {
         loadProject(projectId);

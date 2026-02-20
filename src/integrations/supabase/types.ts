@@ -147,12 +147,172 @@ export type Database = {
         }
         Relationships: []
       }
+      project_references: {
+        Row: {
+          abstract: string | null
+          authors: string | null
+          created_at: string
+          doi: string | null
+          exclusion_reason: string | null
+          id: string
+          inclusion_status: string | null
+          journal: string | null
+          phase_used: number | null
+          pmid: string
+          project_id: string
+          relevance_score: number | null
+          row_id: string | null
+          title: string
+          updated_at: string
+          url: string | null
+          year: number | null
+        }
+        Insert: {
+          abstract?: string | null
+          authors?: string | null
+          created_at?: string
+          doi?: string | null
+          exclusion_reason?: string | null
+          id?: string
+          inclusion_status?: string | null
+          journal?: string | null
+          phase_used?: number | null
+          pmid: string
+          project_id: string
+          relevance_score?: number | null
+          row_id?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+          year?: number | null
+        }
+        Update: {
+          abstract?: string | null
+          authors?: string | null
+          created_at?: string
+          doi?: string | null
+          exclusion_reason?: string | null
+          id?: string
+          inclusion_status?: string | null
+          journal?: string | null
+          phase_used?: number | null
+          pmid?: string
+          project_id?: string
+          relevance_score?: number | null
+          row_id?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_references_row_id_fkey"
+            columns: ["row_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_lab_progress: {
+        Row: {
+          created_at: string
+          fase_0_1_output: Json | null
+          fase_2_3_output: Json | null
+          fase_4_5_output: Json | null
+          fase_6_7_output: Json | null
+          fase_8_9_output: Json | null
+          fase_actual: number
+          id: string
+          project_id: string
+          research_question: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fase_0_1_output?: Json | null
+          fase_2_3_output?: Json | null
+          fase_4_5_output?: Json | null
+          fase_6_7_output?: Json | null
+          fase_8_9_output?: Json | null
+          fase_actual?: number
+          id?: string
+          project_id: string
+          research_question?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fase_0_1_output?: Json | null
+          fase_2_3_output?: Json | null
+          fase_4_5_output?: Json | null
+          fase_6_7_output?: Json | null
+          fase_8_9_output?: Json | null
+          fase_actual?: number
+          id?: string
+          project_id?: string
+          research_question?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      research_projects: {
+        Row: {
+          created_at: string
+          current_phase: number
+          id: string
+          phase_data: Json
+          project_id: string
+          research_question: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_edits: Json
+        }
+        Insert: {
+          created_at?: string
+          current_phase?: number
+          id?: string
+          phase_data?: Json
+          project_id?: string
+          research_question?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_edits?: Json
+        }
+        Update: {
+          created_at?: string
+          current_phase?: number
+          id?: string
+          phase_data?: Json
+          project_id?: string
+          research_question?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_edits?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      set_user_edits_for_phase: {
+        Args: {
+          p_field: string
+          p_phase_key: string
+          p_project_id: string
+          p_value: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

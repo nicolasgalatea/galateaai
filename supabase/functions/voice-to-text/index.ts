@@ -1,10 +1,13 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB base64
 
 // Process base64 in chunks to prevent memory issues
 function processBase64Chunks(base64String: string, chunkSize = 32768) {
@@ -42,10 +45,30 @@ serve(async (req) => {
   }
 
   try {
-    const { audio } = await req.json()
+    // JWT Authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
+    }
+
+    const supabaseAuth = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
+    }
+
+    const body = await req.json()
+    const { audio } = body
     
-    if (!audio) {
+    if (!audio || typeof audio !== 'string') {
       throw new Error('No audio data provided')
+    }
+
+    if (audio.length > MAX_AUDIO_SIZE) {
+      throw new Error('Audio data too large (max 10MB)')
     }
 
     console.log('Processing audio transcription...');
@@ -53,14 +76,13 @@ serve(async (req) => {
     // Process audio in chunks
     const binaryAudio = processBase64Chunks(audio)
     
-    // Prepare form data
+    // Prepare form data (fixed typo: was 'formdata' instead of 'formData')
     const formData = new FormData()
     const blob = new Blob([binaryAudio], { type: 'audio/webm' })
-    formdata.append('file', blob, 'audio.webm')
+    formData.append('file', blob, 'audio.webm')
     formData.append('model', 'whisper-1')
-    formData.append('language', 'es') // Spanish language
+    formData.append('language', 'es')
 
-    // Send to OpenAI
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
@@ -70,13 +92,11 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${response.status}`)
+      console.error('OpenAI API error:', response.status);
+      throw new Error('Transcription service temporarily unavailable')
     }
 
     const result = await response.json()
-    console.log('Transcription completed:', result.text);
 
     return new Response(
       JSON.stringify({ text: result.text }),
@@ -86,7 +106,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Voice to text error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'An error occurred processing your request' }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

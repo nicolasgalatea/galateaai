@@ -33,6 +33,8 @@ import MethodologyIntegration from "./pages/MethodologyIntegration";
 import MethodologyDeployment from "./pages/MethodologyDeployment";
 import MethodologyControl from "./pages/MethodologyControl";
 import ResearchFlow from "./pages/ResearchFlow";
+import ClinicalNavigator from "./pages/ClinicalNavigator";
+import ResearchLab from "./pages/ResearchLab";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +76,8 @@ const App = () => (
             {/* Research Flow - Sistema de 14 Agentes */}
             <Route path="/research/new" element={<ResearchFlow />} />
             <Route path="/research/:projectId" element={<ResearchFlow />} />
+            <Route path="/agent/clinical-navigator" element={<ClinicalNavigator />} />
+            <Route path="/research-lab" element={<ResearchLab />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

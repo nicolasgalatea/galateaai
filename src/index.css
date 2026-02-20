@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tiptap editor styles */
+.tiptap p.is-editor-empty:first-child::before {
+  color: hsl(var(--muted-foreground));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+.tiptap:focus {
+  outline: none;
+}
+
+
 /* Design system for Galatea AI - Modern medical AI platform */
 
 @layer base {
