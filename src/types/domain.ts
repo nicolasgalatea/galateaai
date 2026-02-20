@@ -23,6 +23,10 @@ export interface Project {
   phase: ProjectPhase;
   current_agent_step: number;
   created_at: string;
+  /** Alias used by ResearchDashboard (maps to current_agent_step or research_projects.current_phase) */
+  current_phase?: number;
+  /** Foreign key used in research_projects table */
+  project_id?: string;
 }
 
 /**
