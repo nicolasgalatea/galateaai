@@ -666,26 +666,3 @@ export function useN8nOrchestration(config: OrchestrationConfig): UseN8nOrchestr
 
 export { generateUUID, logger as n8nLogger };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// LEGACY EXPORTS — Compatibilidad con ClinicalNavigator (14 agentes demo)
-// ═══════════════════════════════════════════════════════════════════════════
-
-export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'processing' | 'fallback' | 'error';
-
-/** Mapeo nombre de agente → id numerico (legacy 14 agentes) */
-export const AGENT_NAME_TO_ID: Record<string, number> = {
-  'workflow-configuration-agent': 1,
-  'hypothesis-generation-agent': 2,
-  'literature-review-agent': 3,
-  'experimental-design-agent': 4,
-  'data-analysis-agent': 5,
-  'interpretation-agent': 6,
-  'safety-assessment-agent': 7,
-  'regulatory-strategy-agent': 8,
-  'patent-landscape-agent': 9,
-  'market-assessment-agent': 10,
-  'cost-benefit-agent': 11,
-  'risk-assessment-agent': 12,
-  'sustainability-agent': 13,
-  'final-report-agent': 14,
-};
