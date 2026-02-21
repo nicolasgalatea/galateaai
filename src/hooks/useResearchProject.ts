@@ -153,7 +153,7 @@ export function useResearchProject(projectId?: string) {
 
     try {
       const filteredUpdates = filterProjectUpdates(updates);
-      const { data: updatedProject, error: updateError } = await supabase
+      const { data: updatedProject, error: updateError } = await (supabase as any)
         .from('agent_projects')
         .update(filteredUpdates)
         .eq('id', project.id)
@@ -309,12 +309,12 @@ export function useResearchProject(projectId?: string) {
   const status = project?.phase ?? 'idle';
   const isSaving = false;
 
-  const saveUserEdit = useCallback(async (_phaseKey: string, _field: string, _value: unknown) => {
+  const saveUserEdit = useCallback(async (_phaseKey: string, _field: string, _value: unknown): Promise<void> => {
     // Stub — autosave handled by research-sync-service in the v2 flow
   }, []);
 
-  const approvePhase = useCallback(async (_phaseId: number) => {
-    return approveProtocol();
+  const approvePhase = useCallback(async (_phaseId?: number): Promise<void> => {
+    await approveProtocol();
   }, [approveProtocol]);
 
   const syncWithAI = useCallback(async () => {

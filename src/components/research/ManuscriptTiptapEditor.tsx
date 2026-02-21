@@ -37,7 +37,7 @@ export const ManuscriptTiptapEditor = forwardRef<ManuscriptTiptapEditorHandle, M
       const currentHTML = editor.getHTML();
       // Only update if the external content is truly different
       if (content !== currentHTML && content !== '<p></p>') {
-        editor.commands.setContent(content, false);
+        editor.commands.setContent(content, { emitUpdate: false } as any);
       }
     }, [content, editor]);
 

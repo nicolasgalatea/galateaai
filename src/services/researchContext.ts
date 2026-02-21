@@ -24,7 +24,7 @@ export async function collectProtocolContext(
   projectId: string
 ): Promise<ProtocolContext | null> {
   try {
-    const { data: project, error: projectError } = await supabase
+    const { data: project, error: projectError } = await (supabase as any)
       .from('agent_projects')
       .select(RESEARCH_PROJECT_COLUMNS)
       .eq('id', projectId)
@@ -36,13 +36,13 @@ export async function collectProtocolContext(
     }
 
     return {
-      projectId: project.id,
-      title: project.title,
-      description: project.description ?? null,
-      researchQuestion: project.research_question ?? null,
-      phase: project.phase,
-      currentAgentStep: project.current_agent_step,
-      createdAt: project.created_at,
+      projectId: (project as any).id,
+      title: (project as any).title,
+      description: (project as any).description ?? null,
+      researchQuestion: (project as any).research_question ?? null,
+      phase: (project as any).phase,
+      currentAgentStep: (project as any).current_agent_step,
+      createdAt: (project as any).created_at,
     };
   } catch (error) {
     console.error('Error collecting protocol context:', error);

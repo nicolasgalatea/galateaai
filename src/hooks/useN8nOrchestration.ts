@@ -38,8 +38,9 @@ export interface AgentOutput {
 }
 
 export interface OrchestrationConfig {
-  projectId: string;
+  projectId?: string;
   onAgentUpdate?: (output: AgentOutput) => void;
+  onAgentOutput?: (agentName: string, output: string, status: string) => void;
   onError?: (error: Error) => void;
   onFallback?: () => void;
   onConnectionChange?: (connected: boolean) => void;
@@ -66,15 +67,19 @@ export interface UseN8nOrchestrationReturn {
   error: string | null;
   projectId: string;
   fallbackTriggered: boolean;
+  connectionStatus: ConnectionStatus;
 
   // Acciones
   startOrchestration: (
-    inputData: Record<string, unknown>,
-    options?: { faseActual?: ResearchLabPhaseNumber; projectIdOverride?: string }
-  ) => Promise<void>;
+    inputData: Record<string, unknown> | string,
+    options?: { faseActual?: ResearchLabPhaseNumber; projectIdOverride?: string } | string
+  ) => Promise<any>;
   stopOrchestration: () => void;
   reconnect: () => void;
   getAgentOutput: (agentNumber: number) => AgentOutput | undefined;
+  setConnectionStatus: (status: ConnectionStatus) => void;
+  cleanup: () => void;
+  getReceivedAgentsCount: () => number;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -82,9 +87,29 @@ export interface UseN8nOrchestrationReturn {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const LOG_PREFIX = '[n8n-Realtime]';
-const DEFAULT_FALLBACK_TIMEOUT_MS = 60000; // 60 segundos
+const DEFAULT_FALLBACK_TIMEOUT_MS = 60000;
 const DEFAULT_MAX_RECONNECT_ATTEMPTS = 3;
-const BASE_RECONNECT_DELAY_MS = 1000; // 1 segundo base para backoff
+const BASE_RECONNECT_DELAY_MS = 1000;
+
+// Agent name → ID mapping used by ClinicalNavigator
+export const AGENT_NAME_TO_ID: Record<string, number> = {
+  'PICOT Builder': 1,
+  'MeSH Strategist': 2,
+  'Literature Scout': 3,
+  'FINER Validator': 4,
+  'Study Designer': 5,
+  'Objectives Generator': 6,
+  'Criteria Definer': 7,
+  'Protocol Synthesizer': 8,
+  'PRISMA Navigator': 9,
+  'Data Extractor': 10,
+  'Quality Auditor': 11,
+  'Meta-Analyst': 12,
+  'Evidence Grader': 13,
+  'Report Generator': 14,
+};
+
+export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'processing' | 'fallback' | 'error';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // UTILIDADES
@@ -164,6 +189,7 @@ export function useN8nOrchestration(config: OrchestrationConfig): UseN8nOrchestr
     reconnectAttempt: 0,
     fallbackTriggered: false,
   });
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
 
   // ═══════════════════════════════════════════════════════════════════════
   // REFS (Persistentes entre renders)
@@ -304,7 +330,7 @@ export function useN8nOrchestration(config: OrchestrationConfig): UseN8nOrchestr
             filter: `project_id=eq.${projectId}`,
           },
           (payload) => {
-            handleRealtimeInsert(payload as RealtimePostgresInsertPayload<AgentOutput>);
+            handleRealtimeInsert(payload as unknown as RealtimePostgresInsertPayload<AgentOutput>);
           }
         );
 
@@ -352,7 +378,7 @@ export function useN8nOrchestration(config: OrchestrationConfig): UseN8nOrchestr
     logger.subscribe(`Fetching outputs existentes para proyecto ${projectId}`);
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('agent_executions')
         .select('*')
         .eq('project_id', projectId)
@@ -367,14 +393,14 @@ export function useN8nOrchestration(config: OrchestrationConfig): UseN8nOrchestr
 
         for (const record of data) {
           processedIdsRef.current.add(record.id);
-          outputsMap.set(record.agent_number, record as AgentOutput);
+          outputsMap.set(record.agent_number, record as unknown as AgentOutput);
         }
 
         if (isMountedRef.current) {
           setState(prev => ({
             ...prev,
             agentOutputs: outputsMap,
-            currentAgent: data[data.length - 1].agent_number,
+            currentAgent: (data[data.length - 1] as any).agent_number,
           }));
         }
       }
@@ -602,6 +628,16 @@ export function useN8nOrchestration(config: OrchestrationConfig): UseN8nOrchestr
   // RETORNO DEL HOOK
   // ═══════════════════════════════════════════════════════════════════════
 
+  
+
+  const cleanup = useCallback(() => {
+    cleanupResources();
+  }, [cleanupResources]);
+
+  const getReceivedAgentsCount = useCallback(() => {
+    return state.agentOutputs.size;
+  }, [state.agentOutputs]);
+
   return {
     // Estado
     isConnected: state.isConnected,
@@ -611,12 +647,16 @@ export function useN8nOrchestration(config: OrchestrationConfig): UseN8nOrchestr
     error: state.error,
     projectId,
     fallbackTriggered: state.fallbackTriggered,
+    connectionStatus,
 
     // Acciones
     startOrchestration,
     stopOrchestration,
     reconnect,
     getAgentOutput,
+    setConnectionStatus,
+    cleanup,
+    getReceivedAgentsCount,
   };
 }
 
@@ -624,7 +664,6 @@ export function useN8nOrchestration(config: OrchestrationConfig): UseN8nOrchestr
 // EXPORTS ADICIONALES PARA COMPATIBILIDAD
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type { OrchestrationConfig, OrchestrationState };
 export { generateUUID, logger as n8nLogger };
 
 // ═══════════════════════════════════════════════════════════════════════════
