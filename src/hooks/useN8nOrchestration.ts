@@ -109,7 +109,7 @@ export const AGENT_NAME_TO_ID: Record<string, number> = {
   'Report Generator': 14,
 };
 
-export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'processing' | 'fallback' | 'error';
+export type ConnectionStatus = 'idle' | 'disconnected' | 'connecting' | 'connected' | 'processing' | 'fallback' | 'error';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // UTILIDADES
