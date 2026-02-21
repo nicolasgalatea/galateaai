@@ -69,9 +69,10 @@ serve(async (req) => {
       },
     )
   } catch (error) {
-    console.error('Error in elevenlabs-speech function:', error)
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error('Error in elevenlabs-speech function:', err)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: err.message }),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

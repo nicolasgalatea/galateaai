@@ -145,12 +145,13 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error:', error)
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error('Error:', err)
     return new Response(
       JSON.stringify({ 
         success: false, 
         error: 'Error generating enhanced avatar', 
-        details: error.message 
+        details: err.message 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
