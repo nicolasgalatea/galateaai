@@ -1,3 +1,4 @@
+// AgentLiveGrid v2 — 4 agentes (Arquitecto, Metodólogo, Evidencia, Redactor)
 import { useMemo } from 'react';
 import { Check } from 'lucide-react';
 import { RESEARCH_LAB_AGENTS } from '@/config/researchLabAgents';
