@@ -75,7 +75,7 @@ function AgentStep({
   status: AgentStatus;
   onClick?: () => void;
 }) {
-  const Icon = agent.icon;
+  const Icon = agent.icon as React.ComponentType<{ className?: string }>;
   const isClickable = status !== 'locked' && status !== 'pending';
 
   return (
@@ -243,14 +243,13 @@ export function ResearchProgressBar({
 
     const loadCompletedAgents = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('agent_executions')
           .select('agent_name, agent_number')
           .eq('project_id', projectId);
 
         if (error) {
           console.warn('Error loading completed agents:', error);
-          // Fall back to using currentStep as completed indicator
           const fallbackCompleted = new Set<number>();
           for (let i = 1; i < currentStep; i++) {
             fallbackCompleted.add(i);
@@ -261,7 +260,7 @@ export function ResearchProgressBar({
 
         if (data) {
           const completed = new Set<number>();
-          data.forEach((output) => {
+          (data as any[]).forEach((output) => {
             if (output.agent_name) {
               const agentId = getAgentIdByName(output.agent_name);
               if (agentId !== null) {

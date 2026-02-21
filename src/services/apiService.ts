@@ -73,7 +73,7 @@ export async function createProject(payload: {
   research_question: string;
 }): Promise<ApiResult<Project>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('agent_projects')
       .insert({
         title: payload.title,
@@ -83,7 +83,7 @@ export async function createProject(payload: {
       .single();
 
     if (error) throw error;
-    return { data: data as Project, error: null };
+    return { data: data as unknown as Project, error: null };
   } catch (err) {
     return {
       data: null,
@@ -94,14 +94,14 @@ export async function createProject(payload: {
 
 export async function fetchProjectById(projectId: string): Promise<ApiResult<Project>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('agent_projects')
       .select(RESEARCH_PROJECT_COLUMNS)
       .eq('id', projectId)
       .single();
 
     if (error) throw error;
-    return { data: data as Project, error: null };
+    return { data: data as unknown as Project, error: null };
   } catch (err) {
     return {
       data: null,
@@ -112,13 +112,13 @@ export async function fetchProjectById(projectId: string): Promise<ApiResult<Pro
 
 export async function fetchProjects(): Promise<ApiResult<Project[]>> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('agent_projects')
       .select(RESEARCH_PROJECT_COLUMNS)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return { data: (data || []) as Project[], error: null };
+    return { data: (data || []) as unknown as Project[], error: null };
   } catch (err) {
     return {
       data: null,

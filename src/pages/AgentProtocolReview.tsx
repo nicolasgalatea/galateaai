@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileSearch, Upload, Cpu, AlertTriangle, Plus, Send, Building2, FileText,
   Search, ClipboardCheck, Shield, Play, Copy, Check, ChevronRight, BookOpen,
@@ -505,7 +506,7 @@ export default function AgentProtocolReview() {
       hasAutoStarted.current = true;
       // Small delay to ensure component is fully mounted
       const timer = setTimeout(() => {
-        simulatePhase1Orchestration();
+        startPhase1Orchestration();
       }, 500);
       return () => clearTimeout(timer);
     }

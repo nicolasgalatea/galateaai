@@ -35,7 +35,7 @@ export function useAgentOutputs(projectId?: string): UseAgentOutputsReturn {
     setError(null);
 
     try {
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await (supabase as any)
         .from('agent_executions')
         .select('*')
         .eq('project_id', projectId)
@@ -44,7 +44,7 @@ export function useAgentOutputs(projectId?: string): UseAgentOutputsReturn {
 
       if (fetchError) throw fetchError;
 
-      setOutputs((data || []) as AgentOutput[]);
+      setOutputs((data || []) as unknown as AgentOutput[]);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al cargar executions';
       setError(message);

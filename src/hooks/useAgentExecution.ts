@@ -57,7 +57,7 @@ export function useAgentExecution() {
     if (!agent) return null;
 
     try {
-      const { data, error: insertError } = await supabase
+      const { data, error: insertError } = await (supabase as any)
         .from('agent_executions')
         .insert({
           project_id: projectId,
@@ -85,9 +85,9 @@ export function useAgentExecution() {
     updates: Partial<AgentExecution>
   ): Promise<boolean> => {
     try {
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('agent_executions')
-        .update(updates)
+        .update(updates as any)
         .eq('id', executionId);
 
       if (updateError) throw updateError;
@@ -230,14 +230,14 @@ export function useAgentExecution() {
   // Obtener historial de ejecuciones de un proyecto
   const getProjectExecutions = useCallback(async (projectId: string): Promise<AgentExecution[]> => {
     try {
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await (supabase as any)
         .from('agent_executions')
         .select('*')
         .eq('project_id', projectId)
         .order('agent_number', { ascending: true });
 
       if (fetchError) throw fetchError;
-      return (data || []) as AgentExecution[];
+      return (data || []) as unknown as AgentExecution[];
     } catch (err) {
       console.error('Error fetching executions:', err);
       return [];
