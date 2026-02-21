@@ -300,16 +300,8 @@ export function useResearchProject(projectId?: string) {
       )
       .subscribe();
 
-    // Tambien hacer polling cada 5 segundos como respaldo para asegurar sincronizacion
-    const pollInterval = setInterval(() => {
-      if (projectId) {
-        loadProject(projectId);
-      }
-    }, 5000);
-
     return () => {
       supabase.removeChannel(channel);
-      clearInterval(pollInterval);
     };
   }, [projectId, loadProject]);
 

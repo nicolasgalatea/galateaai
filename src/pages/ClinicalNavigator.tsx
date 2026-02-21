@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
-import { useN8nOrchestration, AGENT_NAME_TO_ID, ConnectionStatus } from '@/hooks/useN8nOrchestration';
+import { AGENT_NAME_TO_ID, type ConnectionStatus } from '@/hooks/useN8nOrchestration';
 import { useResearchLab } from '@/hooks/useResearchLab'; // legacy, kept for non-research-mode usage
 import { Phase2Execution } from '@/components/terminal/Phase2Execution';
 import { IdeadorPhase } from '@/components/research-lab/IdeadorPhase';
@@ -2074,16 +2074,51 @@ export default function ClinicalNavigator() {
   // Research Lab hook — reads from research_lab_progress using the same fixed projectId
   const researchLab = useResearchLab();
 
-  // n8n Orchestration hook
+  // ═══════════════════════════════════════════════════════════════════════
+  // Legacy n8n orchestration stub
+  // The v2 hook (useN8nOrchestration) uses a different API; this page
+  // keeps a local stub so the demo/fallback flow compiles unchanged.
+  // ═══════════════════════════════════════════════════════════════════════
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('idle');
+  const receivedAgentsRef = useRef<Set<number>>(new Set());
+
+  const n8nOrchestration = {
+    connectionStatus,
+    setConnectionStatus,
+    getReceivedAgentsCount: () => receivedAgentsRef.current.size,
+    startOrchestration: async (_title: string, _question: string) => {
+      setConnectionStatus('connecting');
+      try {
+        // Signal n8n via the v2 webhook (fire-and-forget)
+        const { N8N_RESEARCH_LAB_V2_WEBHOOK } = await import('@/config/researchLabAgents');
+        await fetch(N8N_RESEARCH_LAB_V2_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: _title, research_question: _question }),
+        });
+        setConnectionStatus('connected');
+        return { success: true };
+      } catch (err) {
+        console.error('[n8n-stub] startOrchestration failed', err);
+        setConnectionStatus('error');
+        return { success: false };
+      }
+    },
+    cleanup: () => {
+      setConnectionStatus('idle');
+      receivedAgentsRef.current.clear();
+    },
+  };
+
   const handleFallbackToSimulation = useCallback(() => {
-    n8nOrchestration.setConnectionStatus('fallback');
+    setConnectionStatus('fallback');
     setIsN8nMode(false);
-    
+
     toast({
       title: 'Modo demo activado',
       description: 'Usando datos de ejemplo mientras el servidor de IA no está disponible.',
     });
-    
+
     // Continue with simulated Phase 1
     runSimulatedPhase1();
   }, []);
@@ -2091,13 +2126,13 @@ export default function ClinicalNavigator() {
   const addRealDeliverable = useCallback((agentId: number, realOutput: string) => {
     const agentConfig = AGENTS_CONFIG.find(a => a.id === agentId);
     const sources = SCIENTIFIC_SOURCES[agentId] || [];
-    
+
     if (agentConfig) {
       const newDeliverable: Deliverable = {
         id: agentId,
         agentId,
         title: AGENT_OUTPUTS[agentId]?.title || agentConfig.name,
-        content: realOutput, // ← OUTPUT REAL DE CLAUDE (Markdown)
+        content: realOutput,
         sources,
         isExpanded: false,
       };
@@ -2113,84 +2148,6 @@ export default function ClinicalNavigator() {
       setSelectedDeliverable(newDeliverable);
     }
   }, []);
-
-  const n8nOrchestration = useN8nOrchestration({
-    onAgentOutput: (agentName, output, status) => {
-      const agentId = AGENT_NAME_TO_ID[agentName];
-      if (!agentId) return;
-
-      console.log(`[UI] Received agent ${agentId} (${agentName}) status="${status}" content-length=${output?.length ?? 0}`);
-      
-      // Accept both 'success' and 'completed' from backend
-      if (status === 'success' || status === 'completed') {
-        updateAgent(agentId, { status: 'completed' });
-        
-        // Only update if content is non-empty
-        if (output && output.trim().length > 0) {
-          if (agentId <= 8) {
-            // Phase 1
-            setRealOutputs(prev => {
-              const updated = { ...prev, [agentId]: output };
-              const completedCount = Object.keys(updated).length;
-              console.log(`[UI] ✅ Agent ${agentId} completed. Total: ${completedCount}/8`);
-              
-              if (completedCount >= 8 && phase1CompleteResolveRef.current) {
-                phase1CompleteResolveRef.current();
-                phase1CompleteResolveRef.current = null;
-              }
-              return updated;
-            });
-            addRealDeliverable(agentId, output);
-          } else {
-            // Phase 2 (agents 9-14)
-            setPhase2Outputs(prev => ({ ...prev, [agentId]: output }));
-            setPhase2CompletedAgents(prev => new Set([...prev, agentId]));
-            addRealDeliverable(agentId, output);
-            
-            // Try to parse metadata from output for Forest Plot
-            if (agentId === 13) {
-              try {
-                // Attempt to extract metadata if output contains JSON
-                const jsonMatch = output.match(/```json\n([\s\S]*?)\n```/);
-                if (jsonMatch) {
-                  const parsed = JSON.parse(jsonMatch[1]);
-                  setPhase2Metadata(prev => ({ ...prev, [agentId]: parsed }));
-                }
-              } catch {
-                // Use default Forest Plot data
-              }
-            }
-          }
-        }
-      } else if (status === 'in_progress' || status === 'processing') {
-        updateAgent(agentId, { status: 'processing' });
-        setActiveAgentId(agentId);
-        if (agentId <= 8) {
-          setCurrentExplanation({
-            doing: AGENTS_CONFIG[agentId - 1]?.explanation.doing || 'Procesando...',
-            why: AGENTS_CONFIG[agentId - 1]?.explanation.why || '',
-            estimatedTime: AGENTS_CONFIG[agentId - 1]?.explanation.estimatedTime || '...',
-            sources: AGENTS_CONFIG[agentId - 1]?.sources || [],
-            agentName: agentName,
-            progress: 50
-          });
-        }
-      }
-    },
-    onError: (error) => {
-      console.error('[UI] n8n error:', error);
-      toast({
-        title: 'Error de conexión',
-        description: `No se pudo conectar con el servidor de IA: ${error}`,
-        variant: 'destructive',
-      });
-      handleFallbackToSimulation();
-    },
-    onFallback: () => {
-      console.log('[UI] Fallback triggered');
-      handleFallbackToSimulation();
-    },
-  });
 
   // Auto-scroll terminal
   useEffect(() => {

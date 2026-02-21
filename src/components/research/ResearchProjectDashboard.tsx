@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Play, FileText, Clock } from 'lucide-react';
+import { Loader2, Play, FileText } from 'lucide-react';
 import { ResearchProgressBar } from './ResearchProgressBar';
 import { DashboardHeader } from './DashboardHeader';
 import { ApprovalModal } from './ApprovalModal';
@@ -10,7 +10,6 @@ import { ResultsRenderer } from './ResultsRenderer';
 import { AgentLiveGrid } from './AgentLiveGrid';
 import { useResearchProject } from '@/hooks/useResearchProject';
 import { useAgentExecution } from '@/hooks/useAgentExecution';
-import { useAgentOutputs } from '@/hooks/useAgentOutputs';
 import { getAgentById } from '@/config/researchAgents';
 import {
   getResearchLabAgentByPhase,
@@ -84,17 +83,10 @@ export function ResearchProjectDashboard({
     executeAgent,
   } = useAgentExecution();
 
-  // Suscripcion en tiempo real a agent_executions
-  const {
-    outputsByAgent,
-    latestOutput,
-  } = useAgentOutputs(projectId || project?.id);
-
   const [researchQuestion, setResearchQuestion] = useState('');
   const [projectTitle, setProjectTitle] = useState('');
   const [currentOutput, setCurrentOutput] = useState<string | null>(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const [selectedAgentNumber, setSelectedAgentNumber] = useState<number | null>(null);
   const [createError, setCreateError] = useState<ApiErrorDetail | null>(null);
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -110,8 +102,6 @@ export function ResearchProjectDashboard({
     if (currentResearchLabPhase !== prev) {
       prevPhaseRef.current = currentResearchLabPhase;
       setActiveViewPhase(currentResearchLabPhase);
-      // Limpiar override manual para que el renderizado por fase tome control
-      setSelectedAgentNumber(null);
       setCurrentOutput(null);
 
       const agent = getResearchLabAgentByPhase(currentResearchLabPhase as ResearchLabPhaseNumber);
@@ -134,24 +124,6 @@ export function ResearchProjectDashboard({
       setCurrentOutput(result.output);
     }
   }, [result]);
-
-  // Mostrar el output del ultimo agente completado (realtime desde n8n)
-  useEffect(() => {
-    if (latestOutput?.output_markdown && !selectedAgentNumber) {
-      setCurrentOutput(latestOutput.output_markdown);
-    }
-  }, [latestOutput, selectedAgentNumber]);
-
-  // Handler para cuando se hace click en un agente en la barra de progreso
-  const handleAgentClick = (agentNumber: number) => {
-    setSelectedAgentNumber(agentNumber);
-    const output = outputsByAgent[agentNumber];
-    if (output?.output_markdown) {
-      setCurrentOutput(output.output_markdown);
-    } else {
-      setCurrentOutput(null);
-    }
-  };
 
   // Mostrar modal de aprobacion cuando llega a AWAITING_APPROVAL
   useEffect(() => {
@@ -358,7 +330,7 @@ export function ResearchProjectDashboard({
             currentStep={project.current_agent_step}
             phase={project.phase}
             projectId={project.id}
-            onAgentClick={handleAgentClick}
+
             researchLabPhase={activeViewPhase}
           />
         </div>
@@ -381,7 +353,10 @@ export function ResearchProjectDashboard({
           />
 
           <div className="mb-6">
-            <AgentLiveGrid projectId={project.id} />
+            <AgentLiveGrid
+              researchProject={researchProject}
+              currentPhase={currentResearchLabPhase}
+            />
           </div>
 
           {/* Output — driven by activeViewPhase (auto-synced with currentResearchLabPhase) */}
@@ -412,32 +387,8 @@ export function ResearchProjectDashboard({
               <BooleanEquationBlock
                 searchStrategy={researchProject?.search_strategy ?? null}
               />
-            ) : /* Manual override: user selected an agent from progress bar */
-            selectedAgentNumber && currentOutput ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b text-sm text-gray-500">
-                  <Clock className="w-4 h-4" />
-                  <span>
-                    Agente {selectedAgentNumber}: {getAgentById(selectedAgentNumber)?.displayNameEs}
-                  </span>
-                  {outputsByAgent[selectedAgentNumber]?.duration_ms && (
-                    <span className="text-xs bg-gray-200 px-2 py-0.5 rounded">
-                      {Math.round(outputsByAgent[selectedAgentNumber].duration_ms! / 1000)}s
-                    </span>
-                  )}
-                  <button
-                    onClick={() => {
-                      setSelectedAgentNumber(null);
-                      setCurrentOutput(null);
-                    }}
-                    className="ml-auto text-blue-500 hover:text-blue-700 text-xs"
-                  >
-                    Volver a fase actual
-                  </button>
-                </div>
-                <ResultsRenderer content={typeof currentOutput === 'string' ? currentOutput : JSON.stringify(currentOutput, null, 2)} />
-              </div>
-            ) : isExecuting ? (
+            ) : /* Default phases 0-2: show research_question output or executing/empty state */
+            isExecuting ? (
               <div className="flex flex-col items-center justify-center h-full">
                 <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4" />
                 <p className="text-gray-600">
@@ -449,8 +400,8 @@ export function ResearchProjectDashboard({
               </div>
             ) : currentOutput ? (
               <ResultsRenderer content={typeof currentOutput === 'string' ? currentOutput : JSON.stringify(currentOutput, null, 2)} />
-            ) : latestOutput?.output_markdown ? (
-              <ResultsRenderer content={latestOutput.output_markdown} />
+            ) : researchProject?.research_question ? (
+              <ResultsRenderer content={JSON.stringify(researchProject.research_question, null, 2)} />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <FileText className="w-12 h-12 mb-4" />
