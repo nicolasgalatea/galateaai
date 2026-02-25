@@ -353,19 +353,23 @@
     <div class="mt-8 bg-gradient-to-r from-galatea/5 to-verde/5 rounded-2xl border border-galatea/10 p-5 fade-up">
       <div class="flex items-center gap-2 mb-3">
         <svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg>
-        <h4 class="text-xs font-bold text-galatea uppercase tracking-wider">Proceso de Investigacion — 3 Etapas</h4>
+        <h4 class="text-xs font-bold text-galatea uppercase tracking-wider">Proceso de Investigacion — 4 Etapas</h4>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-[11px]">
         <div class="bg-white/60 rounded-lg p-3 border border-galatea/10">
           <div class="font-bold text-galatea mb-1">Etapa 1: Metodologia</div>
-          <p class="text-gray-500 leading-relaxed">Pregunta PICOT, FINER, hipotesis, busqueda sistematica, protocolo, EQUATOR y manuscrito.</p>
+          <p class="text-gray-500 leading-relaxed">Pregunta PICOT, FINER, hipotesis, busqueda sistematica, protocolo y manuscrito.</p>
         </div>
         <div class="bg-white/60 rounded-lg p-3 border border-galatea/10">
-          <div class="font-bold text-galatea mb-1">Etapa 2: Ruta FSFB</div>
-          <p class="text-gray-500 leading-relaxed">Clasificacion, guias institucionales, documentacion, Subdireccion y Comite de Etica.</p>
+          <div class="font-bold text-galatea mb-1">Etapa 2: Documentacion</div>
+          <p class="text-gray-500 leading-relaxed">Clasificacion, guias institucionales y documentacion pre-poblada.</p>
         </div>
         <div class="bg-white/60 rounded-lg p-3 border border-galatea/10">
-          <div class="font-bold text-galatea mb-1">Etapa 3: Sintesis Cuantitativa</div>
+          <div class="font-bold text-galatea mb-1">Etapa 3: Ruta Institucional</div>
+          <p class="text-gray-500 leading-relaxed">Revision preliminar, Subdireccion, Comite de Etica, REDCap y GrupLAC.</p>
+        </div>
+        <div class="bg-white/60 rounded-lg p-3 border border-galatea/10">
+          <div class="font-bold text-galatea mb-1">Etapa 4: Sintesis Cuantitativa</div>
           <p class="text-gray-500 leading-relaxed">Forest Plot, Funnel Plot, tabla GRADE y exportacion de entregables.</p>
         </div>
       </div>
@@ -1370,11 +1374,11 @@ function showStage2TransitionCard() {
   card.innerHTML =
     '<div class="relative z-10">' +
       '<div class="text-4xl mb-4">&#x1F3E5;</div>' +
-      '<h3 class="text-xl font-black text-white mb-2">Etapa 2: Ruta de Presentacion FSFB</h3>' +
-      '<p class="text-sm text-white/60 mb-6 max-w-md mx-auto">Departamento de Cirugia — Fundacion Santa Fe de Bogota<br>10 pasos para someter tu proyecto de investigacion</p>' +
+      '<h3 class="text-xl font-black text-white mb-2">Etapa 2: Documentacion FSFB</h3>' +
+      '<p class="text-sm text-white/60 mb-6 max-w-md mx-auto">Departamento de Cirugia — Fundacion Santa Fe de Bogota<br>4 pasos: clasificacion, ruta, guias y documentacion pre-poblada</p>' +
       '<button onclick="startStage2()" class="confirm-btn bg-gradient-to-r from-galatea to-verde hover:shadow-lg text-white px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2 btn-attention">' +
         '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>' +
-        'Iniciar Ruta FSFB' +
+        'Iniciar Documentacion' +
       '</button>' +
     '</div>';
   views.appendChild(card);
@@ -1480,7 +1484,7 @@ function transitionToDashboard() {
 
 function goToLanding() {
   simulationAborted = true;
-  currentStage = 1; stage2Step = 0; stage2ProjectType = ''; stage2Route = ''; stage2DocChecks = {}; stage2HasExternalInvestigators = false; stage3Step = 0; stage3SimData = null;
+  currentStage = 1; stage2Step = 0; stage2ProjectType = ''; stage2Route = ''; stage2DocChecks = {}; stage2HasExternalInvestigators = false; stage3InstStep = 0; stage3Step = 0; stage3SimData = null;
   liveDocOpen = false; manuscriptItems = { picot:null, metodos:null, busqueda:null, prisma:null, protocolo:null, forest:null, funnel:null, grade:null, equator:null }; manuscriptFigureCount = 0;
   var ldp = $('liveDocPanel'); if (ldp) ldp.classList.remove('open');
   closeExportCenter();
@@ -1605,7 +1609,7 @@ function exportDossier() {
   doc += 'Investigador Principal\n';
   doc += 'Departamento de Cirugia — FSFB\n\n';
 
-  // ══ SECCION 3: RESULTADOS DEL METAANALISIS (Etapa 3) ══
+  // ══ SECCION 3: RESULTADOS DEL METAANALISIS (Etapa 4) ══
   doc += line;
   doc += '3. RESULTADOS DEL METAANALISIS\n';
   doc += thin;
@@ -1654,7 +1658,7 @@ function exportDossier() {
     doc += 'favorece la intervencion con un OR de ' + sd.pooled.or + ' [IC 95% ' + sd.pooled.or_lo + ' - ' + sd.pooled.or_hi + '], ';
     doc += 'p < 0.001 (Z = ' + sd.pooled.z + '). La heterogeneidad fue ' + (sd.i2 > 75 ? 'alta' : sd.i2 > 50 ? 'moderada' : 'baja') + ' (I² = ' + sd.i2 + '%).\n\n';
   } else {
-    doc += 'Metaanalisis pendiente de ejecucion (Etapa 3).\n\n';
+    doc += 'Metaanalisis pendiente de ejecucion (Etapa 4).\n\n';
   }
 
   doc += line;
@@ -2107,7 +2111,7 @@ function handlePicotEdit(key, value) {
   }, 800);
 
   // ── Golden Thread: PICOT → Stage 3 coherence ──
-  if (stage3SimData && (currentStage === 3 || currentSimPhase === 'done')) {
+  if (stage3SimData && (currentStage === 4 || currentSimPhase === 'done')) {
     var fieldNames = { P:'Poblacion', I:'Intervencion', C:'Comparador', O:'Outcome', S:'Setting', T:'Tiempo' };
     var fieldLabel = fieldNames[key] || key;
     setBubbleStatus('thinking', 'Auditoria de coherencia');
@@ -2370,9 +2374,7 @@ var stage2ConfidentialitySigned = false;
 
 var STAGE2_AGENTS = [
   { id:5, name:'Regulatorio', phases:[1,3], color:'#DC2626', desc:'Clasificacion del proyecto, ruta de aprobacion y guias institucionales', activeMsg:'Analizando tipo de proyecto y determinando ruta regulatoria...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75a48.36 48.36 0 0 0-7.5.582V21"/></svg>', check: function() { return stage2Step > 3; } },
-  { id:6, name:'Documental', phases:[4,5], color:'#2563EB', desc:'Preparacion de documentacion y revision preliminar interna', activeMsg:'Verificando completitud de documentos requeridos...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>', check: function() { return stage2Step > 5; } },
-  { id:7, name:'Subdireccion', phases:[6,7], color:'#7C3AED', desc:'Sometimiento a Subdireccion de Estudios Clinicos y respuesta', activeMsg:'Procesando sometimiento a Subdireccion de Estudios Clinicos...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>', check: function() { return stage2Step > 7; } },
-  { id:8, name:'Etica', phases:[8,10], color:'#059669', desc:'Comite de Etica, REDCap y registro en GrupLAC', activeMsg:'Preparando documentacion para Comite Corporativo de Etica...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>', check: function() { return stage2Step > 10; } },
+  { id:6, name:'Documental', phases:[4,4], color:'#2563EB', desc:'Preparacion de documentacion pre-poblada con datos de Etapa 1', activeMsg:'Generando documentos pre-poblados...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>', check: function() { return stage2Step > 4; } },
 ];
 
 var STAGE2_PHASE_BUTTONS = {
@@ -2387,7 +2389,7 @@ var STAGE2_PHASE_BUTTONS = {
 };
 
 var STAGE2_REASONING = {
-  transition: 'Excelente. La Etapa 1 ha finalizado con exito. Ahora debemos someter tu proyecto siguiendo la <strong>Ruta de Presentacion de Proyectos del Departamento de Cirugia – FSFB</strong>. Esta ruta tiene 10 pasos que te guiare uno por uno.',
+  transition: 'Excelente. La Etapa 1 ha finalizado con exito. Ahora debemos preparar toda la documentacion de tu proyecto siguiendo las <strong>guias del Departamento de Cirugia – FSFB</strong>. Son 4 pasos: clasificacion, ruta, guias y documentacion.',
   tipo_proyecto_pre: 'Primero necesito clasificar tu proyecto. Segun la naturaleza de tu investigacion, puede ser un Repositorio, un Protocolo, un estudio Multicentrico, un Ensayo Clinico, una Revision Sistematica, un Meta-analisis o un Reporte de Caso. Esta clasificacion determina el formato y los requisitos que debes cumplir.',
   tipo_proyecto_done: function(tipo) { return 'Proyecto clasificado como <strong>' + tipo + '</strong>. Antes de continuar, te recomiendo revisar el documento de viabilidad (FORMATO DE EVALUACION DE VIABILIDAD PARA IDEAS INICIALES DE INVESTIGACION) para confirmar que es factible su realizacion.'; },
   ruta_pre: 'Ahora debo determinar si tu proyecto requiere asesoria previa por la <strong>Subdireccion de Estudios Clinicos y Epidemiologia Clinica</strong>, o si puede pasar directamente al Comite de Etica. Esto depende del tipo de patrocinio, si hay intervenciones con medicamentos, y si es multicentrico.',
@@ -2618,8 +2620,8 @@ function startStage2() {
   simulationRunning = true;
   simulationAborted = false;
   // Update header for stage 2
-  $('projectTitle').textContent = 'Ruta de Presentacion — FSFB';
-  $('projectMeta').textContent = 'Etapa 2: Departamento de Cirugia | Paso 0 / 10';
+  $('projectTitle').textContent = 'Documentacion — FSFB';
+  $('projectMeta').textContent = 'Etapa 2: Documentacion | Paso 0 / 4';
   showBubble(); // Ensure bubble is visible for Stage 2
   renderStage2AgentGrid();
   runStage2Simulation();
@@ -2709,131 +2711,233 @@ async function runStage2Simulation() {
   await awaitStage2Confirmation('4 — Documentacion', 'documentacion');
   if (simulationAborted) return;
 
-  // ── PASO 5: Revision Preliminar ──
-  stage2Step = 5;
-  currentSimPhase = 's2_revision';
-  setBubbleStatus('thinking', 'Paso 5 — Revision Preliminar');
-  setBubbleThinking();
-  renderStage2Header();
-  renderStage2AgentGrid();
-  await delay(2000);
-  await bubbleTypewriter(STAGE2_REASONING.revision_pre, 32);
-  await delay(3000);
-  renderStage2DetailedViews();
-  await delay(2000);
-  // Show feedback
-  await bubbleTypewriter(STAGE2_REASONING.revision_feedback, 28);
-  await awaitStage2Confirmation('5 — Revision Preliminar', 'revision');
-  if (simulationAborted) return;
-
-  // ── PASO 6: Envio a Subdireccion ──
-  if (stage2Route === 'subdireccion') {
-    stage2Step = 6;
-    currentSimPhase = 's2_subdireccion';
-    setBubbleStatus('thinking', 'Paso 6 — Sometimiento');
-    setBubbleThinking();
-    renderStage2Header();
-    renderStage2AgentGrid();
-    await delay(2000);
-    await bubbleTypewriter(STAGE2_REASONING.subdireccion_pre, 32);
-    await delay(2000);
-    renderStage2DetailedViews();
-    // Animate submission progress
-    await animateSubmissionProgress();
-    if (simulationAborted) return;
-
-    // ── PASO 7: Respuesta y Ajustes ──
-    stage2Step = 7;
-    currentSimPhase = 's2_respuesta';
-    setBubbleStatus('thinking', 'Paso 7 — Respuesta');
-    renderStage2Header();
-    renderStage2AgentGrid();
-    await delay(3000);
-    await bubbleTypewriter(STAGE2_REASONING.subdireccion_done, 32);
-    await delay(1500);
-    renderStage2DetailedViews();
-    await awaitStage2Confirmation('7 — Respuesta Subdireccion', 'subdireccion');
-    if (simulationAborted) return;
-  } else {
-    stage2Step = 7; // Skip to after subdireccion
-  }
-
-  // ── PASO 8: Registro y Seguimiento ──
-  stage2Step = 8;
-  currentSimPhase = 's2_registro';
-  setBubbleStatus('thinking', 'Paso 8 — Registro');
-  setBubbleThinking();
-  renderStage2Header();
-  renderStage2AgentGrid();
-  await delay(2000);
-  await bubbleTypewriter(STAGE2_REASONING.etica_pre, 32);
-  await delay(2000);
-  renderStage2DetailedViews();
-  await delay(1500);
-
-  // ── PASO 9: Documentos Comite Etica ──
-  stage2Step = 9;
-  currentSimPhase = 's2_etica_docs';
-  setBubbleStatus('thinking', 'Paso 9 — Documentos Etica');
-  renderStage2Header();
-  renderStage2AgentGrid();
-  await delay(2000);
-  await bubbleTypewriter(STAGE2_REASONING.etica_docs, 32);
-  await delay(1500);
-  renderStage2DetailedViews();
-  await awaitStage2Confirmation('9 — Documentos Etica', 'etica');
-  if (simulationAborted) return;
-
-  // ── PASO 10: Ultimos Pasos ──
-  stage2Step = 10;
-  currentSimPhase = 's2_final';
-  setBubbleStatus('thinking', 'Paso 10 — Ultimos Pasos');
-  setBubbleThinking();
-  renderStage2Header();
-  renderStage2AgentGrid();
-  await delay(2000);
-  await bubbleTypewriter(STAGE2_REASONING.final_pre, 32);
-  await delay(2000);
-  renderStage2DetailedViews();
-  await delay(2000);
-  await bubbleTypewriter(STAGE2_REASONING.final_redcap, 28);
-  await delay(3000);
-
-  // Done
+  // Done — Stage 2 ends at Paso 4 (documentation)
   simulationRunning = false;
   currentSimPhase = 's2_done';
-  stage2Step = 11;
+  stage2Step = 5;
   setBubbleStatus('done', 'Etapa 2 Completada');
   await delay(1500);
-  await bubbleTypewriter(STAGE2_REASONING.final_done, 32);
+  await bubbleTypewriter('Documentacion completa. Ahora pasaremos a la <strong>Etapa 3: Ruta Institucional FSFB</strong>, donde tu proyecto sera revisado, sometido a la Subdireccion y al Comite de Etica.', 32);
   renderStage2Header();
   renderStage2AgentGrid();
   renderStage2DetailedViews();
 
-  // Show Stage 3 transition
-  await delay(3000);
-  await bubbleTypewriter(STAGE3_REASONING.transition, 28);
-  await delay(1500);
-  showStage3TransitionCard();
+  // Show Stage 3 (institutional route) transition
+  await delay(2000);
+  showStage3InstitutionalTransitionCard();
   } catch(e) { console.error('runStage2Simulation error:', e); showToast('Error Etapa 2: ' + e.message, 'error'); }
 }
 
-function showStage3TransitionCard() {
+function showStage3InstitutionalTransitionCard() {
+  var views = $('detailedViews');
+  var card = document.createElement('div');
+  card.className = 'stage-transition-card mb-6 fade-up';
+  card.innerHTML =
+    '<div class="relative z-10">' +
+      '<div class="text-4xl mb-4">&#x1F3E5;</div>' +
+      '<h3 class="text-xl font-black text-white mb-2">Etapa 3: Ruta Institucional FSFB</h3>' +
+      '<p class="text-sm text-white/60 mb-6 max-w-md mx-auto">Revision preliminar, Subdireccion de Estudios Clinicos, Comite de Etica, REDCap y GrupLAC<br>6 pasos para completar la ruta institucional</p>' +
+      '<button onclick="startStage3Institutional()" class="confirm-btn bg-gradient-to-r from-galatea to-verde hover:shadow-lg text-white px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2 btn-attention">' +
+        '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>' +
+        'Iniciar Ruta Institucional' +
+      '</button>' +
+    '</div>';
+  views.appendChild(card);
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function showStage4TransitionCard() {
   var views = $('detailedViews');
   var card = document.createElement('div');
   card.className = 'stage-transition-card mb-6 fade-up';
   card.innerHTML =
     '<div class="relative z-10">' +
       '<div class="text-4xl mb-4">&#x1F4CA;</div>' +
-      '<h3 class="text-xl font-black text-white mb-2">Etapa 3: Motor de Sintesis Cuantitativa</h3>' +
+      '<h3 class="text-xl font-black text-white mb-2">Etapa 4: Motor de Sintesis Cuantitativa</h3>' +
       '<p class="text-sm text-white/60 mb-6 max-w-md mx-auto">Forest Plot interactivo, Funnel Plot, Leave-One-Out y calificacion GRADE<br>6 pasos para completar el metaanalisis</p>' +
-      '<button onclick="startStage3()" class="confirm-btn bg-gradient-to-r from-galatea to-verde hover:shadow-lg text-white px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2 btn-attention">' +
+      '<button onclick="startStage4()" class="confirm-btn bg-gradient-to-r from-galatea to-verde hover:shadow-lg text-white px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2 btn-attention">' +
         '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>' +
         'Iniciar Metaanalisis' +
       '</button>' +
     '</div>';
   views.appendChild(card);
   card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ETAPA 3: RUTA INSTITUCIONAL (was Pasos 5-10 of old Stage 2)
+// ═══════════════════════════════════════════════════════════════
+var stage3InstStep = 0;
+
+var STAGE3_INST_AGENTS = [
+  { id:9, name:'Revision', phases:[1,2], color:'#2563EB', desc:'Revision preliminar interna y retroalimentacion', activeMsg:'Procesando revision preliminar...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>', check: function() { return stage3InstStep > 2; } },
+  { id:10, name:'Subdireccion', phases:[3,4], color:'#7C3AED', desc:'Sometimiento a Subdireccion de Estudios Clinicos y respuesta', activeMsg:'Procesando sometimiento a Subdireccion...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>', check: function() { return stage3InstStep > 4; } },
+  { id:11, name:'Etica', phases:[5,6], color:'#059669', desc:'Comite de Etica, REDCap y registro en GrupLAC', activeMsg:'Preparando documentacion para Comite de Etica...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>', check: function() { return stage3InstStep > 6; } },
+];
+
+function startStage3Institutional() {
+  currentStage = 3;
+  stage3InstStep = 0;
+  simulationRunning = true;
+  simulationAborted = false;
+  $('projectTitle').textContent = 'Ruta Institucional — FSFB';
+  $('projectMeta').textContent = 'Etapa 3: Ruta Institucional | Paso 0 / 6';
+  showBubble();
+  renderStage3InstAgentGrid();
+  runStage3InstSimulation();
+}
+
+function renderStage3InstHeader() {
+  var step = stage3InstStep || 0;
+  var pct = Math.min(100, Math.round((step / 6) * 100));
+  $('projectMeta').textContent = 'Etapa 3: Ruta Institucional | Paso ' + step + ' / 6';
+  var bar = $('progressBar'); if (bar) bar.style.width = pct + '%';
+  var pl = $('progressLabel'); if (pl) pl.textContent = pct + '%';
+  var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / 6';
+  var badge = $('statusBadge');
+  if (badge) {
+    var done = step > 6;
+    badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ' + (done ? 'bg-verde/10 text-verde' : 'bg-galatea/10 text-galatea');
+    badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full ' + (done ? 'bg-verde' : 'bg-galatea animate-pulse') + '"></span>' + (done ? 'Completado' : 'Etapa 3');
+  }
+}
+
+function renderStage3InstAgentGrid() {
+  var grid = $('agentGrid'); if (!grid) return;
+  var step = stage3InstStep || 0;
+  var html = '';
+  STAGE3_INST_AGENTS.forEach(function(a) {
+    var done = a.check(), active = simulationRunning && step >= a.phases[0] && step <= a.phases[1] && !done;
+    var bc = done ? 'border-verde/40 bg-verde/5' : active ? 'border-galatea/60 bg-galatea/5' : 'border-gray-200 bg-white/60';
+    var sd = done ? '<span class="w-2.5 h-2.5 rounded-full bg-verde inline-block"></span>' : active ? '<span class="w-2.5 h-2.5 rounded-full bg-galatea animate-ping inline-block"></span>' : '<span class="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block"></span>';
+    var st = done ? '<span class="text-verde font-bold text-xs">Completado</span>' : active ? '<span class="text-galatea font-bold text-xs">Procesando</span>' : '<span class="text-gray-400 text-xs">Pendiente</span>';
+    html += '<div class="rounded-xl border-2 p-4 transition-all duration-500 '+bc+'"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:'+a.color+'20;color:'+a.color+'">'+a.icon+'</div><div><div class="font-bold text-sm" style="color:'+a.color+'">'+a.name+'</div><div class="text-[10px] text-gray-500">Pasos '+a.phases[0]+'-'+a.phases[1]+'</div></div></div><div class="flex items-center gap-1.5">'+sd+st+'</div></div><p class="text-[11px] text-gray-500 leading-relaxed">'+(active?'<span class="working-dots">'+a.activeMsg+'</span>':a.desc)+'</p></div>';
+  });
+  grid.innerHTML = html;
+}
+
+function renderStage3InstDetailedViews() {
+  var v = $('detailedViews'); if (!v) return;
+  var html = '';
+
+  if (stage3InstStep >= 1) html += renderPreliminaryReview();
+  if (stage3InstStep >= 3 && stage2Route === 'subdireccion') {
+    html += renderSubmissionProgress();
+    if (stage3InstStep >= 4) html += renderSubdireccionResponse();
+  }
+  if (stage3InstStep >= 5) html += renderEthicsTimeline();
+  if (stage3InstStep >= 5 && stage2SimData) html += renderEthicsDocuments();
+  if (stage3InstStep >= 6) html += renderFinalSteps();
+
+  if (!html.trim()) html = '<div class="text-center py-16 text-gray-400"><div class="text-4xl mb-4">&#x1F3E5;</div><p class="text-lg font-semibold">Iniciando Ruta Institucional...</p></div>';
+  v.innerHTML = html;
+}
+
+async function runStage3InstSimulation() {
+  try {
+  // ── PASO 1: Revision Preliminar ──
+  stage3InstStep = 1;
+  currentSimPhase = 's3_revision';
+  setBubbleStatus('thinking', 'Paso 1 — Revision Preliminar');
+  setBubbleThinking();
+  renderStage3InstHeader();
+  renderStage3InstAgentGrid();
+  await delay(2000);
+  await bubbleTypewriter(STAGE2_REASONING.revision_pre, 32);
+  await delay(3000);
+  renderStage3InstDetailedViews();
+  await delay(2000);
+  await bubbleTypewriter(STAGE2_REASONING.revision_feedback, 28);
+  await awaitStage2Confirmation('1 — Revision Preliminar', 'revision');
+  if (simulationAborted) return;
+
+  // ── PASO 2: Ajustes ──
+  stage3InstStep = 2;
+  currentSimPhase = 's3_ajustes';
+  renderStage3InstHeader();
+  renderStage3InstAgentGrid();
+
+  // ── PASO 3: Envio a Subdireccion ──
+  if (stage2Route === 'subdireccion') {
+    stage3InstStep = 3;
+    currentSimPhase = 's3_subdireccion';
+    setBubbleStatus('thinking', 'Paso 3 — Sometimiento');
+    setBubbleThinking();
+    renderStage3InstHeader();
+    renderStage3InstAgentGrid();
+    await delay(2000);
+    await bubbleTypewriter(STAGE2_REASONING.subdireccion_pre, 32);
+    await delay(2000);
+    renderStage3InstDetailedViews();
+    await animateSubmissionProgress();
+    if (simulationAborted) return;
+
+    // ── PASO 4: Respuesta y Ajustes ──
+    stage3InstStep = 4;
+    currentSimPhase = 's3_respuesta';
+    setBubbleStatus('thinking', 'Paso 4 — Respuesta');
+    renderStage3InstHeader();
+    renderStage3InstAgentGrid();
+    await delay(3000);
+    await bubbleTypewriter(STAGE2_REASONING.subdireccion_done, 32);
+    await delay(1500);
+    renderStage3InstDetailedViews();
+    await awaitStage2Confirmation('4 — Respuesta Subdireccion', 'subdireccion');
+    if (simulationAborted) return;
+  } else {
+    stage3InstStep = 4;
+  }
+
+  // ── PASO 5: Comite de Etica ──
+  stage3InstStep = 5;
+  currentSimPhase = 's3_etica';
+  setBubbleStatus('thinking', 'Paso 5 — Comite de Etica');
+  setBubbleThinking();
+  renderStage3InstHeader();
+  renderStage3InstAgentGrid();
+  await delay(2000);
+  await bubbleTypewriter(STAGE2_REASONING.etica_pre, 32);
+  await delay(2000);
+  renderStage3InstDetailedViews();
+  await delay(1500);
+  await bubbleTypewriter(STAGE2_REASONING.etica_docs, 32);
+  await delay(1500);
+  renderStage3InstDetailedViews();
+  await awaitStage2Confirmation('5 — Comite de Etica', 'etica');
+  if (simulationAborted) return;
+
+  // ── PASO 6: Ultimos Pasos (REDCap, GrupLAC) ──
+  stage3InstStep = 6;
+  currentSimPhase = 's3_final';
+  setBubbleStatus('thinking', 'Paso 6 — Ultimos Pasos');
+  setBubbleThinking();
+  renderStage3InstHeader();
+  renderStage3InstAgentGrid();
+  await delay(2000);
+  await bubbleTypewriter(STAGE2_REASONING.final_pre, 32);
+  await delay(2000);
+  renderStage3InstDetailedViews();
+  await delay(2000);
+  await bubbleTypewriter(STAGE2_REASONING.final_redcap, 28);
+  await delay(3000);
+
+  // Done
+  simulationRunning = false;
+  currentSimPhase = 's3_done';
+  stage3InstStep = 7;
+  setBubbleStatus('done', 'Etapa 3 Completada');
+  await delay(1500);
+  await bubbleTypewriter(STAGE2_REASONING.final_done, 32);
+  renderStage3InstHeader();
+  renderStage3InstAgentGrid();
+  renderStage3InstDetailedViews();
+
+  // Show Stage 4 (meta-analysis) transition
+  await delay(3000);
+  await bubbleTypewriter(STAGE3_REASONING.transition, 28);
+  await delay(1500);
+  showStage4TransitionCard();
+  } catch(e) { console.error('runStage3InstSimulation error:', e); showToast('Error Etapa 4: ' + e.message, 'error'); }
 }
 
 // Await project type selection (promise-based)
@@ -2921,14 +3025,14 @@ function animateSubmissionProgress() {
 
 function renderStage2Header() {
   var step = stage2Step || 0;
-  var pct = Math.min(100, Math.round((step / 10) * 100));
-  $('projectMeta').textContent = 'Etapa 2: Departamento de Cirugia | Paso ' + step + ' / 10';
+  var pct = Math.min(100, Math.round((step / 4) * 100));
+  $('projectMeta').textContent = 'Etapa 2: Documentacion | Paso ' + step + ' / 4';
   var bar = $('progressBar'); if (bar) bar.style.width = pct + '%';
   var pl = $('progressLabel'); if (pl) pl.textContent = pct + '%';
-  var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / 10';
+  var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / 4';
   var badge = $('statusBadge');
   if (badge) {
-    var done = step > 10;
+    var done = step > 4;
     badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ' + (done ? 'bg-verde/10 text-verde' : 'bg-galatea/10 text-galatea');
     badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full ' + (done ? 'bg-verde' : 'bg-galatea animate-pulse') + '"></span>' + (done ? 'Completado' : 'Etapa 2');
   }
@@ -2986,33 +3090,7 @@ function renderStage2DetailedViews() {
     html += renderDocumentChecklist();
   }
 
-  // Paso 5: Preliminary review
-  if (stage2Step >= 5) {
-    html += renderPreliminaryReview();
-  }
-
-  // Paso 6-7: Subdireccion
-  if (stage2Step >= 6 && stage2Route === 'subdireccion') {
-    html += renderSubmissionProgress();
-    if (stage2Step >= 7) {
-      html += renderSubdireccionResponse();
-    }
-  }
-
-  // Paso 8-9: Ethics timeline + docs
-  if (stage2Step >= 8) {
-    html += renderEthicsTimeline();
-  }
-  if (stage2Step >= 9 && stage2SimData) {
-    html += renderEthicsDocuments();
-  }
-
-  // Paso 10: Final steps
-  if (stage2Step >= 10) {
-    html += renderFinalSteps();
-  }
-
-  if (!html.trim()) html = '<div class="text-center py-16 text-gray-400"><div class="text-4xl mb-4">&#x1F3E5;</div><p class="text-lg font-semibold">Iniciando Ruta FSFB...</p></div>';
+  if (!html.trim()) html = '<div class="text-center py-16 text-gray-400"><div class="text-4xl mb-4">&#x1F4CB;</div><p class="text-lg font-semibold">Iniciando Documentacion...</p></div>';
   v.innerHTML = html;
 }
 
@@ -3429,7 +3507,7 @@ function toggleDocExpand(idx) {
   if (stage2DocExpanded[idx] && !stage2DocPrefilled[idx]) {
     prefillFromStage1(idx);
   }
-  renderStage2();
+  if(currentStage===3){renderStage3InstDetailedViews();}else{renderStage2DetailedViews();}
 }
 
 function saveDocField(idx, key, value) {
@@ -3639,7 +3717,7 @@ function toggleDocViewMode(idx) {
   } else {
     stage2DocViewMode[idx] = 'plaintext';
   }
-  renderStage2();
+  if(currentStage===3){renderStage3InstDetailedViews();}else{renderStage2DetailedViews();}
 }
 
 function galateaAiAssist(idx) {
@@ -3716,9 +3794,9 @@ function renderDocumentChecklist() {
 
       // Toggle tabs: [Texto Plano] [Campos]
       h += '<div class="flex items-center gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">';
-      h += '<button onclick="event.stopPropagation(); stage2DocViewMode[' + idx + ']=\'plaintext\'; renderStage2();" class="px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ' + (viewMode === 'plaintext' ? 'bg-white text-galatea shadow-sm' : 'text-gray-500 hover:text-gray-700') + '">';
+      h += '<button onclick="event.stopPropagation(); stage2DocViewMode[' + idx + ']=\'plaintext\'; if(currentStage===3){renderStage3InstDetailedViews();}else{renderStage2DetailedViews();}" class="px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ' + (viewMode === 'plaintext' ? 'bg-white text-galatea shadow-sm' : 'text-gray-500 hover:text-gray-700') + '">';
       h += '<svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>Texto Plano</button>';
-      h += '<button onclick="event.stopPropagation(); if(stage2DocViewMode[' + idx + ']!==\'fields\'){var ta=document.getElementById(\'plaintextDoc_' + idx + '\');if(ta)savePlainTextDoc(' + idx + ',ta.value);} stage2DocViewMode[' + idx + ']=\'fields\'; renderStage2();" class="px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ' + (viewMode === 'fields' ? 'bg-white text-galatea shadow-sm' : 'text-gray-500 hover:text-gray-700') + '">';
+      h += '<button onclick="event.stopPropagation(); if(stage2DocViewMode[' + idx + ']!==\'fields\'){var ta=document.getElementById(\'plaintextDoc_' + idx + '\');if(ta)savePlainTextDoc(' + idx + ',ta.value);} stage2DocViewMode[' + idx + ']=\'fields\'; if(currentStage===3){renderStage3InstDetailedViews();}else{renderStage2DetailedViews();}" class="px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ' + (viewMode === 'fields' ? 'bg-white text-galatea shadow-sm' : 'text-gray-500 hover:text-gray-700') + '">';
       h += '<svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"/></svg>Campos</button>';
       h += '</div>';
 
@@ -3984,7 +4062,7 @@ var STAGE3_PHASE_BUTTONS = {
 };
 
 var STAGE3_REASONING = {
-  transition: 'Excelente. La ruta institucional FSFB esta completa. Ahora viene la etapa final y mas poderosa: el <strong>Motor de Sintesis Cuantitativa</strong>. Aqui es donde los numeros hablan — voy a ejecutar el metaanalisis completo de los estudios incluidos.',
+  transition: 'Excelente. La ruta institucional FSFB esta completa. Ahora viene la etapa final: el <strong>Motor de Sintesis Cuantitativa (Etapa 4)</strong>. Aqui es donde los numeros hablan — voy a ejecutar el metaanalisis completo de los estudios incluidos.',
   extraccion_pre: 'Iniciando la extraccion de datos cuantitativos. Para cada estudio incluido en la revision, voy a identificar: variables dicotomicas (eventos y totales por grupo) y variables continuas (media, desviacion estandar y tamaño de muestra).',
   extraccion_done: function(n) { return 'He extraido los datos crudos de los <strong>' + n + ' estudios</strong>. Procedo a estandarizar las medidas de efecto (Odds Ratio para variables dicotomicas, Diferencia de Medias para continuas).'; },
   heterogeneidad_pre: 'Antes de combinar los datos, necesito evaluar si los estudios son comparables. Voy a calcular el estadistico I² para medir la heterogeneidad entre los estudios.',
@@ -3997,7 +4075,7 @@ var STAGE3_REASONING = {
   sensibilidad_done: function(removed, stable) { return 'He retirado el estudio de <strong>' + removed + '</strong> por tener el mayor impacto; el diamante se mantiene <strong>' + (stable ? 'estable' : 'inestable') + '</strong>, lo que ' + (stable ? 'confirma la robustez del hallazgo.' : 'sugiere cautela en la interpretacion.'); },
   grade_pre: 'Ultimo paso: calificar la certeza de la evidencia con el sistema GRADE. Evaluare 5 dominios: riesgo de sesgo, inconsistencia, evidencia indirecta, imprecision y sesgo de publicacion.',
   grade_done: function(level, or, lo, hi) { return 'Con una certeza de evidencia <strong>' + level + '</strong> (GRADE), el metaanalisis favorece la intervencion con un <strong>OR de ' + or + ' [IC 95% ' + lo + ' – ' + hi + '], p < 0.001</strong>. La investigacion esta completa.'; },
-  final: 'Las 3 etapas han finalizado. Tu investigacion ha recorrido el ciclo completo: desde la pregunta PICOT hasta la sintesis cuantitativa con metaanalisis. El manuscrito PRISMA esta listo para exportacion.',
+  final: 'Las 4 etapas han finalizado. Tu investigacion ha recorrido el ciclo completo: desde la pregunta PICOT hasta la sintesis cuantitativa con metaanalisis. El manuscrito PRISMA esta listo para exportacion.',
 };
 
 function generateStage3SimData() {
@@ -4060,14 +4138,15 @@ function generateStage3SimData() {
 // ETAPA 3: SIMULATION ENGINE
 // ═══════════════════════════════════════════════════════════════
 
-function startStage3() {
-  currentStage = 3;
+function startStage3() { startStage4(); } // backwards compat
+function startStage4() {
+  currentStage = 4;
   stage3Step = 0;
   stage3SimData = generateStage3SimData();
   simulationRunning = true;
   simulationAborted = false;
   $('projectTitle').textContent = 'Motor de Sintesis Cuantitativa';
-  $('projectMeta').textContent = 'Etapa 3: Metaanalisis | Paso 0 / 6';
+  $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso 0 / 6';
   renderStage3AgentGrid();
   runStage3Simulation();
 }
@@ -4208,7 +4287,7 @@ async function runStage3Simulation() {
   renderLiveDocPages(); // Final update with all Stage 3 data
   await delay(2000);
   await bubbleTypewriter('He formateado tu proyecto bajo estandares <strong>PRISMA 2020</strong> y <strong>GRADE</strong>. El dossier esta listo para ser enviado a <strong>investigacion.cirugia@fsfb.org.co</strong>.', 28);
-  } catch(e) { console.error('runStage3Simulation error:', e); showToast('Error Etapa 3: ' + e.message, 'error'); }
+  } catch(e) { console.error('runStage3Simulation error:', e); showToast('Error Etapa 4: ' + e.message, 'error'); }
 }
 
 function animateFunnelPoints() {
@@ -4229,7 +4308,7 @@ function animateFunnelPoints() {
 function renderStage3Header() {
   var step = stage3Step || 0;
   var pct = Math.min(100, Math.round((step / 6) * 100));
-  $('projectMeta').textContent = 'Etapa 3: Metaanalisis | Paso ' + step + ' / 6';
+  $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso ' + step + ' / 6';
   var bar = $('progressBar'); if (bar) bar.style.width = pct + '%';
   var pl = $('progressLabel'); if (pl) pl.textContent = pct + '%';
   var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / 6';
@@ -4237,7 +4316,7 @@ function renderStage3Header() {
   if (badge) {
     var done = step > 6;
     badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ' + (done ? 'bg-verde/10 text-verde' : 'bg-galatea/10 text-galatea');
-    badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full ' + (done ? 'bg-verde' : 'bg-galatea animate-pulse') + '"></span>' + (done ? 'Completado' : 'Etapa 3');
+    badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full ' + (done ? 'bg-verde' : 'bg-galatea animate-pulse') + '"></span>' + (done ? 'Completado' : 'Etapa 4');
   }
 }
 
@@ -4602,7 +4681,7 @@ function renderMetaConclusion(sd) {
   h += '<div class="bg-gradient-to-br from-verde/10 via-galatea/10 to-amber-50 border-2 border-verde/30 rounded-2xl p-8 text-center mb-6 fade-up">';
   h += '<div class="text-5xl mb-3">&#x1F3C6;</div>';
   h += '<h3 class="text-xl font-black text-gray-900 mb-2">Investigacion Completa</h3>';
-  h += '<p class="text-sm text-gray-600 max-w-lg mx-auto">Las 3 etapas han finalizado. Tu investigacion ha recorrido el ciclo completo: Metodologia (Etapa 1) &rarr; Ruta Institucional FSFB (Etapa 2) &rarr; Sintesis Cuantitativa (Etapa 3).</p>';
+  h += '<p class="text-sm text-gray-600 max-w-lg mx-auto">Las 4 etapas han finalizado. Tu investigacion ha recorrido el ciclo completo: Metodologia (Etapa 1) &rarr; Documentacion (Etapa 2) &rarr; Ruta Institucional FSFB (Etapa 3) &rarr; Sintesis Cuantitativa (Etapa 4).</p>';
   h += '<button onclick="showExportCenter()" class="mt-4 bg-gradient-to-r from-galatea to-verde text-white px-8 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2">';
   h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>';
   h += 'Centro de Exportacion (4 formatos)</button>';
@@ -4795,14 +4874,14 @@ function renderLiveDocPages() {
   h += '<div class="doc-page"><div class="doc-draft-badge">Borrador Galatea AI</div>';
   h += '<div class="doc-page-header"><div class="doc-institution">Fundacion Santa Fe de Bogota</div><div class="doc-dept">Departamento de Cirugia | Protocolo de Investigacion</div></div>';
   h += '<div class="doc-section-title">6. Resultados del Metaanalisis</div><div id="docSection_forest">';
-  h += manuscriptItems.forest || '<div class="doc-section-empty">Pendiente &mdash; Se llenara en Etapa 3 (Forest Plot)</div>';
+  h += manuscriptItems.forest || '<div class="doc-section-empty">Pendiente &mdash; Se llenara en Etapa 4 (Forest Plot)</div>';
   h += '</div><div id="docSection_funnel" style="margin-top:12px">' + (manuscriptItems.funnel || '') + '</div></div>';
 
   // Page 5: GRADE + Conclusiones
   h += '<div class="doc-page"><div class="doc-draft-badge">Borrador Galatea AI</div>';
   h += '<div class="doc-page-header"><div class="doc-institution">Fundacion Santa Fe de Bogota</div><div class="doc-dept">Departamento de Cirugia | Protocolo de Investigacion</div></div>';
   h += '<div class="doc-section-title">7. Certeza de la Evidencia (GRADE)</div><div id="docSection_grade">';
-  h += manuscriptItems.grade || '<div class="doc-section-empty">Pendiente &mdash; Se llenara en Etapa 3 (Tabla GRADE)</div>';
+  h += manuscriptItems.grade || '<div class="doc-section-empty">Pendiente &mdash; Se llenara en Etapa 4 (Tabla GRADE)</div>';
   h += '</div><div class="doc-section-title">8. Conclusiones</div><div id="docSection_conclusion">';
   if (stage3SimData) {
     h += '<div class="doc-section-content">Con una certeza de evidencia ' + stage3SimData.certainty + ' (GRADE), el metaanalisis de ' + stage3SimData.studies.length + ' estudios favorece la intervencion con un OR de ' + stage3SimData.pooled.or + ' [IC 95% ' + stage3SimData.pooled.or_lo + ' - ' + stage3SimData.pooled.or_hi + '], p &lt; 0.001.</div>';
