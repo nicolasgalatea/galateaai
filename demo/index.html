@@ -1578,7 +1578,8 @@ function exportDossier() {
   doc += '  "' + q + '"\n\n';
 
   var routeLabel = stage2Route === 'subdireccion' ? 'Via Subdireccion de Estudios Clinicos' : 'Presentacion directa';
-  var typeLabel = stage2ProjectType === 'protocolo' ? 'Protocolo de Investigacion' : stage2ProjectType === 'repositorio' ? 'Repositorio / Base de Datos' : stage2ProjectType === 'multicentrico' ? 'Estudio Multicentrico' : 'Otro tipo de proyecto';
+  var _typeLabels = { protocolo: 'Protocolo de Investigacion', repositorio: 'Repositorio / Base de Datos', multicentrico: 'Estudio Multicentrico', ensayo_clinico: 'Ensayo Clinico', revision_sistematica: 'Revision Sistematica', metaanalisis: 'Meta-analisis', reporte_caso: 'Reporte de Caso' };
+  var typeLabel = _typeLabels[stage2ProjectType] || 'Proyecto de Investigacion';
   doc += 'TIPO DE PROYECTO: ' + typeLabel + '\n';
   doc += 'RUTA: ' + routeLabel + '\n\n';
 
@@ -2387,7 +2388,7 @@ var STAGE2_PHASE_BUTTONS = {
 
 var STAGE2_REASONING = {
   transition: 'Excelente. La Etapa 1 ha finalizado con exito. Ahora debemos someter tu proyecto siguiendo la <strong>Ruta de Presentacion de Proyectos del Departamento de Cirugia – FSFB</strong>. Esta ruta tiene 10 pasos que te guiare uno por uno.',
-  tipo_proyecto_pre: 'Primero necesito clasificar tu proyecto. Segun la naturaleza de tu investigacion, puede ser un Repositorio, un Protocolo especifico, un estudio Multicentrico u otro tipo. Esta clasificacion determina el formato y los requisitos que debes cumplir.',
+  tipo_proyecto_pre: 'Primero necesito clasificar tu proyecto. Segun la naturaleza de tu investigacion, puede ser un Repositorio, un Protocolo, un estudio Multicentrico, un Ensayo Clinico, una Revision Sistematica, un Meta-analisis o un Reporte de Caso. Esta clasificacion determina el formato y los requisitos que debes cumplir.',
   tipo_proyecto_done: function(tipo) { return 'Proyecto clasificado como <strong>' + tipo + '</strong>. Antes de continuar, te recomiendo revisar el documento de viabilidad (FORMATO DE EVALUACION DE VIABILIDAD PARA IDEAS INICIALES DE INVESTIGACION) para confirmar que es factible su realizacion.'; },
   ruta_pre: 'Ahora debo determinar si tu proyecto requiere asesoria previa por la <strong>Subdireccion de Estudios Clinicos y Epidemiologia Clinica</strong>, o si puede pasar directamente al Comite de Etica. Esto depende del tipo de patrocinio, si hay intervenciones con medicamentos, y si es multicentrico.',
   ruta_subdireccion: 'Tu proyecto <strong>requiere asesoria previa</strong> por la Subdireccion de Estudios Clinicos. Esto aplica porque cumple al menos uno de los criterios: patrocinio externo, intervencion con medicamentos/dispositivos, caracter multicentrico, o toma de muestras.',
@@ -2411,14 +2412,21 @@ var STAGE2_PROJECT_TYPES = [
   { key: 'repositorio', name: 'Repositorio', desc: 'Bases de datos prospectivas o retrospectivas para investigacion continua', icon: '&#x1F4BE;', color: 'blue' },
   { key: 'protocolo', name: 'Protocolo', desc: 'Proyecto especifico con pregunta de investigacion, hipotesis y metodologia definida', icon: '&#x1F4CB;', color: 'indigo' },
   { key: 'multicentrico', name: 'Estudio Multicentrico', desc: 'Investigacion colaborativa entre multiples instituciones', icon: '&#x1F3E5;', color: 'purple' },
-  { key: 'otro', name: 'Otro', desc: 'Ensayos clinicos, revisiones sistematicas, metaanalisis y reportes de caso', icon: '&#x1F52C;', color: 'amber' },
+  { key: 'ensayo_clinico', name: 'Ensayo Clinico', desc: 'Estudio experimental con intervencion terapeutica, farmacologica o quirurgica en humanos', icon: '&#x1F489;', color: 'red' },
+  { key: 'revision_sistematica', name: 'Revision Sistematica', desc: 'Sintesis rigurosa de la evidencia disponible con metodologia reproducible (PRISMA)', icon: '&#x1F4DA;', color: 'teal' },
+  { key: 'metaanalisis', name: 'Meta-analisis', desc: 'Analisis estadistico cuantitativo que combina resultados de multiples estudios primarios', icon: '&#x1F4CA;', color: 'green' },
+  { key: 'reporte_caso', name: 'Reporte de Caso', desc: 'Descripcion detallada de un caso clinico o serie de casos con valor educativo o cientifico', icon: '&#x1F4DD;', color: 'amber' },
 ];
 
 function generateStage2SimData(projectType, route) {
   var isProtocolo = projectType === 'protocolo';
   var isMulticentrico = projectType === 'multicentrico';
   var isRepositorio = projectType === 'repositorio';
-  var isOtro = projectType === 'otro';
+  var isEnsayoClinico = projectType === 'ensayo_clinico';
+  var isRevisionSistematica = projectType === 'revision_sistematica';
+  var isMetaanalisis = projectType === 'metaanalisis';
+  var isReporteCaso = projectType === 'reporte_caso';
+  var isOtro = isEnsayoClinico || isRevisionSistematica || isMetaanalisis || isReporteCaso;
 
   var guias = [];
   if (route === 'subdireccion') {
@@ -2522,15 +2530,15 @@ function generateStage2SimData(projectType, route) {
   var docsEticaExtra = [];
   if (route === 'subdireccion') {
     docsEticaExtra = [
-      { name: 'Documentos para experimentos clinicos', code: 'DC-CCEI-F-01 Lista documentos para experimentos clinicos.docx', required: isOtro },
-      { name: 'Consentimiento para investigacion clinica experimental', code: 'DC-CCEI-IT-006 Instructivo ICF Investigacion Clinica Experimental V2.docx', required: isOtro },
+      { name: 'Documentos para experimentos clinicos', code: 'DC-CCEI-F-01 Lista documentos para experimentos clinicos.docx', required: isEnsayoClinico },
+      { name: 'Consentimiento para investigacion clinica experimental', code: 'DC-CCEI-IT-006 Instructivo ICF Investigacion Clinica Experimental V2.docx', required: isEnsayoClinico },
       { name: 'Concepto metodologico de la Subdireccion', code: '', required: true, desc: 'Emitido por la Subdireccion de Estudios Clinicos' },
       { name: 'Formato de asesoria metodologica', code: '', required: true, desc: 'Expedido por la Subdireccion de Estudios Clinicos' },
       { name: 'Acuerdo de confidencialidad / cooperacion / contrato', code: '', required: stage2HasExternalInvestigators || isMulticentrico },
     ];
   }
 
-  var ethicsDocs = isRepositorio ? docsEticaBD : (isOtro && projectType === 'reporte_caso') ? docsEticaReporte : docsEticaProtocolo;
+  var ethicsDocs = isRepositorio ? docsEticaBD : isReporteCaso ? docsEticaReporte : docsEticaProtocolo;
 
   var feedbackItems = [
     'Ajustar la Matriz de Variables para incluir el tiempo de seguimiento definido en el campo Outcome (O) del PICOT de la Etapa 1.',
@@ -3013,13 +3021,13 @@ function renderProjectTypeSelector() {
   var h = '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 s2-appear">';
   h += '<div class="flex items-center gap-3 mb-5"><div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"><svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z"/></svg></div>';
   h += '<div><h3 class="font-bold text-gray-900">Paso 1 — Tipo de Proyecto</h3><p class="text-[10px] text-gray-400">Selecciona la categoria de tu investigacion</p></div></div>';
-  h += '<div class="grid grid-cols-2 gap-4">';
+  h += '<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">';
   STAGE2_PROJECT_TYPES.forEach(function(pt) {
     var sel = stage2ProjectType === pt.key;
     h += '<div class="project-type-card relative ' + (sel ? 'selected' : '') + '" onclick="selectProjectType(\'' + pt.key + '\')">';
-    h += '<div class="text-3xl mb-2">' + pt.icon + '</div>';
-    h += '<div class="font-bold text-sm text-gray-900 mb-1">' + pt.name + '</div>';
-    h += '<div class="text-[11px] text-gray-500 leading-relaxed">' + pt.desc + '</div>';
+    h += '<div class="text-2xl mb-1.5">' + pt.icon + '</div>';
+    h += '<div class="font-bold text-[13px] text-gray-900 mb-1">' + pt.name + '</div>';
+    h += '<div class="text-[10px] text-gray-500 leading-relaxed">' + pt.desc + '</div>';
     h += '</div>';
   });
   h += '</div>';
