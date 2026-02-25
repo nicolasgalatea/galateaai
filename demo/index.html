@@ -920,7 +920,6 @@ var gatekeeperChecks = [false, false, false], gatekeeperDone = false;
 var pendingConfirmResolve = null;
 var currentSimPhase = '';
 var finerSliderValues = null;
-var folderOpen = false;
 var bubbleMinimized = false;
 var lastFinerWarningKey = '';
 
@@ -1727,7 +1726,6 @@ function renderDetailedViews() {
   if (pd.planteamiento) html += renderPlanteamiento(pd);
   if (pd.picot) html += renderFrameworkSection(pd);
   if (pd.finer_results) { html += renderFinerRadar(pd); if (pd.hypothesis) html += renderHypothesis(pd); }
-  if (pd.folder_structure) html += renderFolderTree(pd);
   if (pd.descriptor_mapping) html += renderDescriptorTags(pd);
   if (pd.search_registry) html += renderSearchRegistry(pd);
   // PRISMA y Tabla de Extraccion se muestran solo en entregables finales
@@ -1908,16 +1906,6 @@ function renderFinerRadar(pd) {
 
 function renderHypothesis(pd) {
   var h=pd.hypothesis||{};return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><h3 class="font-bold text-gray-900 mb-4">Hipotesis</h3><div class="grid md:grid-cols-2 gap-4"><div class="p-4 rounded-xl bg-blue-50 border border-blue-100"><div class="text-[10px] font-bold text-blue-600 uppercase mb-1">H&#x2080; Nula</div><div class="text-sm text-gray-800" contenteditable="true" onblur="debounceSave(\'hypothesis.null\',this.textContent)">'+esc(h.null_hypothesis||'')+'</div></div><div class="p-4 rounded-xl bg-amber-50 border border-amber-100"><div class="text-[10px] font-bold text-amber-600 uppercase mb-1">H&#x2081; Alternativa</div><div class="text-sm text-gray-800" contenteditable="true" onblur="debounceSave(\'hypothesis.alt\',this.textContent)">'+esc(h.alternative_hypothesis||'')+'</div></div></div>'+(h.type?'<div class="mt-3 text-xs text-gray-500">Tipo: <strong>'+esc(h.type)+'</strong></div>':'')+'</div>';
-}
-
-function renderFolderTree(pd) {
-  var fs=pd.folder_structure||[];
-  var h='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-3"><svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"/></svg><h3 class="font-bold text-gray-900">Estructura OneDrive</h3></div>';
-  h+='<button onclick="toggleFolder()" id="folderToggleBtn" class="flex items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-all">'+(folderOpen?'Cerrar':'Abrir Carpeta')+'</button></div>';
-  h+='<div class="folder-contents '+(folderOpen?'open':'')+'" id="folderContents"><div class="folder-tree space-y-2">';
-  fs.forEach(function(f){h+='<div class="folder-item p-3 border border-gray-100 rounded-xl"><div class="flex items-center gap-2 font-bold text-sm text-'+(f.color||'gray')+'-700">'+(f.icon||'')+' '+esc(f.name)+'</div><div class="ml-7 mt-1.5 flex flex-wrap gap-1.5">';(f.files||[]).forEach(function(fi){h+='<span class="px-2 py-0.5 rounded-md bg-gray-100 text-[10px] text-gray-600">'+esc(fi)+'</span>';});h+='</div></div>';});
-  h+='</div></div></div>';
-  return h;
 }
 
 // ── Descriptors as editable TAGS ──
@@ -2259,14 +2247,6 @@ function cycleBias(idx) {
   if (rowId) {
     sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
   }
-}
-
-function toggleFolder() {
-  folderOpen = !folderOpen;
-  var el = $('folderContents');
-  var btn = $('folderToggleBtn');
-  if (el) el.classList.toggle('open', folderOpen);
-  if (btn) btn.textContent = folderOpen ? 'Cerrar' : 'Abrir Carpeta';
 }
 
 function removeDescriptor(idx, type) {
