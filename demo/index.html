@@ -3386,16 +3386,21 @@ function getDocTemplateSections(docName) {
       {label:'Fecha de finalizacion', key:'fin', placeholder:'DD/MM/AAAA'},
       {label:'Actividades y tiempos', key:'actividades', placeholder:'Actividad 1: Revision bibliografica  |  Mes 1-2\nActividad 2: Sometimiento CEI  |  Mes 2-3\nActividad 3: Reclutamiento de pacientes  |  Mes 3-6\nActividad 4: Recoleccion de datos  |  Mes 4-8\nActividad 5: Analisis estadistico  |  Mes 8-10\nActividad 6: Redaccion de manuscrito  |  Mes 10-11\nActividad 7: Publicacion / divulgacion  |  Mes 11-12', large:true}
     ]},
-    { id:'crono_ppto', title:'Presupuesto', fields:[
-      {label:'Personal (investigador principal) — valor hora, dedicacion', key:'personal_ip', placeholder:'Valor hora: $___  |  Horas/semana: ___  |  Meses: ___  |  Total: $___'},
-      {label:'Personal (coinvestigadores)', key:'personal_coinv', placeholder:'Valor hora: $___  |  Horas/semana: ___  |  Meses: ___  |  Total: $___'},
-      {label:'Personal (asistentes de investigacion)', key:'personal_asist', placeholder:'Valor hora: $___  |  Horas/semana: ___  |  Meses: ___  |  Total: $___'},
-      {label:'Equipos / tecnologia', key:'equipos', placeholder:'Descripcion: ___  |  Valor: $___  |  Justificacion: ___'},
-      {label:'Materiales e insumos', key:'materiales', placeholder:'Descripcion: ___  |  Valor: $___  |  Justificacion: ___'},
-      {label:'Publicacion en revista', key:'publicacion', placeholder:'Revista objetivo: ___  |  Costo estimado: $___'},
-      {label:'Otros costos directos', key:'otros', placeholder:''},
-      {label:'Costos indirectos', key:'indirectos', placeholder:''},
-      {label:'TOTAL ESTIMADO', key:'total', placeholder:'$___'}
+    { id:'ppto_datos', title:'DATOS INICIALES', fields:[
+      {label:'Cantidad Participantes o Revision HC', key:'cant_participantes', placeholder:'Und'},
+      {label:'Tiempo (meses)', key:'tiempo_meses', placeholder:'Mes'},
+      {label:'Tiempo (semanas)', key:'tiempo_semanas', placeholder:'Semana'},
+      {label:'Tiempo Horas (por semana)', key:'tiempo_horas', placeholder:'Hora'}
+    ]},
+    { id:'ppto_detalle', title:'PRESUPUESTO — Detalle por actividad', fields:[
+      {label:'Planteamiento del problema — Cant Horas | Valor Hora | Total', key:'ppto_planteamiento', placeholder:'Cant Horas: ___  |  Valor Hora: $___  |  Total: $___'},
+      {label:'Pregunta de investigacion — Cant Horas | Valor Hora | Total', key:'ppto_pregunta', placeholder:'Cant Horas: ___  |  Valor Hora: $___  |  Total: $___'},
+      {label:'Marco teorico — Cant Horas | Valor Hora | Total', key:'ppto_marco', placeholder:'Cant Horas: ___  |  Valor Hora: $___  |  Total: $___'},
+      {label:'Objetivos — Cant Horas | Valor Hora | Total', key:'ppto_objetivos', placeholder:'Cant Horas: ___  |  Valor Hora: $___  |  Total: $___'},
+      {label:'Metodologia — Cant Horas | Valor Hora | Total', key:'ppto_metodologia', placeholder:'Cant Horas: ___  |  Valor Hora: $___  |  Total: $___'},
+      {label:'Analisis estadistico — Cant Horas | Valor Hora | Total', key:'ppto_analisis', placeholder:'Cant Horas: ___  |  Valor Hora: $___  |  Total: $___'},
+      {label:'Borrador manuscrito — Cant Horas | Valor Hora | Total', key:'ppto_manuscrito', placeholder:'Cant Horas: ___  |  Valor Hora: $___  |  Total: $___'},
+      {label:'Total de horas | Total presupuesto', key:'ppto_total', placeholder:'Total horas: 0  |  Total: $0'}
     ]}
   ];
   if (docName.indexOf('Acuerdo de confidencialidad') >= 0) return [
