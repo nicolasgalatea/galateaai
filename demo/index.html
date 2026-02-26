@@ -3528,27 +3528,71 @@ function getDocTemplateSections(docName) {
     ]}
   ];
   if (docName.indexOf('Acuerdo de confidencialidad') >= 0) return [
-    { id:'conf_partes', title:'CLAUSULA PRIMERA — Partes', fields:[
-      {label:'Representante FSFB', key:'rep_fsfb', placeholder:'Nombre completo del representante de la Fundacion Santa Fe de Bogota'},
-      {label:'Cargo del representante', key:'cargo_fsfb', placeholder:''},
-      {label:'Investigador externo', key:'inv_externo', placeholder:'Nombre completo'},
-      {label:'Cedula de ciudadania', key:'cc_externo', placeholder:''},
-      {label:'Institucion de origen', key:'inst_externo', placeholder:''}
+    { id:'conf_receptora', title:'PARTE RECEPTORA (Investigador No 1)', fields:[
+      {label:'Nombre', key:'rec_nombre', placeholder:'Nombre completo del investigador receptor'},
+      {label:'Direccion', key:'rec_direccion', placeholder:''},
+      {label:'Institucion', key:'rec_institucion', placeholder:''},
+      {label:'Telefono', key:'rec_telefono', placeholder:''},
+      {label:'e-mail', key:'rec_email', placeholder:''}
     ]},
-    { id:'conf_objeto', title:'CLAUSULA SEGUNDA — Objeto', fields:[
-      {label:'Titulo del estudio', key:'titulo_estudio', placeholder:'Titulo completo del proyecto de investigacion'},
-      {label:'Objeto del acuerdo', key:'objeto', placeholder:'Establecer las condiciones de confidencialidad y tratamiento de datos personales y sensibles de los participantes del estudio, en cumplimiento de la Ley 1581 de 2012, el Decreto 1377 de 2013 y la Resolucion 8430 de 1993.'}
+    { id:'conf_reveladora', title:'PARTE REVELADORA (Investigador FSFB)', fields:[
+      {label:'Nombre', key:'rev_nombre', placeholder:'Nombre completo del investigador FSFB'},
+      {label:'Direccion', key:'rev_direccion', placeholder:''},
+      {label:'Institucion', key:'rev_institucion', placeholder:'Fundacion Santa Fe de Bogota'},
+      {label:'Telefono', key:'rev_telefono', placeholder:''},
+      {label:'e-mail', key:'rev_email', placeholder:''}
     ]},
-    { id:'conf_obligaciones', title:'CLAUSULA TERCERA — Obligaciones', fields:[
-      {label:'Obligaciones', key:'obligaciones', placeholder:'1. Mantener estricta confidencialidad sobre toda la informacion a la que tenga acceso.\n2. No divulgar, copiar ni reproducir datos de los participantes sin autorizacion previa.\n3. Utilizar la informacion exclusivamente para los fines del estudio.\n4. Implementar medidas de seguridad para proteger la informacion (cifrado, acceso restringido).\n5. Reportar cualquier incidente de seguridad de la informacion al Investigador Principal.\n6. Devolver o destruir toda la informacion al finalizar el estudio o al retirarse del equipo.', large:true}
+    { id:'conf_info_acuerdo', title:'Informacion del Acuerdo', fields:[
+      {label:'Proposito o Uso Autorizado (descripcion y finalidad)', key:'proposito', placeholder:'Describa la finalidad del uso autorizado de la informacion confidencial'},
+      {label:'Periodo de Divulgacion', key:'periodo_divulgacion', placeholder:'Desde la fecha de suscripcion hasta por tres (3) anos mas'},
+      {label:'Periodo de Confidencialidad', key:'periodo_confidencialidad', placeholder:'Durante el tiempo de periodo de divulgacion y los tres (3) anos siguientes'}
     ]},
-    { id:'conf_vigencia', title:'CLAUSULA CUARTA — Vigencia', fields:[
-      {label:'Vigencia post-estudio', key:'vigencia', placeholder:'Este acuerdo tendra vigencia desde la fecha de su firma y se extendera hasta ___ anos despues de finalizado el estudio.'}
+    { id:'conf_clausulas', title:'CLAUSULAS', fields:[
+      {label:'Definiciones — Informacion Confidencial', key:'def_info_confidencial', placeholder:'Significa toda informacion de naturaleza confidencial y/o sujeta a derechos de propiedad en cualquier forma (incluyendo medios escritos, electronicos, medios magneticos, oralmente u otros) directa o indirecta y en la cual se relacione el Proposito Autorizado.\n\nTodo tipo de informacion verbal o transmitida por medios electronicos, entregada en los mismos terminos, que se resuma por escrito y se suministre a la parte receptora en un documento escrito tras la revelacion.\n\nToda documentacion y antecedentes orales o escritos que provengan de la base de datos entregada por cualquiera de las partes a la otra, para los efectos de ser utilizados con motivo de las actividades contratadas.', large:true},
+      {label:'Definiciones — Partes', key:'def_partes', placeholder:'Se denomina Revelador la parte que divulga la informacion de caracter confidencial. Se denomina Receptor la parte que recibe la informacion de caracter confidencial. En conjunto se denominaran Las Partes.'},
+      {label:'Definiciones — Datos', key:'def_datos', placeholder:'Informacion o conjunto de informacion como resultados de analisis clinicos/de laboratorio/instrumentales, registros medicos, formularios electronicos de informes de casos, entre otros, o los que las partes consideren que son objeto de tratamiento.'},
+      {label:'Definiciones — Tratamiento', key:'def_tratamiento', placeholder:'Cualquier operacion realizada a un conjunto de datos dado para extraer la informacion requerida en una forma apropiada.'}
+    ]},
+    { id:'conf_objeto', title:'Objeto y Proposito', fields:[
+      {label:'Objeto — Titulo del estudio', key:'objeto_estudio', placeholder:'Cada una de las partes pondra en conocimiento de la otra, la informacion necesaria para la realizacion del estudio denominado "______________________". Esta informacion puede tener contenido institucional, datos personales, datos sensibles, datos de estudios realizados previamente.', large:true},
+      {label:'Proposito', key:'proposito_detalle', placeholder:'La Parte Receptora puede revelar, o pedir a la Parte Reveladora que revele Informacion Confidencial para llevar a cabo el Proposito Autorizado. Las Partes estan advertidas y obligadas por este Acuerdo. La Parte receptora sera responsable de cualquier filtracion de este Acuerdo.', large:true}
+    ]},
+    { id:'conf_propiedad', title:'Propiedad', fields:[
+      {label:'Propiedad de la informacion', key:'propiedad', placeholder:'Toda Informacion Confidencial revelada o transferida por cualquiera de las Partes a la otra permanecera siendo propiedad de la Parte Reveladora. La Parte Receptora reconoce y acepta que ni por implicacion, exclusion u otra forma estara obteniendo ningun derecho de propiedad intelectual, titulo o propiedad, ni una licencia de hacer, usar o vender cualquier producto usando Informacion Confidencial de la otra Parte, o cualquier licencia bajo cualquier patente, derecho de autor, o cualquier otro derecho de propiedad intelectual.', large:true}
+    ]},
+    { id:'conf_obligaciones_partes', title:'Obligaciones de las Partes', fields:[
+      {label:'Obligaciones de las Partes', key:'oblig_partes', placeholder:'1. Las partes se obligan y garantizan el uso adecuado y seguro de los canales de transmision de informacion.\n2. Las partes garantizan que la informacion sera destinada a los fines previamente descritos.\n3. La informacion recibida por el Receptor no podra ser objeto de comercializacion, transferencia a terceros o de algun tipo de negociacion sin acuerdo previo.\n4. Las bases de datos reveladas deberan codificarse de tal forma que no se identifique al titular de la informacion sensible.\n5. Las Partes deberan implementar las medidas de seguridad necesarias para garantizar la seguridad de la informacion.\n6. Cada parte garantiza que cuenta y conoce las politicas, procesos y medidas de seguridad de su organizacion frente al tratamiento de datos.', large:true}
+    ]},
+    { id:'conf_obligaciones_receptor', title:'Obligaciones de la Parte Receptora', fields:[
+      {label:'Obligaciones del Receptor', key:'oblig_receptor', placeholder:'1. No usar la Informacion Confidencial para ningun proposito diferente al proposito previamente autorizado.\n2. No divulgar la Informacion Confidencial ante terceros y protegerla tal como protegeria su propia Informacion Confidencial.\n3. Limitar la circulacion y conocimiento de la Informacion Confidencial a los colaboradores que tengan necesidad de usarla.\n4. Garantizar que no divulgara, exportara o liberara la Informacion Confidencial en contravencion de la Ley.\n5. Informar al Titular la identificacion de los empleados que tendran acceso a la Informacion Confidencial.\n6. Adoptar las medidas de proteccion necesarias para garantizar el caracter confidencial.\n7. Devolver al Revelador y/o destruir los medios fisicos con Informacion Confidencial dentro de los tres (3) dias calendario siguientes a la fecha de cesacion del Uso Autorizado.\n8. Indemnizar los perjuicios causados al Revelador por el incumplimiento de las obligaciones.', large:true}
+    ]},
+    { id:'conf_prohibiciones', title:'Prohibiciones del Receptor', fields:[
+      {label:'Prohibiciones', key:'prohibiciones', placeholder:'1. Obtener cualquier tipo de beneficio o utilidad distintos a los que de ordinario se deriven del Uso Autorizado.\n2. Elaborar copias, transcribir, conservar copias fisicas o almacenar en registros electronicos Informacion Confidencial no autorizada.\n3. Se prohibe cualquier otro tipo de violacion a la informacion recolectada, de acuerdo con las normas vigentes frente al uso, proteccion y tratamiento de la informacion.\n\nLas obligaciones deberan subsistir a la terminacion del presente Acuerdo. La Parte Receptora debera devolver la informacion y certificar la destruccion de la informacion que no pueda ser objeto de devolucion.', large:true}
+    ]},
+    { id:'conf_exclusiones', title:'Exclusiones', fields:[
+      {label:'Exclusiones de Informacion Confidencial', key:'exclusiones', placeholder:'No se considera Informacion Confidencial cuando:\n1. La informacion es publica y ha sido conocida sin violar este Acuerdo.\n2. La informacion ha sido conocida previamente por la parte receptora.\n3. Ha sido obtenida de forma legal a traves de una tercera Parte.\n4. Ha sido suministrada a otras personas por la parte reveladora sin restriccion.\n5. Sea desarrollada por la Parte Receptora de manera completamente independiente.\n6. La informacion es comprobable a traves de un producto disponible comercialmente.\n7. La informacion sea revelada en cumplimiento de orden de autoridad judicial.\n8. La Informacion Confidencial deba ser dada a conocer en virtud de una orden judicial, previa notificacion a la Parte Reveladora.', large:true}
+    ]},
+    { id:'conf_propiedad_ic', title:'Propiedad de la Informacion Confidencial', fields:[
+      {label:'Propiedad intelectual', key:'propiedad_ic', placeholder:'El Receptor declara y reconoce que la Informacion Confidencial es de propiedad del Emisor, y que el Uso Autorizado no le otorga derecho de propiedad industrial o intelectual alguno.\n\nEl Receptor declara que el recibo o uso de la Informacion Confidencial no le concede autorizacion, permiso o licencia de uso de marcas comerciales, patentes, derechos de autor o cualquier otro derecho de propiedad industrial o intelectual del Emisor.', large:true}
+    ]},
+    { id:'conf_seguridad', title:'Medidas de Seguridad y Transferencia', fields:[
+      {label:'Medidas de seguridad', key:'medidas_seguridad', placeholder:'Los datos se recopilaran y almacenaran en una base de datos protegida con contrasena y se transferiran del Emisor al Receptor mediante un sistema de captura de datos electronicos con acceso individual restringido.'},
+      {label:'Divulgacion no autorizada', key:'divulgacion_no_autorizada', placeholder:'En caso de cualquier perdida o divulgacion no autorizada de cualquier Informacion Confidencial, el Receptor inmediatamente notificara al Revelador y confirmara por escrito el grado y detalles de dicha perdida o divulgacion.'},
+      {label:'Transferencia segura de informacion', key:'transferencia_segura', placeholder:'Toda la Informacion Confidencial sera transmitida exclusivamente mediante medios seguros (canales cifrados, plataformas autorizadas con protocolos de seguridad como SFTP, VPN o servicios de almacenamiento en la nube con autenticacion robusta). Cada Parte se compromete a implementar medidas tecnicas, organizativas y administrativas adecuadas. Ninguna Parte podra transferir Informacion Confidencial a terceros sin consentimiento previo, expreso y por escrito.', large:true}
+    ]},
+    { id:'conf_autoria', title:'Autoria e Incumplimiento', fields:[
+      {label:'Autoria', key:'autoria', placeholder:'Las partes firmantes acuerdan que seran consideradas autoras de los productos academicos, cientificos o tecnicos que se deriven del presente proyecto de investigacion, tales como publicaciones, presentaciones o reportes, de acuerdo a lo establecido en el Contrato de Intencion de Publicacion (Anexo 2 del Estandar Operacional codigo DC-CCEI-EO-009).'},
+      {label:'Incumplimiento del Acuerdo', key:'incumplimiento', placeholder:'La inobservancia de cualquiera de las clausulas que impliquen filtracion de informacion a terceros, o que de cualquier manera llegasen a generar perjuicios al Revelador, constituye una justa causa para la terminacion del presente Acuerdo y cualquier clase de contrato o relacion entre las Partes.', large:true}
+    ]},
+    { id:'conf_ley', title:'Ley Aplicable', fields:[
+      {label:'Ley aplicable', key:'ley_aplicable', placeholder:'Este acuerdo se interpretara bajo las leyes de Colombia. Toda controversia que surja de la ejecucion, interpretacion, vencimiento o terminacion de este Acuerdo se sometera a resolucion de la jurisdiccion ordinaria de Colombia.\n\nEl presente acuerdo contiene el entendimiento de las partes respecto de la recepcion y entrega de Informacion con caracter Confidencial y Tratamiento de Datos e Informacion. Toda modificacion debera constar por escrito.', large:true}
     ]},
     { id:'conf_firmas', title:'Firmas', fields:[
-      {label:'Lugar y fecha', key:'lugar_fecha', placeholder:'En Bogota D.C., a los ___ dias del mes de ___ de 20___'},
-      {label:'Firma Investigador Principal — Nombre y C.C.', key:'firma_ip', placeholder:''},
-      {label:'Firma Investigador Externo — Nombre y C.C.', key:'firma_ext', placeholder:''}
+      {label:'Fecha de firma', key:'fecha_firma', placeholder:'Se firma el presente acuerdo en Bogota a los ____ dias del mes de _____ de 202_.'},
+      {label:'Investigador — Nombre', key:'firma_inv_nombre', placeholder:''},
+      {label:'Investigador — Institucion', key:'firma_inv_inst', placeholder:''},
+      {label:'Investigador FSFB — Nombre', key:'firma_fsfb_nombre', placeholder:''},
+      {label:'Investigador FSFB — Institucion', key:'firma_fsfb_inst', placeholder:'Fundacion Santa Fe de Bogota'}
     ]}
   ];
   if (docName.indexOf('Consentimientos informados') >= 0) return [
