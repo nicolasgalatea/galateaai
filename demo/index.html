@@ -15,6 +15,7 @@
     }
   </script>
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { font-family: 'Inter', system-ui, sans-serif; }
@@ -3298,8 +3299,97 @@ function downloadGuiaDoc(guiaIndex) {
   URL.revokeObjectURL(url);
 }
 
+function downloadPresupuestoExcel(docIndex) {
+  if (!stage2SimData || !stage2SimData.docsSubdireccion[docIndex]) return;
+  var ta = document.getElementById('plaintextDoc_' + docIndex);
+  if (ta) savePlainTextDoc(docIndex, ta.value);
+  var content = stage2DocContent[docIndex] || {};
+  var wb = XLSX.utils.book_new();
+
+  // ── Hoja 1: CRONOGRAMA ──
+  var cronoData = [
+    ['CRONOGRAMA — DIAGRAMA DE GANTT'],
+    ['Fundacion Santa Fe de Bogota — Departamento de Cirugia'],
+    [],
+    ['Fecha de inicio', content.inicio || ''],
+    ['Fecha de finalizacion', content.fin || ''],
+    [],
+    ['ACTIVIDAD', 'MES 1', 'MES 2', 'MES 3', 'MES 4', 'MES 5', 'MES 6', 'MES 7', 'MES 8', 'MES 9', 'MES 10', 'MES 11', 'MES 12'],
+    ['Revision bibliografica', 'X', 'X', '', '', '', '', '', '', '', '', '', ''],
+    ['Sometimiento CEI', '', 'X', 'X', '', '', '', '', '', '', '', '', ''],
+    ['Reclutamiento de pacientes', '', '', 'X', 'X', 'X', 'X', '', '', '', '', '', ''],
+    ['Recoleccion de datos', '', '', '', 'X', 'X', 'X', 'X', 'X', '', '', '', ''],
+    ['Analisis estadistico', '', '', '', '', '', '', '', 'X', 'X', 'X', '', ''],
+    ['Redaccion de manuscrito', '', '', '', '', '', '', '', '', '', 'X', 'X', ''],
+    ['Publicacion / divulgacion', '', '', '', '', '', '', '', '', '', '', 'X', 'X']
+  ];
+  var wsCrono = XLSX.utils.aoa_to_sheet(cronoData);
+  wsCrono['!cols'] = [{wch:30},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7}];
+  wsCrono['!merges'] = [{s:{r:0,c:0},e:{r:0,c:12}},{s:{r:1,c:0},e:{r:1,c:12}}];
+  XLSX.utils.book_append_sheet(wb, wsCrono, 'Cronograma');
+
+  // ── Hoja 2: PRESUPUESTO ──
+  var valHora = 50000;
+  var actividades = [
+    {nombre:'Planteamiento del problema', horas: content.ppto_planteamiento ? parseInt(content.ppto_planteamiento) || 10 : 10},
+    {nombre:'Pregunta de investigacion', horas: content.ppto_pregunta ? parseInt(content.ppto_pregunta) || 5 : 5},
+    {nombre:'Marco teorico', horas: content.ppto_marco ? parseInt(content.ppto_marco) || 20 : 20},
+    {nombre:'Objetivos', horas: content.ppto_objetivos ? parseInt(content.ppto_objetivos) || 5 : 5},
+    {nombre:'Metodologia', horas: content.ppto_metodologia ? parseInt(content.ppto_metodologia) || 25 : 25},
+    {nombre:'Analisis estadistico', horas: content.ppto_analisis ? parseInt(content.ppto_analisis) || 15 : 15},
+    {nombre:'Borrador manuscrito', horas: content.ppto_manuscrito ? parseInt(content.ppto_manuscrito) || 20 : 20}
+  ];
+  var totalHoras = actividades.reduce(function(s,a){return s+a.horas;},0);
+
+  var pptoData = [
+    ['PRESUPUESTO — PROTOCOLOS INSTITUCIONALES SIN PATROCINIO'],
+    ['Fundacion Santa Fe de Bogota — Departamento de Cirugia'],
+    [],
+    ['DATOS INICIALES'],
+    ['Cantidad Participantes o Revision HC', content.cant_participantes || '', 'Und'],
+    ['Tiempo (meses)', content.tiempo_meses || '', 'Mes'],
+    ['Tiempo (semanas)', content.tiempo_semanas || '', 'Semana'],
+    ['Tiempo Horas (por semana)', content.tiempo_horas || '', 'Hora'],
+    [],
+    ['PRESUPUESTO — Detalle por actividad'],
+    ['ACTIVIDAD', 'CANT HORAS', 'VALOR HORA (COP)', 'TOTAL (COP)']
+  ];
+  actividades.forEach(function(a) {
+    pptoData.push([a.nombre, a.horas, valHora, a.horas * valHora]);
+  });
+  pptoData.push([]);
+  pptoData.push(['TOTAL', totalHoras, '', totalHoras * valHora]);
+
+  var wsPpto = XLSX.utils.aoa_to_sheet(pptoData);
+  wsPpto['!cols'] = [{wch:38},{wch:14},{wch:18},{wch:18}];
+  wsPpto['!merges'] = [{s:{r:0,c:0},e:{r:0,c:3}},{s:{r:1,c:0},e:{r:1,c:3}},{s:{r:3,c:0},e:{r:3,c:3}},{s:{r:9,c:0},e:{r:9,c:3}}];
+
+  // Format currency cells
+  var pptoStartRow = 11; // row index where activities start (0-based)
+  for (var ri = 0; ri < actividades.length; ri++) {
+    var r = pptoStartRow + ri;
+    var cellC = XLSX.utils.encode_cell({r:r,c:2});
+    var cellD = XLSX.utils.encode_cell({r:r,c:3});
+    if (wsPpto[cellC]) wsPpto[cellC].z = '#,##0';
+    if (wsPpto[cellD]) wsPpto[cellD].z = '#,##0';
+  }
+  // Total row
+  var totalRow = pptoStartRow + actividades.length + 1;
+  var cellTotalD = XLSX.utils.encode_cell({r:totalRow,c:3});
+  if (wsPpto[cellTotalD]) wsPpto[cellTotalD].z = '#,##0';
+
+  XLSX.utils.book_append_sheet(wb, wsPpto, 'Presupuesto');
+
+  // Download
+  XLSX.writeFile(wb, 'Cronograma_Presupuesto_FSFB.xlsx');
+  showToast('Excel descargado', 'success');
+}
+
 function downloadChecklistDoc(docIndex) {
   if (!stage2SimData || !stage2SimData.docsSubdireccion[docIndex]) return;
+  // Presupuesto → Excel
+  var dName = stage2SimData.docsSubdireccion[docIndex].name;
+  if (dName.indexOf('Cronograma y presupuesto') >= 0) { downloadPresupuestoExcel(docIndex); return; }
   // Save any pending plaintext edits before download
   var ta = document.getElementById('plaintextDoc_' + docIndex);
   if (ta) savePlainTextDoc(docIndex, ta.value);
@@ -3823,8 +3913,11 @@ function renderDocumentChecklist() {
     if (progress > 0 && progress < 80) h += '<div class="flex items-center gap-2 mt-1"><div class="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden"><div class="h-full bg-amber-400 rounded-full" style="width:' + progress + '%"></div></div><span class="text-[9px] text-amber-600 font-bold">' + progress + '%</span></div>';
     h += '</div>';
     // Download + expand buttons
-    h += '<button onclick="event.stopPropagation(); downloadChecklistDoc(' + idx + ')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-galatea/10 text-galatea text-[11px] font-bold hover:bg-galatea/20 transition-colors mr-2">';
-    h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>.doc</button>';
+    var isPresupuesto = d.name.indexOf('Cronograma y presupuesto') >= 0;
+    var dlLabel = isPresupuesto ? '.xlsx' : '.doc';
+    var dlColor = isPresupuesto ? 'bg-green-600/10 text-green-700 hover:bg-green-600/20' : 'bg-galatea/10 text-galatea hover:bg-galatea/20';
+    h += '<button onclick="event.stopPropagation(); downloadChecklistDoc(' + idx + ')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ' + dlColor + ' text-[11px] font-bold transition-colors mr-2">';
+    h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>' + dlLabel + '</button>';
     h += '<svg class="w-5 h-5 text-gray-400 transition-transform ' + (isExpanded ? 'rotate-180' : '') + '" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>';
     h += '</div>';
 
