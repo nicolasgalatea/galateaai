@@ -1775,7 +1775,9 @@ function renderFrameworkSection(pd) {
     pregParts.push('<strong style="color:#1e40af;">' + esc(v) + '</strong>');
   });
   var pregunta = '';
-  if (fw === 'PICO' || fw === 'PICOS') {
+  if (pd.pregunta_editada) {
+    pregunta = esc(pd.pregunta_editada);
+  } else if (fw === 'PICO' || fw === 'PICOS') {
     pregunta = 'En ' + pregParts[0] + ', &iquest;la ' + pregParts[1] + ' comparada con ' + pregParts[2] + ' produce diferencias en ' + pregParts[3] + (pregParts[4] ? ' en estudios tipo ' + pregParts[4] : '') + '?';
   } else if (fw === 'ECLIPSE') {
     pregunta = 'Para ' + pregParts[1] + ' en ' + pregParts[2] + ', &iquest;el servicio ' + pregParts[5] + ' proporcionado por ' + pregParts[4] + ' logra ' + pregParts[0] + ' con impacto en ' + pregParts[3] + ' segun ' + pregParts[6] + '?';
@@ -1791,7 +1793,9 @@ function renderFrameworkSection(pd) {
   h += '<div class="mt-4 p-4 rounded-xl bg-galatea/5 border-2 border-galatea/20">';
   h += '<div class="flex items-center gap-2 mb-2"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z"/></svg>';
   h += '<span class="text-[10px] font-bold text-galatea uppercase tracking-wider">Pregunta de Investigacion Estructurada</span></div>';
-  h += '<div class="text-sm text-gray-800 leading-relaxed" id="preguntaIntegrada">' + pregunta + '</div>';
+  h += '<div class="text-sm text-gray-800 leading-relaxed border border-transparent hover:border-galatea/30 focus:border-galatea focus:outline-none focus:ring-2 focus:ring-galatea/20 rounded-lg px-3 py-2 -mx-3 -my-2 transition-all cursor-text" contenteditable="true" id="preguntaIntegrada" onblur="handlePreguntaIntegradaEdit(this.innerText)" title="Haz clic para editar la pregunta">' + pregunta + '</div>';
+  h += '<div class="flex items-center gap-3 mt-2"><div class="flex items-center gap-1"><svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg><span class="text-[10px] text-gray-400 italic">Clic para editar directamente</span></div>';
+  h += '<button id="btnRegenerarPregunta" onclick="regenerarPreguntaPicot()" style="display:' + (pd.pregunta_editada ? 'inline-flex' : 'none') + ';" class="items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-galatea/10 text-galatea hover:bg-galatea/20 transition-colors"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M2.985 19.644l3.181-3.183"/></svg>Regenerar desde PICOT</button></div>';
   h += '</div>';
   h += '</div>';
   if (st.type) {
@@ -2084,9 +2088,9 @@ function handlePicotEdit(key, value) {
   if (!pd.picot) pd.picot = {};
   pd.picot[key] = value;
   project.phase_data = pd;
-  // Update integrated question live
+  // Update integrated question live (only if not manually edited)
   var piEl = document.getElementById('preguntaIntegrada');
-  if (piEl) {
+  if (piEl && !pd.pregunta_editada) {
     var fw2 = pd.framework || 'PICOS', fi2 = getFrameworkLabels(fw2), p2 = pd.picot || {};
     var pp = [];
     fi2.keys.forEach(function(k2) { pp.push('<strong style="color:#1e40af;">' + esc(p2[k2] || '_______________') + '</strong>'); });
@@ -2131,6 +2135,36 @@ function handlePicotEdit(key, value) {
       showToast('Coherencia PICOT ↔ Metaanalisis verificada', 'success');
     });
   }
+}
+
+function handlePreguntaIntegradaEdit(newText) {
+  if (!project || !rowId) return;
+  var pd = project.phase_data || {};
+  if (!pd.picot) pd.picot = {};
+  pd.pregunta_editada = newText.trim();
+  project.phase_data = pd;
+  // Show regenerate button
+  var rBtn = document.getElementById('btnRegenerarPregunta');
+  if (rBtn) rBtn.style.display = 'inline-flex';
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async function() {
+    var r = await sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+    if (!r.error) showToast('Pregunta actualizada', 'success');
+    else showToast('Error al guardar', 'error');
+  }, 800);
+}
+function regenerarPreguntaPicot() {
+  if (!project || !rowId) return;
+  var pd = project.phase_data || {};
+  delete pd.pregunta_editada;
+  project.phase_data = pd;
+  // Re-render to show auto-generated question
+  renderStage1DetailedViews();
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async function() {
+    var r = await sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+    if (!r.error) showToast('Pregunta regenerada desde PICOT', 'success');
+  }, 800);
 }
 
 function handleTitleEdit(el) {
