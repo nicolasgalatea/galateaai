@@ -2489,7 +2489,7 @@ function generateStage2SimData(projectType, route) {
   if (isRepositorio) guias.push({ name: 'Instructivo bases de datos repositorios comite de etica', type: 'Guia Comite Etica', status: 'required', desc: 'Instructivo para bases de datos y repositorios' });
 
   var docsSubdireccion = [
-    { name: 'Protocolo ajustado a Guia SECEC', code: 'GUIA PARA LA ELABORACION DE PROYECTOS v1.1.docx', required: true, desc: 'Protocolo completo con todas las secciones: info general, planteamiento, marco teorico, objetivos, metodologia (diseno, poblacion, criterios, muestreo con formula, variables, plan analisis, control sesgos), etica, resultados esperados, cronograma, presupuesto, bibliografia Vancouver' },
+    { name: 'Guia para la elaboracion de proyectos de investigacion', code: 'Subdireccion de Estudios Clinicos y Epidemiologia Clinica', required: true, desc: 'Protocolo completo con todas las secciones: info general, planteamiento, marco teorico, objetivos, metodologia (diseno, poblacion, criterios, muestreo con formula, variables, plan analisis, control sesgos), etica, resultados esperados, cronograma, presupuesto, bibliografia Vancouver' },
     { name: 'Cronograma y presupuesto estimado', code: 'Formato presupuesto protocolos institucionales sin patrocinio.xlsx', required: true, desc: 'Diagrama de Gantt con fechas inicio/fin + presupuesto: personal (valor hora), equipos, materiales, publicaciones' },
     { name: 'Acuerdo de confidencialidad y tratamiento de datos', code: 'Acuerdo de confidencialidad y tratamiento de datos.docx', required: stage2HasExternalInvestigators || isMulticentrico, desc: 'Firmado por IP institucional y todos los investigadores externos. Obligatorio si hay investigadores fuera de FSFB/Andes/El Bosque', blocked: false },
     { name: 'Consentimientos informados', code: 'DC-CCEI-IT-002 / IT-003 / IT-006', required: true, desc: 'ICF institucional (IT-002), guion verbal (IT-003), o ICF experimental (IT-006) segun tipo de estudio. Clasificar riesgo segun Res. 008430/1993' },
@@ -3306,75 +3306,78 @@ function downloadChecklistDoc(docIndex) {
 
 // ── Paso 4: Document Checklist ──
 function getDocTemplateSections(docName) {
-  if (docName.indexOf('Protocolo ajustado') >= 0) return [
-    { id:'info_general', title:'1. Informacion General del Proyecto', fields:[
-      {label:'Titulo', key:'titulo', placeholder:'Escriba el titulo completo del proyecto...'},
-      {label:'Investigador principal', key:'ip', placeholder:'Nombre completo del investigador principal'},
-      {label:'Co-investigadores', key:'coinv', placeholder:'Nombre, institucion, rol'},
+  if (docName.indexOf('Guia para la elaboracion') >= 0) return [
+    { id:'info_general', title:'Informacion General del Proyecto', fields:[
+      {label:'1.1. Titulo', key:'titulo', placeholder:'Escriba el titulo completo del proyecto de investigacion...'},
+      {label:'1.2. Investigador principal', key:'ip', placeholder:'Nombre completo del investigador principal'},
+      {label:'1.3. Co-investigadores', key:'coinv', placeholder:'Nombre, institucion, rol\nCorreo electronico de contacto:\nTelefono de contacto:'},
       {label:'Correo electronico de contacto', key:'email', placeholder:'correo@fsfb.org.co'},
       {label:'Telefono de contacto', key:'tel', placeholder:''},
-      {label:'Nombre del Grupo de Investigacion (GrupLAC)', key:'gruplac', placeholder:''},
-      {label:'Total de investigadores (numero)', key:'total_inv', placeholder:''},
-      {label:'Asesor metodologico', key:'asesor_met', placeholder:''},
-      {label:'Asesor tematico', key:'asesor_tem', placeholder:''},
-      {label:'Version y fecha', key:'version', placeholder:'v1.0 — Fecha'}
+      {label:'1.4. Nombre del Grupo de Investigacion (GrupLAC)', key:'gruplac', placeholder:''},
+      {label:'1.5. Total de investigadores (numero)', key:'total_inv', placeholder:''},
+      {label:'1.6. Asesor metodologico', key:'asesor_met', placeholder:''},
+      {label:'1.7. Asesor tematico', key:'asesor_tem', placeholder:''},
+      {label:'1.8. Version y fecha', key:'version', placeholder:'v1.0 — Fecha'}
     ]},
-    { id:'resumen', title:'2. Resumen del Proyecto', fields:[
-      {label:'Resumen (max 500 palabras)', key:'resumen', placeholder:'Debe contener la informacion necesaria para darle al lector una idea precisa de la pertinencia y calidad del proyecto. Incluya: sintesis del problema a investigar y su justificacion, los objetivos, la metodologia a utilizar y los resultados esperados.', large:true}
+    { id:'tabla_contenido', title:'Tabla de Contenido', fields:[
+      {label:'Tabla de contenido', key:'tabla_contenido', placeholder:'Debe contener la informacion correspondiente a la ubicacion de cada uno de los capitulos y subcapitulos dentro del documento, a partir del Resumen del Proyecto.', large:true}
     ]},
-    { id:'descriptores', title:'3. Descriptores del Proyecto', fields:[
+    { id:'resumen', title:'Resumen del Proyecto (Maximo 500 palabras)', fields:[
+      {label:'Resumen', key:'resumen', placeholder:'Debe contener la informacion necesaria para darle al lector una idea precisa de la pertinencia y calidad del proyecto. Este debe contener una sintesis del problema a investigar y su justificacion, los objetivos, la metodologia a utilizar y los resultados esperados.', large:true}
+    ]},
+    { id:'descriptores', title:'Descriptores del Proyecto', fields:[
       {label:'Descriptores MeSH / DeCS', key:'descriptores', placeholder:'Palabras clave controladas del proyecto'}
     ]},
-    { id:'planteamiento', title:'4. Planteamiento del Problema y Justificacion', fields:[
-      {label:'Planteamiento del problema', key:'problema', placeholder:'Describa de manera global el tema de investigacion. Identifique claramente la pregunta que se quiere responder o el problema concreto a cuya solucion o entendimiento se contribuira. Haga una descripcion clara, precisa y completa de la naturaleza y magnitud del problema.\n\nDebe explicitamente exponer: la magnitud del problema (frecuencia y distribucion, grupos de poblacion de interes), las posibles causas, si hay consenso o discrepancias en la evidencia, soluciones posibles, y preguntas sin responder.\n\nEl planteamiento del problema no deberia tener afirmaciones sin al menos una referencia bibliografica.', large:true},
-      {label:'Justificacion', key:'justificacion', placeholder:'Explique como se relaciona el proyecto con las prioridades tecnicas, cientificas o sociales. Indique que tipo de informacion se obtendra. Cual es la finalidad que se persigue? Quienes son los beneficiados?', large:true},
-      {label:'Pregunta de investigacion', key:'pregunta_inv', placeholder:'Plantee la pregunta de investigacion estructurada (PICOT) al final del planteamiento del problema'}
+    { id:'planteamiento', title:'4.1. Planteamiento del Problema y Justificacion', fields:[
+      {label:'Planteamiento del problema', key:'problema', placeholder:'Describa de manera global el tema de investigacion. Identifique claramente la pregunta que se quiere responder o el problema concreto a cuya solucion o entendimiento se contribuira con la ejecucion del proyecto. Haga una descripcion clara, precisa y completa de la naturaleza y magnitud del problema.\n\nDebe explicitamente exponer:\n- La magnitud del problema (frecuencia y distribucion; grupos de poblacion de interes)\n- Las posibles causas: Hay consenso o discrepancias? Hay evidencia concluyente?\n- Soluciones posibles: como se ha resuelto en otros contextos? Es plausible esa solucion aca?\n- Preguntas sin responder: que mas debe saberse? Que no se ha podido entender o verificar?\n\nEl planteamiento del problema no deberia tener afirmaciones sin al menos una referencia bibliografica.', large:true},
+      {label:'Justificacion', key:'justificacion', placeholder:'Explique como se relaciona el proyecto con las prioridades tecnicas, cientificas o sociales del pais o el contexto del trabajo. Indique que tipo de informacion se obtendra. Cual es la finalidad que se persigue con el logro de la informacion en este trabajo? Quienes son los beneficiados de socializar y usar la informacion de este trabajo?', large:true},
+      {label:'Pregunta de investigacion', key:'pregunta_inv', placeholder:'Se debe plantear la pregunta de investigacion estructurada (PICOT) al final del planteamiento del problema.'}
     ]},
-    { id:'marco', title:'5. Marco Teorico y Estado del Arte', fields:[
-      {label:'Marco teorico', key:'marco_teorico', placeholder:'Breve sintesis del contexto general (nacional y mundial) en el cual se ubica el tema de la propuesta, el estado actual del conocimiento del problema, las brechas que existen y el vacio que se quiere llenar.\n\nDescriba los metodos de busqueda en la literatura mundial de estudios que se hayan desarrollado previamente. Debe quedar plasmado que se hizo una busqueda de la literatura detallada, completa, responsable y juiciosa.\n\nDeben quedar claras las relaciones entre las variables independientes y de respuesta, asi como los fundamentos de la pregunta de investigacion. Exponga los supuestos e hipotesis de trabajo.\n\nNo deben presentarse afirmaciones sin referencias bibliograficas.', large:true}
+    { id:'marco', title:'4.2. Marco Teorico y Estado del Arte', fields:[
+      {label:'Marco teorico', key:'marco_teorico', placeholder:'Breve sintesis del contexto general (nacional y mundial) en el cual se ubica el tema de la propuesta, el estado actual del conocimiento del problema, las brechas que existen y el vacio que se quiere llenar con el proyecto.\n\nSe debe describir los metodos de busqueda en la literatura mundial de estudios que se hayan desarrollado previamente en busca de resolver la pregunta planteada. Debe quedar plasmado que se hizo una busqueda de la literatura detallada, completa, responsable y juiciosa sobre el tema en mencion cerciorandose de la existencia de estudios similares.\n\nEn el marco teorico deben quedar claras las relaciones entre las variables independientes y de respuesta, asi como los fundamentos de la pregunta de investigacion.\n\nDeben exponerse los supuestos a los que se hace alusion para la formulacion de la pregunta asi como las hipotesis de trabajo. No deben presentarse afirmaciones u otro tipo de datos sin referencias bibliograficas.', large:true}
     ]},
-    { id:'objetivos', title:'6. Objetivos', fields:[
-      {label:'Objetivo general', key:'obj_general', placeholder:'Debe poner de manifiesto lo que se quiere lograr con el estudio en terminos cientificos. Formule un objetivo general global, coherente con el problema planteado.'},
-      {label:'Objetivos especificos', key:'obj_especificos', placeholder:'Dos o mas objetivos especificos que conduciran a lograr el objetivo general y que son alcanzables (factibles) con la metodologia propuesta. Deben ser una secuencia logica o descomponer en etapas el objetivo general.\n\nNo confundir objetivos con actividades o procedimientos metodologicos.', large:true}
+    { id:'objetivos', title:'Objetivos', fields:[
+      {label:'Objetivo general', key:'obj_general', placeholder:'Los objetivos expresan en forma concreta, medible y viable, lo que se espera lograr al finalizar el proyecto de investigacion. Cual sera el conocimiento generado si el trabajo se realiza? Deben mostrar una relacion clara y consistente con la descripcion del problema y con las preguntas que se quieren resolver.\n\nEl objetivo general debe poner de manifiesto lo que se quiere lograr con el estudio en terminos cientificos. Se recomienda formular un objetivo general global, coherente con el problema planteado.'},
+      {label:'Objetivos especificos', key:'obj_especificos', placeholder:'Dos o mas objetivos especificos que conduciran a lograr el objetivo general y que son alcanzables (factibles) con la metodologia propuesta. Los objetivos especificos deben ser una secuencia logica o descomponer en etapas de logro el objetivo general.\n\nRecuerde que no debe confundir objetivos con actividades o procedimientos metodologicos.', large:true}
     ]},
-    { id:'metodologia', title:'7. Metodologia', fields:[
-      {label:'6.1 Diseno de estudio', key:'diseno', placeholder:'Especifique el tipo de diseno metodologico'},
+    { id:'metodologia', title:'Metodologia', fields:[
+      {label:'6.1 Diseno de estudio', key:'diseno', placeholder:'Debe reflejar la estructura logica del proceso de investigacion, desde la eleccion de un diseno metodologico especifico hasta la forma como se van a analizar, interpretar y presentar los resultados. Debe reflejar la articulacion entre los objetivos del proyecto y los procedimientos.'},
       {label:'6.2 Poblacion a estudio', key:'poblacion', placeholder:'Describa la poblacion objetivo'},
       {label:'6.3 Criterios de seleccion', key:'criterios', placeholder:'Criterios de inclusion:\n1.\n2.\n3.\n\nCriterios de exclusion:\n1.\n2.\n3.', large:true},
-      {label:'6.4 Muestreo y tamano de muestra', key:'muestreo', placeholder:'Tipo y estrategia de muestreo, sustentado con formula y referencia bibliografica.\n\nConsidere: hipotesis de investigacion (direccionalidad), Error Alfa (usualmente 0.05), Nivel de confianza Z (95%, 90% o 99%), Error Beta (0.10 o 0.20), Poder estadistico (80% o 90%), Desviacion estandar, Tamano del efecto esperado.\n\nFormula utilizada:\nParametros:\nResultado:', large:true},
-      {label:'6.5 Variables', key:'variables', placeholder:'Especifique las variables, su definicion operativa, relacion de dependencia, clasificacion segun naturaleza (cualitativa/cuantitativa), nivel de medicion (nominal, ordinal, discreta, continua) y nivel operativo.\n\nPara estudios con seguimiento, especifique variables de identificacion (nombres, ID, telefonos, direccion).\n\nVer Matriz de Variables adjunta (Formato Anexo Variables).'},
-      {label:'Metodo de recoleccion y organizacion', key:'metodo', placeholder:'Especifique como sera la organizacion, sistematizacion y analisis de los datos. Incluya estrategias de reclutamiento, pruebas piloto (si aplica), estrategias de seguimiento (si aplica).', large:true},
-      {label:'Plan de analisis estadistico', key:'plan_analisis', placeholder:'Desde el analisis descriptivo hasta los analisis inferenciales que permitan verificar las hipotesis/objetivos. Podran recibir apoyo del estadistico de la Subdireccion de Estudios Clinicos.', large:true},
-      {label:'Estrategias de control de errores y sesgos', key:'sesgos', placeholder:'Especifique los principales sesgos que se pueden presentar en el diseno, y la manera como resolverlos.', large:true}
+      {label:'6.4 Muestreo y tamano de muestra', key:'muestreo', placeholder:'Tipo y estrategia de muestreo, sustentado con formula y referencia bibliografica.\n\nPara determinar el tamano de muestra se debe considerar:\n- Hipotesis de investigacion (direccionalidad: igualdad/dos colas, o asociacion/superioridad/una cola)\n- Error Alfa (usualmente 0.05 — 5% probabilidad de error)\n- Nivel de confianza Z (95%, 90% o 99%)\n- Error Beta (0.10 o 0.20 — probabilidad de no detectar diferencia significativa cuando existe)\n- Poder estadistico 1-Beta (80% o 90%)\n- Desviacion estandar (dispersion de los datos respecto a su promedio)\n- Tamano del efecto o parametro (fuerza de la asociacion o magnitud de la diferencia)\n\nFormula utilizada:\nParametros:\nResultado:', large:true},
+      {label:'6.5 Variables', key:'variables', placeholder:'Especifique las variables, su definicion operativa, su relacion de dependencia en caso de estudios analiticos y clasificacion de acuerdo a la naturaleza (cualitativa o cuantitativa), nivel de medicion (nominal, ordinal, discreta o continua), y nivel operativo (forma de medicion en el instrumento de recoleccion de datos).\n\nPara estudios con seguimiento de pacientes, especifique cuales variables de identificacion se van a recolectar (nombres y apellidos, numero de identificacion, telefonos, direccion fisica o electronica).\n\nVer Matriz de Variables adjunta (Formato Anexo Variables).', large:true},
+      {label:'Metodo de recoleccion y organizacion', key:'metodo', placeholder:'Se debe especificar como va a ser la organizacion, sistematizacion y analisis de los datos, incluyendo estrategias de reclutamiento, pruebas piloto (en caso de ser necesario), estrategias de seguimiento (si aplica) y consideraciones eticas.', large:true},
+      {label:'Plan de analisis estadistico', key:'plan_analisis', placeholder:'Desde el analisis descriptivo hasta aquellos analisis inferenciales que permitan verificar las hipotesis/objetivos. Podran recibir apoyo por parte del estadistico de la Subdireccion de Estudios Clinicos y Epidemiologia Clinica.', large:true},
+      {label:'Estrategias de control de errores y sesgos', key:'sesgos', placeholder:'Especificar los principales sesgos que se pueden presentar en el diseno, y la manera como resolverlos.', large:true}
     ]},
-    { id:'etica', title:'8. Consideraciones Eticas', fields:[
-      {label:'Clasificacion del riesgo (Res. 008430/1993)', key:'riesgo', placeholder:'Sin riesgo / Riesgo minimo / Riesgo mayor que el minimo'},
+    { id:'etica', title:'Consideraciones Eticas', fields:[
+      {label:'Clasificacion del riesgo (Res. 008430/1993)', key:'riesgo', placeholder:'Sin riesgo / Riesgo minimo / Riesgo mayor que el minimo\n\nLos proyectos de investigacion en el campo de la salud humana deberan ajustarse a las Normas Cientificas, Tecnicas y Administrativas para la Investigacion en Salud establecidas en la Resolucion No. 008430 de 1993 del Ministerio de Salud.'},
       {label:'Evaluacion riesgo/beneficio', key:'riesgo_beneficio', placeholder:''},
       {label:'Plan de mitigacion de riesgos', key:'mitigacion', placeholder:''},
-      {label:'Consentimiento informado', key:'consentimiento', placeholder:'Indique si se requiere consentimiento informado. En caso de no requerirlo, justifique por que.\n\nRemitirse a instructivos INFOFE:\n- DC-CCEI-IT-002: Instructivo Elaboracion Consentimiento Informado Investigacion Institucional\n- DC-CCEI-IT-003: Instructivo guion para consentimiento verbal\n- DC-CCEI-IT-006: Instructivo Elaboracion Consentimiento Investigacion Clinica Experimental', large:true},
-      {label:'Proteccion de datos personales (Ley 1581/2012)', key:'datos_personales', placeholder:'Procedimientos para anonimizacion o confidencialidad. Recoleccion y almacenamiento seguro con acceso restringido. Uso de codigos o seudonimizacion. Procedimiento sobre uso, almacenamiento y eliminacion de datos.'},
-      {label:'Publicacion de resultados', key:'publicacion', placeholder:'Los resultados de la investigacion seran publicados, sean positivos, negativos o indeterminados.'}
+      {label:'Consentimiento informado', key:'consentimiento', placeholder:'Indique si se requiere consentimiento informado. En caso de no requerirlo, justifique por que.\n\nRemitirse a instructivos INFOFE:\n- DC-CCEI-IT-002: Instructivo Elaboracion Consentimiento Informado para Investigacion Institucional\n- DC-CCEI-IT-003: Instructivo guion para consentimiento verbal en protocolos institucionales\n- DC-CCEI-IT-006: Instructivo Elaboracion Consentimiento Investigacion Clinica Experimental', large:true},
+      {label:'Proteccion de datos personales (Ley 1581/2012)', key:'datos_personales', placeholder:'Procedimientos para anonimizacion o confidencialidad.\nRecoleccion y almacenamiento seguro de la informacion con acceso restringido.\nUso de codigos o seudonimizacion para garantizar anonimato en bases de datos.\nProcedimiento claro sobre uso, almacenamiento y eliminacion de los datos.', large:true},
+      {label:'Publicacion de resultados', key:'publicacion', placeholder:'Se debe especificar que los resultados de la investigacion seran publicados, sean positivos, negativos o indeterminados.'}
     ]},
-    { id:'resultados', title:'9. Resultados Esperados e Impacto', fields:[
-      {label:'Resultados esperados', key:'resultados', placeholder:'Deben estar de acuerdo con los objetivos planteados y ser coherentes con las capacidades del(os) investigador(es) y con el contexto. Los logros deben ser especificos y realistas.', large:true},
-      {label:'Impacto', key:'impacto', placeholder:'Identifique los efectos de la aplicacion de los resultados en los ambitos: academico, social, ambiental, economico, cientifico, tecnologico, politico. Incluya impacto en generacion de conocimiento y/o nuevos desarrollos.'}
+    { id:'resultados', title:'Resultados Esperados e Impacto', fields:[
+      {label:'Resultados esperados', key:'resultados', placeholder:'Los resultados deben estar de acuerdo con los objetivos planteados y ser coherentes con las capacidades del(os) investigador(es) y con el contexto. Los logros deben ser especificos y realistas en los compromisos adquiridos.', large:true},
+      {label:'Impacto', key:'impacto', placeholder:'Se deben identificar claramente los efectos de la aplicacion de los resultados de la investigacion en uno o varios de los siguientes ambitos: academico, social, ambiental, economico, cientifico, tecnologico, politico.\n\nDeben incluir el impacto de los resultados relacionados con la generacion de conocimiento y/o nuevos desarrollos tecnologicos, conductores al fortalecimiento de la capacidad cientifica nacional, dirigidos a la apropiacion social del conocimiento y dirigidos al cumplimiento de los objetivos trazados por la FSFB/UNIANDES.', large:true}
     ]},
-    { id:'trayectoria', title:'10. Trayectoria de los Investigadores', fields:[
-      {label:'Trayectoria', key:'trayectoria', placeholder:'Breve resena de la trayectoria y experiencia en proyectos de investigacion y desarrollo. Breve hoja de vida de los investigadores.', large:true}
+    { id:'trayectoria', title:'Trayectoria de los Investigadores', fields:[
+      {label:'Trayectoria', key:'trayectoria', placeholder:'Incluya una breve resena de su trayectoria y su experiencia en proyectos de investigacion y desarrollo. Breve hoja de vida de los investigadores.', large:true}
     ]},
-    { id:'cronograma', title:'11. Cronograma de Actividades', fields:[
+    { id:'cronograma', title:'Cronograma de Actividades', fields:[
       {label:'Fecha de inicio', key:'fecha_inicio', placeholder:'DD/MM/AAAA'},
       {label:'Fecha de finalizacion', key:'fecha_fin', placeholder:'DD/MM/AAAA'},
-      {label:'Cronograma de actividades', key:'cronograma', placeholder:'El cuadro de cronograma debe reflejar en forma concreta el proyecto, con sus tiempos, secuencia y duracion de cada actividad.\n\nActividad 1: ___  |  Mes inicio: ___  |  Mes fin: ___\nActividad 2: ___  |  Mes inicio: ___  |  Mes fin: ___\nActividad 3: ___  |  Mes inicio: ___  |  Mes fin: ___', large:true}
+      {label:'Cronograma de actividades', key:'cronograma', placeholder:'Indicar fecha de inicio del proyecto y fecha de finalizacion. El cuadro de cronograma de actividades debe reflejar en forma muy concreta el proyecto, con sus tiempos, secuencia y duracion de cada actividad.\n\nActividad 1: ___  |  Mes inicio: ___  |  Mes fin: ___\nActividad 2: ___  |  Mes inicio: ___  |  Mes fin: ___\nActividad 3: ___  |  Mes inicio: ___  |  Mes fin: ___', large:true}
     ]},
-    { id:'presupuesto', title:'12. Presupuesto', fields:[
-      {label:'Presupuesto detallado', key:'presupuesto', placeholder:'Calculo de costos: personal (valor hora semanal, mensual, anual), equipos, materiales, salidas de campo, busqueda bibliografica, publicaciones, servicios tecnicos.\n\nPara protocolos sin financiacion externa consulte: Formato presupuesto protocolos institucionales sin patrocinio.xlsx', large:true}
+    { id:'presupuesto', title:'Presupuesto', fields:[
+      {label:'Presupuesto detallado', key:'presupuesto', placeholder:'Se debe hacer un calculo de los costos del personal que participara en la investigacion por valor hora dedicada semanal, mensual y anual hasta cumplir el tiempo total calculado. El valor de equipos dispuestos, materiales, salidas de campo, busqueda de material bibliografico, publicaciones y servicios tecnicos entre otros que consideren los investigadores.\n\nPara protocolos sin financiacion externa consulte: Formato presupuesto protocolos institucionales sin patrocinio.xlsx', large:true}
     ]},
-    { id:'bibliografia', title:'13. Bibliografia', fields:[
-      {label:'Referencias (Normas Vancouver)', key:'bibliografia', placeholder:'Relacione unicamente la referida en el texto, siguiendo los Requisitos de Uniformidad para manuscritos enviados a revistas biomedicas (Normas Vancouver).\n\n1.\n2.\n3.', large:true}
+    { id:'bibliografia', title:'Bibliografia', fields:[
+      {label:'Referencias (Normas Vancouver)', key:'bibliografia', placeholder:'Relacione unicamente la referida en el texto, teniendo en cuenta los Requisitos de Uniformidad para los manuscritos enviados a revistas biomedicas realizado por el Comite Internacional de Editores de Revistas Medicas (Normas Vancouver).\n\n1.\n2.\n3.', large:true}
     ]},
-    { id:'anexos', title:'14. Anexos', fields:[
-      {label:'Listado de anexos', key:'anexos', placeholder:'Incluya todos los formatos que haran parte del estudio (formatos de recoleccion, consentimientos informados, tablas de presupuesto, diagramas de Gantt, etc.).\n\n1.\n2.\n3.', large:true}
+    { id:'anexos', title:'Anexos', fields:[
+      {label:'Listado de anexos', key:'anexos', placeholder:'En esta seccion debe incluir todos y cada uno de los formatos que haran parte del estudio (formatos de recoleccion de datos, consentimientos informados) como aquellas Tablas que aclaren aspectos dentro del protocolo (Tablas de Presupuesto, Diagramas de Gantt, etc.).\n\n1.\n2.\n3.', large:true}
     ]}
   ];
   if (docName.indexOf('Cronograma y presupuesto') >= 0) return [
@@ -3523,8 +3526,8 @@ function prefillFromStage1(docIndex) {
   if (!stage2DocContent[docIndex]) stage2DocContent[docIndex] = {};
   var c = stage2DocContent[docIndex];
 
-  // Only prefill Protocolo ajustado a Guia SECEC
-  if (d.name.indexOf('Protocolo ajustado') >= 0) {
+  // Prefill Guia para la elaboracion de proyectos de investigacion
+  if (d.name.indexOf('Guia para la elaboracion') >= 0) {
     // Titulo ← pregunta PICOT completa
     if (!c.titulo && s1.picot) {
       var picotParts = [];
