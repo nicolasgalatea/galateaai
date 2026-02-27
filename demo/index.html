@@ -3600,38 +3600,171 @@ function getDocTemplateSections(docName) {
     ]}
   ];
   if (docName.indexOf('Consentimientos informados') >= 0) return [
-    { id:'icf_encabezado', title:'Encabezado', fields:[
+    // ═══════════ FORMULARIO 1: CONSENTIMIENTO ESCRITO INSTITUCIONAL ═══════════
+    { id:'icf1_titulo', title:'FORMULARIO 1 — CONSENTIMIENTO ESCRITO PARA INVESTIGACION INSTITUCIONAL', fields:[
       {label:'Titulo del estudio', key:'titulo', placeholder:''},
-      {label:'Investigador principal', key:'ip', placeholder:''},
-      {label:'Codigo del protocolo', key:'codigo', placeholder:''},
-      {label:'Tipo de consentimiento', key:'tipo_icf', placeholder:'DC-CCEI-IT-002 (ICF institucional) / DC-CCEI-IT-003 (guion verbal) / DC-CCEI-IT-006 (ICF experimental)'}
+      {label:'Nombre del Investigador Principal', key:'ip', placeholder:''},
+      {label:'Telefono de contacto con el investigador', key:'telefono_ip', placeholder:''},
+      {label:'Nombre de la Institucion de Investigacion', key:'institucion', placeholder:'Fundacion Santa Fe de Bogota'},
+      {label:'Direccion de la Institucion', key:'direccion_inst', placeholder:'Calle 119A No.7-49, Bogota'},
+      {label:'Version y fecha del consentimiento', key:'version_fecha', placeholder:'Version 1.0 — Fecha'},
+      {label:'Numero codificado del participante', key:'codigo_participante', placeholder:''}
     ]},
-    { id:'icf_proposito', title:'1. Proposito del Estudio', fields:[
-      {label:'Proposito', key:'proposito', placeholder:'Usted esta siendo invitado(a) a participar en un estudio de investigacion. Antes de decidir si desea participar, es importante que comprenda por que se realiza esta investigacion y en que consiste.\n\nProposito del estudio:', large:true}
+    { id:'icf1_invitacion', title:'1. Invitacion a Participar', fields:[
+      {label:'Invitacion', key:'invitacion', placeholder:'La Fundacion Santa Fe y el Departamento de ________________ le estan invitando a participar como voluntario en un estudio de investigacion para determinar ______________________________\n\nEste documento le proporcionara la informacion necesaria para que usted pueda decidir si participa o no en la investigacion. Por favor lealo con detenimiento y realice todas las preguntas necesarias al investigador del estudio. Usted no esta obligado a participar y puede retirarse en el momento en que asi lo desee sin perder ningun derecho en su atencion de salud.', large:true}
     ]},
-    { id:'icf_procedimientos', title:'2. Procedimientos', fields:[
-      {label:'Procedimientos', key:'procedimientos', placeholder:'Si usted acepta participar, se le pedira que:\n\n1.\n2.\n3.\n\nDuracion estimada de su participacion:', large:true}
+    { id:'icf1_proposito', title:'2. Proposito del Estudio', fields:[
+      {label:'Proposito', key:'proposito', placeholder:'Describa la finalidad de este estudio. Todo el documento debe contener un lenguaje entendible para cualquier participante, sin utilizar terminos tecnicos o explicando entre parentesis el termino cuando sea necesario.', large:true}
     ]},
-    { id:'icf_riesgos', title:'3. Riesgos Potenciales', fields:[
-      {label:'Clasificacion del riesgo (Res. 008430/1993)', key:'clasif_riesgo', placeholder:'Sin riesgo / Riesgo minimo / Riesgo mayor que el minimo'},
-      {label:'Riesgos identificados', key:'riesgos', placeholder:'1.\n2.', large:true}
+    { id:'icf1_criterios', title:'3. Resumen de Criterios', fields:[
+      {label:'Duracion del estudio', key:'duracion', placeholder:'El estudio tiene una duracion de _______'},
+      {label:'Criterios de inclusion y exclusion', key:'criterios', placeholder:'El medico investigador del estudio hablara con usted para revisar si cumple con los siguientes requisitos para su ingreso al estudio:\n\nCriterios de inclusion:\n1.\n2.\n3.\n\nCriterios de exclusion:\n1.\n2.\n3.', large:true}
     ]},
-    { id:'icf_beneficios', title:'4. Beneficios', fields:[
-      {label:'Beneficios', key:'beneficios', placeholder:'Los posibles beneficios de participar en este estudio son:\n\n1.\n2.\n\nNota: Es posible que usted no reciba un beneficio directo por su participacion.'}
+    { id:'icf1_procedimientos', title:'4. Procedimientos del Estudio', fields:[
+      {label:'Procedimientos', key:'procedimientos', placeholder:'Describa todos los procedimientos a realizar: visitas al hospital, procedimientos de toma de muestra, si las muestras seran solo para este estudio, diligenciamiento de encuestas o cuestionarios, cualquier procedimiento de acuerdo con el diseno del estudio.', large:true}
     ]},
-    { id:'icf_confidencialidad', title:'5. Confidencialidad', fields:[
-      {label:'Manejo de confidencialidad', key:'confidencialidad', placeholder:'Toda la informacion recolectada sera tratada de manera confidencial conforme a la Ley 1581 de 2012. Sus datos seran codificados y almacenados en sistemas protegidos. Solo el equipo de investigacion autorizado tendra acceso. Los resultados podran ser publicados sin revelar su identidad.'}
+    { id:'icf1_muestras', title:'5. Muestras Biologicas para Investigacion Futura', fields:[
+      {label:'Uso de muestras biologicas', key:'muestras', placeholder:'Describa si las muestras que se tomaran para este estudio seran almacenadas y usadas para futuras investigaciones del mismo tema. Registre el lugar y anos de almacenamiento. Especifique que las muestras no seran usadas para ningun tipo de analisis genetico (si aplica). O registre que las muestras no seran usadas en investigaciones futuras.', large:true}
     ]},
-    { id:'icf_voluntariedad', title:'6. Participacion Voluntaria', fields:[
-      {label:'Voluntariedad', key:'voluntariedad', placeholder:'Su participacion es completamente voluntaria. Usted puede negarse a participar o retirarse del estudio en cualquier momento sin que esto afecte su atencion medica en la Fundacion Santa Fe de Bogota.'}
+    { id:'icf1_alternativos', title:'6. Tratamientos Alternativos', fields:[
+      {label:'Tratamientos alternativos', key:'alternativos', placeholder:'Describa cualquier tipo de tratamiento al que el participante pueda acceder si no participa en el estudio. Si no los hay, mencionelo.', large:true}
     ]},
-    { id:'icf_contacto', title:'7. Contacto', fields:[
-      {label:'Datos de contacto', key:'contacto', placeholder:'Investigador principal: ___\nTelefono: ___\nCorreo: ___\n\nComite de Etica en Investigacion FSFB: etica.investigacion@fsfb.org.co'}
+    { id:'icf1_riesgos', title:'7. Riesgos', fields:[
+      {label:'Riesgos fisicos, psicologicos y sociales', key:'riesgos', placeholder:'Describa todos los posibles riesgos por muy minimos que sean: fisicos, psicologicos, sociales.', large:true}
     ]},
-    { id:'icf_firmas', title:'Declaracion y Firmas', fields:[
-      {label:'Firma del participante — Nombre, C.C., Fecha', key:'firma_paciente', placeholder:''},
-      {label:'Firma del testigo — Nombre, C.C., Fecha', key:'firma_testigo', placeholder:''},
-      {label:'Firma del investigador — Nombre, C.C., Fecha', key:'firma_investigador', placeholder:''}
+    { id:'icf1_beneficios', title:'8. Beneficios', fields:[
+      {label:'Beneficios', key:'beneficios', placeholder:'Describa los beneficios que el participante obtendra por su participacion y/o los beneficios para la institucion, para futuros pacientes o para la sociedad en general.', large:true}
+    ]},
+    { id:'icf1_adversos', title:'9. Posibles Eventos Adversos', fields:[
+      {label:'Eventos adversos', key:'adversos', placeholder:'Describa todos los posibles eventos adversos que puedan presentarse asi sean menores al 1%.', large:true}
+    ]},
+    { id:'icf1_compensacion_dano', title:'10. Compensacion por Danos', fields:[
+      {label:'Compensacion por danos', key:'comp_dano', placeholder:'El investigador del estudio no espera que usted sufra algun problema de salud por participar en este estudio. No obstante, si como resultado directo de su participacion usted presenta alguna lesion, enfermedad o complicacion relacionada con la investigacion, el investigador/institucion cubriran los costos de su tratamiento medico y para ello cuenta con una poliza de seguros (registre el numero de la poliza). Las limitaciones de esta compensacion seran las de la legislacion vigente.\n\nEn caso de sufrir un evento adverso serio contacte de forma inmediata al Investigador del estudio en los telefonos descritos en la parte inicial. Si acude al servicio de urgencias de nuestra institucion indique al medico tratante que usted es participante de este estudio.', large:true}
+    ]},
+    { id:'icf1_compensacion_part', title:'11. Compensacion por Participacion', fields:[
+      {label:'Compensacion economica', key:'comp_participacion', placeholder:'Por el desarrollo de esta investigacion los investigadores recibiran (no recibiran) compensacion economica por la investigacion. Usted como participante no recibira compensacion economica por su participacion. El grupo de investigadores puede tener disponible un auxilio para transporte representado en bonos de transporte o bonos para parqueadero.'}
+    ]},
+    { id:'icf1_confidencialidad', title:'12. Confidencialidad de la Informacion', fields:[
+      {label:'Confidencialidad', key:'confidencialidad', placeholder:'El investigador asegurara la confidencialidad de su historia clinica y de la informacion recolectada, la cual no sera identificada. A usted se le asignara un codigo para el estudio diferente a su cedula y de esta forma se mantendra la confidencialidad de sus datos personales. Los codigos se utilizaran hasta donde las leyes y regulaciones lo permitan y no seran accesibles. Usted no sera identificado de ninguna manera.'}
+    ]},
+    { id:'icf1_publicacion', title:'13. Publicacion', fields:[
+      {label:'Publicacion de resultados', key:'publicacion', placeholder:'Todos los resultados de esta investigacion sean positivos, negativos o inconclusos seran publicados acorde a lo descrito en la Declaracion de Helsinki.'}
+    ]},
+    { id:'icf1_contactos', title:'14. Contactos', fields:[
+      {label:'Investigador Principal', key:'contacto_ip', placeholder:'Nombre y telefono'},
+      {label:'Investigador secundario', key:'contacto_sec', placeholder:'Nombre y telefono'},
+      {label:'Coordinador de estudio', key:'contacto_coord', placeholder:'Nombre y telefono'},
+      {label:'Comite de Etica', key:'contacto_comite', placeholder:'Para cualquier aclaracion sobre sus derechos como participante o si cree que los mismos han sido vulnerados, puede comunicarse con el Comite Corporativo de Etica en Investigacion — Calle 119A No.7-49 telefono 6030303 Ext. 5402 o al correo: comiteinvestigativo@fsfb.org.co'}
+    ]},
+    { id:'icf1_declaracion', title:'15. Declaracion de Consentimiento Informado', fields:[
+      {label:'Declaracion del participante', key:'declaracion', placeholder:'Al firmar este formulario, certifico todos los puntos siguientes:\n\n[ ] He leido (o me han leido) este formulario de consentimiento informado en su totalidad y he recibido explicaciones. He tenido la oportunidad de hacer preguntas.\n[ ] He recibido una copia de este formulario que puedo guardar como referencia.\n[ ] Acepto que mi informacion personal confidencial este disponible para el investigador, la institucion, entidad gubernamental o el Comite de Etica.\n[ ] Entiendo que tengo la libertad de retirarme del estudio en cualquier momento, sin justificar mi decision y sin afectar la atencion medica que reciba.\n[ ] Entiendo los procedimientos de este protocolo incluyendo lo relacionado al uso futuro de muestras biologicas.\n[ ] Entiendo que los resultados cualesquiera que sean seran publicados.\n[ ] Comprendo que se me informara sobre cualquier informacion nueva que pudiera afectar mi voluntad de seguir participando.\n[ ] Acepto voluntariamente participar en este estudio.', large:true}
+    ]},
+    { id:'icf1_firmas', title:'16. Firmas', fields:[
+      {label:'Nombre y apellidos del participante', key:'firma_part_nombre', placeholder:''},
+      {label:'Numero de cedula de ciudadania', key:'firma_part_cc', placeholder:''},
+      {label:'Firma del participante', key:'firma_part', placeholder:''},
+      {label:'Direccion', key:'firma_part_dir', placeholder:''},
+      {label:'Fecha y Hora', key:'firma_part_fecha', placeholder:''},
+      {label:'Testigo No.1 — Nombre, C.C., Firma, Parentesco, Fecha', key:'firma_testigo1', placeholder:''},
+      {label:'Testigo No.2 — Nombre, C.C., Firma, Parentesco, Fecha', key:'firma_testigo2', placeholder:''},
+      {label:'Persona que realiza el procedimiento de consentimiento — Nombre, Firma, Fecha', key:'firma_consentidor', placeholder:''}
+    ]},
+    // ═══════════ FORMULARIO 2: CONSENTIMIENTO VERBAL ═══════════
+    { id:'icf2_titulo', title:'FORMULARIO 2 — CONSENTIMIENTO INFORMADO VERBAL', fields:[
+      {label:'Titulo del estudio', key:'v_titulo', placeholder:''},
+      {label:'Nombre del Investigador Principal', key:'v_ip', placeholder:''},
+      {label:'Telefono de contacto', key:'v_telefono', placeholder:''},
+      {label:'Institucion de Investigacion', key:'v_institucion', placeholder:'Fundacion Santa Fe de Bogota'},
+      {label:'Direccion de la Institucion', key:'v_direccion', placeholder:''},
+      {label:'Version y fecha del consentimiento verbal', key:'v_version', placeholder:''},
+      {label:'Numero codificado del participante', key:'v_codigo', placeholder:''}
+    ]},
+    { id:'icf2_proposito', title:'Proposito (Verbal)', fields:[
+      {label:'Proposito del estudio', key:'v_proposito', placeholder:'El proposito de este estudio es ______________________________________________________'}
+    ]},
+    { id:'icf2_procedimientos', title:'Procedimientos (Verbal)', fields:[
+      {label:'Procedimientos', key:'v_procedimientos', placeholder:'En forma breve describa los procedimientos y lo que el potencial participante tendria que hacer si participa en el estudio.', large:true}
+    ]},
+    { id:'icf2_riesgos', title:'Riesgos (Verbal)', fields:[
+      {label:'Riesgos', key:'v_riesgos', placeholder:'Todos los estudios de investigacion tienen algun grado de riesgo o incomodidad para sus participantes. Para este estudio los riesgos podrian ser ___________________________________'}
+    ]},
+    { id:'icf2_beneficios', title:'Beneficios (Verbal)', fields:[
+      {label:'Beneficios', key:'v_beneficios', placeholder:'Si no hay un beneficio directo al sujeto, describir el beneficio potencial para las personas en el futuro como resultado de la informacion recopilada en el estudio.'}
+    ]},
+    { id:'icf2_voluntad', title:'Voluntad de Participacion y Retiro (Verbal)', fields:[
+      {label:'Voluntariedad', key:'v_voluntad', placeholder:'Su participacion es voluntaria, le podemos garantizar que nuestro equipo lo tratara de la misma forma si decide o no participar. En el momento en que usted lo decida puede retirarse informandole al investigador su decision. Sus derechos en la atencion en salud permaneceran sin modificacion.'}
+    ]},
+    { id:'icf2_confidencialidad', title:'Confidencialidad (Verbal)', fields:[
+      {label:'Confidencialidad', key:'v_confidencialidad', placeholder:'Vamos a recoger informacion sobre usted y para identificarlo se le asignara un codigo, sus datos personales no seran revelados, permaneceran anonimos. Mediante esta autorizacion usted tambien nos permite consultar datos de su historia clinica.\n\nSi considera que sus derechos han sido vulnerados, puede comunicarse con el Comite Corporativo de Etica en Investigacion al telefono 6030303 Ext 5402 o comiteinvestigativo@fsfb.org.co', large:true}
+    ]},
+    { id:'icf2_publicacion', title:'Publicacion (Verbal)', fields:[
+      {label:'Publicacion', key:'v_publicacion', placeholder:'Todos los resultados de esta investigacion seran publicados como lo ordenan las normas eticas en investigacion, pero usted no sera identificado.'}
+    ]},
+    { id:'icf2_confirmacion', title:'Confirmacion y Firmas (Verbal)', fields:[
+      {label:'Confirmacion de entendimiento', key:'v_confirmacion', placeholder:'Por favor confirme si le ha quedado clara la informacion: SI ___ NO ___\nPor favor confirme si desea participar en la investigacion propuesta: SI ___ NO ___'},
+      {label:'Nombre del participante', key:'v_nombre_part', placeholder:''},
+      {label:'Firma del Investigador que imparte el consentimiento verbal', key:'v_firma_inv', placeholder:''},
+      {label:'Fecha y Hora', key:'v_fecha', placeholder:''}
+    ]},
+    // ═══════════ FORMULARIO 3: ASENTIMIENTO MENORES 7-12 ANOS ═══════════
+    { id:'icf3_titulo', title:'FORMULARIO 3 — ASENTIMIENTO INFORMADO PARA MENORES DE EDAD (7 a 12 anos)', fields:[
+      {label:'Titulo del estudio', key:'m_titulo', placeholder:''},
+      {label:'Nombre del Investigador Principal', key:'m_ip', placeholder:''},
+      {label:'Telefono de contacto', key:'m_telefono', placeholder:''},
+      {label:'Institucion de Investigacion', key:'m_institucion', placeholder:'Fundacion Santa Fe de Bogota'},
+      {label:'Direccion de la Institucion', key:'m_direccion', placeholder:''},
+      {label:'Version y fecha del Asentimiento', key:'m_version', placeholder:''},
+      {label:'Numero codificado del participante', key:'m_codigo', placeholder:''}
+    ]},
+    { id:'icf3_invitacion', title:'Invitacion a Participar (Menores)', fields:[
+      {label:'Invitacion', key:'m_invitacion', placeholder:'A traves de este documento queremos hacerte una invitacion a participar voluntariamente en un estudio de investigacion.\n\nMi nombre es _________________ y soy el investigador principal de este estudio. Hemos discutido esto con tus padres y ellos saben que te estamos preguntando a ti tambien para tu aceptacion, pero tambien puedes elegir no participar.\n\nVas a leer una informacion que luego discutiremos. Tomate todo el tiempo necesario. Puedes hacer todas las preguntas que quieras.', large:true}
+    ]},
+    { id:'icf3_objetivo', title:'Objetivo de la Investigacion (Menores)', fields:[
+      {label:'Objetivo', key:'m_objetivo', placeholder:'Mi trabajo consiste en investigar ________________ y creemos que esta investigacion nos ayudara a poder ____________________\n\n(Use un lenguaje claro, sencillo y amigable acorde a la edad del nino participante. Explique por que se esta haciendo el estudio.)', large:true},
+      {label:'El menor entiende que su participacion es voluntaria (iniciales)', key:'m_voluntario_iniciales', placeholder:'Iniciales del menor'}
+    ]},
+    { id:'icf3_procedimientos', title:'Procedimientos: Que me va a suceder? (Menores)', fields:[
+      {label:'Procedimientos paso a paso', key:'m_procedimientos', placeholder:'Si decides que quieres participar, estas actividades realizaras con nosotros:\n\n1. En ___ dias, vendras con tus padres para ___\n2. En la clinica te haremos preguntas sobre ___ y llenaras unos formularios\n3. En tu casa de forma ___ (frecuencia) tendras que hacer ___\n4. Despues, ___ vez(ces) al mes durante ___ meses, volveras a la clinica para ___\n\nEn total vendras a la clinica ___ veces en ___ meses.\n\n(Presente al nino paso a paso cada procedimiento, el tiempo que implicara, y explique los terminos tecnicos en lenguaje simple)', large:true},
+      {label:'El menor entiende los procedimientos (iniciales)', key:'m_proc_iniciales', placeholder:'Iniciales del menor'}
+    ]},
+    { id:'icf3_riesgos', title:'Riesgos y Molestias: Es malo o peligroso para mi? (Menores)', fields:[
+      {label:'Riesgos', key:'m_riesgos', placeholder:'Enumere los posibles riesgos o molestias. Explique que en caso de molestia o dolor podra comunicarselo al investigador y a sus padres.\n\nEj: No esperamos que tengas molestias de salud por participar, solo diligenciaras unos cuestionarios.\nEj: La toma de muestra de sangre puede doler por solo un segundo. Si duele por mas tiempo, dilo a tus padres o a mi.', large:true},
+      {label:'El menor entiende los riesgos (iniciales)', key:'m_riesgos_iniciales', placeholder:'Iniciales del menor'}
+    ]},
+    { id:'icf3_beneficios', title:'Beneficios: Algo bueno me puede ocurrir? (Menores)', fields:[
+      {label:'Beneficios', key:'m_beneficios', placeholder:'Con tu ayuda vamos a saber mas sobre como ________________ en ninos. Ademas te podremos decir ______________________\n\nEj: Tendras chequeos regulares con la enfermera de forma que si estas enfermo, lo sabremos bien pronto.'},
+      {label:'El menor entiende los beneficios (iniciales)', key:'m_benef_iniciales', placeholder:'Iniciales del menor'}
+    ]},
+    { id:'icf3_incentivos', title:'Obtengo algo por participar? (Menores)', fields:[
+      {label:'Incentivos', key:'m_incentivos', placeholder:'Cualquier regalo debe ser lo suficientemente pequeno como para no inducir la participacion. La OMS no promueve incentivos mayores que el reembolso por gastos incurridos. Ej: Le daremos a tus padres un bono para pagar el transporte y cuando llegues te daremos un bono para un refrigerio.'}
+    ]},
+    { id:'icf3_confidencialidad', title:'Confidencialidad: Van a saber todos acerca de esto? (Menores)', fields:[
+      {label:'Confidencialidad', key:'m_confidencialidad', placeholder:'No diremos a otras personas que estas en esta investigacion y no compartiremos informacion sobre ti a nadie que no trabaje en el estudio. Cuando la investigacion finalice, te diremos los resultados. La informacion sobre ti tendra un numero en vez de tu nombre. Solo los investigadores sabran cual es tu numero y se guardara con llave.', large:true},
+      {label:'El menor entiende la confidencialidad (iniciales)', key:'m_conf_iniciales', placeholder:'Iniciales del menor'}
+    ]},
+    { id:'icf3_compensacion', title:'Compensacion: Que pasa si resulto danado? (Menores)', fields:[
+      {label:'Compensacion', key:'m_compensacion', placeholder:'Si te enfermas durante la investigacion por el medicamento que te dimos, te ayudaremos. Hemos dado informacion a tus padres acerca de que hacer si resultas danado o enfermas.\n\nDebes entender que tu participacion es voluntaria y ni tu o yo como investigador recibiremos dinero por hacer esto.'}
+    ]},
+    { id:'icf3_resultados', title:'Compartir los Resultados (Menores)', fields:[
+      {label:'Resultados', key:'m_resultados', placeholder:'Cuando finalicemos la investigacion, me sentare contigo y con tu padre/madre y les explicaremos lo que hemos aprendido. Despues, informaremos a mas gente, a cientificos y a otros, escribiendo y compartiendo informes.'}
+    ]},
+    { id:'icf3_voluntariedad', title:'Puedo elegir no participar? Puedo cambiar de idea? (Menores)', fields:[
+      {label:'Voluntariedad', key:'m_voluntariedad', placeholder:'No es obligatorio que participes. Nadie se enfadara o molestara contigo si dices que no. Eres libre de tomar la decision asi tus padres tengan otra opinion diferente a la tuya. Puedes pensar en ello y responder mas tarde. Puedes decir "si" ahora y cambiar de idea mas tarde y tambien estara bien.'}
+    ]},
+    { id:'icf3_contacto', title:'Con quien puedo hablar para hacer preguntas? (Menores)', fields:[
+      {label:'Contactos', key:'m_contacto', placeholder:'Puedes hacerme preguntas ahora o mas tarde. Puedes preguntar a la enfermera. Mis numeros de contacto son ___________________________________________________'},
+      {label:'Comite de Etica', key:'m_comite', placeholder:'Existe un grupo de personas encargadas de revisar que tu participacion sea la mas adecuada para ti y tu salud. Ellos son el Comite Corporativo de Etica en Investigacion. Puedes contactarlos al telefono 6030303 Ext 5402 o escribir a comiteinvestigativo@fsfb.org.co'}
+    ]},
+    { id:'icf3_declaracion', title:'Declaracion del Menor', fields:[
+      {label:'Preguntas de verificacion', key:'m_verificacion', placeholder:'Ya leiste o te leyeron el documento y quieres participar en el estudio? ___\nYa preguntaste y te contestaron todas tus dudas? ___\nEntendiste que tu ayuda es voluntaria y puedes retirarte cuando quieras? ___\nEntendiste que no le podemos dar dinero a tus papas por tu ayuda? ___\nEntendiste que si no quieres participar te vamos a seguir atendiendo como siempre? ___', large:true},
+      {label:'Declaracion del menor', key:'m_declaracion', placeholder:'Yo, ____________________________________________________________ declaro que estoy de acuerdo en participar en este estudio. Mi participacion es voluntaria. Me explicaron que puedo negarme a participar sin que pase nada malo y que me van a seguir atendiendo como siempre.'}
+    ]},
+    { id:'icf3_firmas', title:'Firmas (Menores)', fields:[
+      {label:'Nombre del menor, Identificacion, Firma, Fecha y Hora', key:'m_firma_menor', placeholder:''},
+      {label:'Madre — Nombre, C.C., Firma, Direccion, Fecha y Hora', key:'m_firma_madre', placeholder:''},
+      {label:'Padre — Nombre, C.C., Firma, Direccion, Fecha y Hora', key:'m_firma_padre', placeholder:''},
+      {label:'Testigo No.1 — Nombre, C.C., Firma, Parentesco, Fecha', key:'m_firma_testigo1', placeholder:''},
+      {label:'Testigo No.2 — Nombre, C.C., Firma, Parentesco, Fecha', key:'m_firma_testigo2', placeholder:''}
     ]}
   ];
   if (docName.indexOf('Matriz de Variables') >= 0) return [
