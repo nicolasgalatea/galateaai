@@ -3303,6 +3303,51 @@ function downloadGuiaDoc(guiaIndex) {
   URL.revokeObjectURL(url);
 }
 
+function downloadMatrizVariablesExcel(docIndex) {
+  if (!stage2SimData || !stage2SimData.docsSubdireccion[docIndex]) return;
+  var ta = document.getElementById('plaintextDoc_' + docIndex);
+  if (ta) savePlainTextDoc(docIndex, ta.value);
+  var content = stage2DocContent[docIndex] || {};
+  var wb = XLSX.utils.book_new();
+
+  var headers = ['Variable', 'Definicion Conceptual', 'Definicion Operacional', 'Tipo', 'Escala de Medicion', 'Unidad de Medicion', 'Identificatoria', 'Obligatoriedad'];
+  var data = [
+    ['MATRIZ DE VARIABLES — ' + (content.titulo || 'Proyecto de Investigacion')],
+    ['Investigador Principal: ' + (content.ip || '')],
+    ['Fundacion Santa Fe de Bogota — Departamento de Cirugia'],
+    [],
+    headers
+  ];
+
+  for (var i = 1; i <= 5; i++) {
+    var prefix = 'v' + i + '_';
+    var nombre = content[prefix + 'nombre'] || '';
+    if (nombre || i <= 3) {
+      data.push([
+        nombre,
+        content[prefix + 'def_conceptual'] || '',
+        content[prefix + 'def_operacional'] || '',
+        content[prefix + 'tipo'] || '',
+        content[prefix + 'escala'] || '',
+        content[prefix + 'unidad'] || '',
+        content[prefix + 'identificatoria'] || '',
+        content[prefix + 'obligatoriedad'] || ''
+      ]);
+    }
+  }
+  // Add empty rows for user to fill more variables
+  for (var j = 0; j < 10; j++) {
+    data.push(['', '', '', '', '', '', '', '']);
+  }
+
+  var ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{wch:22},{wch:30},{wch:35},{wch:14},{wch:18},{wch:25},{wch:14},{wch:14}];
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:1,c:0},e:{r:1,c:7}},{s:{r:2,c:0},e:{r:2,c:7}}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Matriz de Variables');
+  XLSX.writeFile(wb, 'Matriz_Variables_FSFB.xlsx');
+  showToast('Excel Matriz de Variables descargado', 'success');
+}
+
 function downloadPresupuestoExcel(docIndex) {
   if (!stage2SimData || !stage2SimData.docsSubdireccion[docIndex]) return;
   var ta = document.getElementById('plaintextDoc_' + docIndex);
@@ -3394,6 +3439,7 @@ function downloadChecklistDoc(docIndex) {
   // Presupuesto → Excel
   var dName = stage2SimData.docsSubdireccion[docIndex].name;
   if (dName.indexOf('Cronograma y presupuesto') >= 0) { downloadPresupuestoExcel(docIndex); return; }
+  if (dName.indexOf('Matriz de Variables') >= 0) { downloadMatrizVariablesExcel(docIndex); return; }
   // Save any pending plaintext edits before download
   var ta = document.getElementById('plaintextDoc_' + docIndex);
   if (ta) savePlainTextDoc(docIndex, ta.value);
@@ -3772,15 +3818,47 @@ function getDocTemplateSections(docName) {
       {label:'Titulo del proyecto', key:'titulo', placeholder:''},
       {label:'Investigador principal', key:'ip', placeholder:''}
     ]},
-    { id:'mv_variables', title:'Variables del Estudio', fields:[
-      {label:'Variable 1', key:'var1', placeholder:'Nombre: ___  |  Definicion operativa: ___  |  Naturaleza: Cualitativa/Cuantitativa  |  Nivel medicion: Nominal/Ordinal/Discreta/Continua  |  Nivel operativo: ___  |  Dependencia: Dependiente/Independiente/Interviniente'},
-      {label:'Variable 2', key:'var2', placeholder:'Nombre: ___  |  Definicion operativa: ___  |  Naturaleza: ___  |  Nivel medicion: ___  |  Nivel operativo: ___  |  Dependencia: ___'},
-      {label:'Variable 3', key:'var3', placeholder:'Nombre: ___  |  Definicion operativa: ___  |  Naturaleza: ___  |  Nivel medicion: ___  |  Nivel operativo: ___  |  Dependencia: ___'},
-      {label:'Variable 4', key:'var4', placeholder:'Nombre: ___  |  Definicion operativa: ___  |  Naturaleza: ___  |  Nivel medicion: ___  |  Nivel operativo: ___  |  Dependencia: ___'},
-      {label:'Variable 5', key:'var5', placeholder:'Nombre: ___  |  Definicion operativa: ___  |  Naturaleza: ___  |  Nivel medicion: ___  |  Nivel operativo: ___  |  Dependencia: ___'},
-      {label:'Variable 6', key:'var6', placeholder:''},
-      {label:'Variable 7', key:'var7', placeholder:''},
-      {label:'Variable 8', key:'var8', placeholder:''},
+    { id:'mv_variables', title:'Variables del Estudio (8 columnas por variable)', fields:[
+      {label:'Variable 1 — Nombre', key:'v1_nombre', placeholder:'Ej: Tension arterial, Tipo de cirugia, Complicacion postoperatoria'},
+      {label:'Variable 1 — Definicion Conceptual', key:'v1_def_conceptual', placeholder:'Que significa la variable desde un punto de vista teorico o clinico. Ej: Medida de la presion que ejerce la sangre sobre las paredes arteriales'},
+      {label:'Variable 1 — Definicion Operacional', key:'v1_def_operacional', placeholder:'Como se mide y registra concretamente esa variable en la practica, siguiendo criterios estandarizados. Ej: Se considerara mortalidad 30 dias si el paciente fallece dentro de los 30 dias posteriores a la fecha de la cirugia, verificado en historia clinica y registro civil'},
+      {label:'Variable 1 — Tipo', key:'v1_tipo', placeholder:'Cualitativa / Cuantitativa'},
+      {label:'Variable 1 — Escala de Medicion', key:'v1_escala', placeholder:'Nominal / Ordinal / Intervalo / Razon'},
+      {label:'Variable 1 — Unidad de Medicion', key:'v1_unidad', placeholder:'Pregunta abierta / Opcion multiple / Multiples opciones. Ej: 0. No  1. Si'},
+      {label:'Variable 1 — Identificatoria', key:'v1_identificatoria', placeholder:'Si / No'},
+      {label:'Variable 1 — Obligatoriedad', key:'v1_obligatoriedad', placeholder:'Si / No'},
+      {label:'Variable 2 — Nombre', key:'v2_nombre', placeholder:''},
+      {label:'Variable 2 — Def. Conceptual', key:'v2_def_conceptual', placeholder:''},
+      {label:'Variable 2 — Def. Operacional', key:'v2_def_operacional', placeholder:''},
+      {label:'Variable 2 — Tipo', key:'v2_tipo', placeholder:'Cualitativa / Cuantitativa'},
+      {label:'Variable 2 — Escala', key:'v2_escala', placeholder:'Nominal / Ordinal / Intervalo / Razon'},
+      {label:'Variable 2 — Unidad', key:'v2_unidad', placeholder:''},
+      {label:'Variable 2 — Identificatoria', key:'v2_identificatoria', placeholder:'Si / No'},
+      {label:'Variable 2 — Obligatoriedad', key:'v2_obligatoriedad', placeholder:'Si / No'},
+      {label:'Variable 3 — Nombre', key:'v3_nombre', placeholder:''},
+      {label:'Variable 3 — Def. Conceptual', key:'v3_def_conceptual', placeholder:''},
+      {label:'Variable 3 — Def. Operacional', key:'v3_def_operacional', placeholder:''},
+      {label:'Variable 3 — Tipo', key:'v3_tipo', placeholder:'Cualitativa / Cuantitativa'},
+      {label:'Variable 3 — Escala', key:'v3_escala', placeholder:'Nominal / Ordinal / Intervalo / Razon'},
+      {label:'Variable 3 — Unidad', key:'v3_unidad', placeholder:''},
+      {label:'Variable 3 — Identificatoria', key:'v3_identificatoria', placeholder:'Si / No'},
+      {label:'Variable 3 — Obligatoriedad', key:'v3_obligatoriedad', placeholder:'Si / No'},
+      {label:'Variable 4 — Nombre', key:'v4_nombre', placeholder:''},
+      {label:'Variable 4 — Def. Conceptual', key:'v4_def_conceptual', placeholder:''},
+      {label:'Variable 4 — Def. Operacional', key:'v4_def_operacional', placeholder:''},
+      {label:'Variable 4 — Tipo', key:'v4_tipo', placeholder:'Cualitativa / Cuantitativa'},
+      {label:'Variable 4 — Escala', key:'v4_escala', placeholder:'Nominal / Ordinal / Intervalo / Razon'},
+      {label:'Variable 4 — Unidad', key:'v4_unidad', placeholder:''},
+      {label:'Variable 4 — Identificatoria', key:'v4_identificatoria', placeholder:'Si / No'},
+      {label:'Variable 4 — Obligatoriedad', key:'v4_obligatoriedad', placeholder:'Si / No'},
+      {label:'Variable 5 — Nombre', key:'v5_nombre', placeholder:''},
+      {label:'Variable 5 — Def. Conceptual', key:'v5_def_conceptual', placeholder:''},
+      {label:'Variable 5 — Def. Operacional', key:'v5_def_operacional', placeholder:''},
+      {label:'Variable 5 — Tipo', key:'v5_tipo', placeholder:'Cualitativa / Cuantitativa'},
+      {label:'Variable 5 — Escala', key:'v5_escala', placeholder:'Nominal / Ordinal / Intervalo / Razon'},
+      {label:'Variable 5 — Unidad', key:'v5_unidad', placeholder:''},
+      {label:'Variable 5 — Identificatoria', key:'v5_identificatoria', placeholder:'Si / No'},
+      {label:'Variable 5 — Obligatoriedad', key:'v5_obligatoriedad', placeholder:'Si / No'},
       {label:'Variables identificadoras (si aplica seguimiento)', key:'vars_id', placeholder:'Especifique cuales variables de identificacion se recolectaran (nombres, apellidos, numero de identificacion, telefonos, direccion fisica o electronica)'}
     ]}
   ];
@@ -4094,9 +4172,9 @@ function renderDocumentChecklist() {
     if (progress > 0 && progress < 80) h += '<div class="flex items-center gap-2 mt-1"><div class="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden"><div class="h-full bg-amber-400 rounded-full" style="width:' + progress + '%"></div></div><span class="text-[9px] text-amber-600 font-bold">' + progress + '%</span></div>';
     h += '</div>';
     // Download + expand buttons
-    var isPresupuesto = d.name.indexOf('Cronograma y presupuesto') >= 0;
-    var dlLabel = isPresupuesto ? '.xlsx' : '.doc';
-    var dlColor = isPresupuesto ? 'bg-green-600/10 text-green-700 hover:bg-green-600/20' : 'bg-galatea/10 text-galatea hover:bg-galatea/20';
+    var isExcel = d.name.indexOf('Cronograma y presupuesto') >= 0 || d.name.indexOf('Matriz de Variables') >= 0;
+    var dlLabel = isExcel ? '.xlsx' : '.doc';
+    var dlColor = isExcel ? 'bg-green-600/10 text-green-700 hover:bg-green-600/20' : 'bg-galatea/10 text-galatea hover:bg-galatea/20';
     h += '<button onclick="event.stopPropagation(); downloadChecklistDoc(' + idx + ')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ' + dlColor + ' text-[11px] font-bold transition-colors mr-2">';
     h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>' + dlLabel + '</button>';
     h += '<svg class="w-5 h-5 text-gray-400 transition-transform ' + (isExpanded ? 'rotate-180' : '') + '" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>';
