@@ -287,11 +287,11 @@
 
   <!-- ═══ MODO DEMO / REAL TOGGLE ═══ -->
   <div id="modeToggle" class="fixed top-4 right-4 z-[90] flex items-center gap-2 bg-white/90 backdrop-blur-md border border-gray-200 rounded-full px-4 py-2 shadow-lg">
-    <span id="modeLabel" class="text-xs font-semibold text-gray-300">Demo</span>
-    <button onclick="toggleRealMode()" id="modeBtn" class="relative w-11 h-6 rounded-full bg-galatea transition-colors duration-300 focus:outline-none">
-      <span id="modeDot" class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300" style="transform:translateX(20px)"></span>
+    <span id="modeLabel" class="text-xs font-semibold text-gray-500">Demo</span>
+    <button onclick="toggleRealMode()" id="modeBtn" class="relative w-11 h-6 rounded-full bg-gray-300 transition-colors duration-300 focus:outline-none">
+      <span id="modeDot" class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300" style="transform:translateX(0)"></span>
     </button>
-    <span id="modeLabelReal" class="text-xs font-semibold text-galatea">Real AI</span>
+    <span id="modeLabelReal" class="text-xs font-semibold text-gray-300">Real AI</span>
   </div>
 
   <!-- ═══ MAIN ═══ -->
@@ -883,7 +883,7 @@
 // ═══════════════════════════════════════════════════════════════
 // CONFIG + STATE
 // ═══════════════════════════════════════════════════════════════
-var REAL_AI_ENABLED = true;
+var REAL_AI_ENABLED = false;
 var SUPABASE_URL = 'https://stoxauquwryanlnfmthm.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0b3hhdXF1d3J5YW5sbmZtdGhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxODc4MDksImV4cCI6MjA3OTc2MzgwOX0.eNGszOo6Wry_SPab0XKx6iR60PP2KWHTf9GIIQ-qYhU';
 var DEFAULT_PROJECT_ID = 'e8233417-9ddf-4453-8372-c5b6797da8aa';
@@ -5447,29 +5447,30 @@ function exportCoverLetter() {
 // ═══════════════════════════════════════════════════════════════
 // MODO DEMO / REAL AI TOGGLE
 // ═══════════════════════════════════════════════════════════════
-function toggleRealMode() {
-  REAL_AI_ENABLED = !REAL_AI_ENABLED;
+function setModeToggleUI(isReal) {
   var btn = $('modeBtn');
   var dot = $('modeDot');
   var labelDemo = $('modeLabel');
   var labelReal = $('modeLabelReal');
+  if (isReal) {
+    if (btn) { btn.classList.remove('bg-gray-300'); btn.classList.add('bg-galatea'); }
+    if (dot) dot.style.transform = 'translateX(20px)';
+    if (labelDemo) { labelDemo.classList.remove('text-gray-500'); labelDemo.classList.add('text-gray-300'); }
+    if (labelReal) { labelReal.classList.remove('text-gray-300'); labelReal.classList.add('text-galatea'); }
+  } else {
+    if (btn) { btn.classList.remove('bg-galatea'); btn.classList.add('bg-gray-300'); }
+    if (dot) dot.style.transform = 'translateX(0)';
+    if (labelDemo) { labelDemo.classList.remove('text-gray-300'); labelDemo.classList.add('text-gray-500'); }
+    if (labelReal) { labelReal.classList.remove('text-galatea'); labelReal.classList.add('text-gray-300'); }
+  }
+}
+
+function toggleRealMode() {
+  REAL_AI_ENABLED = !REAL_AI_ENABLED;
+  setModeToggleUI(REAL_AI_ENABLED);
   if (REAL_AI_ENABLED) {
-    btn.classList.remove('bg-gray-300');
-    btn.classList.add('bg-galatea');
-    dot.style.transform = 'translateX(20px)';
-    labelDemo.classList.remove('text-gray-500');
-    labelDemo.classList.add('text-gray-300');
-    labelReal.classList.remove('text-gray-300');
-    labelReal.classList.add('text-galatea');
     showToast('Modo Real AI activado — se usara Claude API', 'info');
   } else {
-    btn.classList.remove('bg-galatea');
-    btn.classList.add('bg-gray-300');
-    dot.style.transform = 'translateX(0)';
-    labelDemo.classList.remove('text-gray-300');
-    labelDemo.classList.add('text-gray-500');
-    labelReal.classList.remove('text-galatea');
-    labelReal.classList.add('text-gray-300');
     showToast('Modo Demo activado — datos simulados', 'info');
   }
 }
@@ -5478,7 +5479,7 @@ function toggleRealMode() {
 // REAL AI — Helper: call single agent endpoint with timeout
 // ═══════════════════════════════════════════════════════════════
 async function callAgentEndpoint(url, body, timeoutMs) {
-  timeoutMs = timeoutMs || 55000;
+  timeoutMs = timeoutMs || 60000;
   var controller = new AbortController();
   var timer = setTimeout(function() { controller.abort(); }, timeoutMs);
   try {
@@ -5496,6 +5497,18 @@ async function callAgentEndpoint(url, body, timeoutMs) {
     if (err.name === 'AbortError') throw new Error('Timeout: el servidor tardo mas de ' + Math.round(timeoutMs/1000) + 's');
     throw err;
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REAL AI — Call orchestrator endpoint (all agents in one call)
+// ═══════════════════════════════════════════════════════════════
+async function callOrchestrator(question) {
+  var res = await callAgentEndpoint('/api/orchestrator', {
+    projectId: rowId || activeProjectId,
+    researchQuestion: question
+  }, 60000);
+  if (!res.success) throw new Error(res.error || 'Orchestrator failed');
+  return res.results; // { picot, finer, literatureScout, pubmed }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -5797,8 +5810,9 @@ async function callAgentOrSimulate(question) {
 
   try {
     // ── Step 1: PICOT Builder ──
+    setBubbleStatus('thinking', 'Agente 1/3 — PICOT Builder');
     setBubbleThinking();
-    await bubbleTypewriter('Conectando con Claude AI para analizar tu pregunta con PICOT...', 28);
+    await bubbleTypewriter('Consultando Claude API para analizar tu pregunta con PICOT...', 28);
     await delay(500);
 
     var picotResult = await callAgentEndpoint('/api/agents/picot-builder', {
@@ -5808,9 +5822,13 @@ async function callAgentOrSimulate(question) {
 
     if (!picotResult.success) throw new Error('PICOT: ' + (picotResult.error || 'failed'));
     picotData = picotResult.data;
-    showToast('PICOT completado (' + Math.round(picotResult.metrics.duration/1000) + 's)', 'success');
+    var picotMs = picotResult.metrics ? picotResult.metrics.duration : 0;
+    var picotTokens = picotResult.metrics ? picotResult.metrics.tokensUsed : 0;
+    showToast('PICOT completado (' + Math.round(picotMs/1000) + 's)', 'success');
+    await bubbleTypewriter('PICOT completado con Claude Haiku. <span class="text-gray-400 text-[10px]">' + Math.round(picotMs/1000) + 's | ' + picotTokens + ' tokens</span>', 28);
 
     // ── Step 2: FINER Validator ──
+    setBubbleStatus('thinking', 'Agente 2/3 — FINER');
     await bubbleTypewriter('Evaluando viabilidad FINER de tu investigacion...', 28);
 
     var finerResult = await callAgentEndpoint('/api/agents/finer-validator', {
@@ -5821,12 +5839,16 @@ async function callAgentOrSimulate(question) {
 
     if (finerResult.success) {
       finerData = finerResult.data;
-      showToast('FINER completado (' + Math.round(finerResult.metrics.duration/1000) + 's)', 'success');
+      var finerMs = finerResult.metrics ? finerResult.metrics.duration : 0;
+      var finerTokens = finerResult.metrics ? finerResult.metrics.tokensUsed : 0;
+      showToast('FINER completado (' + Math.round(finerMs/1000) + 's)', 'success');
+      await bubbleTypewriter('FINER completado. <span class="text-gray-400 text-[10px]">' + Math.round(finerMs/1000) + 's | ' + finerTokens + ' tokens</span>', 28);
     } else {
       showToast('FINER: continuo sin validacion', 'error');
     }
 
     // ── Step 3: Literature Scout ──
+    setBubbleStatus('thinking', 'Agente 3/3 — Literature Scout');
     await bubbleTypewriter('Generando estrategia de busqueda y descriptores MeSH...', 28);
 
     var scoutResult = await callAgentEndpoint('/api/agents/literature-scout', {
@@ -5837,7 +5859,10 @@ async function callAgentOrSimulate(question) {
 
     if (scoutResult.success) {
       scoutData = scoutResult.data;
-      showToast('Estrategia de busqueda completada (' + Math.round(scoutResult.metrics.duration/1000) + 's)', 'success');
+      var scoutMs = scoutResult.metrics ? scoutResult.metrics.duration : 0;
+      var scoutTokens = scoutResult.metrics ? scoutResult.metrics.tokensUsed : 0;
+      showToast('Estrategia de busqueda completada (' + Math.round(scoutMs/1000) + 's)', 'success');
+      await bubbleTypewriter('Estrategia de busqueda generada. <span class="text-gray-400 text-[10px]">' + Math.round(scoutMs/1000) + 's | ' + scoutTokens + ' tokens</span>', 28);
     } else {
       showToast('Literature Scout: continuo sin estrategia', 'error');
     }
@@ -5902,12 +5927,19 @@ async function callAgentOrSimulate(question) {
 
   } catch (err) {
     console.error('Real AI error:', err);
-    showToast('Error Real AI: ' + err.message, 'error');
+    showToast('Error Real AI: ' + err.message + ' — Cambiando a modo Demo', 'error');
+    // Fallback: switch to demo mode
+    REAL_AI_ENABLED = false;
+    setModeToggleUI(false);
     simulationRunning = false;
-    currentSimPhase = 'done';
-    setBubbleStatus('done', 'Error');
-    await bubbleTypewriter('Error al conectar con la API: <strong>' + esc(err.message) + '</strong>. Verifica tu conexion e intenta de nuevo.', 28);
-    renderAll();
+    simData = null;
+    currentSimPhase = '';
+    setBubbleStatus('done', 'Fallback Demo');
+    await bubbleTypewriter('Error al conectar con la API: <strong>' + esc(err.message) + '</strong>. Cambiando a <strong>modo Demo</strong> automaticamente. Puedes reintentar con el toggle Real AI.', 28);
+    await delay(2000);
+    // Run simulation in demo mode
+    simData = generateSimulationData(question);
+    return runFullSimulation(question);
   }
 }
 </script>
