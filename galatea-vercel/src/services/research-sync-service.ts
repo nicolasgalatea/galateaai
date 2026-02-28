@@ -158,7 +158,7 @@ function buildOrchestratorInput(
   if (params.userEdits) {
     user_edits = params.userEdits;
   } else if (existing) {
-    const raw = (existing as unknown as Record<string, unknown>).user_edits_json;
+    const raw = (existing as unknown as Record<string, unknown>).user_edits;
     if (raw && typeof raw === 'object') {
       user_edits = raw as Partial<Record<PhaseKey, PhasePayload | null>>;
     }
@@ -186,7 +186,6 @@ async function persistOrchestrated(
 ): Promise<void> {
   const updatePayload: Record<string, unknown> = {
     current_phase: output.fase_actual,
-    updated_at: new Date().toISOString(),
   };
 
   for (const key of PHASE_KEYS) {
@@ -218,13 +217,12 @@ async function persistOrchestrated(
       throw new SyncError('UPDATE_FAILED', `Error al actualizar: ${error.message}`);
     }
   } else {
-    // Proyecto nuevo: inicializar user_edits_json como {} vacio
+    // Proyecto nuevo: inicializar user_edits como {} vacio
     const { error } = await (supabase
       .from('research_projects' as AnyQuery)
       .insert({
         id: projectId,
-        user_id: 'system',
-        user_edits_json: {},
+        user_edits: {},
         ...updatePayload,
       }) as unknown as Promise<{
         error: { message: string } | null;
@@ -317,7 +315,7 @@ export async function saveUserEdits(
 
 /**
  * RPC atomico: llama a set_research_project_user_edits en Supabase.
- * Solo modifica la clave de la fase activa dentro de user_edits_json.
+ * Solo modifica la clave de la fase activa dentro de user_edits.
  */
 async function saveUserEditsViaRPC(
   projectId: string,
@@ -353,7 +351,7 @@ async function saveUserEditsViaRPC(
 }
 
 /**
- * Fallback: lee user_edits_json completo, hace merge en JS, escribe de vuelta.
+ * Fallback: lee user_edits completo, hace merge en JS, escribe de vuelta.
  * Menos atomico que el RPC pero compatible sin migracion.
  */
 async function saveUserEditsViaReadMergeWrite(
@@ -364,7 +362,7 @@ async function saveUserEditsViaReadMergeWrite(
   // 1. Leer registro actual
   const { data, error: fetchError } = await (supabase
     .from('research_projects' as AnyQuery)
-    .select('user_edits_json')
+    .select('user_edits')
     .eq('id', projectId)
     .maybeSingle() as unknown as Promise<{
       data: unknown;
@@ -373,7 +371,7 @@ async function saveUserEditsViaReadMergeWrite(
 
   if (fetchError) throw new SyncError('FETCH_EDITS_FAILED', fetchError.message);
 
-  // 2. Si no existe registro, crear uno con user_edits_json inicializado
+  // 2. Si no existe registro, crear uno con user_edits inicializado
   if (!data) {
     const initialEdits = { [phaseKey]: { ...edits, _processed: false } };
     const { error: insertError } = await (supabase
@@ -381,10 +379,8 @@ async function saveUserEditsViaReadMergeWrite(
       .upsert(
         {
           id: projectId,
-          user_id: 'system',
           current_phase: 0,
-          user_edits_json: initialEdits,
-          updated_at: new Date().toISOString(),
+          user_edits: initialEdits,
         },
         { onConflict: 'id' },
       ) as unknown as Promise<{
@@ -399,7 +395,7 @@ async function saveUserEditsViaReadMergeWrite(
 
   // 3. Merge solo la fase activa, preservar las demas
   const row = data as Record<string, unknown>;
-  const existingEdits = (row.user_edits_json ?? {}) as
+  const existingEdits = (row.user_edits ?? {}) as
     Partial<Record<PhaseKey, PhasePayload | null>>;
 
   const updatedEdits = {
@@ -414,7 +410,7 @@ async function saveUserEditsViaReadMergeWrite(
   // 4. Escribir de vuelta
   const { error: updateError } = await (supabase
     .from('research_projects' as AnyQuery)
-    .update({ user_edits_json: updatedEdits, updated_at: new Date().toISOString() })
+    .update({ user_edits: updatedEdits })
     .eq('id', projectId) as unknown as Promise<{
       error: { message: string } | null;
     }>);
@@ -520,7 +516,6 @@ export const researchSyncService = {
         .from('research_projects' as AnyQuery)
         .update({
           status: 'paused',
-          updated_at: new Date().toISOString(),
         })
         .eq('id', projectId) as unknown as Promise<{
           error: { message: string } | null;

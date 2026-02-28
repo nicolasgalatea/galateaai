@@ -972,7 +972,7 @@ function DashboardHeader({ project, onFieldUpdate }: DashboardHeaderProps) {
           <FlaskConical className="w-4 h-4" /> RESEARCH DASHBOARD — 10 Fases · 14 Agentes
         </div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard de Investigación Médica</h1>
-        <p className="text-base mt-1 text-muted-foreground">Conectado a n8n + Claude · Sincronización bidireccional con Lovable Cloud</p>
+        <p className="text-base mt-1 text-muted-foreground">Conectado a n8n + Claude · GalateaAI Cloud</p>
       </div>
     );
   }
