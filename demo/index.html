@@ -1058,6 +1058,29 @@ function generateSimulationData(question) {
     search_registry: isDefault ? searchRegistry : searchRegistry.slice(0,4),
     descriptor_mapping: isDefault ? descriptorMapping : descriptorMapping.slice(0,3),
     search_strategy: { databases: searchRegistry.map(function(r){return r.database}), boolean_equation: searchRegistry[0].equation, filters: 'Fecha: 2018-2025 | Idiomas: EN, ES, PT | Tipo: originales', prisma: prisma },
+    feasibility: {
+      dimensions: {
+        recursos: { score: isDefault ? 88 : 70, risk: isDefault ? 'bajo' : 'bajo', note: isDefault ? 'Revision sistematica requiere acceso a bases de datos (disponible via institucional) y software estadistico R/mada (gratuito).' : 'Recursos basicos disponibles.' },
+        tiempo: { score: isDefault ? 82 : 65, risk: isDefault ? 'bajo' : 'moderado', note: isDefault ? 'Cronograma de 8-12 semanas es realista para RS con meta-analisis de DTA.' : 'Cronograma ajustado pero factible.' },
+        acceso_datos: { score: isDefault ? 90 : 75, risk: isDefault ? 'bajo' : 'bajo', note: isDefault ? 'Datos accesibles via PubMed, Cochrane, LILACS y Scopus. No requiere datos primarios.' : 'Datos accesibles con permisos estandar.' },
+        equipo: { score: isDefault ? 78 : 60, risk: isDefault ? 'bajo' : 'moderado', note: isDefault ? 'Requiere competencias en meta-analisis bivariado y uso de R. Capacitacion disponible.' : 'Equipo con competencias basicas, puede requerir asesoria.' },
+        apoyo_institucional: { score: isDefault ? 85 : 72, risk: isDefault ? 'bajo' : 'bajo', note: isDefault ? 'RS de literatura publicada no requiere aprobacion de comite de etica. Registro PROSPERO recomendado.' : 'Apoyo institucional disponible.' },
+        complejidad: { score: isDefault ? 75 : 55, risk: isDefault ? 'bajo' : 'moderado', note: isDefault ? 'Meta-analisis bivariado (Reitsma) requiere experiencia intermedia. Herramientas estandarizadas disponibles.' : 'Complejidad moderada, abordable con guias existentes.' }
+      },
+      overall_score: isDefault ? 83 : 66,
+      viable: true,
+      verdict: isDefault ? 'viable' : 'viable_con_reservas',
+      critical_risks: isDefault ? [] : ['Cronograma ajustado para el tipo de estudio'],
+      recommendations: isDefault ? ['Registrar protocolo en PROSPERO antes de iniciar extraccion', 'Considerar capacitacion en meta-analisis bivariado con R/mada'] : ['Asegurar disponibilidad del equipo investigador', 'Planificar cronograma con margenes de contingencia'],
+      summary: isDefault ? 'El proyecto es operativamente viable. Los recursos necesarios para una revision sistematica con meta-analisis estan disponibles. Se recomienda registro PROSPERO y capacitacion en herramientas estadisticas especificas.' : 'Proyecto viable con reservas. Se recomienda reforzar el equipo y ajustar cronograma.'
+    },
+    sample_size: {
+      formula: 'single_proportion',
+      alpha: 0.05, power: 0.80, tails: 'bilateral',
+      p: 0.93, margin: 0.05, lossRate: 0.15,
+      n_raw: 101, n_total: 101, n_adjusted: 119,
+      formula_display: 'n = [Z\u00B2 \u00D7 p(1-p)] / d\u00B2'
+    },
     extraction_table: extraction, stats: stats, equator_checklist: equatorChecklist, planteamiento: planteamiento,
     protocol_draft: isDefault ?
       'PROTOCOLO DE INVESTIGACION\n\n1. TITULO\nPrecision diagnostica de Deep Learning para retinopatia diabetica en atencion primaria rural: revision sistematica y meta-analisis\n\n2. REGISTRO: PROSPERO CRD42025XXXXXX\n\n3. ANTECEDENTES\nLa RD es la principal causa de ceguera prevenible. Prevalencia DM2 en Colombia: 10.6% urbano, ~8% rural. DL muestra precision comparable a especialistas en entornos controlados.\n\n4. OBJETIVO\nEvaluar precision diagnostica de DL vs oftalmologos para RD, enfasis en contextos rurales.\n\n5. CRITERIOS\nInclusion: Estudios DL para RD, referencia estandar, Sens/Esp reportada, >=50 imagenes.\nExclusion: Cartas, opiniones, sin referencia.\n\n6. BUSQUEDA\n6 bases de datos. 2018-2025. Sin restriccion de idioma.\n\n7. CALIDAD: QUADAS-2. Dos revisores independientes.\n\n8. SINTESIS: Meta-analisis bivariado. SROC. I2. R (mada).\n\n9. GUIAS: PRISMA-DTA, QUADAS-2, GRADE-DTA, STARD 2015\n\n10. CRONOGRAMA: 8 semanas\n\n11. ETICA: No requiere aprobacion. Sin conflictos.'
@@ -1735,7 +1758,7 @@ function renderDetailedViews() {
   if (currentSimPhase === 'planteamiento') return;
   if (pd.planteamiento) html += renderPlanteamiento(pd);
   if (pd.picot) html += renderFrameworkSection(pd);
-  if (pd.finer_results) { html += renderFinerRadar(pd); if (pd.hypothesis) html += renderHypothesis(pd); }
+  if (pd.finer_results) { html += renderFinerRadar(pd); if (pd.feasibility) html += renderFeasibility(pd); html += renderSampleSizeCalculator(pd); html += renderConsistencyChecker(pd); if (pd.hypothesis) html += renderHypothesis(pd); }
   if (pd.descriptor_mapping) html += renderDescriptorTags(pd);
   if (pd.search_registry) html += renderSearchRegistry(pd);
   // PRISMA y Tabla de Extraccion se muestran solo en entregables finales
@@ -1743,8 +1766,7 @@ function renderDetailedViews() {
   // if (pd.stats) html += renderStats(pd);
   // if (pd.equator_checklist) html += renderEquator(pd);
   if (pd.protocol_draft) html += renderProtocol(pd, ue);
-  // Manuscrito removido de la vista principal
-  // if (pd.manuscript) { html += (currentSimPhase === 'manuscript' ? renderManuscriptTW(pd) : renderManuscript(pd, ue)); }
+  html += renderManuscriptGenerator(pd, ue);
   if (!html.trim()) html = '<div class="text-center py-16 text-gray-400"><div class="text-4xl mb-4">&#x1F9EC;</div><p class="text-lg font-semibold">Esperando inicio...</p></div>';
   v.innerHTML = html;
 }
@@ -1918,6 +1940,597 @@ function renderFinerRadar(pd) {
   return h;
 }
 
+function renderFeasibility(pd) {
+  var f = pd.feasibility || {};
+  var dims = f.dimensions || {};
+  var dimKeys = ['recursos', 'tiempo', 'acceso_datos', 'equipo', 'apoyo_institucional', 'complejidad'];
+  var dimLabels = { recursos: 'Recursos', tiempo: 'Tiempo', acceso_datos: 'Acceso a Datos', equipo: 'Equipo', apoyo_institucional: 'Apoyo Institucional', complejidad: 'Complejidad' };
+  var dimIcons = { recursos: '&#x1F4B0;', tiempo: '&#x23F1;&#xFE0F;', acceso_datos: '&#x1F4C2;', equipo: '&#x1F465;', apoyo_institucional: '&#x1F3E5;', complejidad: '&#x1F9E9;' };
+
+  function barColor(score) {
+    if (score >= 70) return { bg: 'bg-green-500', text: 'text-green-700', light: 'bg-green-50', border: 'border-green-200' };
+    if (score >= 50) return { bg: 'bg-yellow-500', text: 'text-yellow-700', light: 'bg-yellow-50', border: 'border-yellow-200' };
+    if (score >= 30) return { bg: 'bg-orange-500', text: 'text-orange-700', light: 'bg-orange-50', border: 'border-orange-200' };
+    return { bg: 'bg-red-500', text: 'text-red-700', light: 'bg-red-50', border: 'border-red-200' };
+  }
+
+  var verdictConfig = { viable: { label: 'Viable', cls: 'bg-green-100 text-green-700' }, viable_con_reservas: { label: 'Con Reservas', cls: 'bg-yellow-100 text-yellow-700' }, no_viable: { label: 'No Viable', cls: 'bg-red-100 text-red-700' } };
+  var vc = verdictConfig[f.verdict] || verdictConfig.viable;
+
+  var h = '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">';
+  h += '<div class="flex items-center gap-3 mb-4">';
+  h += '<div class="w-8 h-8 rounded-lg bg-gradient-to-br from-galatea to-bayer flex items-center justify-center"><svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"/></svg></div>';
+  h += '<h3 class="font-bold text-gray-900">Factibilidad Operativa</h3>';
+  h += '<span class="px-3 py-1 rounded-full text-[10px] font-black ' + vc.cls + '">' + vc.label + '</span>';
+  h += '<span class="text-[10px] text-gray-400 ml-auto">Score: ' + (f.overall_score || 0) + '/100</span>';
+  h += '</div>';
+
+  // Override banner
+  if (f._overridden) {
+    h += '<div class="mb-4 p-3 rounded-xl bg-yellow-50 border border-yellow-300 flex items-center gap-2">';
+    h += '<svg class="w-4 h-4 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>';
+    h += '<span class="text-xs font-bold text-yellow-700">Proyecto marcado como riesgo alto — el investigador decidio continuar a pesar de la evaluacion.</span>';
+    h += '</div>';
+  }
+
+  // 6 dimension bars
+  h += '<div class="space-y-3">';
+  dimKeys.forEach(function(key) {
+    var d = dims[key] || { score: 0, risk: 'critico', note: '' };
+    var c = barColor(d.score);
+    h += '<div class="p-3 rounded-xl ' + c.light + ' border ' + c.border + '">';
+    h += '<div class="flex items-center justify-between mb-1.5">';
+    h += '<div class="flex items-center gap-2"><span class="text-sm">' + dimIcons[key] + '</span><span class="text-xs font-bold ' + c.text + '">' + dimLabels[key] + '</span></div>';
+    h += '<div class="flex items-center gap-2"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold ' + c.text + ' ' + c.light + '">' + d.risk + '</span><span class="text-xs font-black ' + c.text + '">' + d.score + '</span></div>';
+    h += '</div>';
+    h += '<div class="w-full bg-gray-200 rounded-full h-2"><div class="' + c.bg + ' h-2 rounded-full transition-all" style="width:' + d.score + '%"></div></div>';
+    if (d.note) h += '<div class="text-[10px] text-gray-500 mt-1.5">' + esc(d.note) + '</div>';
+    h += '</div>';
+  });
+  h += '</div>';
+
+  // Summary, critical risks, recommendations
+  if (f.summary) {
+    h += '<div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200">';
+    h += '<div class="text-xs font-bold text-slate-700 mb-1">Resumen</div>';
+    h += '<div class="text-[11px] text-slate-600 leading-relaxed">' + esc(f.summary) + '</div>';
+    h += '</div>';
+  }
+
+  if (f.critical_risks && f.critical_risks.length > 0) {
+    h += '<div class="mt-3 p-3 rounded-xl bg-red-50 border border-red-200">';
+    h += '<div class="text-[10px] font-bold text-red-700 mb-1">&#x26A0; Riesgos Criticos</div>';
+    h += '<ul class="text-[10px] text-red-600 space-y-0.5 list-disc list-inside">';
+    f.critical_risks.forEach(function(r) { h += '<li>' + esc(r) + '</li>'; });
+    h += '</ul></div>';
+  }
+
+  if (f.recommendations && f.recommendations.length > 0) {
+    h += '<div class="mt-3 p-3 rounded-xl bg-blue-50 border border-blue-200">';
+    h += '<div class="text-[10px] font-bold text-blue-700 mb-1">&#x1F4A1; Recomendaciones</div>';
+    h += '<ul class="text-[10px] text-blue-600 space-y-0.5 list-disc list-inside">';
+    f.recommendations.forEach(function(r) { h += '<li>' + esc(r) + '</li>'; });
+    h += '</ul></div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function showFeasibilityGateModal(feasData) {
+  return new Promise(function(resolve) {
+    var overlay = document.createElement('div');
+    overlay.id = 'feasibilityGateOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+
+    var dims = feasData.dimensions || {};
+    var dimLabels = { recursos: 'Recursos', tiempo: 'Tiempo', acceso_datos: 'Acceso a Datos', equipo: 'Equipo', apoyo_institucional: 'Apoyo Institucional', complejidad: 'Complejidad' };
+
+    var risksHtml = '';
+    if (feasData.critical_risks && feasData.critical_risks.length > 0) {
+      risksHtml = '<div class="mb-4 p-3 rounded-xl bg-red-50 border border-red-200"><div class="text-xs font-bold text-red-700 mb-1">&#x26A0; Riesgos Criticos</div><ul class="text-xs text-red-600 space-y-1 list-disc list-inside">';
+      feasData.critical_risks.forEach(function(r) { risksHtml += '<li>' + r + '</li>'; });
+      risksHtml += '</ul></div>';
+    }
+
+    var recsHtml = '';
+    if (feasData.recommendations && feasData.recommendations.length > 0) {
+      recsHtml = '<div class="mb-4 p-3 rounded-xl bg-blue-50 border border-blue-200"><div class="text-xs font-bold text-blue-700 mb-1">&#x1F4A1; Recomendaciones</div><ul class="text-xs text-blue-600 space-y-1 list-disc list-inside">';
+      feasData.recommendations.forEach(function(r) { recsHtml += '<li>' + r + '</li>'; });
+      recsHtml += '</ul></div>';
+    }
+
+    var dimBarsHtml = '';
+    ['recursos','tiempo','acceso_datos','equipo','apoyo_institucional','complejidad'].forEach(function(k) {
+      var d = dims[k] || { score: 0, risk: 'critico' };
+      var color = d.score >= 70 ? '#22c55e' : d.score >= 50 ? '#eab308' : d.score >= 30 ? '#f97316' : '#ef4444';
+      dimBarsHtml += '<div class="flex items-center gap-2 text-xs"><span class="w-28 font-medium text-gray-700">' + dimLabels[k] + '</span><div class="flex-1 bg-gray-200 rounded-full h-2"><div style="width:' + d.score + '%;background:' + color + ';" class="h-2 rounded-full"></div></div><span class="w-8 text-right font-bold" style="color:' + color + '">' + d.score + '</span></div>';
+    });
+
+    var card = '<div style="max-width:480px;width:90%;" class="bg-white rounded-2xl shadow-2xl p-6 fade-up">';
+    card += '<div class="text-center mb-4"><div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg></div>';
+    card += '<h2 class="text-lg font-black text-gray-900">Proyecto No Viable</h2>';
+    card += '<p class="text-sm text-gray-500 mt-1">La evaluacion operativa indica riesgos significativos</p></div>';
+    card += '<div class="mb-4 p-4 rounded-xl bg-gray-50 border border-gray-200"><div class="text-xs font-bold text-gray-700 mb-2">Score General: <span class="text-red-600">' + (feasData.overall_score || 0) + '/100</span></div>';
+    card += '<div class="space-y-2">' + dimBarsHtml + '</div></div>';
+    if (feasData.summary) card += '<p class="text-xs text-gray-600 mb-4">' + feasData.summary + '</p>';
+    card += risksHtml + recsHtml;
+    card += '<div class="flex gap-3 mt-4">';
+    card += '<button id="feasGateRevise" class="flex-1 px-4 py-2.5 rounded-xl border-2 border-gray-300 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">Revisar Pregunta</button>';
+    card += '<button id="feasGateContinue" class="flex-1 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition-colors flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>Continuar de Todos Modos</button>';
+    card += '</div></div>';
+
+    overlay.innerHTML = card;
+    document.body.appendChild(overlay);
+
+    document.getElementById('feasGateRevise').addEventListener('click', function() {
+      overlay.remove();
+      resolve('revise');
+    });
+    document.getElementById('feasGateContinue').addEventListener('click', function() {
+      overlay.remove();
+      resolve('continue');
+    });
+  });
+}
+
+// ── Sample Size Calculator (client-side, deterministic) ──
+function calculateSampleSize(params) {
+  var Z_TABLE = {0.001:3.291, 0.005:2.576, 0.01:2.326, 0.025:1.960, 0.05:1.645, 0.10:1.282, 0.20:0.842};
+  var alpha = params.alpha || 0.05;
+  var power = params.power || 0.80;
+  var beta = 1 - power;
+  var tails = params.tails || 'bilateral';
+  var alphaLookup = tails === 'bilateral' ? alpha / 2 : alpha;
+  var Za = Z_TABLE[alphaLookup] || 1.960;
+  var Zb = Z_TABLE[beta] || 0.842;
+  var formula = params.formula || 'single_proportion';
+  var lossRate = params.lossRate || 0;
+  var n = 0, nTotal = 0, formulaDisplay = '', formulaName = '';
+
+  if (formula === 'two_proportions') {
+    var p1 = params.p1 || 0.5, p2 = params.p2 || 0.3;
+    var diff = p1 - p2;
+    if (diff === 0) diff = 0.001;
+    n = Math.ceil(Math.pow(Za + Zb, 2) * (p1*(1-p1) + p2*(1-p2)) / Math.pow(diff, 2));
+    nTotal = n * 2;
+    formulaDisplay = 'n = [(Z\u03B1 + Z\u03B2)\u00B2 \u00D7 (p\u2081(1-p\u2081) + p\u2082(1-p\u2082))] / (p\u2081 - p\u2082)\u00B2';
+    formulaName = 'comparacion de dos proporciones (Fleiss)';
+  } else if (formula === 'two_means') {
+    var sigma = params.sigma || 1, delta = params.delta || 0.5;
+    if (delta === 0) delta = 0.001;
+    n = Math.ceil(Math.pow(Za + Zb, 2) * 2 * Math.pow(sigma, 2) / Math.pow(delta, 2));
+    nTotal = n * 2;
+    formulaDisplay = 'n = [(Z\u03B1 + Z\u03B2)\u00B2 \u00D7 2\u03C3\u00B2] / \u03B4\u00B2';
+    formulaName = 'diferencia de dos medias';
+  } else {
+    var p = params.p || 0.5, d = params.margin || 0.05;
+    if (d === 0) d = 0.001;
+    n = Math.ceil(Math.pow(Za, 2) * p * (1 - p) / Math.pow(d, 2));
+    nTotal = n;
+    formulaDisplay = 'n = [Z\u00B2 \u00D7 p(1-p)] / d\u00B2';
+    formulaName = 'estimacion de una proporcion';
+  }
+  var nAdjusted = lossRate < 1 ? Math.ceil(nTotal / (1 - lossRate)) : nTotal;
+  return { n_per_group: n, n_total: nTotal, n_adjusted: nAdjusted, formula_used: formula, formula_display: formulaDisplay, formula_name: formulaName, parameters: params };
+}
+
+function autoDetectFormula(pd) {
+  var st = ((pd.study_type || {}).type || '').toLowerCase();
+  var dl = ((pd.study_type || {}).design_locked || '').toLowerCase();
+  var combined = st + ' ' + dl;
+  if (/ensayo|eca|experimental|clinical trial/i.test(combined)) return 'two_means';
+  if (/cohorte|casos y controles|cohort|case.control/i.test(combined)) return 'two_proportions';
+  return 'single_proportion';
+}
+
+var sampleSizeSaveTimeout = null;
+
+function saveSampleSizeToSupabase(data) {
+  if (project && rowId) {
+    clearTimeout(sampleSizeSaveTimeout);
+    sampleSizeSaveTimeout = setTimeout(async function() {
+      var pd = project.phase_data || {};
+      pd.sample_size = data;
+      project.phase_data = pd;
+      var r = await sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+      if (!r.error) showToast('Tamano de muestra guardado', 'success');
+    }, 1000);
+  }
+}
+
+function copySampleSizeToProtocol() {
+  var container = document.getElementById('sampleSizeCalculator');
+  if (!container) return;
+  var sel = container.querySelector('#ssFormula');
+  var formula = sel ? sel.value : 'single_proportion';
+  var alpha = parseFloat(container.querySelector('#ssAlpha').value) || 0.05;
+  var power = parseFloat(container.querySelector('#ssPower').value) || 0.80;
+  var tails = container.querySelector('input[name="ssTails"]:checked');
+  var tailsVal = tails ? tails.value : 'bilateral';
+  var loss = parseFloat(container.querySelector('#ssLoss').value) || 0;
+
+  var params = { formula: formula, alpha: alpha, power: power, tails: tailsVal, lossRate: loss / 100 };
+  if (formula === 'two_proportions') {
+    params.p1 = parseFloat(container.querySelector('#ssP1').value) || 0.5;
+    params.p2 = parseFloat(container.querySelector('#ssP2').value) || 0.3;
+  } else if (formula === 'two_means') {
+    params.sigma = parseFloat(container.querySelector('#ssSigma').value) || 1;
+    params.delta = parseFloat(container.querySelector('#ssDelta').value) || 0.5;
+  } else {
+    params.p = parseFloat(container.querySelector('#ssP').value) || 0.5;
+    params.margin = parseFloat(container.querySelector('#ssMargin').value) || 0.05;
+  }
+
+  var result = calculateSampleSize(params);
+  var refs = { two_proportions: 'Fleiss JL, Levin B, Paik MC. Statistical Methods for Rates and Proportions. 3rd ed. Wiley; 2003.', two_means: 'Chow SC, Shao J, Wang H. Sample Size Calculations in Clinical Research. 2nd ed. Chapman & Hall/CRC; 2008.', single_proportion: 'Daniel WW. Biostatistics: A Foundation for Analysis in the Health Sciences. 10th ed. Wiley; 2013.' };
+  var tailsText = tailsVal === 'bilateral' ? 'bilateral' : 'unilateral';
+
+  var text = 'Para determinar el tamano de muestra se utilizo la formula de ' + result.formula_name + ':\n' + result.formula_display + '\n\nParametros:\n- Nivel de significancia (\u03B1): ' + alpha + ' (' + tailsText + ')\n- Poder estadistico (1-\u03B2): ' + Math.round(power * 100) + '%\n';
+
+  if (formula === 'two_proportions') text += '- Proporcion grupo 1 (p\u2081): ' + params.p1 + '\n- Proporcion grupo 2 (p\u2082): ' + params.p2 + '\n';
+  else if (formula === 'two_means') text += '- Desviacion estandar (\u03C3): ' + params.sigma + '\n- Diferencia minima clinicamente importante (\u03B4): ' + params.delta + '\n';
+  else text += '- Proporcion esperada (p): ' + params.p + '\n- Margen de error (d): ' + params.margin + '\n';
+
+  text += '\nResultado: n = ' + result.n_total;
+  if (result.n_per_group !== result.n_total) text += ' (' + result.n_per_group + ' por grupo)';
+  text += '\nCorreccion por perdidas (' + Math.round(loss) + '%): n ajustado = ' + result.n_adjusted;
+  text += '\n\nReferencia: ' + (refs[formula] || refs.single_proportion);
+
+  // Save to phase_data
+  var saveData = Object.assign({}, params, { n_raw: result.n_per_group, n_total: result.n_total, n_adjusted: result.n_adjusted, formula_display: result.formula_display, protocol_text: text });
+  saveSampleSizeToSupabase(saveData);
+
+  // Copy to clipboard
+  navigator.clipboard.writeText(text).then(function() {
+    showToast('Copiado al portapapeles — pega en §6.4 del protocolo', 'success');
+  }).catch(function() {
+    showToast('Texto generado — selecciona y copia manualmente', 'info');
+  });
+}
+
+function runConsistencyChecks(pd) {
+  var findings = [];
+  function add(id, cat, pri, fn) {
+    var r = fn();
+    findings.push({ id: id, category: cat, priority: pri, title: r.title || '', detail: r.detail || '', suggestion: r.suggestion || '', passed: r.passed !== false });
+  }
+  var picot = pd.picot || {}, hyp = pd.hypothesis || {}, ss = pd.sample_size || {}, st = pd.study_type || {};
+  var stats = pd.stats || {}, ext = pd.extraction_table || [], feas = pd.feasibility || {};
+  var finer = pd.finer_results || {}, sr = pd.search_registry || [], prisma = (pd.search_strategy || {}).prisma || {};
+  var dm = pd.descriptor_mapping || [], eq = pd.equator_checklist || [], proto = pd.protocol_draft || '';
+
+  // Cat 1 — Variables sin analisis
+  add('vars_outcome_no_stats', 'Variables sin analisis', 'importante', function() {
+    if (!picot.O) return { passed: true };
+    var hasStats = stats && Object.keys(stats).length > 0;
+    if (!hasStats) return { passed: false, title: 'Outcome definido sin analisis estadistico', detail: 'PICOT.O: "' + (picot.O || '').substring(0, 80) + '" pero la seccion de estadisticas esta vacia', suggestion: 'Completar las fases de analisis estadistico para evaluar los desenlaces definidos' };
+    return { passed: true };
+  });
+  add('vars_intervention_no_extraction', 'Variables sin analisis', 'importante', function() {
+    if (!picot.I) return { passed: true };
+    if (!ext || ext.length === 0) return { passed: false, title: 'Intervencion definida sin tabla de extraccion', detail: 'PICOT.I: "' + (picot.I || '').substring(0, 80) + '" pero extraction_table esta vacia', suggestion: 'Completar la extraccion de datos de los estudios incluidos' };
+    return { passed: true };
+  });
+  add('vars_comparator_no_comparison', 'Variables sin analisis', 'menor', function() {
+    if (!picot.C) return { passed: true };
+    var hasComparative = stats.pooled_sensitivity || stats.pooled_specificity || stats.auc_sroc || stats.or || stats.rr || stats.hr;
+    if (!hasComparative) return { passed: false, title: 'Comparador definido sin estadisticas comparativas', detail: 'PICOT.C: "' + (picot.C || '').substring(0, 80) + '" pero no hay metricas comparativas en stats', suggestion: 'Incluir medidas de efecto comparativas (OR, RR, HR) en el analisis' };
+    return { passed: true };
+  });
+
+  // Cat 2 — Objetivos sin metodologia
+  add('obj_no_studytype', 'Objetivos sin metodologia', 'critico', function() {
+    if (!hyp.type && !hyp.null_hypothesis) return { passed: true };
+    if (!st.type) return { passed: false, title: 'Hipotesis sin tipo de estudio definido', detail: 'Se definio hipotesis pero study_type.type esta vacio', suggestion: 'Definir el tipo de estudio antes de formular hipotesis' };
+    return { passed: true };
+  });
+  add('obj_no_design_details', 'Objetivos sin metodologia', 'menor', function() {
+    if (!st.type) return { passed: true };
+    if (!st.design_details) return { passed: false, title: 'Tipo de estudio sin detalles de diseno', detail: 'study_type.type: "' + st.type + '" pero design_details esta vacio', suggestion: 'Agregar detalles metodologicos del diseno (guias, protocolo, herramientas)' };
+    return { passed: true };
+  });
+  add('obj_planteamiento_no_hypothesis', 'Objetivos sin metodologia', 'importante', function() {
+    if (!pd.planteamiento) return { passed: true };
+    if (!hyp.type && !hyp.null_hypothesis) return { passed: false, title: 'Planteamiento sin hipotesis', detail: 'Existe planteamiento del problema pero no se ha formulado hipotesis', suggestion: 'Formular hipotesis nula y alternativa a partir del planteamiento' };
+    return { passed: true };
+  });
+
+  // Cat 3 — Metodos que no responden a hipotesis
+  add('metodo_tails_mismatch', 'Metodos vs hipotesis', 'critico', function() {
+    if (!hyp.type || !ss.tails) return { passed: true };
+    var hypBilateral = /bilateral|dos colas/i.test(hyp.type);
+    var ssBilateral = ss.tails === 'bilateral';
+    if (hypBilateral !== ssBilateral) return { passed: false, title: 'Hipotesis y prueba estadistica no coinciden', detail: 'Hipotesis: "' + hyp.type + '" vs Prueba: "' + ss.tails + '"', suggestion: 'Ajustar tipo de prueba en la calculadora de tamano de muestra' };
+    return { passed: true };
+  });
+  add('metodo_formula_studytype', 'Metodos vs hipotesis', 'critico', function() {
+    if (!ss.formula || !st.type) return { passed: true };
+    var isECA = /ensayo|eca|rct|experimental/i.test(st.type);
+    var isSingleProp = ss.formula === 'single_proportion';
+    if (isECA && isSingleProp) return { passed: false, title: 'Formula incompatible con tipo de estudio', detail: 'Estudio: "' + st.type + '" usa formula de proporcion unica (requiere comparacion de grupos)', suggestion: 'Cambiar a formula de comparacion de proporciones o medias para ensayos clinicos' };
+    return { passed: true };
+  });
+  add('metodo_framework_studytype', 'Metodos vs hipotesis', 'importante', function() {
+    if (!pd.framework || !st.type) return { passed: true };
+    var isSpider = pd.framework === 'SPIDER';
+    var isCuali = /cualitativ/i.test(st.type);
+    var isEnsayo = /ensayo|eca|rct/i.test(st.type);
+    var isPicos = pd.framework === 'PICOS' || pd.framework === 'PICO';
+    if (isSpider && isEnsayo) return { passed: false, title: 'Framework SPIDER con estudio cuantitativo', detail: 'Framework SPIDER (cualitativo) pero study_type="' + st.type + '"', suggestion: 'Usar framework PICO/PICOS para estudios cuantitativos' };
+    if (isPicos && isCuali) return { passed: false, title: 'Framework PICOS con estudio cualitativo', detail: 'Framework PICOS (cuantitativo) pero study_type="' + st.type + '"', suggestion: 'Usar framework SPIDER para estudios cualitativos' };
+    return { passed: true };
+  });
+  add('metodo_noninf_formula', 'Metodos vs hipotesis', 'menor', function() {
+    if (!hyp.type || !ss.formula) return { passed: true };
+    var isNonInf = /no.?inferi/i.test(hyp.type);
+    var supportsMargin = ss.formula === 'non_inferiority' || (ss.margin && ss.margin > 0);
+    if (isNonInf && !supportsMargin) return { passed: false, title: 'Hipotesis de no inferioridad sin margen', detail: 'Hipotesis tipo "' + hyp.type + '" pero la formula no incluye margen de no inferioridad', suggestion: 'Usar formula de no inferioridad con margen delta especificado' };
+    return { passed: true };
+  });
+
+  // Cat 4 — Tamano de muestra
+  add('sample_missing', 'Tamano de muestra', 'critico', function() {
+    if (!ss || (!ss.n_adjusted && ss.n_adjusted !== 0)) return { passed: true };
+    if (ss.n_adjusted === 0) return { passed: false, title: 'Tamano de muestra no calculado', detail: 'sample_size.n_adjusted es 0', suggestion: 'Usar la calculadora arriba para determinar el tamano de muestra necesario' };
+    return { passed: true };
+  });
+  add('sample_underpowered', 'Tamano de muestra', 'importante', function() {
+    if (!ss.n_adjusted || ss.n_adjusted === 0) return { passed: true };
+    if (ss.n_adjusted < 30) return { passed: false, title: 'Muestra potencialmente insuficiente', detail: 'N ajustado = ' + ss.n_adjusted + ' (menor a 30 sujetos)', suggestion: 'Revisar parametros de la calculadora; considerar si el poder estadistico es adecuado' };
+    return { passed: true };
+  });
+  add('sample_time_conflict', 'Tamano de muestra', 'menor', function() {
+    var dims = (feas.dimensions || {});
+    var tiempo = dims.tiempo || {};
+    if (!tiempo.score || !ss.n_adjusted) return { passed: true };
+    if (tiempo.score < 50 && ss.n_adjusted > 500) return { passed: false, title: 'Conflicto entre tamano de muestra y tiempo', detail: 'Factibilidad de tiempo: ' + tiempo.score + '% pero N = ' + ss.n_adjusted, suggestion: 'Reducir tamano de muestra o ampliar cronograma del estudio' };
+    return { passed: true };
+  });
+  add('sample_loss_excessive', 'Tamano de muestra', 'importante', function() {
+    if (ss.lossRate === undefined || ss.lossRate === null) return { passed: true };
+    if (ss.lossRate > 0.40) return { passed: false, title: 'Tasa de perdida excesiva', detail: 'Perdida estimada: ' + Math.round(ss.lossRate * 100) + '% (mayor al 40%)', suggestion: 'Revisar estrategias de retencion o justificar la alta tasa de perdidas esperada' };
+    return { passed: true };
+  });
+
+  // Cat 5 — Coherencia cruzada
+  add('cross_finer_feasibility', 'Coherencia cruzada', 'importante', function() {
+    var keys = Object.keys(finer);
+    if (keys.length === 0) return { passed: true };
+    var sum = 0, count = 0;
+    keys.forEach(function(k) { if (finer[k] && finer[k].score !== undefined) { sum += finer[k].score; count++; } });
+    var avg = count > 0 ? sum / count : 100;
+    var risks = feas.critical_risks || [];
+    if (avg < 50 && risks.length === 0) return { passed: false, title: 'FINER bajo sin riesgos criticos documentados', detail: 'Promedio FINER: ' + Math.round(avg) + '% pero feasibility.critical_risks esta vacio', suggestion: 'Documentar los riesgos criticos identificados en la evaluacion de factibilidad' };
+    return { passed: true };
+  });
+  add('cross_search_prisma', 'Coherencia cruzada', 'importante', function() {
+    if (sr.length === 0 || !prisma.included_quantitative) return { passed: true };
+    var allZero = sr.every(function(s) { return s.results === 0; });
+    if (allZero && (prisma.included_quantitative > 0 || prisma.included_qualitative > 0)) return { passed: false, title: 'Busqueda sin resultados pero PRISMA con incluidos', detail: 'Todas las bases reportan 0 resultados pero PRISMA muestra ' + (prisma.included_quantitative || 0) + ' incluidos', suggestion: 'Verificar coherencia entre resultados de busqueda y diagrama PRISMA' };
+    return { passed: true };
+  });
+  add('cross_descriptors_equations', 'Coherencia cruzada', 'menor', function() {
+    if (dm.length === 0 || sr.length === 0) return { passed: true };
+    var allEqs = sr.map(function(s) { return (s.equation || '').toLowerCase(); }).join(' ');
+    var anyMatch = dm.some(function(d) {
+      var terms = [d.term, d.mesh, d.decs, d.emtree].filter(Boolean).map(function(t) { return t.toLowerCase(); });
+      return terms.some(function(t) { return allEqs.indexOf(t) >= 0; });
+    });
+    if (!anyMatch) return { passed: false, title: 'Descriptores no aparecen en ecuaciones de busqueda', detail: 'Ningun termino de descriptor_mapping coincide con las ecuaciones de busqueda registradas', suggestion: 'Verificar que los descriptores MeSH/DeCS estan incluidos en las estrategias de busqueda' };
+    return { passed: true };
+  });
+  add('cross_equator_failing', 'Coherencia cruzada', 'menor', function() {
+    if (eq.length === 0 || !proto) return { passed: true };
+    var hasFailing = eq.some(function(e) { return e.status === 'fail' || e.items_met < e.items_total; });
+    if (!hasFailing) return { passed: true };
+    var failingNotes = eq.filter(function(e) { return e.items_met < e.items_total; }).map(function(e) { return e.notes || ''; }).join(' ').toLowerCase();
+    if (failingNotes && proto.toLowerCase().indexOf('limitacion') < 0 && proto.toLowerCase().indexOf('faltante') < 0) return { passed: false, title: 'Items EQUATOR incompletos no reflejados en protocolo', detail: 'Hay items de checklists EQUATOR sin cumplir pero no se mencionan en el protocolo', suggestion: 'Agregar en el protocolo los items pendientes o justificar su exclusion' };
+    return { passed: true };
+  });
+
+  var passed = findings.filter(function(f) { return f.passed; }).length;
+  var total = findings.length;
+  var score = total > 0 ? Math.round((passed / total) * 100) : 100;
+  return { score: score, total: total, passed: passed, findings: findings };
+}
+
+function renderConsistencyChecker(pd) {
+  var result = runConsistencyChecks(pd);
+  var score = result.score, total = result.total, passed = result.passed;
+  var failing = result.findings.filter(function(f) { return !f.passed; });
+
+  var criticos = failing.filter(function(f) { return f.priority === 'critico'; });
+  var importantes = failing.filter(function(f) { return f.priority === 'importante'; });
+  var menores = failing.filter(function(f) { return f.priority === 'menor'; });
+
+  var badgeColor = score >= 90 ? 'bg-emerald-100 text-emerald-700' : score >= 70 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+  var barColor = score >= 90 ? 'bg-emerald-500' : score >= 70 ? 'bg-amber-500' : 'bg-red-500';
+
+  var h = '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">';
+  // Header
+  h += '<div class="flex items-center justify-between mb-1">';
+  h += '<div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-lg shadow">&#x1F6E1;</div>';
+  h += '<div><h3 class="font-bold text-gray-900 text-sm">Verificador de Coherencia Interna</h3>';
+  h += '<div class="text-[11px] text-gray-400">' + total + ' verificaciones automaticas</div></div></div>';
+  h += '<span class="px-3 py-1 rounded-full text-sm font-black ' + badgeColor + '">' + score + '%</span>';
+  h += '</div>';
+
+  // Progress bar
+  h += '<div class="w-full bg-gray-100 rounded-full h-2.5 mb-4 mt-3">';
+  h += '<div class="' + barColor + ' h-2.5 rounded-full transition-all duration-500" style="width:' + score + '%"></div>';
+  h += '</div>';
+  h += '<div class="text-[11px] text-gray-400 mb-4">' + passed + '/' + total + ' verificaciones aprobadas</div>';
+
+  if (score === 100) {
+    h += '<div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center">';
+    h += '<div class="text-emerald-600 font-bold text-sm mb-1">&#x2705; Protocolo coherente</div>';
+    h += '<div class="text-[11px] text-emerald-500">Todas las verificaciones pasaron exitosamente</div>';
+    h += '</div>';
+  } else {
+    function renderGroup(items, label, emoji, cardBg, cardBorder, badgeBg, titleColor, textColor, lighterColor) {
+      if (items.length === 0) return '';
+      var g = '<div class="mb-3"><div class="text-xs font-bold text-gray-600 mb-2">' + emoji + ' ' + label + ' (' + items.length + ')</div>';
+      items.forEach(function(f) {
+        g += '<div class="p-3 rounded-xl ' + cardBg + ' border ' + cardBorder + ' mb-2">';
+        g += '<div class="flex items-start gap-2 mb-1">';
+        g += '<span class="px-2 py-0.5 rounded text-[9px] font-black ' + badgeBg + ' text-white uppercase flex-shrink-0">' + f.priority + '</span>';
+        g += '<span class="text-xs font-bold ' + titleColor + ' flex-1">' + esc(f.title) + '</span>';
+        g += '</div>';
+        g += '<div class="text-[11px] ' + textColor + ' mb-1.5">' + esc(f.detail) + '</div>';
+        if (f.suggestion) {
+          g += '<div class="flex items-start gap-1.5 text-[10px] ' + lighterColor + '">';
+          g += '<span class="flex-shrink-0">&#x1F4A1;</span><span class="italic">' + esc(f.suggestion) + '</span>';
+          g += '</div>';
+        }
+        g += '</div>';
+      });
+      g += '</div>';
+      return g;
+    }
+    h += renderGroup(criticos, 'CRITICO', '&#x1F534;', 'bg-red-50', 'border-red-300', 'bg-red-600', 'text-red-800', 'text-red-700', 'text-red-400');
+    h += renderGroup(importantes, 'IMPORTANTE', '&#x1F7E1;', 'bg-amber-50', 'border-amber-300', 'bg-amber-500', 'text-amber-800', 'text-amber-700', 'text-amber-400');
+    h += renderGroup(menores, 'MENOR', '&#x1F535;', 'bg-blue-50', 'border-blue-200', 'bg-blue-500', 'text-blue-800', 'text-blue-700', 'text-blue-400');
+  }
+
+  h += '<div class="text-[10px] text-gray-300 italic mt-3">Verificacion deterministica client-side. Se recalcula automaticamente con cada cambio en los datos del protocolo.</div>';
+  h += '</div>';
+  return h;
+}
+
+function renderSampleSizeCalculator(pd) {
+  var saved = (pd.sample_size) || {};
+  var detectedFormula = autoDetectFormula(pd);
+  var formula = saved.formula || detectedFormula;
+  var alpha = saved.alpha !== undefined ? saved.alpha : 0.05;
+  var power = saved.power !== undefined ? saved.power : 0.80;
+  var tails = saved.tails || 'bilateral';
+  var loss = saved.lossRate !== undefined ? Math.round(saved.lossRate * 100) : 15;
+  var p1 = saved.p1 || 0.50, p2 = saved.p2 || 0.30;
+  var sigma = saved.sigma || 10, delta = saved.delta || 5;
+  var p = saved.p || 0.50, margin = saved.margin || 0.05;
+
+  var initParams = { formula: formula, alpha: alpha, power: power, tails: tails, lossRate: loss / 100 };
+  if (formula === 'two_proportions') { initParams.p1 = p1; initParams.p2 = p2; }
+  else if (formula === 'two_means') { initParams.sigma = sigma; initParams.delta = delta; }
+  else { initParams.p = p; initParams.margin = margin; }
+  var initResult = calculateSampleSize(initParams);
+
+  var h = '<div id="sampleSizeCalculator" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">';
+  h += '<div class="flex items-center gap-3 mb-5">';
+  h += '<div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25v-.008Zm2.498-6.75h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007v-.008Zm2.504-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008v-.008Zm2.498-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008v-.008ZM8.25 6h7.5v2.25h-7.5V6ZM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 0 0 2.25 2.25h10.5a2.25 2.25 0 0 0 2.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0 0 12 2.25Z"/></svg></div>';
+  h += '<div class="flex-1"><h3 class="font-bold text-gray-900">Calculadora de Tamano de Muestra</h3><p class="text-[10px] text-gray-400">Calculo determinístico — ajusta parametros en tiempo real</p></div>';
+  h += '<span id="ssBadge" class="px-3 py-1.5 rounded-full text-sm font-black bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md">N = ' + initResult.n_adjusted + '</span>';
+  h += '</div>';
+
+  // Formula selector
+  h += '<div class="mb-4"><label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Formula</label>';
+  h += '<select id="ssFormula" class="w-full p-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all" onchange="onSSChange()">';
+  h += '<option value="two_proportions"' + (formula === 'two_proportions' ? ' selected' : '') + '>Comparacion de dos proporciones (Fleiss)</option>';
+  h += '<option value="two_means"' + (formula === 'two_means' ? ' selected' : '') + '>Diferencia de dos medias</option>';
+  h += '<option value="single_proportion"' + (formula === 'single_proportion' ? ' selected' : '') + '>Estimacion de una proporcion</option>';
+  h += '</select></div>';
+
+  // General parameters
+  h += '<div class="grid md:grid-cols-2 gap-4 mb-4">';
+  // Alpha
+  h += '<div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Alfa (\u03B1): <span id="ssAlphaVal">' + alpha + '</span></label>';
+  h += '<input type="range" id="ssAlpha" min="0.01" max="0.10" step="0.01" value="' + alpha + '" class="finer-slider w-full" oninput="document.getElementById(\'ssAlphaVal\').textContent=this.value;onSSChange()"></div>';
+  // Power
+  h += '<div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Poder (1-\u03B2): <span id="ssPowerVal">' + power + '</span></label>';
+  h += '<input type="range" id="ssPower" min="0.80" max="0.99" step="0.01" value="' + power + '" class="finer-slider w-full" oninput="document.getElementById(\'ssPowerVal\').textContent=this.value;onSSChange()"></div>';
+  h += '</div>';
+
+  // Tails + Loss
+  h += '<div class="grid md:grid-cols-2 gap-4 mb-4">';
+  h += '<div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Tipo de prueba</label><div class="flex gap-4 mt-1">';
+  h += '<label class="flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer"><input type="radio" name="ssTails" value="bilateral"' + (tails === 'bilateral' ? ' checked' : '') + ' onchange="onSSChange()" class="accent-indigo-500"> Bilateral</label>';
+  h += '<label class="flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer"><input type="radio" name="ssTails" value="unilateral"' + (tails === 'unilateral' ? ' checked' : '') + ' onchange="onSSChange()" class="accent-indigo-500"> Unilateral</label>';
+  h += '</div></div>';
+  h += '<div><label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Perdidas esperadas: <span id="ssLossVal">' + loss + '</span>%</label>';
+  h += '<input type="range" id="ssLoss" min="0" max="50" step="5" value="' + loss + '" class="finer-slider w-full" oninput="document.getElementById(\'ssLossVal\').textContent=this.value;onSSChange()"></div>';
+  h += '</div>';
+
+  // Specific parameters (all rendered, visibility toggled by JS)
+  // Two proportions
+  h += '<div id="ssParamsFleiss" class="grid md:grid-cols-2 gap-4 mb-4 p-4 rounded-xl bg-blue-50/50 border border-blue-100" style="display:' + (formula === 'two_proportions' ? 'grid' : 'none') + '">';
+  h += '<div><label class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1 block">Proporcion grupo 1 (p\u2081)</label>';
+  h += '<input type="number" id="ssP1" min="0.01" max="0.99" step="0.01" value="' + p1 + '" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none" oninput="onSSChange()"></div>';
+  h += '<div><label class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1 block">Proporcion grupo 2 (p\u2082)</label>';
+  h += '<input type="number" id="ssP2" min="0.01" max="0.99" step="0.01" value="' + p2 + '" class="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none" oninput="onSSChange()"></div>';
+  h += '</div>';
+
+  // Two means
+  h += '<div id="ssParamsMeans" class="grid md:grid-cols-2 gap-4 mb-4 p-4 rounded-xl bg-amber-50/50 border border-amber-100" style="display:' + (formula === 'two_means' ? 'grid' : 'none') + '">';
+  h += '<div><label class="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1 block">Desviacion estandar (\u03C3)</label>';
+  h += '<input type="number" id="ssSigma" min="0.01" step="0.1" value="' + sigma + '" class="w-full p-2 border border-amber-200 rounded-lg text-sm bg-white focus:border-amber-400 outline-none" oninput="onSSChange()"></div>';
+  h += '<div><label class="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1 block">Diferencia minima (\u03B4)</label>';
+  h += '<input type="number" id="ssDelta" min="0.01" step="0.1" value="' + delta + '" class="w-full p-2 border border-amber-200 rounded-lg text-sm bg-white focus:border-amber-400 outline-none" oninput="onSSChange()"></div>';
+  h += '</div>';
+
+  // Single proportion
+  h += '<div id="ssParamsProp" class="grid md:grid-cols-2 gap-4 mb-4 p-4 rounded-xl bg-green-50/50 border border-green-100" style="display:' + (formula === 'single_proportion' ? 'grid' : 'none') + '">';
+  h += '<div><label class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-1 block">Proporcion esperada (p): <span id="ssPVal">' + p + '</span></label>';
+  h += '<input type="range" id="ssP" min="0.01" max="0.99" step="0.01" value="' + p + '" class="finer-slider w-full" oninput="document.getElementById(\'ssPVal\').textContent=this.value;onSSChange()"></div>';
+  h += '<div><label class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-1 block">Margen de error (d)</label>';
+  h += '<input type="number" id="ssMargin" min="0.01" max="0.20" step="0.01" value="' + margin + '" class="w-full p-2 border border-green-200 rounded-lg text-sm bg-white focus:border-green-400 outline-none" oninput="onSSChange()"></div>';
+  h += '</div>';
+
+  // Result card
+  h += '<div id="ssResult" class="p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200">';
+  h += '<div class="grid grid-cols-3 gap-4 mb-3 text-center">';
+  h += '<div><div class="text-[10px] font-bold text-indigo-500 uppercase">N por grupo</div><div id="ssNGroup" class="text-2xl font-black text-gray-900">' + initResult.n_per_group + '</div></div>';
+  h += '<div><div class="text-[10px] font-bold text-indigo-500 uppercase">N total</div><div id="ssNTotal" class="text-2xl font-black text-gray-900">' + initResult.n_total + '</div></div>';
+  h += '<div><div class="text-[10px] font-bold text-purple-500 uppercase">N ajustado</div><div id="ssNAdj" class="text-3xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">' + initResult.n_adjusted + '</div></div>';
+  h += '</div>';
+  h += '<div id="ssFormulaDisplay" class="text-xs text-gray-500 font-mono text-center mb-3 p-2 bg-white/60 rounded-lg">' + esc(initResult.formula_display) + '</div>';
+  h += '<div class="flex justify-center"><button onclick="copySampleSizeToProtocol()" class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs font-bold hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">';
+  h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184"/></svg>';
+  h += 'Copiar al Protocolo §6.4</button></div>';
+  h += '</div></div>';
+  return h;
+}
+
+function onSSChange() {
+  var container = document.getElementById('sampleSizeCalculator');
+  if (!container) return;
+  var formula = container.querySelector('#ssFormula').value;
+
+  // Toggle parameter visibility
+  container.querySelector('#ssParamsFleiss').style.display = formula === 'two_proportions' ? 'grid' : 'none';
+  container.querySelector('#ssParamsMeans').style.display = formula === 'two_means' ? 'grid' : 'none';
+  container.querySelector('#ssParamsProp').style.display = formula === 'single_proportion' ? 'grid' : 'none';
+
+  var alpha = parseFloat(container.querySelector('#ssAlpha').value) || 0.05;
+  var power = parseFloat(container.querySelector('#ssPower').value) || 0.80;
+  var tails = container.querySelector('input[name="ssTails"]:checked');
+  var tailsVal = tails ? tails.value : 'bilateral';
+  var loss = parseFloat(container.querySelector('#ssLoss').value) || 0;
+
+  var params = { formula: formula, alpha: alpha, power: power, tails: tailsVal, lossRate: loss / 100 };
+  if (formula === 'two_proportions') {
+    params.p1 = parseFloat(container.querySelector('#ssP1').value) || 0.5;
+    params.p2 = parseFloat(container.querySelector('#ssP2').value) || 0.3;
+  } else if (formula === 'two_means') {
+    params.sigma = parseFloat(container.querySelector('#ssSigma').value) || 1;
+    params.delta = parseFloat(container.querySelector('#ssDelta').value) || 0.5;
+  } else {
+    params.p = parseFloat(container.querySelector('#ssP').value) || 0.5;
+    params.margin = parseFloat(container.querySelector('#ssMargin').value) || 0.05;
+  }
+
+  var result = calculateSampleSize(params);
+  container.querySelector('#ssNGroup').textContent = result.n_per_group;
+  container.querySelector('#ssNTotal').textContent = result.n_total;
+  container.querySelector('#ssNAdj').textContent = result.n_adjusted;
+  container.querySelector('#ssBadge').textContent = 'N = ' + result.n_adjusted;
+  container.querySelector('#ssFormulaDisplay').textContent = result.formula_display;
+
+  // Save debounced
+  var saveData = Object.assign({}, params, { n_raw: result.n_per_group, n_total: result.n_total, n_adjusted: result.n_adjusted, formula_display: result.formula_display });
+  saveSampleSizeToSupabase(saveData);
+}
+
 function renderHypothesis(pd) {
   var h=pd.hypothesis||{};return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><h3 class="font-bold text-gray-900 mb-4">Hipotesis</h3><div class="grid md:grid-cols-2 gap-4"><div class="p-4 rounded-xl bg-blue-50 border border-blue-100"><div class="text-[10px] font-bold text-blue-600 uppercase mb-1">H&#x2080; Nula</div><div class="text-sm text-gray-800" contenteditable="true" onblur="debounceSave(\'hypothesis.null\',this.textContent)">'+esc(h.null_hypothesis||'')+'</div></div><div class="p-4 rounded-xl bg-amber-50 border border-amber-100"><div class="text-[10px] font-bold text-amber-600 uppercase mb-1">H&#x2081; Alternativa</div><div class="text-sm text-gray-800" contenteditable="true" onblur="debounceSave(\'hypothesis.alt\',this.textContent)">'+esc(h.alternative_hypothesis||'')+'</div></div></div>'+(h.type?'<div class="mt-3 text-xs text-gray-500">Tipo: <strong>'+esc(h.type)+'</strong></div>':'')+'</div>';
 }
@@ -2075,13 +2688,230 @@ function renderProtocol(pd, ue) {
   return h;
 }
 
-function renderManuscriptTW(pd) {
-  return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center gap-3 mb-4"><h3 class="font-bold text-gray-900">Manuscrito</h3><span class="text-xs text-galatea font-bold working-dots">Redactando</span></div><pre id="typewriterManuscript" class="whitespace-pre-wrap text-xs text-gray-700 bg-gray-50 rounded-xl p-4 border leading-relaxed min-h-[100px]"></pre></div>';
+// ═══════════════════════════════════════════════════════════════
+// ETAPA 5 — GENERADOR DE ARTICULO CIENTIFICO IMRyD
+// ═══════════════════════════════════════════════════════════════
+
+function buildManuscriptSections(pd, ue) {
+  var userSections = (ue && ue.manuscript_sections) || {};
+  var picot = pd.picot || {};
+  var st = (pd.study_type || {}).type || '';
+  var rq = (project && project.research_question) || '';
+  var stats = pd.stats || {};
+  var hyp = pd.hypothesis || {};
+  var ext = pd.extraction_table || [];
+  var prisma = (pd.search_strategy || {}).prisma || {};
+  var sr = pd.search_registry || [];
+  var eq = pd.equator_checklist || [];
+  var ss = pd.sample_size || {};
+  var fw = pd.framework || 'PICOS';
+  var hasStats = stats && (stats.pooled_or || stats.pooled_rr || stats.i2 !== undefined || (typeof stats === 'object' && Object.keys(stats).length > 2));
+  var hasHyp = hyp && (hyp.h0 || hyp.h1 || hyp.text);
+
+  function wc(t) { return t ? t.trim().split(/\s+/).filter(function(w){return w.length>0}).length : 0; }
+
+  var sections = [
+    { key: 'titulo', label: 'Titulo', content: '', complete: false, wordCount: 0 },
+    { key: 'abstract', label: 'Abstract Estructurado', content: '', complete: false, wordCount: 0 },
+    { key: 'introduccion', label: 'Introduccion', content: '', complete: false, wordCount: 0 },
+    { key: 'metodos', label: 'Metodos', content: '', complete: false, wordCount: 0 },
+    { key: 'resultados', label: 'Resultados', content: '', complete: false, wordCount: 0 },
+    { key: 'discusion', label: 'Discusion', content: '', complete: false, wordCount: 0 },
+    { key: 'conclusion', label: 'Conclusion', content: '', complete: false, wordCount: 0 },
+    { key: 'referencias', label: 'Referencias Vancouver', content: '', complete: false, wordCount: 0 }
+  ];
+
+  // Titulo
+  if (rq || picot.I) {
+    var tit = rq || (st + ': ' + (picot.I || '') + ' en ' + (picot.P || 'poblacion de estudio'));
+    sections[0].content = tit; sections[0].complete = true;
+  } else { sections[0].content = '[Pendiente: defina la pregunta de investigacion]'; }
+
+  // Abstract
+  if (pd.planteamiento) {
+    var abs = 'Objetivo: ' + (rq || pd.planteamiento.substring(0, 200)) + '\n\n';
+    abs += 'Metodos: ' + (st || 'Estudio') + ' siguiendo guias ' + (eq.length > 0 ? eq[0].guideline || 'EQUATOR' : 'internacionales') + '. ';
+    if (sr.length) abs += 'Busqueda en ' + sr.length + ' bases de datos. ';
+    if (picot.I) abs += 'Intervencion: ' + picot.I + '. ';
+    abs += '\n\nResultados: ' + (hasStats ? 'Se obtuvieron resultados estadisticamente significativos (ver seccion Resultados).' : '[Pendiente de analisis]');
+    abs += '\n\nConclusiones: ' + (hasHyp ? 'Los hallazgos son consistentes con la hipotesis planteada.' : '[Pendiente]');
+    abs += '\n\nPalabras clave: ' + (picot.P || 'poblacion') + ', ' + (picot.I || 'intervencion') + ', ' + (picot.O || 'desenlace');
+    sections[1].content = abs; sections[1].complete = true;
+  } else { sections[1].content = '[Pendiente: complete el planteamiento del problema]'; }
+
+  // Introduccion
+  if (pd.planteamiento) {
+    sections[2].content = pd.planteamiento; sections[2].complete = true;
+  } else { sections[2].content = '[Pendiente: complete el planteamiento del problema]'; }
+
+  // Metodos
+  if (st) {
+    var met = 'Diseno del estudio\nSe realizo un estudio de tipo ' + st + ' siguiendo las guias ';
+    if (eq.length > 0) met += eq.map(function(e){return e.guideline}).join(', '); else met += 'EQUATOR aplicables';
+    met += '.\n\n';
+    met += 'Marco conceptual\nLa pregunta de investigacion fue estructurada mediante el marco ' + fw + '.\n';
+    if (picot.P) met += '- Poblacion (P): ' + picot.P + '\n';
+    if (picot.I) met += '- Intervencion (I): ' + picot.I + '\n';
+    if (picot.C) met += '- Comparador (C): ' + picot.C + '\n';
+    if (picot.O) met += '- Desenlace (O): ' + picot.O + '\n';
+    if (picot.S || picot.T) met += '- ' + (picot.S ? 'Setting (S): ' + picot.S : 'Tiempo (T): ' + picot.T) + '\n';
+    met += '\n';
+    if (sr.length > 0) {
+      met += 'Estrategia de busqueda\nSe realizo una busqueda sistematica en ' + sr.length + ' bases de datos: ' + sr.map(function(r){return r.database}).join(', ') + '.\n';
+      if (sr[0] && sr[0].equation) met += 'Ecuacion de busqueda: ' + sr[0].equation + '\n';
+      met += '\n';
+    }
+    if (ss.n_adjusted) met += 'Tamano de muestra\nSe calculo un tamano de muestra de n=' + ss.n_adjusted + ' sujetos.\n\n';
+    met += 'Evaluacion de calidad\nLa calidad metodologica se evaluo con herramientas validadas. La certeza de la evidencia se clasifico con GRADE (10).';
+    sections[3].content = met; sections[3].complete = true;
+  } else { sections[3].content = '[Pendiente: defina el tipo de estudio]'; }
+
+  // Resultados
+  if (hasStats || ext.length > 0) {
+    var res = '';
+    if (prisma && (prisma.identified || prisma.screened)) {
+      res += 'Flujo PRISMA\nRegistros identificados: ' + (prisma.identified || 0) + '\nTras cribado: ' + (prisma.screened || 0) + '\nElegibles: ' + (prisma.eligible || 0) + '\nIncluidos: ' + (prisma.included || 0) + '\n\n';
+    }
+    if (ext.length > 0) {
+      res += 'Estudios incluidos: ' + ext.length + '\n';
+      ext.forEach(function(e, i) { res += (i+1) + '. ' + (e.author || e.study || 'Estudio ' + (i+1)) + ' (' + (e.year || '') + ') - n=' + ((e.total_i || 0) + (e.total_c || 0)) + '\n'; });
+      res += '\n';
+    }
+    if (stage3SimData) {
+      var sd = stage3SimData;
+      res += 'Analisis principal\nOR agrupado: ' + sd.pooled.or + ' (IC 95%: ' + sd.pooled.or_lo + ' - ' + sd.pooled.or_hi + '; p < 0.001)\n';
+      res += 'Heterogeneidad: I\u00B2 = ' + sd.i2 + '% (' + (sd.i2 > 75 ? 'alta' : sd.i2 > 50 ? 'moderada' : 'baja') + ')\n';
+      res += 'Certeza GRADE: ' + (sd.certainty || 'No evaluada') + '\n';
+    }
+    sections[4].content = res; sections[4].complete = true;
+  } else { sections[4].content = '[Pendiente: complete la extraccion de datos y analisis estadistico]'; }
+
+  // Discusion
+  if (hasStats && hasHyp) {
+    var disc = 'Interpretacion de resultados\nLos resultados obtenidos son consistentes con la hipotesis planteada';
+    if (hyp.h1) disc += ': "' + hyp.h1 + '"';
+    disc += '.\n\n';
+    disc += 'Limitaciones\n- Posible sesgo de publicacion\n- Heterogeneidad entre estudios\n';
+    if (pd.feasibility) { var fe = pd.feasibility; if (fe.risk_level === 'alto' || fe.risk_level === 'high') disc += '- Riesgo de viabilidad identificado\n'; }
+    disc += '\nImplicaciones\nEstos hallazgos sugieren la necesidad de futuras investigaciones que confirmen los resultados en contextos diversos.';
+    sections[5].content = disc; sections[5].complete = true;
+  } else { sections[5].content = '[Pendiente: se requieren resultados estadisticos e hipotesis para generar la discusion]'; }
+
+  // Conclusion
+  if (hasHyp && hasStats) {
+    var conc = 'En conclusion, los hallazgos de este estudio';
+    if (hyp.h1) conc += ' apoyan la hipotesis de que ' + hyp.h1.charAt(0).toLowerCase() + hyp.h1.slice(1);
+    conc += '. ';
+    if (stage3SimData) conc += 'El efecto agrupado (OR ' + stage3SimData.pooled.or + ') fue estadisticamente significativo. ';
+    conc += 'Se recomienda la realizacion de estudios adicionales para confirmar estos resultados y explorar su aplicabilidad en diferentes contextos.';
+    sections[6].content = conc; sections[6].complete = true;
+  } else { sections[6].content = '[Pendiente: se requieren hipotesis y resultados para generar la conclusion]'; }
+
+  // Referencias
+  var refs = '';
+  VANCOUVER_REFS.forEach(function(ref) { refs += ref + '\n'; });
+  sections[7].content = refs.trim(); sections[7].complete = true;
+
+  // Apply user edits override
+  sections.forEach(function(sec) {
+    if (userSections[sec.key]) { sec.content = userSections[sec.key]; sec.complete = true; }
+    sec.wordCount = wc(sec.content);
+  });
+
+  return sections;
 }
 
-function renderManuscript(pd, ue) {
-  var ms=(ue&&ue.manuscript)||pd.manuscript||'';
-  return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><h3 class="font-bold text-gray-900 mb-4">Manuscrito</h3><pre class="whitespace-pre-wrap text-xs text-gray-700 bg-gray-50 rounded-xl p-4 border leading-relaxed max-h-96 overflow-auto" contenteditable="true" onblur="debounceSave(\'manuscript\',this.textContent)">'+esc(ms)+'</pre></div>';
+function detectEditorialCompliance(pd) {
+  var st = (pd.study_type || {}).type || '';
+  var guideline, fullName;
+  if (/revision sistematica|meta.?analisis|sistematica/i.test(st)) { guideline = 'PRISMA'; fullName = 'Preferred Reporting Items for Systematic Reviews and Meta-Analyses 2020'; }
+  else if (/ensayo|eca|rct|experimental/i.test(st)) { guideline = 'CONSORT'; fullName = 'Consolidated Standards of Reporting Trials 2010'; }
+  else if (/cohorte|transversal|caso.?control|observacional/i.test(st)) { guideline = 'STROBE'; fullName = 'Strengthening the Reporting of Observational Studies in Epidemiology'; }
+  else if (/caso clinico|reporte de caso|case report/i.test(st)) { guideline = 'CARE'; fullName = 'CAse REport Guidelines 2017'; }
+  else if (/diagnostico|dta|precision/i.test(st)) { guideline = 'STARD'; fullName = 'Standards for Reporting of Diagnostic Accuracy Studies 2015'; }
+  else { guideline = 'PRISMA'; fullName = 'PRISMA 2020 (default)'; }
+
+  var eq = pd.equator_checklist || [];
+  var totalItems = 0, metItems = 0;
+  eq.forEach(function(e) { totalItems += (e.items_total || 0); metItems += (e.items_met || 0); });
+  var compliance = totalItems > 0 ? Math.round((metItems / totalItems) * 100) : 0;
+  var color = compliance >= 80 ? 'emerald' : compliance >= 50 ? 'amber' : 'red';
+  return { guideline: guideline, fullName: fullName, totalItems: totalItems, metItems: metItems, compliance: compliance, color: color };
+}
+
+function renderManuscriptGenerator(pd, ue) {
+  var sections = buildManuscriptSections(pd, ue);
+  var comp = detectEditorialCompliance(pd);
+  var completed = sections.filter(function(s){return s.complete}).length;
+  var total = sections.length;
+  var pct = Math.round((completed / total) * 100);
+  var pctColor = pct >= 80 ? 'emerald' : pct >= 50 ? 'amber' : 'red';
+  var totalWords = sections.reduce(function(s, sec){return s + sec.wordCount}, 0);
+
+  var h = '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">';
+
+  // Header
+  h += '<div class="flex items-center gap-3 mb-5">';
+  h += '<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white text-sm">\u{1F4DD}</div>';
+  h += '<div><h3 class="font-bold text-gray-900 text-sm">Articulo Cientifico IMRyD</h3>';
+  h += '<p class="text-[10px] text-gray-400">Manuscrito estructurado segun normas internacionales</p></div>';
+  h += '<span class="ml-auto text-[9px] text-gray-300">' + totalWords + ' palabras</span>';
+  h += '</div>';
+
+  // Progress bar
+  h += '<div class="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-100">';
+  h += '<div class="flex items-center justify-between mb-2">';
+  h += '<span class="text-[10px] font-bold text-gray-600">Progreso: ' + completed + '/' + total + ' secciones</span>';
+  h += '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-' + pctColor + '-100 text-' + pctColor + '-700">' + pct + '%</span>';
+  h += '</div>';
+  h += '<div class="w-full bg-gray-200 rounded-full h-1.5 mb-2"><div class="bg-rose-500 h-1.5 rounded-full transition-all" style="width:' + pct + '%"></div></div>';
+  h += '<div class="flex flex-wrap gap-1">';
+  sections.forEach(function(sec) {
+    var chipClass = sec.complete ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400';
+    var icon = sec.complete ? '\u2705' : '\u2B1C';
+    h += '<span class="' + chipClass + ' text-[9px] px-1.5 py-0.5 rounded font-medium">' + icon + ' ' + sec.label.substring(0, 3) + '</span>';
+  });
+  h += '</div></div>';
+
+  // Compliance card
+  if (comp.totalItems > 0) {
+    h += '<div class="bg-' + comp.color + '-50 border border-' + comp.color + '-200 rounded-xl p-3 mb-4">';
+    h += '<div class="flex items-center gap-2">';
+    h += '<span class="text-xs">\u{1F3E5}</span>';
+    h += '<span class="text-[10px] font-bold text-gray-700">Compliance: ' + comp.guideline + '</span>';
+    h += '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-' + comp.color + '-100 text-' + comp.color + '-700 ml-auto">' + comp.compliance + '%</span>';
+    h += '</div>';
+    h += '<p class="text-[9px] text-gray-500 mt-1">' + comp.fullName + ' \u2014 ' + comp.metItems + '/' + comp.totalItems + ' items cumplidos</p>';
+    h += '</div>';
+  }
+
+  // Export buttons
+  h += '<div class="flex gap-2 mb-5">';
+  h += '<button onclick="exportManuscriptDOCX()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] rounded-lg px-3 py-1.5 font-medium transition-colors">\u{1F4E5} DOCX</button>';
+  h += '<button onclick="exportManuscriptPDF()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] rounded-lg px-3 py-1.5 font-medium transition-colors">\u{1F4E5} PDF</button>';
+  h += '</div>';
+
+  // Sections
+  sections.forEach(function(sec) {
+    h += '<div class="mb-4">';
+    h += '<div class="flex items-center gap-2 mb-1.5">';
+    h += '<span class="text-xs">' + (sec.complete ? '\u2705' : '\u2B1C') + '</span>';
+    h += '<span class="text-[10px] font-black uppercase tracking-wider text-gray-500">' + esc(sec.label) + '</span>';
+    h += '<span class="text-[9px] text-gray-300 ml-auto">' + sec.wordCount + ' palabras</span>';
+    h += '</div>';
+    if (sec.complete) {
+      h += '<div class="text-xs text-gray-700 bg-gray-50 rounded-xl p-4 border leading-relaxed whitespace-pre-wrap" contenteditable="true" onblur="debounceSave(\'manuscript_sections.' + sec.key + '\',this.textContent)">' + esc(sec.content) + '</div>';
+    } else {
+      h += '<div class="text-xs text-gray-300 bg-gray-50/50 rounded-xl p-4 border border-dashed italic">' + esc(sec.content) + '</div>';
+    }
+    h += '</div>';
+  });
+
+  // Footer note
+  h += '<p class="text-[9px] text-gray-300 italic mt-4">Contenido generado a partir de datos del proyecto. Las secciones son editables — los cambios se guardan automaticamente.</p>';
+
+  h += '</div>';
+  return h;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -5344,49 +6174,124 @@ function exportProtocolPDF() {
 
 function exportManuscriptDOCX() {
   var pd = (project && project.phase_data) || {};
+  var ue = (project && project.user_edits) || {};
   var q = (project && project.research_question) || 'Proyecto de Investigacion';
+  var sections = buildManuscriptSections(pd, ue);
+  var comp = detectEditorialCompliance(pd);
+
   var html = '<html><head><meta charset="UTF-8"><style>';
   html += 'body{font-family:Georgia,serif;font-size:12pt;margin:60px 72px;color:#1a1a1a;line-height:2.0}';
   html += 'h1{font-family:Arial,sans-serif;font-size:16pt;text-align:center;margin:20px 0}';
-  html += 'h2{font-family:Arial,sans-serif;font-size:13pt;margin-top:24px;color:#0f172a}';
+  html += 'h2{font-family:Arial,sans-serif;font-size:13pt;margin-top:24px;color:#0f172a;border-bottom:1px solid #e2e8f0;padding-bottom:4px}';
   html += 'table{width:100%;border-collapse:collapse;margin:12px 0;font-size:10pt}';
   html += 'th{background:#f1f5f9;border:1px solid #d1d5db;padding:6px 8px;text-align:left;font-family:Arial,sans-serif}';
   html += 'td{border:1px solid #d1d5db;padding:6px 8px}';
-  html += '.fig-label{font-size:10pt;font-weight:bold;text-align:center;margin:8px 0;font-family:Arial,sans-serif}';
   html += '.ref{font-size:10pt;text-indent:-24px;padding-left:24px;margin:4px 0}';
+  html += '.compliance{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:8px 12px;margin:12px 0;font-size:10pt;font-family:Arial,sans-serif}';
+  html += '.section-content{white-space:pre-line;margin:8px 0}';
   html += '</style></head><body>';
+
+  // Header
   html += '<h1>' + esc(q) + '</h1>';
-  html += '<p style="text-align:center;font-size:10pt;color:#666">Manuscrito preparado segun normas Vancouver</p>';
+  html += '<p style="text-align:center;font-size:10pt;color:#666">Manuscrito IMRyD preparado segun normas Vancouver</p>';
   if (stage2SimData && stage2SimData.investigators) {
     html += '<p style="text-align:center;font-size:10pt">';
     stage2SimData.investigators.forEach(function(inv, i) { html += esc(inv.name) + '<sup>' + (i + 1) + '</sup>' + (i < stage2SimData.investigators.length - 1 ? ', ' : ''); });
     html += '</p>';
   }
-  html += '<h2>Resumen</h2>';
-  if (pd.manuscript) { var ms = pd.manuscript; var rs = ms.indexOf('Resumen:'); html += '<p>' + esc(rs !== -1 ? ms.substring(rs + 8).trim() : ms) + '</p>'; }
-  html += '<h2>Introduccion</h2>';
-  html += pd.planteamiento ? '<div style="white-space:pre-line">' + esc(pd.planteamiento) + '</div>' : '<p>[Pendiente]</p>';
-  html += '<h2>Metodos</h2><p>Se realizo una revision sistematica con metaanalisis siguiendo las guias PRISMA 2020 (1). ';
-  if (pd.picot) html += 'La pregunta de investigacion fue estructurada mediante el marco ' + (pd.framework || 'PICOS') + '. ';
-  if (pd.search_registry && pd.search_registry.length) html += 'La busqueda se realizo en ' + pd.search_registry.length + ' bases de datos (' + pd.search_registry.map(function(r){return r.database}).join(', ') + '). ';
-  html += 'La calidad se evaluo con QUADAS-2 y la certeza con GRADE (10).</p>';
-  html += '<h2>Resultados</h2>';
-  if (stage3SimData) {
+
+  // Compliance badge
+  if (comp.totalItems > 0) {
+    html += '<div class="compliance"><strong>' + comp.guideline + '</strong> &mdash; ' + comp.fullName + ' | Compliance: ' + comp.compliance + '% (' + comp.metItems + '/' + comp.totalItems + ' items)</div>';
+  }
+
+  // IMRyD sections
+  var sectionLabels = { titulo: 'Titulo', abstract: 'Resumen', introduccion: 'Introduccion', metodos: 'Metodos', resultados: 'Resultados', discusion: 'Discusion', conclusion: 'Conclusion', referencias: 'Referencias' };
+  sections.forEach(function(sec) {
+    if (sec.key === 'titulo') {
+      html += '<h1>' + esc(sec.content) + '</h1>';
+    } else if (sec.key === 'referencias') {
+      html += '<h2>' + (sectionLabels[sec.key] || sec.label) + '</h2>';
+      sec.content.split('\n').forEach(function(line) { if (line.trim()) html += '<div class="ref">' + esc(line) + '</div>'; });
+    } else {
+      html += '<h2>' + (sectionLabels[sec.key] || sec.label) + '</h2>';
+      html += '<div class="section-content">' + esc(sec.content) + '</div>';
+    }
+  });
+
+  // Extraction table if available
+  var ext = pd.extraction_table || [];
+  if (ext.length > 0 && stage3SimData) {
     var sd = stage3SimData;
-    html += '<p>Se incluyeron ' + sd.studies.length + ' estudios (N = ' + sd.studies.reduce(function(s,st){return s+st.total_i+st.total_c},0).toLocaleString() + '). OR agrupado: ' + sd.pooled.or + ' (IC 95%: ' + sd.pooled.or_lo + ' - ' + sd.pooled.or_hi + '; p &lt; 0.001). Heterogeneidad ' + (sd.i2 > 50 ? 'moderada' : 'baja') + ' (I&sup2; = ' + sd.i2 + '%).</p>';
-    html += '<div class="fig-label">Figura 1. Forest Plot: analisis de efectos aleatorios para el desenlace primario.</div>';
+    html += '<h2>Tabla de Estudios Incluidos</h2>';
     html += '<table><tr><th>Estudio</th><th>Eventos (I)</th><th>Total (I)</th><th>Eventos (C)</th><th>Total (C)</th><th>OR [IC 95%]</th><th>Peso (%)</th></tr>';
     sd.studies.forEach(function(s) { html += '<tr><td>' + esc(s.author) + ' ' + s.year + '</td><td style="text-align:center">' + s.events_i + '</td><td style="text-align:center">' + s.total_i + '</td><td style="text-align:center">' + s.events_c + '</td><td style="text-align:center">' + s.total_c + '</td><td style="text-align:center">' + s.or.toFixed(2) + ' [' + s.or_lo.toFixed(2) + '-' + s.or_hi.toFixed(2) + ']</td><td style="text-align:center">' + s.weight + '</td></tr>'; });
     html += '<tr style="font-weight:bold;border-top:2px solid #333"><td>Global</td><td colspan="4"></td><td style="text-align:center">' + sd.pooled.or + ' [' + sd.pooled.or_lo + '-' + sd.pooled.or_hi + ']</td><td style="text-align:center">100</td></tr></table>';
-    html += '<p>Certeza: <strong>' + sd.certainty + '</strong> (GRADE) (10).</p>';
   }
-  html += '<h2>Discusion</h2><p>Los resultados sugieren asociacion significativa. La heterogeneidad se explica por diferencias contextuales. Limitacion: posible sesgo de publicacion (Egger). Futuros estudios en contextos rurales necesarios.</p>';
-  html += '<h2>Referencias</h2>';
-  VANCOUVER_REFS.forEach(function(ref) { html += '<div class="ref">' + esc(ref) + '</div>'; });
+
   html += '</body></html>';
   var blob = new Blob([html], { type: 'application/msword' });
   var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'Manuscrito_IMRyD_GalateaAI.doc'; a.click(); URL.revokeObjectURL(url);
   showToast('Manuscrito IMRyD exportado', 'success');
+}
+
+function exportManuscriptPDF() {
+  var pd = (project && project.phase_data) || {};
+  var ue = (project && project.user_edits) || {};
+  var q = (project && project.research_question) || 'Proyecto de Investigacion';
+  var sections = buildManuscriptSections(pd, ue);
+  var comp = detectEditorialCompliance(pd);
+  var totalWords = sections.reduce(function(s, sec){return s + sec.wordCount}, 0);
+  var completed = sections.filter(function(s){return s.complete}).length;
+  var now = new Date();
+  var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+  var html = '<html><head><meta charset="UTF-8"><style>';
+  html += '@page{margin:2.5cm}';
+  html += 'body{font-family:Georgia,serif;font-size:11pt;margin:40px 60px;color:#1a1a1a;line-height:1.8}';
+  html += 'h1{font-family:Arial,sans-serif;font-size:15pt;text-align:center;margin:16px 0}';
+  html += 'h2{font-family:Arial,sans-serif;font-size:12pt;margin-top:20px;color:#0f172a;border-bottom:1px solid #cbd5e1;padding-bottom:3px}';
+  html += 'table{width:100%;border-collapse:collapse;margin:10px 0;font-size:9pt}';
+  html += 'th{background:#f1f5f9;border:1px solid #d1d5db;padding:4px 6px;text-align:left;font-family:Arial,sans-serif}';
+  html += 'td{border:1px solid #d1d5db;padding:4px 6px}';
+  html += '.ref{font-size:9pt;text-indent:-24px;padding-left:24px;margin:3px 0}';
+  html += '.meta{background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:8px 12px;margin:12px 0;font-size:9pt;font-family:Arial,sans-serif}';
+  html += '.section-content{white-space:pre-line;margin:6px 0}';
+  html += '</style></head><body>';
+
+  // Header with metadata
+  html += '<h1>' + esc(q) + '</h1>';
+  html += '<p style="text-align:center;font-size:9pt;color:#666">Manuscrito IMRyD &mdash; GalateaAI</p>';
+  if (stage2SimData && stage2SimData.investigators) {
+    html += '<p style="text-align:center;font-size:9pt">';
+    stage2SimData.investigators.forEach(function(inv, i) { html += esc(inv.name) + '<sup>' + (i + 1) + '</sup>' + (i < stage2SimData.investigators.length - 1 ? ', ' : ''); });
+    html += '</p>';
+  }
+  html += '<div class="meta">';
+  html += '<strong>Fecha:</strong> ' + dateStr + ' | ';
+  html += '<strong>Compliance:</strong> ' + comp.guideline + ' ' + comp.compliance + '% | ';
+  html += '<strong>Secciones:</strong> ' + completed + '/8 | ';
+  html += '<strong>Palabras:</strong> ' + totalWords;
+  html += '</div>';
+
+  // Sections
+  var sectionLabels = { titulo: 'Titulo', abstract: 'Resumen', introduccion: 'Introduccion', metodos: 'Metodos', resultados: 'Resultados', discusion: 'Discusion', conclusion: 'Conclusion', referencias: 'Referencias' };
+  sections.forEach(function(sec) {
+    if (sec.key === 'titulo') {
+      html += '<h1>' + esc(sec.content) + '</h1>';
+    } else if (sec.key === 'referencias') {
+      html += '<h2>' + (sectionLabels[sec.key] || sec.label) + '</h2>';
+      sec.content.split('\n').forEach(function(line) { if (line.trim()) html += '<div class="ref">' + esc(line) + '</div>'; });
+    } else {
+      html += '<h2>' + (sectionLabels[sec.key] || sec.label) + '</h2>';
+      html += '<div class="section-content">' + esc(sec.content) + '</div>';
+    }
+  });
+
+  html += '</body></html>';
+  var blob = new Blob([html], { type: 'application/msword' });
+  var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'Manuscrito_IMRyD_GalateaAI_print.doc'; a.click(); URL.revokeObjectURL(url);
+  showToast('Manuscrito PDF exportado', 'success');
 }
 
 function exportREDCapDict() {
@@ -5533,10 +6438,11 @@ function buildRealPrisma(pubmedCount, articlesReturned) {
 // ═══════════════════════════════════════════════════════════════
 // REAL AI — Transform API results (ZERO simulation data mixed in)
 // ═══════════════════════════════════════════════════════════════
-function transformApiToReal(picotData, finerData, scoutData, pubmedResult, question) {
+function transformApiToReal(picotData, finerData, scoutData, pubmedResult, question, extraAgents) {
   // Start from EMPTY object — no generateSimulationData() contamination
   var real = {};
   var q = (question || '').trim();
+  var extra = extraAgents || {};
 
   // PICOT — from Claude
   if (picotData) {
@@ -5554,17 +6460,26 @@ function transformApiToReal(picotData, finerData, scoutData, pubmedResult, quest
   if (finerData && finerData.finerScores) {
     real.finer_results = finerData.finerScores;
   }
-  // Hypothesis placeholder (future batch)
-  real.hypothesis = { null_hypothesis: 'Pendiente de definir por el investigador.', alternative_hypothesis: 'Pendiente de definir por el investigador.', type: 'Dos colas' };
 
-  // Folder structure (static, not hallucinated)
-  real.folder_structure = [
-    { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_v1.docx'], color: 'blue' },
-    { name: '01_revision_literatura', icon: '&#x1F4DA;', files: [], color: 'amber' },
-    { name: '02_tablas_extraccion', icon: '&#x1F4CA;', files: ['Tabla_extraccion.xlsx'], color: 'green' },
-    { name: '03_analisis_estadistico', icon: '&#x1F4C8;', files: [], color: 'purple' },
-    { name: '04_manuscrito', icon: '&#x270D;&#xFE0F;', files: [], color: 'indigo' }
-  ];
+  // Hypothesis — from Claude or placeholder
+  if (extra.hypothesisData) {
+    real.hypothesis = extra.hypothesisData;
+  } else {
+    real.hypothesis = { null_hypothesis: 'Pendiente de definir por el investigador.', alternative_hypothesis: 'Pendiente de definir por el investigador.', type: 'Dos colas' };
+  }
+
+  // Folder structure — from Claude or static fallback
+  if (extra.folderData && extra.folderData.folders) {
+    real.folder_structure = extra.folderData.folders;
+  } else {
+    real.folder_structure = [
+      { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_v1.docx'], color: 'blue' },
+      { name: '01_revision_literatura', icon: '&#x1F4DA;', files: [], color: 'amber' },
+      { name: '02_tablas_extraccion', icon: '&#x1F4CA;', files: ['Tabla_extraccion.xlsx'], color: 'green' },
+      { name: '03_analisis_estadistico', icon: '&#x1F4C8;', files: [], color: 'purple' },
+      { name: '04_manuscrito', icon: '&#x270D;&#xFE0F;', files: [], color: 'indigo' }
+    ];
+  }
 
   // Literature Scout — from Claude
   var realEquation = '';
@@ -5640,23 +6555,75 @@ function transformApiToReal(picotData, finerData, scoutData, pubmedResult, quest
     });
   }
 
-  // Planteamiento placeholder
-  real.planteamiento = 'Pregunta de investigacion analizada por Galatea AI con datos reales.\n\n' + q;
+  // Planteamiento — from Claude or placeholder
+  if (extra.planteamientoData && extra.planteamientoData.planteamiento) {
+    real.planteamiento = extra.planteamientoData.planteamiento;
+  } else {
+    real.planteamiento = 'Pregunta de investigacion analizada por Galatea AI con datos reales.\n\n' + q;
+  }
 
-  // Fases 8-10: placeholders para fases sin backend real (Batch 2+)
-  // NO se mezclan con datos reales de PICOT/FINER/Scout/PubMed
-  real.stats = {
-    pooled_sensitivity: { value: 0, ci_low: 0, ci_high: 0 },
-    pooled_specificity: { value: 0, ci_low: 0, ci_high: 0 },
-    auc_sroc: { value: 0, ci_low: 0, ci_high: 0 },
-    i2_sensitivity: 0, i2_specificity: 0, cochran_q_p: 0,
-    median_n: 0, mean_n: 0, sd_n: 0
-  };
-  real.equator_checklist = [
-    { guideline: 'PRISMA 2020', category: 'Reporte', items_total: 27, items_met: 0, status: 'pending', notes: 'Pendiente de evaluacion (Batch 2)' }
-  ];
-  real.protocol_draft = 'PROTOCOLO DE INVESTIGACION\n\n1. TITULO\n' + q + '\n\n2. MARCO: ' + (real.framework || '') + '\n\n3. DISENO: ' + ((real.study_type && real.study_type.type) || '') + '\n\nNota: Este protocolo sera completado por el agente Redactor en Batch 2.';
-  real.manuscript = 'MANUSCRITO — ' + q + '\n\nResumen: Pendiente de redaccion por el agente Redactor (Batch 2).\n\nLos datos de PICOT, FINER y estrategia de busqueda ya fueron generados con IA real.\nLos resultados de PubMed son verificables.';
+  // Sample Size — passthrough from saved data
+  real.sample_size = extra.sampleSizeData || null;
+
+  // Feasibility — from Claude or placeholder
+  if (extra.feasibilityData) {
+    real.feasibility = extra.feasibilityData;
+  } else {
+    real.feasibility = { viable: true, verdict: 'viable', overall_score: 0, dimensions: {} };
+  }
+
+  // Stats — from Claude or placeholder
+  if (extra.statsData) {
+    real.stats = extra.statsData;
+  } else {
+    real.stats = {
+      pooled_sensitivity: { value: 0, ci_low: 0, ci_high: 0 },
+      pooled_specificity: { value: 0, ci_low: 0, ci_high: 0 },
+      auc_sroc: { value: 0, ci_low: 0, ci_high: 0 },
+      i2_sensitivity: 0, i2_specificity: 0, cochran_q_p: 0,
+      median_n: 0, mean_n: 0, sd_n: 0
+    };
+  }
+
+  // EQUATOR checklist — from Claude or placeholder
+  if (extra.equatorData && extra.equatorData.checklist) {
+    real.equator_checklist = extra.equatorData.checklist;
+  } else {
+    real.equator_checklist = [
+      { guideline: 'PRISMA 2020', category: 'Reporte', items_total: 27, items_met: 0, status: 'pending', notes: 'Pendiente de evaluacion' }
+    ];
+  }
+
+  // Quality assessments — enrich extraction_table with bias data
+  if (extra.qualityData && extra.qualityData.assessments && real.extraction_table) {
+    var assessMap = {};
+    for (var ai = 0; ai < extra.qualityData.assessments.length; ai++) {
+      var assess = extra.qualityData.assessments[ai];
+      if (assess.pmid) assessMap[assess.pmid] = assess;
+    }
+    for (var ei = 0; ei < real.extraction_table.length; ei++) {
+      var entry = real.extraction_table[ei];
+      if (entry.pmid && assessMap[entry.pmid]) {
+        entry.sesgo = assessMap[entry.pmid].overall_risk || 'pendiente';
+        entry.quality_tool = assessMap[entry.pmid].tool || '';
+        entry.quality_rationale = assessMap[entry.pmid].rationale || '';
+      }
+    }
+  }
+
+  // Protocol — from Claude or placeholder
+  if (extra.protocolData && extra.protocolData.protocol_draft) {
+    real.protocol_draft = extra.protocolData.protocol_draft;
+  } else {
+    real.protocol_draft = 'PROTOCOLO DE INVESTIGACION\n\n1. TITULO\n' + q + '\n\n2. MARCO: ' + (real.framework || '') + '\n\n3. DISENO: ' + ((real.study_type && real.study_type.type) || '') + '\n\nNota: Este protocolo sera completado por el agente Redactor en Deploy 3.';
+  }
+
+  // Manuscript — from Claude or placeholder
+  if (extra.manuscriptData && extra.manuscriptData.manuscript) {
+    real.manuscript = extra.manuscriptData.manuscript;
+  } else {
+    real.manuscript = 'MANUSCRITO — ' + q + '\n\nResumen: Pendiente de redaccion por el agente Redactor (Deploy 3).\n\nLos datos de PICOT, FINER y estrategia de busqueda ya fueron generados con IA real.\nLos resultados de PubMed son verificables.';
+  }
 
   return real;
 }
@@ -5807,10 +6774,14 @@ async function callAgentOrSimulate(question) {
   setBubbleStatus('thinking', 'Modo Real AI');
 
   var picotData = null, finerData = null, scoutData = null;
+  var planteamientoData = null, hypothesisData = null, folderData = null;
+  var equatorData = null, qualityData = null, feasibilityData = null;
+  var totalAgents = 12;
+  var statsData = null, protocolData = null, manuscriptData = null;
 
   try {
     // ── Step 1: PICOT Builder ──
-    setBubbleStatus('thinking', 'Agente 1/3 — PICOT Builder');
+    setBubbleStatus('thinking', 'Agente 1/' + totalAgents + ' — PICOT Builder');
     setBubbleThinking();
     await bubbleTypewriter('Consultando Claude API para analizar tu pregunta con PICOT...', 28);
     await delay(500);
@@ -5825,10 +6796,32 @@ async function callAgentOrSimulate(question) {
     var picotMs = picotResult.metrics ? picotResult.metrics.duration : 0;
     var picotTokens = picotResult.metrics ? picotResult.metrics.tokensUsed : 0;
     showToast('PICOT completado (' + Math.round(picotMs/1000) + 's)', 'success');
-    await bubbleTypewriter('PICOT completado con Claude Haiku. <span class="text-gray-400 text-[10px]">' + Math.round(picotMs/1000) + 's | ' + picotTokens + ' tokens</span>', 28);
+    await bubbleTypewriter('PICOT completado. <span class="text-gray-400 text-[10px]">' + Math.round(picotMs/1000) + 's | ' + picotTokens + ' tokens</span>', 28);
 
-    // ── Step 2: FINER Validator ──
-    setBubbleStatus('thinking', 'Agente 2/3 — FINER');
+    // ── Step 2: Planteamiento Builder ──
+    setBubbleStatus('thinking', 'Agente 2/' + totalAgents + ' — Planteamiento');
+    await bubbleTypewriter('Redactando el planteamiento del problema...', 28);
+
+    try {
+      var planteamientoResult = await callAgentEndpoint('/api/agents/planteamiento-builder', {
+        projectId: activeProjectId,
+        researchQuestion: question
+      });
+      if (planteamientoResult.success) {
+        planteamientoData = planteamientoResult.data;
+        var plantMs = planteamientoResult.metrics ? planteamientoResult.metrics.duration : 0;
+        showToast('Planteamiento completado (' + Math.round(plantMs/1000) + 's)', 'success');
+        await bubbleTypewriter('Planteamiento generado. <span class="text-gray-400 text-[10px]">' + Math.round(plantMs/1000) + 's</span>', 28);
+      } else {
+        showToast('Planteamiento: continuo sin planteamiento', 'error');
+      }
+    } catch (plantErr) {
+      console.warn('Planteamiento builder failed:', plantErr.message);
+      showToast('Planteamiento: ' + plantErr.message, 'error');
+    }
+
+    // ── Step 3: FINER Validator ──
+    setBubbleStatus('thinking', 'Agente 3/' + totalAgents + ' — FINER');
     await bubbleTypewriter('Evaluando viabilidad FINER de tu investigacion...', 28);
 
     var finerResult = await callAgentEndpoint('/api/agents/finer-validator', {
@@ -5847,8 +6840,83 @@ async function callAgentOrSimulate(question) {
       showToast('FINER: continuo sin validacion', 'error');
     }
 
-    // ── Step 3: Literature Scout ──
-    setBubbleStatus('thinking', 'Agente 3/3 — Literature Scout');
+    // ── Step 4: Factibilidad Operativa ──
+    setBubbleStatus('thinking', 'Agente 4/' + totalAgents + ' — Factibilidad Operativa');
+    await bubbleTypewriter('Evaluando factibilidad operativa del proyecto...', 28);
+
+    try {
+      var feasResult = await callAgentEndpoint('/api/agents/factibilidad-operativa', {
+        projectId: activeProjectId,
+        researchQuestion: question,
+        picot: picotData.picot,
+        framework: picotData.framework,
+        studyType: picotData.studyType || '',
+        finerScores: finerData ? finerData.finerScores : {}
+      });
+      if (feasResult.success) {
+        feasibilityData = feasResult.data;
+        var feasMs = feasResult.metrics ? feasResult.metrics.duration : 0;
+        showToast('Factibilidad evaluada (' + Math.round(feasMs/1000) + 's)', 'success');
+        await bubbleTypewriter('Factibilidad operativa evaluada. <span class="text-gray-400 text-[10px]">' + Math.round(feasMs/1000) + 's</span>', 28);
+
+        // Gate logic: if not viable, show modal
+        if (feasibilityData && feasibilityData.verdict === 'no_viable') {
+          var userChoice = await showFeasibilityGateModal(feasibilityData);
+          if (userChoice === 'revise') {
+            simulationRunning = false;
+            setBubbleStatus('done', 'Revisando pregunta');
+            await bubbleTypewriter('Pipeline pausado. Revisa tu pregunta de investigacion y vuelve a intentar.', 28);
+            var inputEl = document.getElementById('questionInput') || document.getElementById('researchQuestion');
+            if (inputEl) inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+          feasibilityData._overridden = true;
+        }
+      } else {
+        showToast('Factibilidad: continuo sin evaluacion', 'error');
+      }
+    } catch (feasErr) {
+      console.warn('Factibilidad operativa failed:', feasErr.message);
+      showToast('Factibilidad: ' + feasErr.message, 'error');
+    }
+
+    // ── Steps 5+6: Hypothesis Generator + Folder Organizer (parallel) ──
+    setBubbleStatus('thinking', 'Agentes 5-6/' + totalAgents + ' — Hipotesis + Carpetas');
+    await bubbleTypewriter('Generando hipotesis y organizando carpetas en paralelo...', 28);
+
+    var parallelResults4_5 = await Promise.allSettled([
+      callAgentEndpoint('/api/agents/hypothesis-generator', {
+        projectId: activeProjectId,
+        researchQuestion: question,
+        picot: picotData.picot
+      }),
+      callAgentEndpoint('/api/agents/folder-organizer', {
+        projectId: activeProjectId,
+        framework: picotData.framework,
+        studyType: picotData.studyType || ''
+      })
+    ]);
+
+    if (parallelResults4_5[0].status === 'fulfilled' && parallelResults4_5[0].value.success) {
+      hypothesisData = parallelResults4_5[0].value.data;
+      var hypMs = parallelResults4_5[0].value.metrics ? parallelResults4_5[0].value.metrics.duration : 0;
+      showToast('Hipotesis completadas (' + Math.round(hypMs/1000) + 's)', 'success');
+    } else {
+      showToast('Hipotesis: usando placeholder', 'error');
+    }
+
+    if (parallelResults4_5[1].status === 'fulfilled' && parallelResults4_5[1].value.success) {
+      folderData = parallelResults4_5[1].value.data;
+      var folderMs = parallelResults4_5[1].value.metrics ? parallelResults4_5[1].value.metrics.duration : 0;
+      showToast('Carpetas organizadas (' + Math.round(folderMs/1000) + 's)', 'success');
+    } else {
+      showToast('Carpetas: usando estructura por defecto', 'error');
+    }
+
+    await bubbleTypewriter('Hipotesis y carpetas listos.', 28);
+
+    // ── Step 7: Literature Scout ──
+    setBubbleStatus('thinking', 'Agente 7/' + totalAgents + ' — Literature Scout');
     await bubbleTypewriter('Generando estrategia de busqueda y descriptores MeSH...', 28);
 
     var scoutResult = await callAgentEndpoint('/api/agents/literature-scout', {
@@ -5868,14 +6936,21 @@ async function callAgentOrSimulate(question) {
     }
 
     // ── Build real simData (ZERO hallucination) ──
-    simData = transformApiToReal(picotData, finerData, scoutData, null, question);
+    simData = transformApiToReal(picotData, finerData, scoutData, null, question, {
+      planteamientoData: planteamientoData,
+      hypothesisData: hypothesisData,
+      folderData: folderData,
+      feasibilityData: feasibilityData
+    });
 
-    // ── Step 4: Evidence Aggregator (PubMed real + Claude estimates) ──
+    // ── Step 8: Evidence Aggregator (PubMed real + Claude estimates) ──
+    setBubbleStatus('thinking', 'Agente 8/' + totalAgents + ' — Evidence Aggregator');
     var equation = (scoutData && scoutData.searchStrategy && scoutData.searchStrategy.pubmedEquation) || question;
     realSearchEquation = equation;
 
     await bubbleTypewriter('Consultando PubMed en vivo y estimando otras bases de datos...', 28);
 
+    var aggArticles = [];
     try {
       var aggResult = await callAgentEndpoint('/api/evidence/aggregate', {
         equation: equation,
@@ -5885,7 +6960,6 @@ async function callAgentOrSimulate(question) {
 
       if (aggResult.success && aggResult.data) {
         var aggData = aggResult.data;
-        // Update search_registry with real + estimated data
         simData.search_registry = aggData.databases.map(function(db) {
           return {
             database: db.database,
@@ -5898,13 +6972,12 @@ async function callAgentOrSimulate(question) {
             color: db.color
           };
         });
-        // Update PRISMA with aggregated data
         if (aggData.prisma) {
           simData.search_strategy = simData.search_strategy || {};
           simData.search_strategy.prisma = aggData.prisma;
         }
-        // Update extraction table with real articles
         if (aggData.articles && aggData.articles.length > 0) {
+          aggArticles = aggData.articles;
           simData.extraction_table = aggData.articles.map(function(a) {
             var authorStr = (a.authors && a.authors.length > 0) ? a.authors[0] + (a.authors.length > 1 ? ' et al.' : '') : 'N/A';
             return { autor: authorStr, anio: parseInt(a.year) || 0, pais: '', diseno: '', n: '', resultado: a.title || '', sesgo: 'pendiente', pmid: a.pmid || '', doi: a.doi || '' };
@@ -5913,14 +6986,145 @@ async function callAgentOrSimulate(question) {
         var realCount = aggData.databases.filter(function(d){return d.real;}).length;
         var estCount = aggData.databases.length - realCount;
         showToast('Evidencia: ' + realCount + ' base(s) en vivo, ' + estCount + ' estimada(s). Total: ' + aggData.totalIdentified + ' resultados', 'success');
-        await bubbleTypewriter('He analizado <strong>' + aggData.totalIdentified + '</strong> resultados en ' + aggData.databases.length + ' bases de datos. <strong>PubMed: datos en vivo</strong>. Cochrane, LILACS y Scopus: estimaciones basadas en densidad de palabras clave.', 28);
+        await bubbleTypewriter('He analizado <strong>' + aggData.totalIdentified + '</strong> resultados en ' + aggData.databases.length + ' bases de datos. <strong>PubMed: datos en vivo</strong>.', 28);
       }
     } catch (aggErr) {
       console.warn('Evidence aggregator failed, continuing with scout data:', aggErr.message);
       showToast('Agregador: ' + aggErr.message + ' — usando datos parciales', 'error');
     }
 
-    await bubbleTypewriter('He generado la ecuacion de busqueda. <strong>Revisala y editala</strong> si necesitas, luego haz clic en "Ejecutar Busqueda en PubMed".', 28);
+    // ── Step 9: EQUATOR Checker + Quality Assessor (parallel) ──
+    setBubbleStatus('thinking', 'Agente 9/' + totalAgents + ' — EQUATOR + Calidad');
+    await bubbleTypewriter('Verificando guias EQUATOR y evaluando calidad de articulos...', 28);
+
+    var parallelPost = [
+      callAgentEndpoint('/api/agents/equator-checker', {
+        projectId: activeProjectId,
+        framework: picotData.framework,
+        studyType: picotData.studyType || ''
+      })
+    ];
+
+    // Only run Quality Assessor if we have articles
+    var hasArticles = (aggArticles.length > 0) || (simData.extraction_table && simData.extraction_table.length > 0);
+    if (hasArticles) {
+      var articlesToAssess = aggArticles.length > 0 ? aggArticles : [];
+      if (articlesToAssess.length > 0) {
+        parallelPost.push(
+          callAgentEndpoint('/api/agents/quality-assessor', {
+            projectId: activeProjectId,
+            articles: articlesToAssess.slice(0, 10)
+          })
+        );
+      }
+    }
+
+    var postResults = await Promise.allSettled(parallelPost);
+
+    if (postResults[0].status === 'fulfilled' && postResults[0].value.success) {
+      equatorData = postResults[0].value.data;
+      showToast('EQUATOR verificado', 'success');
+    } else {
+      showToast('EQUATOR: usando checklist por defecto', 'error');
+    }
+
+    if (postResults[1] && postResults[1].status === 'fulfilled' && postResults[1].value.success) {
+      qualityData = postResults[1].value.data;
+      showToast('Calidad evaluada', 'success');
+    } else if (hasArticles && articlesToAssess && articlesToAssess.length > 0) {
+      showToast('Calidad: evaluacion pendiente', 'error');
+    }
+
+    // ── Apply EQUATOR + Quality data to simData ──
+    if (equatorData && equatorData.checklist) {
+      simData.equator_checklist = equatorData.checklist;
+    }
+    if (qualityData && qualityData.assessments && simData.extraction_table) {
+      var assessMap = {};
+      for (var qi = 0; qi < qualityData.assessments.length; qi++) {
+        var assess = qualityData.assessments[qi];
+        if (assess.pmid) assessMap[assess.pmid] = assess;
+      }
+      for (var xi = 0; xi < simData.extraction_table.length; xi++) {
+        var entry = simData.extraction_table[xi];
+        if (entry.pmid && assessMap[entry.pmid]) {
+          entry.sesgo = assessMap[entry.pmid].overall_risk || 'pendiente';
+          entry.quality_tool = assessMap[entry.pmid].tool || '';
+          entry.quality_rationale = assessMap[entry.pmid].rationale || '';
+        }
+      }
+    }
+
+    // ── Step 9: Stats Agent ──
+    var hasExtraction = simData.extraction_table && simData.extraction_table.length > 0;
+    if (hasExtraction) {
+      setBubbleStatus('thinking', 'Agente 10/' + totalAgents + ' — Estadisticas');
+      await bubbleTypewriter('Calculando estadisticas pooled y heterogeneidad...', 28);
+
+      try {
+        var statsResult = await callAgentEndpoint('/api/agents/stats-agent', {
+          projectId: activeProjectId,
+          extractionTable: simData.extraction_table,
+          picot: picotData.picot,
+          studyType: picotData.studyType || ''
+        });
+        if (statsResult.success) {
+          statsData = statsResult.data;
+          simData.stats = statsData;
+          var statsMs = statsResult.metrics ? statsResult.metrics.duration : 0;
+          showToast('Estadisticas calculadas (' + Math.round(statsMs/1000) + 's)', 'success');
+          await bubbleTypewriter('Estadisticas pooled calculadas. <span class="text-gray-400 text-[10px]">' + Math.round(statsMs/1000) + 's</span>', 28);
+        } else {
+          showToast('Stats: usando valores por defecto', 'error');
+        }
+      } catch (statsErr) {
+        console.warn('Stats agent failed:', statsErr.message);
+        showToast('Stats: ' + statsErr.message, 'error');
+      }
+    }
+
+    // ── Steps 11+12: Protocol Writer + Manuscript Writer (parallel) ──
+    setBubbleStatus('thinking', 'Agentes 11-12/' + totalAgents + ' — Protocolo + Manuscrito');
+    await bubbleTypewriter('Redactando protocolo y manuscrito en paralelo...', 28);
+
+    var writerContext = {
+      researchQuestion: question,
+      picot: picotData.picot,
+      framework: picotData.framework,
+      studyType: picotData.studyType || '',
+      planteamiento: (planteamientoData && planteamientoData.planteamiento) ? planteamientoData.planteamiento : '',
+      hypothesis: hypothesisData || {},
+      searchStrategy: (scoutData && scoutData.searchStrategy) ? scoutData.searchStrategy : {},
+      criteria: (scoutData && scoutData.criteriaDesigner) ? scoutData.criteriaDesigner : {},
+      extractionTable: (simData.extraction_table || []).slice(0, 15),
+      stats: statsData || {},
+      equatorChecklist: (equatorData && equatorData.checklist) ? equatorData.checklist : []
+    };
+
+    var writerResults = await Promise.allSettled([
+      callAgentEndpoint('/api/agents/protocol-writer', Object.assign({ projectId: activeProjectId }, writerContext), 60000),
+      callAgentEndpoint('/api/agents/manuscript-writer', Object.assign({ projectId: activeProjectId }, writerContext), 60000)
+    ]);
+
+    if (writerResults[0].status === 'fulfilled' && writerResults[0].value.success) {
+      protocolData = writerResults[0].value.data;
+      simData.protocol_draft = protocolData.protocol_draft;
+      var protMs = writerResults[0].value.metrics ? writerResults[0].value.metrics.duration : 0;
+      showToast('Protocolo redactado (' + Math.round(protMs/1000) + 's)', 'success');
+    } else {
+      showToast('Protocolo: usando plantilla por defecto', 'error');
+    }
+
+    if (writerResults[1].status === 'fulfilled' && writerResults[1].value.success) {
+      manuscriptData = writerResults[1].value.data;
+      simData.manuscript = manuscriptData.manuscript;
+      var msMs = writerResults[1].value.metrics ? writerResults[1].value.metrics.duration : 0;
+      showToast('Manuscrito redactado (' + Math.round(msMs/1000) + 's)', 'success');
+    } else {
+      showToast('Manuscrito: usando plantilla por defecto', 'error');
+    }
+
+    await bubbleTypewriter('Protocolo y manuscrito listos. He generado la ecuacion de busqueda. <strong>Revisala y editala</strong> si necesitas, luego haz clic en "Ejecutar Busqueda en PubMed".', 28);
 
     // The simulation flow will show the search editor at the right phase
     return runFullSimulation(question);
