@@ -1,7 +1,17 @@
 import { callClaude } from '../utils/anthropic-client.js';
-import { updatePhaseData } from '../utils/supabase-server.js';
+import { updatePhaseData as _updatePhaseData } from '../utils/supabase-server.js';
 import { logAgent, logError, logMetrics } from '../utils/logger.js';
 import { PROMPTS } from '../../prompts/system-prompts.js';
+
+// Wrap updatePhaseData to be non-fatal — Supabase write failures should not break agent responses
+async function updatePhaseData(projectId, phase, data) {
+  try {
+    return await _updatePhaseData(projectId, phase, data);
+  } catch (err) {
+    logAgent('supabase', 'warn', `updatePhaseData failed for ${phase}: ${err.message}`);
+    return null;
+  }
+}
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -206,6 +216,12 @@ export default async function handler(req, res) {
 
   try {
     logAgent(agentName, 'info', `Starting ${agentName}`, { projectId: (req.body || {}).projectId });
+
+    // Validate ANTHROPIC_API_KEY exists
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(500).json({ success: false, error: 'Server misconfiguration: ANTHROPIC_API_KEY not set' });
+    }
+
     const { data, result, extra } = await agentHandler(req.body || {});
     logMetrics(agentName, result);
 
@@ -219,6 +235,13 @@ export default async function handler(req, res) {
       return res.status(err.status).json({ success: false, error: err.message });
     }
     logError(agentName, err);
-    return res.status(500).json({ success: false, error: err.message });
+    const errorMsg = err.message || 'Unknown error';
+    // Provide more context for common failures
+    const detail = errorMsg.includes('JSON')
+      ? `${errorMsg} (Claude returned non-JSON response)`
+      : errorMsg.includes('Supabase')
+      ? `${errorMsg} (Supabase write failed — agent result was still generated)`
+      : errorMsg;
+    return res.status(500).json({ success: false, error: detail });
   }
 }

@@ -2304,14 +2304,21 @@ async function createNewProject(question) {
   var id = crypto.randomUUID();
   var insertData = { project_id: id, title: question, research_question: question, current_phase: 0, status: 'executing', phase_data: {}, user_edits: {} };
   if (currentUser) { insertData.department_id = currentUser.department_id; insertData.created_by = currentUser.email; }
-  var { data, error } = await sb.from(TABLE).insert(insertData).select().single();
-  // Fallback: si las columnas department_id/created_by no existen, reintentar sin ellas
-  if (error && error.message && (error.message.indexOf('department_id') !== -1 || error.message.indexOf('created_by') !== -1)) {
-    delete insertData.department_id; delete insertData.created_by;
-    var retry = await sb.from(TABLE).insert(insertData).select().single();
-    data = retry.data; error = retry.error;
+  try {
+    var { data, error } = await sb.from(TABLE).insert(insertData).select().single();
+    // Fallback: si las columnas department_id/created_by no existen, reintentar sin ellas
+    if (error && error.message && (error.message.indexOf('department_id') !== -1 || error.message.indexOf('created_by') !== -1)) {
+      delete insertData.department_id; delete insertData.created_by;
+      var retry = await sb.from(TABLE).insert(insertData).select().single();
+      data = retry.data; error = retry.error;
+    }
+    if (error) {
+      console.warn('Supabase insert failed:', error.message, '— continuing in local-only mode');
+      // Continue without Supabase persistence — project works in-memory
+    }
+  } catch (e) {
+    console.warn('createNewProject: Supabase unavailable:', e.message, '— continuing in local-only mode');
   }
-  if (error) { btn.innerHTML = 'Iniciar Analisis'; btn.disabled = false; alert('Error: ' + error.message); return; }
   activeProjectId = id; transitionToDashboard();
 }
 
@@ -2440,10 +2447,15 @@ function showProjectListPage() {
 async function loadUserProjects() {
   var content = document.getElementById('projectListContent');
   content.innerHTML = '<div class="flex items-center justify-center py-20"><div class="text-center"><svg class="w-8 h-8 animate-spin text-galatea mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg><p class="text-sm text-gray-400">Cargando proyectos...</p></div></div>';
-  // Siempre cargar todos los proyectos, filtrar client-side
+  var allProjects = [];
+  // In demo mode (no Supabase auth session), try Supabase but fall back gracefully
   var res = await sb.from(TABLE).select('*').order('created_at', { ascending: false });
-  if (res.error) { content.innerHTML = '<p class="text-red-500 text-center py-10">Error cargando proyectos: ' + res.error.message + '</p>'; return; }
-  var allProjects = res.data || [];
+  if (res.error) {
+    console.warn('Supabase query failed:', res.error.message, '— using empty project list');
+    allProjects = [];
+  } else {
+    allProjects = res.data || [];
+  }
   // Filtrar client-side segun rol
   if (currentUser.role === 'jefe_investigacion') {
     userProjects = allProjects;
@@ -4313,8 +4325,15 @@ function addDescriptor(value, type) {
 // LOAD + REALTIME + DEBUG
 // ═══════════════════════════════════════════════════════════════
 async function loadProject() {
-  var { data, error } = await sb.from(TABLE).select('*').eq('project_id', activeProjectId).order('created_at', { ascending: false }).limit(1).single();
-  if (error && error.code !== 'PGRST116') { console.error(error); return; }
+  var result;
+  try {
+    result = await sb.from(TABLE).select('*').eq('project_id', activeProjectId).order('created_at', { ascending: false }).limit(1).single();
+  } catch (e) {
+    console.warn('loadProject: Supabase query failed:', e.message);
+    result = { data: null, error: e };
+  }
+  var data = result.data, error = result.error;
+  if (error && error.code !== 'PGRST116') { console.warn('loadProject:', error.message); }
   if (!data) {
     project = { project_id: activeProjectId, title: 'Nuevo Proyecto', research_question: '', current_phase: 0, status: 'pending', phase_data: {}, user_edits: {} };
     renderAll(); updateDebug();
@@ -4335,7 +4354,7 @@ async function loadProject() {
 }
 
 function subscribeRealtime() {
-  sb.channel('research_changes')
+  try { sb.channel('research_changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: TABLE, filter: 'project_id=eq.' + activeProjectId }, function(payload) {
       if (isRealtimeUpdate) return;
       isRealtimeUpdate = true;
@@ -4349,6 +4368,7 @@ function subscribeRealtime() {
       setTimeout(function() { isRealtimeUpdate = false; }, 100);
     })
     .subscribe();
+  } catch (e) { console.warn('Realtime subscription failed:', e.message); }
 }
 
 function updateDebug() {
@@ -4384,9 +4404,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch(e) {}
   }
-  // Check Supabase session
+  // Check Supabase session (suppress 400 errors from stale/expired tokens)
   sb.auth.getSession().then(function(res) {
-    if (res.data.session) {
+    if (res.data && res.data.session) {
       var email = res.data.session.user.email;
       var userInfo = FSFB_USERS[email];
       if (userInfo) {
@@ -4396,6 +4416,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     // No valid session — loginPage is already visible by default
+  }).catch(function(e) {
+    console.warn('Supabase session check failed (expected in demo mode):', e.message);
   });
 });
 

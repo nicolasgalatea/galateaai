@@ -150,7 +150,33 @@ export default async function handler(req, res) {
       });
     }
 
-    // ── Agent 2: FINER Validator ──
+    // ── Agent 2: Planteamiento Builder ──
+    logAgent(AGENT_NAME, 'info', 'Running Planteamiento Builder');
+    try {
+      const planteamientoResult = await callClaude(
+        PROMPTS.PLANTEAMIENTO_BUILDER,
+        `Pregunta de investigacion:\n"${researchQuestion}"\n\nRedacta el planteamiento del problema para esta investigacion.`
+      );
+      logMetrics('planteamiento-builder', planteamientoResult);
+      const planteamientoData = parseClaudeJSON(planteamientoResult.text);
+      results.planteamiento = {
+        data: planteamientoData,
+        metrics: { duration: planteamientoResult.duration, tokensUsed: planteamientoResult.tokensUsed },
+      };
+
+      if (projectId) {
+        try {
+          await updatePhaseData(projectId, 'planteamiento', planteamientoData.planteamiento);
+        } catch (dbErr) {
+          logError(AGENT_NAME, dbErr, { context: 'planteamiento_save' });
+        }
+      }
+    } catch (err) {
+      logError('planteamiento-builder', err);
+      errors.push({ agent: 'planteamiento-builder', error: err.message });
+    }
+
+    // ── Agent 3: FINER Validator ──
     logAgent(AGENT_NAME, 'info', 'Running FINER Validator');
     try {
       const finerResult = await callClaude(
@@ -174,10 +200,79 @@ export default async function handler(req, res) {
     } catch (err) {
       logError('finer-validator', err);
       errors.push({ agent: 'finer-validator', error: err.message });
-      // Continue — FINER is not blocking
     }
 
-    // ── Agent 3: Literature Scout ──
+    // ── Agent 4: Factibilidad Operativa ──
+    logAgent(AGENT_NAME, 'info', 'Running Factibilidad Operativa');
+    try {
+      const feasibilityResult = await callClaude(
+        PROMPTS.FACTIBILIDAD_OPERATIVA,
+        `Pregunta de investigacion:\n"${researchQuestion}"\n\nEstructuracion PICOT:\n${JSON.stringify(picotData.picot, null, 2)}\n\nFramework: ${picotData.framework}\nTipo de estudio: ${picotData.studyType || 'No especificado'}\n\nScores FINER:\n${JSON.stringify(results.finer?.data?.finerScores || {}, null, 2)}\n\nEvalua la factibilidad operativa de este proyecto de investigacion en las 6 dimensiones.`
+      );
+      logMetrics('factibilidad-operativa', feasibilityResult);
+      const feasibilityData = parseClaudeJSON(feasibilityResult.text);
+      results.feasibility = {
+        data: feasibilityData,
+        metrics: { duration: feasibilityResult.duration, tokensUsed: feasibilityResult.tokensUsed },
+      };
+
+      if (projectId) {
+        try {
+          await updatePhaseData(projectId, 'feasibility', feasibilityData);
+        } catch (dbErr) {
+          logError(AGENT_NAME, dbErr, { context: 'feasibility_save' });
+        }
+      }
+    } catch (err) {
+      logError('factibilidad-operativa', err);
+      errors.push({ agent: 'factibilidad-operativa', error: err.message });
+    }
+
+    // ── Agents 5+6: Hypothesis Generator + Folder Organizer (parallel) ──
+    logAgent(AGENT_NAME, 'info', 'Running Hypothesis Generator + Folder Organizer in parallel');
+
+    const [hypothesisSettled, folderSettled] = await Promise.allSettled([
+      // Hypothesis Generator
+      (async () => {
+        const hypResult = await callClaude(
+          PROMPTS.HYPOTHESIS_GENERATOR,
+          `Pregunta de investigacion:\n"${researchQuestion}"\n\nEstructuracion PICOT:\n${JSON.stringify(picotData.picot, null, 2)}\n\nFormula las hipotesis de investigacion (H0 y H1).`
+        );
+        logMetrics('hypothesis-generator', hypResult);
+        return { data: parseClaudeJSON(hypResult.text), metrics: { duration: hypResult.duration, tokensUsed: hypResult.tokensUsed } };
+      })(),
+      // Folder Organizer
+      (async () => {
+        const folderResult = await callClaude(
+          PROMPTS.FOLDER_ORGANIZER,
+          `Framework: ${picotData.framework}\nTipo de estudio: ${picotData.studyType || 'No especificado'}\n\nGenera la estructura de carpetas optima para este proyecto de investigacion.`
+        );
+        logMetrics('folder-organizer', folderResult);
+        return { data: parseClaudeJSON(folderResult.text), metrics: { duration: folderResult.duration, tokensUsed: folderResult.tokensUsed } };
+      })(),
+    ]);
+
+    if (hypothesisSettled.status === 'fulfilled') {
+      results.hypothesis = hypothesisSettled.value;
+      if (projectId) {
+        try { await updatePhaseData(projectId, 'hypothesis', hypothesisSettled.value.data); } catch (dbErr) { logError(AGENT_NAME, dbErr, { context: 'hypothesis_save' }); }
+      }
+    } else {
+      logError('hypothesis-generator', hypothesisSettled.reason);
+      errors.push({ agent: 'hypothesis-generator', error: hypothesisSettled.reason?.message || 'failed' });
+    }
+
+    if (folderSettled.status === 'fulfilled') {
+      results.folderOrganizer = folderSettled.value;
+      if (projectId) {
+        try { await updatePhaseData(projectId, 'folder_structure', folderSettled.value.data.folders); } catch (dbErr) { logError(AGENT_NAME, dbErr, { context: 'folder_save' }); }
+      }
+    } else {
+      logError('folder-organizer', folderSettled.reason);
+      errors.push({ agent: 'folder-organizer', error: folderSettled.reason?.message || 'failed' });
+    }
+
+    // ── Agent 7: Literature Scout ──
     logAgent(AGENT_NAME, 'info', 'Running Literature Scout');
     let scoutData;
     try {
@@ -203,23 +298,173 @@ export default async function handler(req, res) {
     } catch (err) {
       logError('literature-scout', err);
       errors.push({ agent: 'literature-scout', error: err.message });
-      // Continue — PubMed may still work with a fallback query
     }
 
     // ── PubMed Search ──
     logAgent(AGENT_NAME, 'info', 'Running PubMed search');
+    let pubmedResult;
     try {
       const pubmedQuery = scoutData?.searchStrategy?.pubmedEquation || researchQuestion;
-      const pubmedResult = await searchPubMed(pubmedQuery, 10);
+      pubmedResult = await searchPubMed(pubmedQuery, 10);
       results.pubmed = {
         data: pubmedResult,
-        metrics: { duration: 0 }, // timing not tracked separately here
+        metrics: { duration: 0 },
       };
 
       logAgent(AGENT_NAME, 'info', `PubMed returned ${pubmedResult.articles.length} articles`);
     } catch (err) {
       logError('pubmed-search', err);
       errors.push({ agent: 'pubmed-search', error: err.message });
+    }
+
+    // ── Agents 9+10: EQUATOR Checker + Quality Assessor (parallel) ──
+    logAgent(AGENT_NAME, 'info', 'Running EQUATOR Checker + Quality Assessor in parallel');
+
+    const parallelPost = [];
+
+    // EQUATOR Checker
+    parallelPost.push(
+      (async () => {
+        const eqResult = await callClaude(
+          PROMPTS.EQUATOR_CHECKER,
+          `Framework: ${picotData.framework}\nTipo de estudio: ${picotData.studyType || 'No especificado'}\n\nIdentifica las guias EQUATOR aplicables y evalua el cumplimiento inicial.`
+        );
+        logMetrics('equator-checker', eqResult);
+        return { data: parseClaudeJSON(eqResult.text), metrics: { duration: eqResult.duration, tokensUsed: eqResult.tokensUsed } };
+      })()
+    );
+
+    // Quality Assessor (only if we have articles)
+    const articles = pubmedResult?.articles || [];
+    if (articles.length > 0) {
+      parallelPost.push(
+        (async () => {
+          const articleSummaries = articles.slice(0, 10).map((a) => ({
+            pmid: a.pmid || '', title: a.title || '', authors: (a.authors || []).join(', '),
+            year: a.year || '', abstract: (a.abstract || '').slice(0, 500),
+          }));
+          const qaResult = await callClaude(
+            PROMPTS.QUALITY_ASSESSOR,
+            `Articulos a evaluar:\n${JSON.stringify(articleSummaries, null, 2)}\n\nEvalua la calidad metodologica y riesgo de sesgo de cada articulo.`
+          );
+          logMetrics('quality-assessor', qaResult);
+          return { data: parseClaudeJSON(qaResult.text), metrics: { duration: qaResult.duration, tokensUsed: qaResult.tokensUsed } };
+        })()
+      );
+    }
+
+    const postSettled = await Promise.allSettled(parallelPost);
+
+    // EQUATOR result
+    if (postSettled[0]?.status === 'fulfilled') {
+      results.equatorChecker = postSettled[0].value;
+      if (projectId) {
+        try { await updatePhaseData(projectId, 'equator_checklist', postSettled[0].value.data.checklist); } catch (dbErr) { logError(AGENT_NAME, dbErr, { context: 'equator_save' }); }
+      }
+    } else {
+      logError('equator-checker', postSettled[0]?.reason);
+      errors.push({ agent: 'equator-checker', error: postSettled[0]?.reason?.message || 'failed' });
+    }
+
+    // Quality Assessor result
+    if (postSettled[1]?.status === 'fulfilled') {
+      results.qualityAssessor = postSettled[1].value;
+      if (projectId) {
+        try { await updatePhaseData(projectId, 'quality_assessments', postSettled[1].value.data.assessments); } catch (dbErr) { logError(AGENT_NAME, dbErr, { context: 'quality_save' }); }
+      }
+    } else if (articles.length > 0) {
+      logError('quality-assessor', postSettled[1]?.reason);
+      errors.push({ agent: 'quality-assessor', error: postSettled[1]?.reason?.message || 'failed' });
+    }
+
+    // ── Agent 11: Stats Agent ──
+    logAgent(AGENT_NAME, 'info', 'Running Stats Agent');
+    let statsData;
+    const extractionForStats = pubmedResult?.articles?.map((a) => ({
+      autor: (a.authors?.[0] || 'N/A') + (a.authors?.length > 1 ? ' et al.' : ''),
+      anio: parseInt(a.year) || 0,
+      titulo: a.title || '',
+      pmid: a.pmid || '',
+      n: '',
+    })) || [];
+
+    if (extractionForStats.length > 0) {
+      try {
+        const statsResult = await callClaude(
+          PROMPTS.STATS_AGENT,
+          `Tipo de estudio: ${picotData.studyType || 'No especificado'}\n\nPICOT:\n${JSON.stringify(picotData.picot, null, 2)}\n\nTabla de extraccion (${extractionForStats.length} estudios):\n${JSON.stringify(extractionForStats, null, 2)}\n\nCalcula las estadisticas pooled, heterogeneidad y estadisticas descriptivas.`
+        );
+        logMetrics('stats-agent', statsResult);
+        statsData = parseClaudeJSON(statsResult.text);
+        results.stats = {
+          data: statsData,
+          metrics: { duration: statsResult.duration, tokensUsed: statsResult.tokensUsed },
+        };
+
+        if (projectId) {
+          try { await updatePhaseData(projectId, 'stats', statsData); } catch (dbErr) { logError(AGENT_NAME, dbErr, { context: 'stats_save' }); }
+        }
+      } catch (err) {
+        logError('stats-agent', err);
+        errors.push({ agent: 'stats-agent', error: err.message });
+      }
+    }
+
+    // ── Agents 12+13: Protocol Writer + Manuscript Writer (parallel) ──
+    logAgent(AGENT_NAME, 'info', 'Running Protocol Writer + Manuscript Writer in parallel');
+
+    // Gather all context for writers
+    const writerContext = {
+      pregunta: researchQuestion,
+      framework: picotData.framework,
+      tipo_estudio: picotData.studyType || '',
+      picot: picotData.picot,
+      planteamiento: (results.planteamiento?.data?.planteamiento || '').slice(0, 1000),
+      hipotesis: results.hypothesis?.data || {},
+      estrategia_busqueda: results.literatureScout?.data?.searchStrategy || {},
+      criterios: results.literatureScout?.data?.criteriaDesigner || {},
+      tabla_extraccion: extractionForStats.slice(0, 15),
+      estadisticas: statsData || {},
+      equator: results.equatorChecker?.data?.checklist || [],
+    };
+
+    const [protocolSettled, manuscriptSettled] = await Promise.allSettled([
+      (async () => {
+        const protResult = await callClaude(
+          PROMPTS.PROTOCOL_WRITER,
+          `Datos del proyecto de investigacion:\n${JSON.stringify(writerContext, null, 2)}\n\nRedacta el protocolo de investigacion completo.`
+        );
+        logMetrics('protocol-writer', protResult);
+        return { data: parseClaudeJSON(protResult.text), metrics: { duration: protResult.duration, tokensUsed: protResult.tokensUsed } };
+      })(),
+      (async () => {
+        const msResult = await callClaude(
+          PROMPTS.MANUSCRIPT_WRITER,
+          `Datos completos del proyecto de investigacion:\n${JSON.stringify(writerContext, null, 2)}\n\nRedacta el manuscrito cientifico completo en formato IMRaD.`
+        );
+        logMetrics('manuscript-writer', msResult);
+        return { data: parseClaudeJSON(msResult.text), metrics: { duration: msResult.duration, tokensUsed: msResult.tokensUsed } };
+      })(),
+    ]);
+
+    if (protocolSettled.status === 'fulfilled') {
+      results.protocolWriter = protocolSettled.value;
+      if (projectId) {
+        try { await updatePhaseData(projectId, 'protocol_draft', protocolSettled.value.data.protocol_draft); } catch (dbErr) { logError(AGENT_NAME, dbErr, { context: 'protocol_save' }); }
+      }
+    } else {
+      logError('protocol-writer', protocolSettled.reason);
+      errors.push({ agent: 'protocol-writer', error: protocolSettled.reason?.message || 'failed' });
+    }
+
+    if (manuscriptSettled.status === 'fulfilled') {
+      results.manuscriptWriter = manuscriptSettled.value;
+      if (projectId) {
+        try { await updatePhaseData(projectId, 'manuscript', manuscriptSettled.value.data.manuscript); } catch (dbErr) { logError(AGENT_NAME, dbErr, { context: 'manuscript_save' }); }
+      }
+    } else {
+      logError('manuscript-writer', manuscriptSettled.reason);
+      errors.push({ agent: 'manuscript-writer', error: manuscriptSettled.reason?.message || 'failed' });
     }
 
     const totalDuration = Date.now() - totalStart;
