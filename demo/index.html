@@ -322,6 +322,15 @@
                 <span class="text-[10px] text-white/20">Dejar vacio para demo</span>
               </div>
             </div>
+            <!-- Mode Toggle: Demo / Real AI -->
+            <div id="modeToggle" class="mt-4 flex items-center justify-center lg:justify-start gap-3">
+              <span id="modeLabel" class="text-xs font-semibold text-white/60">Demo</span>
+              <button onclick="toggleRealMode()" id="modeBtn" class="relative w-11 h-6 rounded-full bg-white/20 transition-colors duration-300 focus:outline-none">
+                <span id="modeDot" class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300" style="transform:translateX(0)"></span>
+              </button>
+              <span id="modeLabelReal" class="text-xs font-semibold text-white/30">Real AI</span>
+            </div>
+
             <button onclick="startAnalysis()"
               class="mt-4 w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-galatea to-verde rounded-xl text-white font-bold text-sm hover:shadow-lg hover:shadow-galatea/25 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -393,15 +402,6 @@
   <!-- ═══ TOAST container ═══ -->
   <div id="toastContainer" class="fixed bottom-6 right-6 z-[100] space-y-2"></div>
 
-  <!-- ═══ MODO DEMO / REAL TOGGLE ═══ -->
-  <div id="modeToggle" class="fixed top-4 right-4 z-[90] flex items-center gap-2 bg-white/90 backdrop-blur-md border border-gray-200 rounded-full px-4 py-2 shadow-lg">
-    <span id="modeLabel" class="text-xs font-semibold text-gray-500">Demo</span>
-    <button onclick="toggleRealMode()" id="modeBtn" class="relative w-11 h-6 rounded-full bg-gray-300 transition-colors duration-300 focus:outline-none">
-      <span id="modeDot" class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300" style="transform:translateX(0)"></span>
-    </button>
-    <span id="modeLabelReal" class="text-xs font-semibold text-gray-300">Real AI</span>
-  </div>
-
   <!-- ═══ MAIN ═══ -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -416,7 +416,7 @@
             <span id="phaseBadge" class="text-xs text-gray-400 font-medium">Fase 1 / 10</span>
           </div>
           <div class="flex items-center gap-2 mb-2">
-            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight" id="projectTitle" contenteditable="true" onblur="handleTitleEdit(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">Cargando...</h2>
+            <h2 class="text-lg sm:text-xl font-extrabold text-gray-900 leading-snug break-words" id="projectTitle" contenteditable="true" onblur="handleTitleEdit(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">Cargando...</h2>
             <span id="titleSaveIndicator" class="hidden items-center gap-1 text-[11px] font-semibold shrink-0 transition-all"></span>
           </div>
           <p class="text-sm text-gray-500 max-w-2xl" id="projectMeta" contenteditable="true" onblur="handleSubtitleEdit(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"></p>
@@ -1099,6 +1099,69 @@ function getFrameworkLabels(fw) {
 // ═══════════════════════════════════════════════════════════════
 // SIMULATION DATA GENERATOR (same as before)
 // ═══════════════════════════════════════════════════════════════
+function extractPICOTFromQuestion(q) {
+  var ql = q.toLowerCase();
+  // Patterns to detect population
+  var popPatterns = [
+    /(?:en |con )(pacientes|adultos|ni[ñn]os|mujeres|hombres|personas|sujetos|poblaci[oó]n|gestantes|embarazadas|neonatos|adolescentes|ancianos|mayores)[^,.?]*/i,
+    /(?:pacientes|adultos|ni[ñn]os|personas|sujetos) (?:con|que|diagnosticad)[^,.?]*/i,
+    /(?:con )(edema|diabetes|hipertensi|c[aá]ncer|obesidad|depresi|ansiedad|asma|EPOC|insuficiencia|artritis|lupus|VIH|hepatitis|cirrosis|retinopatia|glaucoma|degeneraci)[^,.?]*/i
+  ];
+  var P = '';
+  for (var pi = 0; pi < popPatterns.length; pi++) {
+    var pm = q.match(popPatterns[pi]);
+    if (pm) { P = pm[0].replace(/^(en |con )/, '').trim(); P = P.charAt(0).toUpperCase() + P.slice(1); break; }
+  }
+  if (!P) {
+    // Try extracting disease/condition
+    var condMatch = q.match(/(edema macular|retinopatia|diabetes|hipertensi[oó]n|c[aá]ncer|tumor|depresi[oó]n|ansiedad|asma|EPOC|obesidad|insuficiencia|artritis|COVID|VIH|hepatitis|cirrosis|glaucoma|degeneraci[oó]n|infarto|ictus|ACV|esquizofrenia|epilepsia|Parkinson|Alzheimer|fibromialgia|artrosis|osteoporosis|neumon[ií]a|sepsis|meningitis|endometriosis|preeclampsia)[^,.?]*/i);
+    if (condMatch) P = 'Pacientes con ' + condMatch[0].trim().toLowerCase();
+    else P = 'Poblacion de estudio segun la pregunta planteada';
+  }
+
+  // Patterns to detect intervention
+  var intPatterns = [
+    /(?:tras |con |de |del |mediante |usando )(tratamiento|terapia|cirug[ií]a|inyecci[oó]n|inyecciones|administraci[oó]n|implante|dosis|anti-VEGF|bevacizumab|ranibizumab|aflibercept|metformina|insulina|quimioterapia|radioterapia|inmunoterapia|rehabilitaci[oó]n|fisioterapia|psicoterapia|f[aá]rmaco|medicamento|vacuna|stent|by-?pass|transplante|di[aá]lisis|ventilaci[oó]n|oxigenoterapia|Deep Learning|inteligencia artificial|IA|algoritmo)[^,.?]*/i,
+    /(?:eficacia|efectividad|efecto|impacto|precision) (?:de |del )(la |el |los |las )?([^,.?]+)/i
+  ];
+  var I = '';
+  for (var ii = 0; ii < intPatterns.length; ii++) {
+    var im = q.match(intPatterns[ii]);
+    if (im) { I = (im[2] || im[0]).replace(/^(tras |con |de |del |mediante |usando )/, '').trim(); I = I.charAt(0).toUpperCase() + I.slice(1); break; }
+  }
+  if (!I) {
+    // Heuristic: take words after "de" or "del" or main noun phrases
+    var deMatch = q.match(/(?:ganancia|reducci[oó]n|efecto|eficacia|efectividad|impacto|resultado|precisi[oó]n) .{0,10}(?:de |del |con |tras )((?:la |el |los |las )?[^,.?]{5,80})/i);
+    if (deMatch) I = deMatch[1].trim();
+    else I = 'Intervencion evaluada en el estudio';
+  }
+
+  // Comparator
+  var compPatterns = [
+    /(?:compar|versus|vs\.?|frente a|en comparaci[oó]n con|contra) ([^,.?]+)/i,
+    /(?:placebo|control|est[aá]ndar|convencional|habitual|sham)/i
+  ];
+  var C = '';
+  for (var ci = 0; ci < compPatterns.length; ci++) {
+    var cm = q.match(compPatterns[ci]);
+    if (cm) { C = (cm[1] || cm[0]).trim(); C = C.charAt(0).toUpperCase() + C.slice(1); break; }
+  }
+  if (!C) C = 'Tratamiento estandar o placebo';
+
+  // Outcome
+  var outPatterns = [
+    /(?:ganancia|reducci[oó]n|mejora|cambio|tasa|incidencia|prevalencia|mortalidad|supervivencia|recurrencia|respuesta|remisi[oó]n|agudeza|espesor|presi[oó]n|HbA1c|IMC|calidad de vida|dolor|funci[oó]n|puntaje|score)[^,.?]*/i
+  ];
+  var O = '';
+  for (var oi = 0; oi < outPatterns.length; oi++) {
+    var om = q.match(outPatterns[oi]);
+    if (om) { O = om[0].trim(); O = O.charAt(0).toUpperCase() + O.slice(1); break; }
+  }
+  if (!O) O = 'Desenlaces clinicos primarios medibles';
+
+  return { P: P, I: I, C: C, O: O };
+}
+
 function generateSimulationData(question) {
   var q = (question || '').trim();
   var isDefault = !q || q.length < 10;
@@ -1106,15 +1169,16 @@ function generateSimulationData(question) {
 
   var framework = detectQuestionFramework(q);
   var fwData = {};
+  var parsed = isDefault ? null : extractPICOTFromQuestion(q);
 
   if (framework === 'PICOS') {
-    fwData = isDefault ? { P:'Pacientes adultos con DM2 en atencion primaria rural de Colombia', I:'Algoritmos de Deep Learning (CNN) para deteccion automatizada de retinopatia diabetica', C:'Lectura convencional por oftalmologos certificados (gold standard)', O:'Precision diagnostica: sensibilidad, especificidad, AUC-ROC, VPP, VPN', S:'Estudios de precision diagnostica (DTA), cohortes retrospectivas y prospectivas' } : { P:'Poblacion objetivo: ' + q.slice(0, 60), I:'Intervencion principal identificada', C:'Comparador o grupo control', O:'Desenlaces primarios medibles', S:'Tipo de estudio segun pregunta' };
+    fwData = isDefault ? { P:'Pacientes adultos con DM2 en atencion primaria rural de Colombia', I:'Algoritmos de Deep Learning (CNN) para deteccion automatizada de retinopatia diabetica', C:'Lectura convencional por oftalmologos certificados (gold standard)', O:'Precision diagnostica: sensibilidad, especificidad, AUC-ROC, VPP, VPN', S:'Estudios de precision diagnostica (DTA), cohortes retrospectivas y prospectivas' } : { P:parsed.P, I:parsed.I, C:parsed.C, O:parsed.O, S:'Estudios segun pregunta: ensayos clinicos, cohortes, revision sistematica' };
   } else if (framework === 'ECLIPSE') {
-    fwData = { E:'Mejorar acceso a diagnostico', C:'Pacientes diabeticos rurales', L:'Atencion primaria Colombia/LATAM', I:'Reduccion en ceguera prevenible', P:'Medicos generales, oftalmologos', S:'Tamizaje con IA', E2:'Costo-efectividad y precision' };
+    fwData = isDefault ? { E:'Mejorar acceso a diagnostico', C:'Pacientes diabeticos rurales', L:'Atencion primaria Colombia/LATAM', I:'Reduccion en ceguera prevenible', P:'Medicos generales, oftalmologos', S:'Tamizaje con IA', E2:'Costo-efectividad y precision' } : { E:'Expectativa de mejora clinica', C:parsed.P, L:'Contexto clinico del estudio', I:parsed.O, P:'Profesionales de salud involucrados', S:parsed.I, E2:'Evaluacion de resultados' };
   } else if (framework === 'SPIDER') {
-    fwData = { S:'Pacientes y profesionales de salud', PI:'Experiencia con diagnostico IA', D:'Estudio cualitativo fenomenologico', E:'Entrevistas semiestructuradas', R:'Investigacion cualitativa' };
+    fwData = isDefault ? { S:'Pacientes y profesionales de salud', PI:'Experiencia con diagnostico IA', D:'Estudio cualitativo fenomenologico', E:'Entrevistas semiestructuradas', R:'Investigacion cualitativa' } : { S:parsed.P, PI:parsed.I, D:'Estudio cualitativo', E:'Metodos cualitativos apropiados', R:'Investigacion cualitativa' };
   } else {
-    fwData = isDefault ? { P:'Pacientes adultos con DM2 en atencion primaria rural', I:'Algoritmos de Deep Learning para deteccion de retinopatia', C:'Lectura por oftalmologos (gold standard)', O:'Sensibilidad, especificidad, AUC-ROC' } : { P:'Poblacion objetivo', I:'Intervencion evaluada', C:'Comparador', O:'Desenlaces primarios' };
+    fwData = isDefault ? { P:'Pacientes adultos con DM2 en atencion primaria rural', I:'Algoritmos de Deep Learning para deteccion de retinopatia', C:'Lectura por oftalmologos (gold standard)', O:'Sensibilidad, especificidad, AUC-ROC' } : { P:parsed.P, I:parsed.I, C:parsed.C, O:parsed.O };
   }
 
   var studyType = isDefault ? 'Revision sistematica con meta-analisis' : (framework === 'SPIDER' ? 'Estudio cualitativo' : framework === 'ECLIPSE' ? 'Evaluacion de servicios de salud' : 'Revision sistematica');
@@ -1190,7 +1254,7 @@ function generateSimulationData(question) {
   // Planteamiento text for typewriter
   var planteamiento = isDefault ?
     'La retinopatia diabetica (RD) es la principal causa de ceguera prevenible en adultos en edad laboral. En Colombia, la prevalencia de diabetes tipo 2 alcanza el 10.6% en areas urbanas y aproximadamente el 8% en zonas rurales, donde el acceso a oftalmologos especializados es extremadamente limitado.\n\nLos algoritmos de Deep Learning, particularmente las redes neuronales convolucionales (CNN), han demostrado precision comparable a especialistas en la deteccion de RD en entornos controlados. Sin embargo, existe una brecha critica: la evidencia sobre su rendimiento en contextos de atencion primaria rural en paises de ingreso medio es escasa.\n\nEsta revision sistematica con meta-analisis evaluara la precision diagnostica de algoritmos de DL comparada con la lectura por oftalmologos certificados, con enfasis en contextos rurales de America Latina.'
-    : 'Planteamiento generado a partir de la pregunta de investigacion proporcionada. El analisis del contexto clinico y la brecha en el conocimiento actual seran procesados por el agente Arquitecto para definir el marco metodologico apropiado.';
+    : 'Pregunta de investigacion: ' + q + '\n\nEsta revision aborda una pregunta clinica relevante. La poblacion de interes son ' + fwData.P.toLowerCase() + '. La intervencion o exposicion evaluada es: ' + fwData.I + '. Se comparara contra: ' + fwData.C.toLowerCase() + '.\n\nEl desenlace principal a evaluar es: ' + fwData.O + '. Se realizara una busqueda sistematica en bases de datos biomedicas internacionales (PubMed, Cochrane, LILACS, Scopus) para identificar la mejor evidencia disponible.\n\nEl marco metodologico seleccionado (' + framework + ') permitira estructurar la busqueda y sintesis de evidencia de manera rigurosa y reproducible.';
 
   return {
     framework: framework, picot: fwData,
@@ -1310,6 +1374,83 @@ function setBubbleText(html) {
 function delay(ms) {
   return new Promise(function(resolve) { var t = setTimeout(resolve, ms); simTimers.push(t); });
 }
+
+// ── PubMed Direct Search (browser → NCBI E-utilities) ──────────
+function buildPubMedQuery(picot) {
+  var terms = [];
+  if (picot.P) terms.push('(' + picot.P + ')');
+  if (picot.I) terms.push('(' + picot.I + ')');
+  if (picot.O) terms.push('(' + picot.O + ')');
+  return terms.join(' AND ');
+}
+
+function extractXMLTag(xml, tag) {
+  var match = xml.match(new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>'));
+  return match ? match[1].trim() : '';
+}
+
+function extractXMLAuthors(xml) {
+  var authors = [];
+  var re = /<Author[^>]*>[\s\S]*?<LastName>([^<]+)<\/LastName>[\s\S]*?<Initials>([^<]+)<\/Initials>[\s\S]*?<\/Author>/g;
+  var m;
+  while ((m = re.exec(xml)) !== null) {
+    authors.push(m[1] + ' ' + m[2]);
+    if (authors.length >= 5) break;
+  }
+  return authors;
+}
+
+function extractXMLAbstract(xml) {
+  var absMatch = xml.match(/<Abstract>([\s\S]*?)<\/Abstract>/);
+  if (!absMatch) return '';
+  var texts = [];
+  var re = /<AbstractText[^>]*>([\s\S]*?)<\/AbstractText>/g;
+  var m;
+  while ((m = re.exec(absMatch[1])) !== null) {
+    texts.push(m[1].trim());
+  }
+  return texts.join(' ') || absMatch[1].replace(/<[^>]+>/g, '').trim();
+}
+
+function cleanXMLText(text) {
+  return (text || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function parsePubMedXML(xml) {
+  var articles = [];
+  var blocks = xml.split('<PubmedArticle>').slice(1);
+  blocks.forEach(function(block) {
+    try {
+      var pmid = extractXMLTag(block, 'PMID');
+      var title = extractXMLTag(block, 'ArticleTitle');
+      var journal = extractXMLTag(block, 'Title') || extractXMLTag(block, 'ISOAbbreviation');
+      var year = extractXMLTag(block, 'Year');
+      var doi = (block.match(/<ArticleId IdType="doi">([^<]+)<\/ArticleId>/) || [])[1] || '';
+      var authors = extractXMLAuthors(block);
+      var abstract = extractXMLAbstract(block);
+      articles.push({ pmid: pmid, title: cleanXMLText(title), authors: authors, abstract: cleanXMLText(abstract), journal: cleanXMLText(journal), year: year, doi: doi });
+    } catch(e) { /* skip malformed */ }
+  });
+  return articles;
+}
+
+async function searchPubMedDirect(query, maxResults) {
+  maxResults = maxResults || 15;
+  var searchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=' + encodeURIComponent(query) + '&retmax=' + maxResults + '&retmode=json&sort=relevance';
+  var searchResp = await fetch(searchUrl);
+  var searchData = await searchResp.json();
+  var pmids = searchData.esearchresult.idlist || [];
+  var totalCount = parseInt(searchData.esearchresult.count, 10);
+
+  if (pmids.length === 0) return { count: totalCount, articles: [] };
+
+  var fetchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=' + pmids.join(',') + '&retmode=xml';
+  var fetchResp = await fetch(fetchUrl);
+  var xml = await fetchResp.text();
+  var articles = parsePubMedXML(xml);
+  return { count: totalCount, articles: articles };
+}
+// ── End PubMed Direct Search ────────────────────────────────────
 
 function typewriter(elementId, text, speed) {
   speed = speed || 25;
@@ -1484,8 +1625,32 @@ async function runFullSimulation(question) {
     // Now simData has real PubMed numbers — update Supabase
     await simulateEvidencia();
   } else {
-    // DEMO MODE: use simulation data as before
-    await delay(6000);
+    // DEMO MODE: intentar PubMed real, fallback a simulacion
+    try {
+      var pd = project.phase_data || {};
+      var picot = pd.picot || {};
+      var query = buildPubMedQuery(picot);
+      if (query) {
+        await bubbleTypewriter('Buscando estudios reales en PubMed...', 28);
+        var pubmedResult = await searchPubMedDirect(query, 15);
+        if (pubmedResult.articles.length > 0) {
+          simData.extraction_table = pubmedResult.articles.map(function(a) {
+            var authorStr = (a.authors && a.authors.length > 0) ? a.authors[0] + (a.authors.length > 1 ? ' et al.' : '') : 'N/A';
+            return { autor: authorStr, anio: parseInt(a.year) || 0, pais: '', diseno: '', n: '', resultado: a.title, sesgo: 'pendiente', pmid: a.pmid, doi: a.doi };
+          });
+          if (simData.search_registry && simData.search_registry.length > 0) {
+            simData.search_registry[0].results = pubmedResult.count;
+            simData.search_registry[0].included = pubmedResult.articles.length;
+            simData.search_registry[0].real = true;
+          }
+          simData._pubmed_real = true;
+          await bubbleTypewriter('Encontrados <strong>' + pubmedResult.count + '</strong> resultados en PubMed. Se extrajeron <strong>' + pubmedResult.articles.length + '</strong> articulos.', 28);
+        }
+      }
+    } catch(pubErr) {
+      console.warn('PubMed direct search failed, using simulation:', pubErr);
+    }
+    await delay(2000);
     await simulateEvidencia();
   }
 
@@ -1605,6 +1770,7 @@ async function simulateEvidencia() {
   var pd = project.phase_data || {};
   pd.search_strategy = simData.search_strategy; pd.extraction_table = simData.extraction_table;
   pd.search_registry = simData.search_registry; pd.descriptor_mapping = simData.descriptor_mapping;
+  if (simData._pubmed_real) pd._pubmed_real = true;
   var r = await sb.from(TABLE).update({ phase_data: pd, current_phase: 7, updated_at: new Date().toISOString() }).eq('id', rowId);
   if (r.error) return;
   project.phase_data = pd; project.current_phase = 7;
@@ -1635,7 +1801,7 @@ async function createNewProject(question) {
   btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg> Creando...';
   btn.disabled = true;
   var id = crypto.randomUUID();
-  var insertData = { project_id: id, title: question.slice(0,120), research_question: question, current_phase: 0, status: 'executing', phase_data: {}, user_edits: {} };
+  var insertData = { project_id: id, title: question, research_question: question, current_phase: 0, status: 'executing', phase_data: {}, user_edits: {} };
   if (currentUser) { insertData.department_id = currentUser.department_id; insertData.created_by = currentUser.email; }
   var { data, error } = await sb.from(TABLE).insert(insertData).select().single();
   // Fallback: si las columnas department_id/created_by no existen, reintentar sin ellas
@@ -2191,7 +2357,7 @@ function renderHeader() {
   if (!project) return;
   var phase = project.current_phase || 0;
   var status = project.status || 'executing';
-  $('projectTitle').textContent = project.title || project.research_question || 'Proyecto';
+  $('projectTitle').textContent = project.research_question || project.title || 'Proyecto';
   $('projectMeta').textContent = 'ID: ' + (project.project_id || '').slice(0,8) + ' | Fase ' + phase + '/10';
   var pct = Math.min(100, Math.round((phase / 10) * 100));
   var bar = $('progressBar'); if (bar) bar.style.width = pct + '%';
@@ -3048,10 +3214,12 @@ function renderPrisma(pd) {
 
 function renderExtraction(pd) {
   var t=pd.extraction_table||[];
-  var h='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><h3 class="font-bold text-gray-900 mb-4">Tabla de Extraccion ('+t.length+')</h3><div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="border-b-2 border-gray-200">';
-  ['Autor','Ano','Pais','Diseno','N','Resultado','Sesgo'].forEach(function(hd){h+='<th class="text-left py-2 px-2 text-gray-500 font-bold uppercase text-[10px]">'+hd+'</th>';});
+  var realBadge=pd._pubmed_real?'<span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white"><span class="w-1.5 h-1.5 rounded-full bg-white inline-block"></span>Datos PubMed reales</span>':'';
+  var h='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><h3 class="font-bold text-gray-900 mb-4">Tabla de Extraccion ('+t.length+')'+realBadge+'</h3><div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="border-b-2 border-gray-200">';
+  var cols=pd._pubmed_real?['Autor','Ano','PMID','Resultado','Sesgo']:['Autor','Ano','Pais','Diseno','N','Resultado','Sesgo'];
+  cols.forEach(function(hd){h+='<th class="text-left py-2 px-2 text-gray-500 font-bold uppercase text-[10px]">'+hd+'</th>';});
   h+='</tr></thead><tbody>';
-  t.forEach(function(r,i){var bc=r.sesgo==='bajo'?'bg-verde/10 text-verde':r.sesgo==='alto'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700';h+='<tr class="border-b border-gray-50 hover:bg-gray-50/50"><td class="py-2 px-2 font-medium text-gray-800">'+esc(r.autor)+'</td><td class="py-2 px-2">'+r.anio+'</td><td class="py-2 px-2">'+esc(r.pais)+'</td><td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-700">'+esc(r.diseno)+'</span></td><td class="py-2 px-2 font-mono">'+esc(r.n)+'</td><td class="py-2 px-2 max-w-[200px] truncate">'+esc(r.resultado)+'</td><td class="py-2 px-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer '+bc+'" onclick="cycleBias('+i+')">'+esc(r.sesgo)+'</span></td></tr>';});
+  t.forEach(function(r,i){var bc=r.sesgo==='bajo'?'bg-verde/10 text-verde':r.sesgo==='alto'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700';if(pd._pubmed_real){h+='<tr class="border-b border-gray-50 hover:bg-gray-50/50"><td class="py-2 px-2 font-medium text-gray-800">'+esc(r.autor)+'</td><td class="py-2 px-2">'+r.anio+'</td><td class="py-2 px-2 font-mono text-blue-600">'+(r.pmid?'<a href="https://pubmed.ncbi.nlm.nih.gov/'+esc(r.pmid)+'/" target="_blank" class="hover:underline">'+esc(r.pmid)+'</a>':'-')+'</td><td class="py-2 px-2 max-w-[300px]" title="'+esc(r.resultado)+'">'+esc(r.resultado)+'</td><td class="py-2 px-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer '+bc+'" onclick="cycleBias('+i+')">'+esc(r.sesgo)+'</span></td></tr>';}else{h+='<tr class="border-b border-gray-50 hover:bg-gray-50/50"><td class="py-2 px-2 font-medium text-gray-800">'+esc(r.autor)+'</td><td class="py-2 px-2">'+r.anio+'</td><td class="py-2 px-2">'+esc(r.pais)+'</td><td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-700">'+esc(r.diseno)+'</span></td><td class="py-2 px-2 font-mono">'+esc(r.n)+'</td><td class="py-2 px-2 max-w-[200px] truncate">'+esc(r.resultado)+'</td><td class="py-2 px-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer '+bc+'" onclick="cycleBias('+i+')">'+esc(r.sesgo)+'</span></td></tr>';}});
   h+='</tbody></table></div></div>';return h;
 }
 
@@ -6965,15 +7133,15 @@ function setModeToggleUI(isReal) {
   var labelDemo = $('modeLabel');
   var labelReal = $('modeLabelReal');
   if (isReal) {
-    if (btn) { btn.classList.remove('bg-gray-300'); btn.classList.add('bg-galatea'); }
+    if (btn) { btn.classList.remove('bg-white/20'); btn.classList.add('bg-galatea'); }
     if (dot) dot.style.transform = 'translateX(20px)';
-    if (labelDemo) { labelDemo.classList.remove('text-gray-500'); labelDemo.classList.add('text-gray-300'); }
-    if (labelReal) { labelReal.classList.remove('text-gray-300'); labelReal.classList.add('text-galatea'); }
+    if (labelDemo) { labelDemo.classList.remove('text-white/60'); labelDemo.classList.add('text-white/30'); }
+    if (labelReal) { labelReal.classList.remove('text-white/30'); labelReal.classList.add('text-galatea'); }
   } else {
-    if (btn) { btn.classList.remove('bg-galatea'); btn.classList.add('bg-gray-300'); }
+    if (btn) { btn.classList.remove('bg-galatea'); btn.classList.add('bg-white/20'); }
     if (dot) dot.style.transform = 'translateX(0)';
-    if (labelDemo) { labelDemo.classList.remove('text-gray-300'); labelDemo.classList.add('text-gray-500'); }
-    if (labelReal) { labelReal.classList.remove('text-galatea'); labelReal.classList.add('text-gray-300'); }
+    if (labelDemo) { labelDemo.classList.remove('text-white/30'); labelDemo.classList.add('text-white/60'); }
+    if (labelReal) { labelReal.classList.remove('text-galatea'); labelReal.classList.add('text-white/30'); }
   }
 }
 
