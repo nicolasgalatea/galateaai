@@ -1160,6 +1160,291 @@ function extractPICOTFromQuestion(q) {
   return { P: P, I: I, C: C, O: O };
 }
 
+// ═══════════════════════════════════════════════════════════════
+// STUDY TYPE CONFIGURATION — Ruta Metodologica por Tipo
+// ═══════════════════════════════════════════════════════════════
+var STUDY_TYPE_CONFIGS = {
+  rs_ma: {
+    id: 'rs_ma', type: 'Revision sistematica con meta-analisis',
+    label: 'Revision Sistematica + MA', shortLabel: 'RS + Meta-analisis',
+    icon: '&#x1F50D;', description: 'Sintesis de evidencia de multiples estudios primarios con analisis cuantitativo',
+    design_locked: 'PRISMA 2020',
+    equator: [
+      { guideline: 'PRISMA 2020', category: 'Reporte', items_total: 27, items_met: 24, status: 'pass', notes: 'Checklist de reporte para revisiones sistematicas y meta-analisis' },
+      { guideline: 'RoB 2', category: 'Sesgo', items_total: 7, items_met: 6, status: 'pass', notes: 'Evaluacion de riesgo de sesgo en estudios incluidos' },
+      { guideline: 'GRADE', category: 'Certeza', items_total: 5, items_met: 4, status: 'pass', notes: 'Certeza de la evidencia para cada desenlace' }
+    ],
+    needsSystematicSearch: true, needsMetaAnalysis: true,
+    rMeasure: 'OR', rModel: 'random',
+    sampleSizeFormula: 'not_applicable',
+    searchDatabases: ['PubMed/MEDLINE','Cochrane Library','LILACS','Scopus','Web of Science'],
+    biasTools: ['RoB 2','ROBINS-I'],
+    statsTemplate: { test: 'Modelo efectos aleatorios (DerSimonian & Laird)', rPkg: 'metafor', objective: 'Inferencial (sintesis cuantitativa)' },
+    protocolSections: ['titulo','registro_prospero','antecedentes','objetivo','criterios','busqueda','calidad','sintesis','guias','cronograma','etica'],
+    documents: ['Protocolo PROSPERO','PRISMA Checklist','Data Extraction Form','Risk of Bias Tables','GRADE Evidence Profile','Forest Plots','Funnel Plots'],
+    folderStructure: [
+      { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_v1.docx', 'PROSPERO_registro.pdf'], color: 'blue' },
+      { name: '01_revision_literatura', icon: '&#x1F4DA;', files: ['Busqueda_PubMed.csv', 'Busqueda_Cochrane.csv', 'PRISMA_flow.png'], color: 'amber' },
+      { name: '02_tablas_extraccion', icon: '&#x1F4CA;', files: ['Tabla_extraccion.xlsx', 'RoB2_assessment.xlsx'], color: 'green' },
+      { name: '03_analisis_estadistico', icon: '&#x1F4C8;', files: ['Meta_analisis_R.R', 'Forest_plot.png', 'Funnel_plot.png', 'Datos_raw.csv'], color: 'purple' },
+      { name: '04_manuscrito', icon: '&#x270D;&#xFE0F;', files: ['Manuscrito_v1.docx', 'Figuras/', 'Tablas/'], color: 'indigo' },
+      { name: '05_correspondencia', icon: '&#x1F4E7;', files: ['Carta_editor.docx'], color: 'rose' },
+      { name: '06_documentos_etica', icon: '&#x1F6E1;&#xFE0F;', files: ['Declaracion_conflictos.pdf'], color: 'teal' }
+    ]
+  },
+  eca: {
+    id: 'eca', type: 'Ensayo clinico aleatorizado (ECA)',
+    label: 'Ensayo Clinico (ECA)', shortLabel: 'ECA',
+    icon: '&#x1F489;', description: 'Estudio experimental con asignacion aleatoria a intervencion y control',
+    design_locked: 'CONSORT 2010',
+    equator: [
+      { guideline: 'CONSORT 2010', category: 'Reporte', items_total: 25, items_met: 22, status: 'pass', notes: 'Estandar de reporte para ensayos clinicos aleatorizados' },
+      { guideline: 'RoB 2', category: 'Sesgo', items_total: 7, items_met: 6, status: 'pass', notes: 'Riesgo de sesgo del ensayo' }
+    ],
+    needsSystematicSearch: false, needsMetaAnalysis: false,
+    rMeasure: 'MD', rModel: 'fixed',
+    sampleSizeFormula: 'two_means',
+    searchDatabases: [],
+    biasTools: ['RoB 2'],
+    statsTemplate: { test: 'Chi-cuadrado / t de Student / ANOVA / Cox', rPkg: 'stats', objective: 'Inferencial (comparacion de grupos)' },
+    protocolSections: ['titulo','registro_trial','antecedentes','objetivo','criterios','aleatorizacion','cegamiento','intervencion','desenlaces','analisis_itt','cronograma','etica'],
+    documents: ['Protocolo Ensayo','Registro ClinicalTrials.gov','CONSORT Checklist','CRF','Consentimiento Informado','Plan Analisis Estadistico'],
+    folderStructure: [
+      { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_ECA_v1.docx', 'Registro_ClinicalTrials.pdf'], color: 'blue' },
+      { name: '01_documentos_etica', icon: '&#x1F6E1;&#xFE0F;', files: ['Consentimiento_informado.docx', 'Aprobacion_comite_etica.pdf'], color: 'teal' },
+      { name: '02_recoleccion_datos', icon: '&#x1F4CB;', files: ['CRF_v1.xlsx', 'Manual_procedimientos.docx'], color: 'green' },
+      { name: '03_analisis_estadistico', icon: '&#x1F4C8;', files: ['Plan_analisis.docx', 'Analisis_R.R', 'Resultados.csv'], color: 'purple' },
+      { name: '04_manuscrito', icon: '&#x270D;&#xFE0F;', files: ['Manuscrito_v1.docx', 'CONSORT_flowchart.png'], color: 'indigo' },
+      { name: '05_correspondencia', icon: '&#x1F4E7;', files: ['Carta_editor.docx'], color: 'rose' }
+    ]
+  },
+  cohorte: {
+    id: 'cohorte', type: 'Estudio de cohorte',
+    label: 'Cohorte', shortLabel: 'Cohorte',
+    icon: '&#x1F4C5;', description: 'Seguimiento longitudinal de grupos expuestos y no expuestos',
+    design_locked: 'STROBE',
+    equator: [
+      { guideline: 'STROBE', category: 'Reporte', items_total: 22, items_met: 19, status: 'pass', notes: 'Guia de reporte para estudios observacionales de cohorte' },
+      { guideline: 'NOS', category: 'Calidad', items_total: 9, items_met: 7, status: 'pass', notes: 'Newcastle-Ottawa Scale para evaluacion de calidad' }
+    ],
+    needsSystematicSearch: false, needsMetaAnalysis: false,
+    rMeasure: 'HR', rModel: 'fixed',
+    sampleSizeFormula: 'two_proportions',
+    searchDatabases: [],
+    biasTools: ['NOS'],
+    statsTemplate: { test: 'Regresion de Cox / Kaplan-Meier / HR', rPkg: 'survival', objective: 'Inferencial (asociacion longitudinal)' },
+    protocolSections: ['titulo','antecedentes','objetivo','definicion_cohortes','exposicion','seguimiento','desenlaces','analisis_confusores','cronograma','etica'],
+    documents: ['Protocolo Cohorte','STROBE Checklist','CRF','Plan Seguimiento','Plan Analisis','Consentimiento Informado'],
+    folderStructure: [
+      { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_cohorte_v1.docx'], color: 'blue' },
+      { name: '01_documentos_etica', icon: '&#x1F6E1;&#xFE0F;', files: ['Consentimiento_informado.docx', 'Aprobacion_etica.pdf'], color: 'teal' },
+      { name: '02_recoleccion_datos', icon: '&#x1F4CB;', files: ['CRF_cohorte.xlsx', 'Plan_seguimiento.docx'], color: 'green' },
+      { name: '03_analisis_estadistico', icon: '&#x1F4C8;', files: ['Cox_regression.R', 'KaplanMeier.png', 'Datos.csv'], color: 'purple' },
+      { name: '04_manuscrito', icon: '&#x270D;&#xFE0F;', files: ['Manuscrito_v1.docx', 'Tablas/', 'Figuras/'], color: 'indigo' }
+    ]
+  },
+  caso_control: {
+    id: 'caso_control', type: 'Estudio de casos y controles',
+    label: 'Casos y Controles', shortLabel: 'Caso-Control',
+    icon: '&#x1F465;', description: 'Comparacion retrospectiva entre casos con desenlace y controles sin el',
+    design_locked: 'STROBE',
+    equator: [
+      { guideline: 'STROBE', category: 'Reporte', items_total: 22, items_met: 19, status: 'pass', notes: 'Guia de reporte para estudios de casos y controles' },
+      { guideline: 'NOS', category: 'Calidad', items_total: 9, items_met: 7, status: 'pass', notes: 'Newcastle-Ottawa Scale adaptada a caso-control' }
+    ],
+    needsSystematicSearch: false, needsMetaAnalysis: false,
+    rMeasure: 'OR', rModel: 'fixed',
+    sampleSizeFormula: 'case_control',
+    searchDatabases: [],
+    biasTools: ['NOS'],
+    statsTemplate: { test: 'Regresion logistica / OR', rPkg: 'stats', objective: 'Inferencial (asociacion retrospectiva)' },
+    protocolSections: ['titulo','antecedentes','objetivo','definicion_casos','definicion_controles','exposicion','matching','analisis','cronograma','etica'],
+    documents: ['Protocolo Caso-Control','STROBE Checklist','CRF','Plan Analisis','Consentimiento Informado'],
+    folderStructure: [
+      { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_caso_control_v1.docx'], color: 'blue' },
+      { name: '01_documentos_etica', icon: '&#x1F6E1;&#xFE0F;', files: ['Consentimiento.docx', 'Aprobacion_etica.pdf'], color: 'teal' },
+      { name: '02_recoleccion_datos', icon: '&#x1F4CB;', files: ['CRF_caso_control.xlsx', 'Base_datos.csv'], color: 'green' },
+      { name: '03_analisis_estadistico', icon: '&#x1F4C8;', files: ['Regresion_logistica.R', 'Resultados.csv'], color: 'purple' },
+      { name: '04_manuscrito', icon: '&#x270D;&#xFE0F;', files: ['Manuscrito_v1.docx'], color: 'indigo' }
+    ]
+  },
+  transversal: {
+    id: 'transversal', type: 'Estudio transversal',
+    label: 'Transversal', shortLabel: 'Transversal',
+    icon: '&#x1F4F7;', description: 'Medicion simultanea de exposicion y desenlace en un punto del tiempo',
+    design_locked: 'STROBE',
+    equator: [
+      { guideline: 'STROBE', category: 'Reporte', items_total: 22, items_met: 18, status: 'pass', notes: 'Guia de reporte para estudios transversales' },
+      { guideline: 'JBI', category: 'Calidad', items_total: 8, items_met: 7, status: 'pass', notes: 'JBI Critical Appraisal para estudios de prevalencia' }
+    ],
+    needsSystematicSearch: false, needsMetaAnalysis: false,
+    rMeasure: 'PR', rModel: 'fixed',
+    sampleSizeFormula: 'single_proportion',
+    searchDatabases: [],
+    biasTools: ['JBI'],
+    statsTemplate: { test: 'Chi-cuadrado / Regresion logistica / Prevalencia', rPkg: 'stats', objective: 'Descriptivo / Inferencial' },
+    protocolSections: ['titulo','antecedentes','objetivo','poblacion','muestreo','instrumento','variables','analisis','cronograma','etica'],
+    documents: ['Protocolo Transversal','STROBE Checklist','Cuestionario/Instrumento','Plan Analisis','Consentimiento Informado'],
+    folderStructure: [
+      { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_transversal_v1.docx'], color: 'blue' },
+      { name: '01_documentos_etica', icon: '&#x1F6E1;&#xFE0F;', files: ['Consentimiento.docx', 'Aprobacion_etica.pdf'], color: 'teal' },
+      { name: '02_recoleccion_datos', icon: '&#x1F4CB;', files: ['Cuestionario_v1.docx', 'Base_datos.xlsx'], color: 'green' },
+      { name: '03_analisis_estadistico', icon: '&#x1F4C8;', files: ['Analisis_descriptivo.R', 'Regresion.R'], color: 'purple' },
+      { name: '04_manuscrito', icon: '&#x270D;&#xFE0F;', files: ['Manuscrito_v1.docx'], color: 'indigo' }
+    ]
+  },
+  dta: {
+    id: 'dta', type: 'Precision diagnostica (DTA)',
+    label: 'Precision Diagnostica', shortLabel: 'DTA',
+    icon: '&#x1F3AF;', description: 'Evaluacion de sensibilidad y especificidad de pruebas diagnosticas',
+    design_locked: 'STARD 2015',
+    equator: [
+      { guideline: 'STARD 2015', category: 'Diagnostico', items_total: 30, items_met: 27, status: 'pass', notes: 'Estandar de reporte para estudios de precision diagnostica' },
+      { guideline: 'QUADAS-2', category: 'Calidad', items_total: 4, items_met: 4, status: 'pass', notes: 'Evaluacion de calidad en 4 dominios: seleccion, indice, referencia, flujo' },
+      { guideline: 'GRADE-DTA', category: 'Certeza', items_total: 5, items_met: 4, status: 'pass', notes: 'Certeza de la evidencia para desenlaces diagnosticos' }
+    ],
+    needsSystematicSearch: true, needsMetaAnalysis: true,
+    rMeasure: 'DTA', rModel: 'bivariate',
+    sampleSizeFormula: 'single_proportion',
+    searchDatabases: ['PubMed/MEDLINE','Cochrane Library','LILACS','Scopus','Web of Science'],
+    biasTools: ['QUADAS-2'],
+    statsTemplate: { test: 'Modelo bivariado (Reitsma) / SROC / mada', rPkg: 'mada', objective: 'Inferencial (sintesis DTA)' },
+    protocolSections: ['titulo','registro_prospero','antecedentes','objetivo','criterios','busqueda','calidad_quadas','sintesis_bivariada','guias','cronograma','etica'],
+    documents: ['Protocolo PROSPERO','PRISMA-DTA Checklist','Data Extraction Form','QUADAS-2 Tables','SROC Curve','Forest Plots (Sens/Esp)'],
+    folderStructure: [
+      { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_v1.docx', 'PROSPERO_registro.pdf'], color: 'blue' },
+      { name: '01_revision_literatura', icon: '&#x1F4DA;', files: ['Busqueda_PubMed.csv', 'PRISMA_DTA_flow.png'], color: 'amber' },
+      { name: '02_tablas_extraccion', icon: '&#x1F4CA;', files: ['Tabla_extraccion_DTA.xlsx', 'QUADAS2_assessment.xlsx'], color: 'green' },
+      { name: '03_analisis_estadistico', icon: '&#x1F4C8;', files: ['Meta_analisis_mada.R', 'Forest_Sens.png', 'Forest_Esp.png', 'SROC_curve.png'], color: 'purple' },
+      { name: '04_manuscrito', icon: '&#x270D;&#xFE0F;', files: ['Manuscrito_v1.docx', 'Figuras/', 'Tablas/'], color: 'indigo' }
+    ]
+  },
+  cualitativo: {
+    id: 'cualitativo', type: 'Estudio cualitativo',
+    label: 'Cualitativo', shortLabel: 'Cualitativo',
+    icon: '&#x1F4AC;', description: 'Exploracion de experiencias, percepciones y significados mediante metodos interpretativos',
+    design_locked: 'SRQR/COREQ',
+    equator: [
+      { guideline: 'SRQR', category: 'Reporte', items_total: 21, items_met: 18, status: 'pass', notes: 'Standards for Reporting Qualitative Research' },
+      { guideline: 'CASP', category: 'Calidad', items_total: 10, items_met: 8, status: 'pass', notes: 'Critical Appraisal Skills Programme para estudios cualitativos' }
+    ],
+    needsSystematicSearch: false, needsMetaAnalysis: false,
+    rMeasure: 'none', rModel: 'none',
+    sampleSizeFormula: 'qualitative_saturation',
+    searchDatabases: [],
+    biasTools: ['CASP'],
+    statsTemplate: { test: 'Analisis tematico (no cuantitativo)', rPkg: 'none', objective: 'Analisis tematico / fenomenologico' },
+    protocolSections: ['titulo','marco_teorico','objetivo','paradigma','diseno_cualitativo','muestreo_intencional','saturacion','tecnicas_recoleccion','guia_entrevista','analisis_tematico','triangulacion','rigor','etica'],
+    documents: ['Protocolo Cualitativo','SRQR Checklist','Guia de Entrevista','Consentimiento Informado','Libro de Codigos','Matriz de Analisis Tematico'],
+    folderStructure: [
+      { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_cualitativo_v1.docx'], color: 'blue' },
+      { name: '01_documentos_etica', icon: '&#x1F6E1;&#xFE0F;', files: ['Consentimiento_informado.docx', 'Aprobacion_etica.pdf'], color: 'teal' },
+      { name: '02_recoleccion_datos', icon: '&#x1F4CB;', files: ['Guia_entrevista.docx', 'Transcripciones/'], color: 'green' },
+      { name: '03_analisis', icon: '&#x1F4C8;', files: ['Libro_codigos.xlsx', 'Matriz_tematica.xlsx', 'Memos_reflexivos.docx'], color: 'purple' },
+      { name: '04_manuscrito', icon: '&#x270D;&#xFE0F;', files: ['Manuscrito_v1.docx'], color: 'indigo' }
+    ]
+  },
+  caso_reporte: {
+    id: 'caso_reporte', type: 'Serie/Reporte de caso',
+    label: 'Reporte de Caso', shortLabel: 'Caso',
+    icon: '&#x1F4DD;', description: 'Descripcion detallada de uno o pocos casos clinicos inusuales o instructivos',
+    design_locked: 'CARE 2017',
+    equator: [
+      { guideline: 'CARE 2017', category: 'Reporte', items_total: 13, items_met: 12, status: 'pass', notes: 'CAse REport guidelines para reportes de caso' }
+    ],
+    needsSystematicSearch: false, needsMetaAnalysis: false,
+    rMeasure: 'none', rModel: 'none',
+    sampleSizeFormula: 'not_applicable',
+    searchDatabases: [],
+    biasTools: ['JBI Case Report'],
+    statsTemplate: { test: 'Descriptivo solamente', rPkg: 'none', objective: 'Descriptivo' },
+    protocolSections: ['titulo','introduccion','presentacion_caso','historia_clinica','hallazgos','diagnostico','tratamiento','evolucion','discusion','perspectiva_paciente'],
+    documents: ['Reporte CARE','CARE Checklist','Consentimiento del Paciente','Imagenes Clinicas'],
+    folderStructure: [
+      { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Reporte_caso_v1.docx'], color: 'blue' },
+      { name: '01_documentos_etica', icon: '&#x1F6E1;&#xFE0F;', files: ['Consentimiento_paciente.pdf'], color: 'teal' },
+      { name: '02_imagenes_clinicas', icon: '&#x1F4F7;', files: ['Imagen_1.png', 'Imagen_2.png'], color: 'green' },
+      { name: '03_manuscrito', icon: '&#x270D;&#xFE0F;', files: ['Manuscrito_v1.docx', 'Timeline_clinico.png'], color: 'indigo' }
+    ]
+  }
+};
+
+function getStudyTypeConfig(typeId) {
+  return STUDY_TYPE_CONFIGS[typeId] || STUDY_TYPE_CONFIGS['rs_ma'];
+}
+
+// Auto-detect study type ID from framework and question
+function detectStudyTypeId(framework, question) {
+  var q = (question || '').toLowerCase();
+  if (/revision sistematica|systematic review|meta.?analisis|meta.?analysis/i.test(q)) return 'rs_ma';
+  if (/ensayo clinico|clinical trial|rct|aleatoriz/i.test(q)) return 'eca';
+  if (/cohorte|cohort|seguimiento|longitudinal/i.test(q)) return 'cohorte';
+  if (/caso.?control|case.?control/i.test(q)) return 'caso_control';
+  if (/transversal|cross.?sectional|prevalencia/i.test(q)) return 'transversal';
+  if (/diagnostico|diagnostic|sensibilidad.*especificidad|auc|dta|precision diagnostica/i.test(q)) return 'dta';
+  if (/cualitativ|qualitative|fenomenolog|etnograf|entrevista/i.test(q)) return 'cualitativo';
+  if (/reporte de caso|case report|serie de caso|caso clinico/i.test(q)) return 'caso_reporte';
+  // Fallback by framework
+  if (framework === 'SPIDER') return 'cualitativo';
+  if (framework === 'PICOS') return 'rs_ma';
+  if (framework === 'PICO') return 'eca';
+  return 'rs_ma';
+}
+
+// Global: currently selected study type
+var selectedStudyTypeId = null;
+
+function selectStudyType(typeId) {
+  selectedStudyTypeId = typeId;
+  if (simData) {
+    var cfg = getStudyTypeConfig(typeId);
+    simData.study_type = { type: cfg.type, design_locked: cfg.design_locked, justification: 'Tipo de estudio seleccionado por el investigador.', design_details: cfg.equator.map(function(e){return e.guideline}).join(', ') + '.' };
+    simData.study_type_id = typeId;
+    simData.equator_checklist = cfg.equator;
+    simData.folder_structure = cfg.folderStructure;
+    if (project && project.phase_data) {
+      project.phase_data.study_type = simData.study_type;
+      project.phase_data.study_type_id = typeId;
+      project.phase_data.equator_checklist = cfg.equator;
+      project.phase_data.folder_structure = cfg.folderStructure;
+    }
+  }
+  // Re-render the selector to highlight selection
+  var selectorEl = document.getElementById('studyTypeSelector');
+  if (selectorEl) renderStudyTypeSelectorInner(selectorEl, typeId);
+  showToast('Tipo: ' + getStudyTypeConfig(typeId).label, 'success');
+  // Resolve promise if waiting
+  if (window._studyTypeResolve) { var r = window._studyTypeResolve; window._studyTypeResolve = null; r(typeId); }
+}
+
+function renderStudyTypeSelectorInner(container, selectedId) {
+  var types = ['rs_ma','eca','cohorte','caso_control','transversal','dta','cualitativo','caso_reporte'];
+  var h = '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">';
+  types.forEach(function(tid) {
+    var cfg = STUDY_TYPE_CONFIGS[tid];
+    var sel = tid === selectedId;
+    var borderClass = sel ? 'border-galatea ring-2 ring-galatea/30 bg-galatea/5' : 'border-gray-200 hover:border-galatea/40 hover:bg-galatea/5 bg-white';
+    h += '<button onclick="selectStudyType(\'' + tid + '\')" class="relative text-left p-4 rounded-xl border-2 transition-all duration-200 ' + borderClass + '">';
+    if (sel) h += '<div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-galatea flex items-center justify-center"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div>';
+    h += '<div class="text-xl mb-2">' + cfg.icon + '</div>';
+    h += '<div class="text-xs font-bold text-gray-900 mb-1">' + cfg.label + '</div>';
+    h += '<div class="text-[10px] text-gray-500 leading-snug">' + cfg.description.substring(0, 60) + (cfg.description.length > 60 ? '...' : '') + '</div>';
+    h += '<div class="mt-2 flex flex-wrap gap-1">';
+    h += '<span class="text-[8px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">' + cfg.design_locked + '</span>';
+    if (cfg.needsSystematicSearch) h += '<span class="text-[8px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium">Busq. Sistematica</span>';
+    else h += '<span class="text-[8px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-medium">Datos Primarios</span>';
+    h += '</div></button>';
+  });
+  h += '</div>';
+  container.innerHTML = h;
+}
+
+function awaitStudyTypeSelection() {
+  return new Promise(function(resolve) {
+    window._studyTypeResolve = resolve;
+  });
+}
+
 function generateSimulationData(question) {
   var q = (question || '').trim();
   var isDefault = !q || q.length < 10;
@@ -1254,15 +1539,38 @@ function generateSimulationData(question) {
     'La retinopatia diabetica (RD) es la principal causa de ceguera prevenible en adultos en edad laboral. En Colombia, la prevalencia de diabetes tipo 2 alcanza el 10.6% en areas urbanas y aproximadamente el 8% en zonas rurales, donde el acceso a oftalmologos especializados es extremadamente limitado.\n\nLos algoritmos de Deep Learning, particularmente las redes neuronales convolucionales (CNN), han demostrado precision comparable a especialistas en la deteccion de RD en entornos controlados. Sin embargo, existe una brecha critica: la evidencia sobre su rendimiento en contextos de atencion primaria rural en paises de ingreso medio es escasa.\n\nEsta revision sistematica con meta-analisis evaluara la precision diagnostica de algoritmos de DL comparada con la lectura por oftalmologos certificados, con enfasis en contextos rurales de America Latina.'
     : 'Pregunta de investigacion: ' + q + '\n\nEsta revision aborda una pregunta clinica relevante. La poblacion de interes son ' + fwData.P.toLowerCase() + '. La intervencion o exposicion evaluada es: ' + fwData.I + '. Se comparara contra: ' + fwData.C.toLowerCase() + '.\n\nEl desenlace principal a evaluar es: ' + fwData.O + '. Se realizara una busqueda sistematica en bases de datos biomedicas internacionales (PubMed, Cochrane, LILACS, Scopus) para identificar la mejor evidencia disponible.\n\nEl marco metodologico seleccionado (' + framework + ') permitira estructurar la busqueda y sintesis de evidencia de manera rigurosa y reproducible.';
 
+  // ── Detect study type and apply config ──
+  var detectedTypeId = isDefault ? 'dta' : detectStudyTypeId(framework, q);
+  // If user already selected a type, use that instead
+  if (selectedStudyTypeId) detectedTypeId = selectedStudyTypeId;
+  var stCfg = getStudyTypeConfig(detectedTypeId);
+
+  // Build protocol draft adapted to study type
+  var protocolDraft;
+  if (isDefault) {
+    protocolDraft = 'PROTOCOLO DE INVESTIGACION\n\n1. TITULO\nPrecision diagnostica de Deep Learning para retinopatia diabetica en atencion primaria rural: revision sistematica y meta-analisis\n\n2. REGISTRO: PROSPERO CRD42025XXXXXX\n\n3. ANTECEDENTES\nLa RD es la principal causa de ceguera prevenible. Prevalencia DM2 en Colombia: 10.6% urbano, ~8% rural. DL muestra precision comparable a especialistas en entornos controlados.\n\n4. OBJETIVO\nEvaluar precision diagnostica de DL vs oftalmologos para RD, enfasis en contextos rurales.\n\n5. CRITERIOS\nInclusion: Estudios DL para RD, referencia estandar, Sens/Esp reportada, >=50 imagenes.\nExclusion: Cartas, opiniones, sin referencia.\n\n6. BUSQUEDA\n6 bases de datos. 2018-2025. Sin restriccion de idioma.\n\n7. CALIDAD: QUADAS-2. Dos revisores independientes.\n\n8. SINTESIS: Meta-analisis bivariado. SROC. I2. R (mada).\n\n9. GUIAS: PRISMA-DTA, QUADAS-2, GRADE-DTA, STARD 2015\n\n10. CRONOGRAMA: 8 semanas\n\n11. ETICA: No requiere aprobacion. Sin conflictos.';
+  } else {
+    protocolDraft = generateProtocolByType(stCfg, q, fwData, framework);
+  }
+
+  // Build manuscript adapted to study type
+  var manuscriptText;
+  if (isDefault) {
+    manuscriptText = 'Titulo: Precision diagnostica de Deep Learning para retinopatia diabetica en atencion primaria rural\n\nResumen:\nObjetivo: Evaluar precision DL para RD en AP rural.\nMetodos: RS y MA de DTA. 6 bases de datos (2018-2025). QUADAS-2. MA bivariado.\nResultados: 12 estudios (N=657,177). Sens agrupada 93.2% (89.8-95.6%). Esp 91.1% (87.4-93.8%). AUC-SROC 0.967. Rural (k=4): Sens 91.8%, Esp 84.3%.\nConclusiones: DL alta precision para RD. Especificidad menor en rural sugiere calibracion local.\nPalabras clave: Deep Learning, retinopatia diabetica, precision diagnostica, tamizaje';
+  } else {
+    manuscriptText = generateManuscriptByType(stCfg, q, fwData);
+  }
+
   return {
     framework: framework, picot: fwData,
-    study_type: { type: studyType, design_locked: designLocked, justification: isDefault ? 'Pregunta de precision diagnostica con multiples estudios primarios disponibles. El meta-analisis bivariado permite sintetizar sensibilidad y especificidad.' : 'Diseno seleccionado automaticamente segun el tipo de pregunta detectada.', design_details: isDefault ? 'PRISMA-DTA 2018. Protocolo PROSPERO. Meta-analisis bivariado (Reitsma).' : 'Siguiendo guias metodologicas internacionales.' },
+    study_type_id: detectedTypeId,
+    study_type: { type: stCfg.type, design_locked: stCfg.design_locked, justification: isDefault ? 'Pregunta de precision diagnostica con multiples estudios primarios disponibles. El meta-analisis bivariado permite sintetizar sensibilidad y especificidad.' : 'Diseno seleccionado automaticamente segun el tipo de pregunta detectada.', design_details: stCfg.equator.map(function(e){return e.guideline}).join(', ') + '.' },
     finer_results: finerScores,
     hypothesis: { null_hypothesis: isDefault ? 'No existe diferencia en precision diagnostica entre DL y oftalmologos para RD.' : 'No existe diferencia significativa entre los grupos.', alternative_hypothesis: isDefault ? 'DL presenta precision no inferior (margen 5%) a oftalmologos en atencion primaria rural.' : 'Existe diferencia significativa entre los grupos.', type: isDefault ? 'No inferioridad' : 'Dos colas' },
-    folder_structure: folderStructure,
-    search_registry: isDefault ? searchRegistry : searchRegistry.slice(0,4),
+    folder_structure: stCfg.folderStructure,
+    search_registry: stCfg.needsSystematicSearch ? (isDefault ? searchRegistry : searchRegistry.slice(0,4)) : [],
     descriptor_mapping: isDefault ? descriptorMapping : descriptorMapping.slice(0,3),
-    search_strategy: { databases: searchRegistry.map(function(r){return r.database}), boolean_equation: searchRegistry[0].equation, filters: 'Fecha: 2018-2025 | Idiomas: EN, ES, PT | Tipo: originales', prisma: prisma },
+    search_strategy: stCfg.needsSystematicSearch ? { databases: stCfg.searchDatabases, boolean_equation: searchRegistry[0].equation, filters: 'Fecha: 2018-2025 | Idiomas: EN, ES, PT | Tipo: originales', prisma: prisma } : { databases: [], boolean_equation: '', filters: '', prisma: null },
     feasibility: {
       dimensions: {
         recursos: { score: isDefault ? 88 : 70, risk: isDefault ? 'bajo' : 'bajo', note: isDefault ? 'Revision sistematica requiere acceso a bases de datos (disponible via institucional) y software estadistico R/mada (gratuito).' : 'Recursos basicos disponibles.' },
@@ -1280,26 +1588,188 @@ function generateSimulationData(question) {
       summary: isDefault ? 'El proyecto es operativamente viable. Los recursos necesarios para una revision sistematica con meta-analisis estan disponibles. Se recomienda registro PROSPERO y capacitacion en herramientas estadisticas especificas.' : 'Proyecto viable con reservas. Se recomienda reforzar el equipo y ajustar cronograma.'
     },
     sample_size: {
-      formula: 'single_proportion',
+      formula: stCfg.sampleSizeFormula || 'single_proportion',
       alpha: 0.05, power: 0.80, tails: 'bilateral',
       p: 0.93, margin: 0.05, lossRate: 0.15,
       n_raw: 101, n_total: 101, n_adjusted: 119,
       formula_display: 'n = [Z\u00B2 \u00D7 p(1-p)] / d\u00B2'
     },
-    extraction_table: extraction, stats: stats, equator_checklist: equatorChecklist, planteamiento: planteamiento,
-    protocol_draft: isDefault ?
-      'PROTOCOLO DE INVESTIGACION\n\n1. TITULO\nPrecision diagnostica de Deep Learning para retinopatia diabetica en atencion primaria rural: revision sistematica y meta-analisis\n\n2. REGISTRO: PROSPERO CRD42025XXXXXX\n\n3. ANTECEDENTES\nLa RD es la principal causa de ceguera prevenible. Prevalencia DM2 en Colombia: 10.6% urbano, ~8% rural. DL muestra precision comparable a especialistas en entornos controlados.\n\n4. OBJETIVO\nEvaluar precision diagnostica de DL vs oftalmologos para RD, enfasis en contextos rurales.\n\n5. CRITERIOS\nInclusion: Estudios DL para RD, referencia estandar, Sens/Esp reportada, >=50 imagenes.\nExclusion: Cartas, opiniones, sin referencia.\n\n6. BUSQUEDA\n6 bases de datos. 2018-2025. Sin restriccion de idioma.\n\n7. CALIDAD: QUADAS-2. Dos revisores independientes.\n\n8. SINTESIS: Meta-analisis bivariado. SROC. I2. R (mada).\n\n9. GUIAS: PRISMA-DTA, QUADAS-2, GRADE-DTA, STARD 2015\n\n10. CRONOGRAMA: 8 semanas\n\n11. ETICA: No requiere aprobacion. Sin conflictos.'
-    : 'PROTOCOLO DE INVESTIGACION\n\n1. TITULO\n' + q + '\n\n2. DISENO: ' + studyType + '\n\n3. BUSQUEDA: PubMed, Cochrane, LILACS, Scopus\n\n4. CALIDAD: Herramientas validadas\n\n5. GUIAS: PRISMA 2020, GRADE, EQUATOR',
-    manuscript: isDefault ?
-      'Titulo: Precision diagnostica de Deep Learning para retinopatia diabetica en atencion primaria rural\n\nResumen:\nObjetivo: Evaluar precision DL para RD en AP rural.\nMetodos: RS y MA de DTA. 6 bases de datos (2018-2025). QUADAS-2. MA bivariado.\nResultados: 12 estudios (N=657,177). Sens agrupada 93.2% (89.8-95.6%). Esp 91.1% (87.4-93.8%). AUC-SROC 0.967. Rural (k=4): Sens 91.8%, Esp 84.3%.\nConclusiones: DL alta precision para RD. Especificidad menor en rural sugiere calibracion local.\nPalabras clave: Deep Learning, retinopatia diabetica, precision diagnostica, tamizaje'
-    : 'Titulo: ' + q + '\n\nPendiente de completar.'
+    extraction_table: extraction, stats: stats,
+    equator_checklist: stCfg.equator,
+    planteamiento: planteamiento,
+    protocol_draft: protocolDraft,
+    manuscript: manuscriptText
   };
+}
+
+// ── Generate protocol text adapted to study type ──
+function generateProtocolByType(cfg, question, picot, framework) {
+  var P = (picot.P || '').substring(0, 100);
+  var I = (picot.I || '').substring(0, 100);
+  var C = (picot.C || '').substring(0, 100);
+  var O = (picot.O || '').substring(0, 100);
+  var sections = cfg.protocolSections || [];
+  var proto = 'PROTOCOLO DE INVESTIGACION\n\n';
+  proto += '1. TITULO\n' + question + '\n\n';
+  proto += '2. DISENO: ' + cfg.type + '\n';
+  proto += '   Guias: ' + cfg.equator.map(function(e){return e.guideline}).join(', ') + '\n\n';
+
+  if (cfg.id === 'rs_ma' || cfg.id === 'dta') {
+    proto += '3. REGISTRO: PROSPERO CRD2025XXXXXX\n\n';
+    proto += '4. CRITERIOS DE ELEGIBILIDAD\n';
+    proto += '   Poblacion: ' + P + '\n   Intervencion: ' + I + '\n   Comparador: ' + C + '\n   Desenlace: ' + O + '\n\n';
+    proto += '5. BUSQUEDA SISTEMATICA\n   Bases de datos: ' + cfg.searchDatabases.join(', ') + '\n   Periodo: 2018-2025 | Idiomas: EN, ES, PT\n\n';
+    proto += '6. EVALUACION DE CALIDAD: ' + cfg.biasTools.join(', ') + '\n\n';
+    proto += '7. SINTESIS: ' + cfg.statsTemplate.test + '\n   Software: R (' + cfg.statsTemplate.rPkg + ')\n\n';
+  } else if (cfg.id === 'eca') {
+    proto += '3. REGISTRO: ClinicalTrials.gov NCT0000XXXX\n\n';
+    proto += '4. PARTICIPANTES\n   Poblacion: ' + P + '\n   Criterios inclusion/exclusion por definir\n\n';
+    proto += '5. INTERVENCION: ' + I + '\n   Control: ' + C + '\n\n';
+    proto += '6. ALEATORIZACION: Bloques permutados, estratificada\n   Cegamiento: Doble ciego (participante + evaluador)\n\n';
+    proto += '7. DESENLACE PRIMARIO: ' + O + '\n\n';
+    proto += '8. ANALISIS: Intencion de tratar (ITT)\n   Prueba: ' + cfg.statsTemplate.test + '\n\n';
+  } else if (cfg.id === 'cohorte') {
+    proto += '3. DEFINICION DE COHORTES\n   Expuestos: ' + I + '\n   No expuestos: ' + C + '\n\n';
+    proto += '4. SEGUIMIENTO: Periodo y frecuencia por definir\n\n';
+    proto += '5. DESENLACE: ' + O + '\n\n';
+    proto += '6. ANALISIS: ' + cfg.statsTemplate.test + '\n   Ajuste por confusores: Edad, sexo, comorbilidades\n\n';
+  } else if (cfg.id === 'caso_control') {
+    proto += '3. DEFINICION DE CASOS: Pacientes con ' + O + '\n';
+    proto += '   DEFINICION DE CONTROLES: Pacientes sin ' + O + '\n\n';
+    proto += '4. EXPOSICION: ' + I + '\n\n';
+    proto += '5. MATCHING: Por edad y sexo\n\n';
+    proto += '6. ANALISIS: ' + cfg.statsTemplate.test + '\n\n';
+  } else if (cfg.id === 'transversal') {
+    proto += '3. POBLACION Y MUESTREO\n   Poblacion: ' + P + '\n   Muestreo: Probabilistico por definir\n\n';
+    proto += '4. INSTRUMENTO: Cuestionario validado por definir\n\n';
+    proto += '5. VARIABLES\n   Dependiente: ' + O + '\n   Independiente: ' + I + '\n\n';
+    proto += '6. ANALISIS: ' + cfg.statsTemplate.test + '\n\n';
+  } else if (cfg.id === 'cualitativo') {
+    proto += '3. PARADIGMA: Interpretativo\n   Diseno: Fenomenologico / Teoria fundamentada\n\n';
+    proto += '4. MUESTREO INTENCIONAL\n   Participantes: ' + P + '\n   Criterio de saturacion teorica\n\n';
+    proto += '5. TECNICAS DE RECOLECCION\n   Entrevistas semiestructuradas\n   Guia de entrevista basada en: ' + I + '\n\n';
+    proto += '6. ANALISIS TEMATICO\n   Codificacion abierta, axial y selectiva\n   Triangulacion de fuentes\n\n';
+    proto += '7. RIGOR: Credibilidad, transferibilidad, dependencia, confirmabilidad\n\n';
+  } else if (cfg.id === 'caso_reporte') {
+    proto += '3. PRESENTACION DEL CASO\n   Paciente: ' + P + '\n\n';
+    proto += '4. HISTORIA CLINICA Y HALLAZGOS\n\n';
+    proto += '5. DIAGNOSTICO: ' + I + '\n\n';
+    proto += '6. TRATAMIENTO Y EVOLUCION: ' + O + '\n\n';
+    proto += '7. PERSPECTIVA DEL PACIENTE\n\n';
+  }
+  proto += 'CRONOGRAMA: Por definir\n\nETICA: Aprobacion por comite de etica institucional\n\nGUIAS: ' + cfg.equator.map(function(e){return e.guideline}).join(', ');
+  return proto;
+}
+
+// ── Generate manuscript text adapted to study type ──
+function generateManuscriptByType(cfg, question, picot) {
+  var ms = 'Titulo: ' + question + '\n\n';
+  if (cfg.id === 'rs_ma') {
+    ms += 'Resumen:\nObjetivo: Sintetizar la evidencia disponible sobre ' + (picot.I || 'la intervencion') + ' en ' + (picot.P || 'la poblacion') + '.\n';
+    ms += 'Metodos: Revision sistematica y meta-analisis siguiendo PRISMA 2020. Busqueda en ' + cfg.searchDatabases.join(', ') + '. Evaluacion de sesgo con ' + cfg.biasTools.join(', ') + '. Modelo de efectos aleatorios.\n';
+    ms += 'Resultados: Pendiente de completar con datos reales.\n';
+    ms += 'Conclusiones: Pendiente.\nPalabras clave: Revision sistematica, meta-analisis, ' + (picot.I || '') + ', ' + (picot.O || '');
+  } else if (cfg.id === 'eca') {
+    ms += 'Resumen:\nObjetivo: Evaluar la eficacia de ' + (picot.I || 'la intervencion') + ' vs ' + (picot.C || 'control') + ' en ' + (picot.P || 'participantes') + '.\n';
+    ms += 'Metodos: Ensayo clinico aleatorizado. Desenlace primario: ' + (picot.O || 'pendiente') + '. Analisis por intencion de tratar.\n';
+    ms += 'Resultados: Pendiente de recoleccion de datos.\nConclusiones: Pendiente.';
+  } else if (cfg.id === 'cohorte') {
+    ms += 'Resumen:\nObjetivo: Evaluar la asociacion entre ' + (picot.I || 'la exposicion') + ' y ' + (picot.O || 'el desenlace') + ' en ' + (picot.P || 'la cohorte') + '.\n';
+    ms += 'Metodos: Estudio de cohorte. Analisis con regresion de Cox. Ajuste por confusores.\n';
+    ms += 'Resultados: Pendiente.\nConclusiones: Pendiente.';
+  } else if (cfg.id === 'caso_control') {
+    ms += 'Resumen:\nObjetivo: Evaluar la asociacion entre ' + (picot.I || 'la exposicion') + ' y ' + (picot.O || 'el desenlace') + '.\n';
+    ms += 'Metodos: Estudio de casos y controles. Regresion logistica para estimar OR ajustado.\n';
+    ms += 'Resultados: Pendiente.\nConclusiones: Pendiente.';
+  } else if (cfg.id === 'transversal') {
+    ms += 'Resumen:\nObjetivo: Determinar la prevalencia y factores asociados a ' + (picot.O || 'el desenlace') + ' en ' + (picot.P || 'la poblacion') + '.\n';
+    ms += 'Metodos: Estudio transversal analitico. Muestreo probabilistico. Regresion logistica.\n';
+    ms += 'Resultados: Pendiente.\nConclusiones: Pendiente.';
+  } else if (cfg.id === 'dta') {
+    ms += 'Resumen:\nObjetivo: Evaluar la precision diagnostica de ' + (picot.I || 'la prueba indice') + ' comparada con ' + (picot.C || 'el estandar de referencia') + '.\n';
+    ms += 'Metodos: Revision sistematica de estudios DTA. QUADAS-2. Meta-analisis bivariado con R (mada). Curva SROC.\n';
+    ms += 'Resultados: Pendiente.\nConclusiones: Pendiente.';
+  } else if (cfg.id === 'cualitativo') {
+    ms += 'Resumen:\nObjetivo: Explorar las experiencias y percepciones de ' + (picot.P || picot.S || 'los participantes') + ' respecto a ' + (picot.I || picot.PI || 'el fenomeno') + '.\n';
+    ms += 'Metodos: Estudio cualitativo ' + (picot.D || 'fenomenologico') + '. Muestreo intencional hasta saturacion. Entrevistas semiestructuradas. Analisis tematico.\n';
+    ms += 'Resultados: Pendiente.\nConclusiones: Pendiente.';
+  } else if (cfg.id === 'caso_reporte') {
+    ms += 'Resumen:\nIntroduccion: Presentamos un caso de ' + (picot.P || 'un paciente') + '.\n';
+    ms += 'Presentacion del caso: ' + (picot.I || 'Hallazgos clinicos por describir') + '.\n';
+    ms += 'Discusion: ' + (picot.O || 'Desenlace y lecciones aprendidas') + '.\n';
+    ms += 'Conclusion: Pendiente.';
+  } else {
+    ms += 'Pendiente de completar.';
+  }
+  return ms;
 }
 
 
 // ═══════════════════════════════════════════════════════════════
 // GALATEA BUBBLE SYSTEM
 // ═══════════════════════════════════════════════════════════════
+// ── Show primary data collection card for non-systematic studies ──
+function showPrimaryDataCollectionCard(cfg) {
+  var views = $('detailedViews');
+  if (!views) return;
+  var typeId = cfg ? cfg.id : 'eca';
+  var h = '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 fade-up">';
+  h += '<div class="flex items-center gap-3 mb-4">';
+  h += '<div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center"><svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg></div>';
+  h += '<div><h3 class="font-bold text-gray-900">Recoleccion de Datos Primarios</h3>';
+  h += '<p class="text-[10px] text-gray-400">Diseno: ' + (cfg ? cfg.type : 'Estudio primario') + ' — No requiere busqueda sistematica</p></div></div>';
+
+  if (typeId === 'eca') {
+    h += '<div class="space-y-3">';
+    h += '<div class="p-3 rounded-xl bg-blue-50 border border-blue-100"><div class="text-xs font-bold text-blue-700 mb-1">&#x1F4CB; Case Report Form (CRF)</div><div class="text-[11px] text-gray-600">Formulario estandarizado para registro de datos del ensayo. Incluye: datos demograficos, criterios de elegibilidad, asignacion de grupo, variables de desenlace, eventos adversos.</div></div>';
+    h += '<div class="p-3 rounded-xl bg-green-50 border border-green-100"><div class="text-xs font-bold text-green-700 mb-1">&#x1F3B2; Plan de Aleatorizacion</div><div class="text-[11px] text-gray-600">Generacion de secuencia aleatoria con bloques permutados. Sobres sellados o sistema electronico centralizado.</div></div>';
+    h += '<div class="p-3 rounded-xl bg-purple-50 border border-purple-100"><div class="text-xs font-bold text-purple-700 mb-1">&#x1F4CA; Tabla de Variables</div><div class="text-[11px] text-gray-600">Variable dependiente (desenlace primario), variable independiente (grupo de intervencion), covariables de ajuste.</div></div>';
+    h += '</div>';
+  } else if (typeId === 'cohorte') {
+    h += '<div class="space-y-3">';
+    h += '<div class="p-3 rounded-xl bg-blue-50 border border-blue-100"><div class="text-xs font-bold text-blue-700 mb-1">&#x1F4CB; Ficha de Seguimiento</div><div class="text-[11px] text-gray-600">Formulario de registro longitudinal: visita basal, seguimientos periodicos, registro de exposicion y desenlaces.</div></div>';
+    h += '<div class="p-3 rounded-xl bg-amber-50 border border-amber-100"><div class="text-xs font-bold text-amber-700 mb-1">&#x23F1; Plan de Seguimiento</div><div class="text-[11px] text-gray-600">Definicion de periodos de seguimiento, estrategias para minimizar perdidas, criterios de censura.</div></div>';
+    h += '<div class="p-3 rounded-xl bg-purple-50 border border-purple-100"><div class="text-xs font-bold text-purple-700 mb-1">&#x1F4CA; Tabla de Variables</div><div class="text-[11px] text-gray-600">Exposicion, tiempo al evento, desenlace, confusores potenciales (edad, sexo, comorbilidades).</div></div>';
+    h += '</div>';
+  } else if (typeId === 'caso_control') {
+    h += '<div class="space-y-3">';
+    h += '<div class="p-3 rounded-xl bg-blue-50 border border-blue-100"><div class="text-xs font-bold text-blue-700 mb-1">&#x1F4CB; Ficha de Recoleccion</div><div class="text-[11px] text-gray-600">Formulario para casos y controles: datos demograficos, exposicion retrospectiva, matching variables.</div></div>';
+    h += '<div class="p-3 rounded-xl bg-purple-50 border border-purple-100"><div class="text-xs font-bold text-purple-700 mb-1">&#x1F4CA; Tabla de Variables</div><div class="text-[11px] text-gray-600">Variable dependiente (caso/control), exposicion, variables de matching, confusores.</div></div>';
+    h += '</div>';
+  } else if (typeId === 'transversal') {
+    h += '<div class="space-y-3">';
+    h += '<div class="p-3 rounded-xl bg-blue-50 border border-blue-100"><div class="text-xs font-bold text-blue-700 mb-1">&#x1F4CB; Cuestionario / Instrumento</div><div class="text-[11px] text-gray-600">Instrumento de medicion validado. Incluye: datos sociodemograficos, variables de exposicion, variable de desenlace (prevalencia).</div></div>';
+    h += '<div class="p-3 rounded-xl bg-green-50 border border-green-100"><div class="text-xs font-bold text-green-700 mb-1">&#x1F3AF; Plan de Muestreo</div><div class="text-[11px] text-gray-600">Muestreo probabilistico. Calculo de tamano muestral para estimacion de prevalencia.</div></div>';
+    h += '<div class="p-3 rounded-xl bg-purple-50 border border-purple-100"><div class="text-xs font-bold text-purple-700 mb-1">&#x1F4CA; Tabla de Variables</div><div class="text-[11px] text-gray-600">Variable dependiente, variables independientes, variables de control demografico.</div></div>';
+    h += '</div>';
+  } else if (typeId === 'cualitativo') {
+    h += '<div class="space-y-3">';
+    h += '<div class="p-3 rounded-xl bg-blue-50 border border-blue-100"><div class="text-xs font-bold text-blue-700 mb-1">&#x1F399; Guia de Entrevista Semiestructurada</div><div class="text-[11px] text-gray-600">Preguntas abiertas organizadas por categorias tematicas. Probes y preguntas de seguimiento. Duracion estimada: 45-60 min.</div></div>';
+    h += '<div class="p-3 rounded-xl bg-green-50 border border-green-100"><div class="text-xs font-bold text-green-700 mb-1">&#x1F465; Plan de Muestreo Intencional</div><div class="text-[11px] text-gray-600">Seleccion de participantes por criterios de variacion maxima. Criterio de saturacion teorica (estimado: 12-20 participantes).</div></div>';
+    h += '<div class="p-3 rounded-xl bg-purple-50 border border-purple-100"><div class="text-xs font-bold text-purple-700 mb-1">&#x1F4D3; Libro de Codigos Inicial</div><div class="text-[11px] text-gray-600">Categorias a priori basadas en marco teorico. Codigos emergentes durante el analisis tematico.</div></div>';
+    h += '</div>';
+  } else if (typeId === 'caso_reporte') {
+    h += '<div class="space-y-3">';
+    h += '<div class="p-3 rounded-xl bg-blue-50 border border-blue-100"><div class="text-xs font-bold text-blue-700 mb-1">&#x1F4DD; Plantilla CARE</div><div class="text-[11px] text-gray-600">Formato estructurado: informacion del paciente, hallazgos clinicos, timeline diagnostico, intervenciones, seguimiento, perspectiva del paciente.</div></div>';
+    h += '<div class="p-3 rounded-xl bg-green-50 border border-green-100"><div class="text-xs font-bold text-green-700 mb-1">&#x1F4F7; Documentacion Clinica</div><div class="text-[11px] text-gray-600">Imagenes clinicas, estudios de laboratorio, imagenologia. Consentimiento del paciente para publicacion.</div></div>';
+    h += '</div>';
+  }
+
+  h += '<div class="mt-4 p-3 rounded-xl bg-gray-50 border border-gray-200">';
+  h += '<div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Documentos del Proyecto</div>';
+  h += '<div class="flex flex-wrap gap-1.5">';
+  if (cfg && cfg.documents) {
+    cfg.documents.forEach(function(doc) {
+      h += '<span class="text-[10px] px-2 py-1 rounded-lg bg-white border border-gray-200 text-gray-600">&#x1F4C4; ' + doc + '</span>';
+    });
+  }
+  h += '</div></div></div>';
+
+  var card = document.createElement('div');
+  card.innerHTML = h;
+  views.appendChild(card.firstChild);
+}
+
 function showBubble() {
   var b = $('galateaBubble');
   if (b) { b.classList.remove('hidden'); b.classList.remove('minimized'); bubbleMinimized = false; }
@@ -1578,9 +2048,26 @@ async function runFullSimulation(question) {
   await delay(1500);
   await bubbleTypewriter(GALATEA_REASONING.arquitecto_done, 32);
 
-  // STOP — User reviews PICOT
+  // STOP — User reviews PICOT and selects study type
   await awaitStepConfirmation('Arquitecto', 'arquitecto');
   if (simulationAborted) return;
+
+  // Ensure study type selector is rendered and wait if not yet selected
+  if (!selectedStudyTypeId && simData.study_type_id) {
+    selectedStudyTypeId = simData.study_type_id;
+  }
+  // Apply the selected study type config to simData
+  if (selectedStudyTypeId) {
+    var stCfg = getStudyTypeConfig(selectedStudyTypeId);
+    simData.study_type = { type: stCfg.type, design_locked: stCfg.design_locked, justification: 'Tipo de estudio seleccionado por el investigador.', design_details: stCfg.equator.map(function(e){return e.guideline}).join(', ') + '.' };
+    simData.study_type_id = selectedStudyTypeId;
+    simData.equator_checklist = stCfg.equator;
+    simData.folder_structure = stCfg.folderStructure;
+    if (!stCfg.needsSystematicSearch) {
+      simData.search_registry = [];
+      simData.search_strategy = { databases: [], boolean_equation: '', filters: '', prisma: null };
+    }
+  }
   renderLiveDocPages(); // Update Live Doc with PICOT
 
   // ── PHASES 4-6: Metodologo ──
@@ -1607,49 +2094,65 @@ async function runFullSimulation(question) {
   setBubbleStatus('thinking', 'Fase 7 — Evidencia');
   setBubbleThinking();
   await delay(2000);
-  await bubbleTypewriter(GALATEA_REASONING.evidencia_pre, 32);
   project.current_phase = 7;
   renderHeader(); renderAgentGrid();
 
-  if (REAL_AI_ENABLED && realSearchEquation) {
-    // REAL MODE: show search editor and wait for user to execute PubMed
-    await delay(1000);
-    showSearchEditor(realSearchEquation);
-    realPubmedPending = true;
-    setBubbleStatus('listening', 'Esperando busqueda PubMed');
-    await bubbleTypewriter('Revisa la cadena de busqueda y haz clic en <strong>Ejecutar Busqueda en PubMed</strong>. Puedes editar la ecuacion antes de ejecutar.', 28);
-    await awaitPubMedExecution();
-    if (simulationAborted) return;
-    // Now simData has real PubMed numbers — update Supabase
-    await simulateEvidencia();
-  } else {
-    // DEMO MODE: intentar PubMed real, fallback a simulacion
-    try {
-      var pd = project.phase_data || {};
-      var picot = pd.picot || {};
-      var query = buildPubMedQuery(picot);
-      if (query) {
-        await bubbleTypewriter('Buscando estudios reales en PubMed...', 28);
-        var pubmedResult = await searchPubMedDirect(query, 15);
-        if (pubmedResult.articles.length > 0) {
-          simData.extraction_table = pubmedResult.articles.map(function(a) {
-            var authorStr = (a.authors && a.authors.length > 0) ? a.authors[0] + (a.authors.length > 1 ? ' et al.' : '') : 'N/A';
-            return { autor: authorStr, anio: parseInt(a.year) || 0, pais: '', diseno: '', n: '', resultado: a.title, sesgo: 'pendiente', pmid: a.pmid, doi: a.doi };
-          });
-          if (simData.search_registry && simData.search_registry.length > 0) {
-            simData.search_registry[0].results = pubmedResult.count;
-            simData.search_registry[0].included = pubmedResult.articles.length;
-            simData.search_registry[0].real = true;
+  // Check if this study type needs systematic search
+  var currentCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : (simData.study_type_id ? getStudyTypeConfig(simData.study_type_id) : null);
+  var needsSearch = currentCfg ? currentCfg.needsSystematicSearch : true;
+
+  if (needsSearch) {
+    // ── Systematic search path (RS+MA, DTA) ──
+    await bubbleTypewriter(GALATEA_REASONING.evidencia_pre, 32);
+
+    if (REAL_AI_ENABLED && realSearchEquation) {
+      await delay(1000);
+      showSearchEditor(realSearchEquation);
+      realPubmedPending = true;
+      setBubbleStatus('listening', 'Esperando busqueda PubMed');
+      await bubbleTypewriter('Revisa la cadena de busqueda y haz clic en <strong>Ejecutar Busqueda en PubMed</strong>. Puedes editar la ecuacion antes de ejecutar.', 28);
+      await awaitPubMedExecution();
+      if (simulationAborted) return;
+      await simulateEvidencia();
+    } else {
+      try {
+        var pd = project.phase_data || {};
+        var picot = pd.picot || {};
+        var query = buildPubMedQuery(picot);
+        if (query) {
+          await bubbleTypewriter('Buscando estudios reales en PubMed...', 28);
+          var pubmedResult = await searchPubMedDirect(query, 15);
+          if (pubmedResult.articles.length > 0) {
+            simData.extraction_table = pubmedResult.articles.map(function(a) {
+              var authorStr = (a.authors && a.authors.length > 0) ? a.authors[0] + (a.authors.length > 1 ? ' et al.' : '') : 'N/A';
+              return { autor: authorStr, anio: parseInt(a.year) || 0, pais: '', diseno: '', n: '', resultado: a.title, sesgo: 'pendiente', pmid: a.pmid, doi: a.doi };
+            });
+            if (simData.search_registry && simData.search_registry.length > 0) {
+              simData.search_registry[0].results = pubmedResult.count;
+              simData.search_registry[0].included = pubmedResult.articles.length;
+              simData.search_registry[0].real = true;
+            }
+            simData._pubmed_real = true;
+            await bubbleTypewriter('Encontrados <strong>' + pubmedResult.count + '</strong> resultados en PubMed. Se extrajeron <strong>' + pubmedResult.articles.length + '</strong> articulos.', 28);
           }
-          simData._pubmed_real = true;
-          await bubbleTypewriter('Encontrados <strong>' + pubmedResult.count + '</strong> resultados en PubMed. Se extrajeron <strong>' + pubmedResult.articles.length + '</strong> articulos.', 28);
         }
+      } catch(pubErr) {
+        console.warn('PubMed direct search failed, using simulation:', pubErr);
       }
-    } catch(pubErr) {
-      console.warn('PubMed direct search failed, using simulation:', pubErr);
+      await delay(2000);
+      await simulateEvidencia();
     }
+  } else {
+    // ── Primary data collection path (ECA, Cohorte, Caso-Control, Transversal, Cualitativo, Caso) ──
+    var typeLabel = currentCfg ? currentCfg.label : 'estudio primario';
+    await bubbleTypewriter('Para un <strong>' + typeLabel + '</strong> no se requiere busqueda sistematica en bases de datos. En su lugar, voy a generar el <strong>plan de recoleccion de datos primarios</strong> y las herramientas necesarias.', 32);
+    await delay(3000);
+
+    // Show primary data collection card instead of search/PRISMA
+    showPrimaryDataCollectionCard(currentCfg);
     await delay(2000);
     await simulateEvidencia();
+    await bubbleTypewriter('He preparado el instrumento de recoleccion y la tabla de variables para tu <strong>' + typeLabel + '</strong>. Revisa los detalles antes de continuar.', 28);
   }
 
   if (simulationAborted) return;
@@ -2461,11 +2964,20 @@ function renderFrameworkSection(pd) {
   h += '<button id="btnRegenerarPregunta" onclick="regenerarPreguntaPicot()" style="display:' + (pd.pregunta_editada ? 'inline-flex' : 'none') + ';" class="items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-galatea/10 text-galatea hover:bg-galatea/20 transition-colors"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M2.985 19.644l3.181-3.183"/></svg>Regenerar desde PICOT</button></div>';
   h += '</div>';
   h += '</div>';
+  // Study Type Selector — interactive cards
+  var currentTypeId = (simData && simData.study_type_id) || selectedStudyTypeId || (st.type ? detectStudyTypeId(fw, '') : 'rs_ma');
+  h += '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">';
+  h += '<div class="flex items-center justify-between mb-3"><h3 class="font-bold text-gray-900">Tipo de Estudio</h3>';
+  h += '<span class="px-3 py-1 rounded-full text-[10px] font-black bg-galatea/10 text-galatea">&#x1F3AF; Selecciona tu diseno</span></div>';
   if (st.type) {
-    h += '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-gray-900">Tipo de Estudio</h3><span class="px-3 py-1 rounded-full text-[10px] font-black bg-purple-100 text-purple-700">&#x1F512; Bloqueado</span></div><div class="text-lg font-bold text-galatea mb-1">'+esc(st.type)+'</div><div class="text-xs text-gray-500 mb-2">'+esc(st.design_locked||'')+'</div><div class="text-sm text-gray-600">'+esc(st.justification||'')+'</div>';
-    if (st.design_details) h += '<div class="text-xs text-gray-400 mt-2 italic">'+esc(st.design_details)+'</div>';
-    h += '</div>';
+    h += '<div class="text-sm font-bold text-galatea mb-1">Detectado: '+esc(st.type)+'</div>';
+    h += '<div class="text-xs text-gray-500 mb-3">'+esc(st.justification||'Puedes cambiar el tipo antes de continuar.')+'</div>';
+  } else {
+    h += '<div class="text-xs text-gray-500 mb-3">Selecciona el diseno metodologico que mejor se ajuste a tu pregunta de investigacion.</div>';
   }
+  h += '<div id="studyTypeSelector"></div>';
+  h += '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" onload="renderStudyTypeSelectorInner(document.getElementById(\'studyTypeSelector\'),\'' + currentTypeId + '\');this.remove();" style="display:none">';
+  h += '</div>';
   h += '</div>';
   return h;
 }
@@ -4281,14 +4793,40 @@ function showStage4TransitionCard() {
   var views = $('detailedViews');
   var card = document.createElement('div');
   card.className = 'stage-transition-card mb-6 fade-up';
+
+  // Adapt title and description based on study type
+  var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  var needsMA = curCfg ? curCfg.needsMetaAnalysis : true;
+  var isQualitative = curCfg && (curCfg.id === 'cualitativo');
+  var isCaseReport = curCfg && (curCfg.id === 'caso_reporte');
+
+  var title, desc, btnLabel;
+  if (needsMA) {
+    title = 'Etapa 4: Motor de Sintesis Cuantitativa';
+    desc = 'Forest Plot interactivo, Funnel Plot, Leave-One-Out y calificacion GRADE<br>6 pasos para completar el metaanalisis';
+    btnLabel = 'Iniciar Metaanalisis';
+  } else if (isQualitative) {
+    title = 'Etapa 4: Plan de Analisis Tematico';
+    desc = 'Codificacion, categorias tematicas, triangulacion y rigor metodologico<br>Plan de analisis cualitativo adaptado a tu diseno';
+    btnLabel = 'Iniciar Analisis Cualitativo';
+  } else if (isCaseReport) {
+    title = 'Etapa 4: Analisis Descriptivo del Caso';
+    desc = 'Timeline clinico, hallazgos clave, discusion de diagnosticos diferenciales<br>Analisis descriptivo del reporte de caso';
+    btnLabel = 'Iniciar Analisis Descriptivo';
+  } else {
+    title = 'Etapa 4: Plan de Analisis Estadistico';
+    desc = 'Pruebas estadisticas, software (R/Stata), variables y plan de analisis<br>Adaptado a tu diseno: ' + (curCfg ? curCfg.statsTemplate.test : 'por definir');
+    btnLabel = 'Iniciar Plan Estadistico';
+  }
+
   card.innerHTML =
     '<div class="relative z-10">' +
       '<div class="text-4xl mb-4">&#x1F4CA;</div>' +
-      '<h3 class="text-xl font-black text-white mb-2">Etapa 4: Motor de Sintesis Cuantitativa</h3>' +
-      '<p class="text-sm text-white/60 mb-6 max-w-md mx-auto">Forest Plot interactivo, Funnel Plot, Leave-One-Out y calificacion GRADE<br>6 pasos para completar el metaanalisis</p>' +
+      '<h3 class="text-xl font-black text-white mb-2">' + title + '</h3>' +
+      '<p class="text-sm text-white/60 mb-6 max-w-md mx-auto">' + desc + '</p>' +
       '<button onclick="startStage4()" class="confirm-btn bg-gradient-to-r from-galatea to-verde hover:shadow-lg text-white px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2 btn-attention">' +
         '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>' +
-        'Iniciar Metaanalisis' +
+        btnLabel +
       '</button>' +
     '</div>';
   views.appendChild(card);
@@ -4463,9 +5001,15 @@ async function runStage3InstSimulation() {
   renderStage3InstAgentGrid();
   renderStage3InstDetailedViews();
 
-  // Show Stage 4 (meta-analysis) transition
+  // Show Stage 4 transition — adapted to study type
   await delay(3000);
-  await bubbleTypewriter(STAGE3_REASONING.transition, 28);
+  var s4Cfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  var s4Msg = 'Excelente. La ruta institucional FSFB esta completa. ';
+  if (s4Cfg && s4Cfg.needsMetaAnalysis) s4Msg += 'Ahora viene el <strong>Motor de Sintesis Cuantitativa (Etapa 4)</strong>. Aqui es donde los numeros hablan — voy a ejecutar el metaanalisis completo.';
+  else if (s4Cfg && s4Cfg.id === 'cualitativo') s4Msg += 'Ahora viene la <strong>Etapa 4: Plan de Analisis Tematico</strong>. Voy a preparar el esquema de codificacion y analisis cualitativo.';
+  else if (s4Cfg && s4Cfg.id === 'caso_reporte') s4Msg += 'Ahora viene la <strong>Etapa 4: Analisis Descriptivo</strong>. Voy a estructurar el analisis del reporte de caso.';
+  else s4Msg += 'Ahora viene la <strong>Etapa 4: Plan de Analisis Estadistico</strong>. Voy a preparar el plan de analisis adaptado a tu tipo de estudio.';
+  await bubbleTypewriter(s4Msg, 28);
   await delay(1500);
   showStage4TransitionCard();
   } catch(e) { console.error('runStage3InstSimulation error:', e); showToast('Error Etapa 4: ' + e.message, 'error'); }
@@ -5965,7 +6509,7 @@ var STAGE3_PHASE_BUTTONS = {
 };
 
 var STAGE3_REASONING = {
-  transition: 'Excelente. La ruta institucional FSFB esta completa. Ahora viene la etapa final: el <strong>Motor de Sintesis Cuantitativa (Etapa 4)</strong>. Aqui es donde los numeros hablan — voy a ejecutar el metaanalisis completo de los estudios incluidos.',
+  transition: 'Excelente. La ruta institucional FSFB esta completa. Ahora viene la <strong>Etapa 4</strong>.',
   extraccion_pre: 'Iniciando la extraccion de datos cuantitativos. Para cada estudio incluido en la revision, voy a identificar: variables dicotomicas (eventos y totales por grupo) y variables continuas (media, desviacion estandar y tamaño de muestra).',
   extraccion_done: function(n) { return 'He extraido los datos crudos de los <strong>' + n + ' estudios</strong>. Procedo a estandarizar las medidas de efecto (Odds Ratio para variables dicotomicas, Diferencia de Medias para continuas).'; },
   heterogeneidad_pre: 'Antes de combinar los datos, necesito evaluar si los estudios son comparables. Voy a calcular el estadistico I² para medir la heterogeneidad entre los estudios.',
@@ -6071,11 +6615,11 @@ function getExtractionStudies() {
   ];
 }
 
-async function callRAnalysis(studies) {
+async function callRAnalysis(studies, measure, model) {
   var payload = {
     studies: studies,
-    measure: 'OR',
-    model: 'random'
+    measure: measure || 'OR',
+    model: model || 'random'
   };
   var resp = await fetch(R_API_URL + '/analyze', {
     method: 'POST',
@@ -6092,23 +6636,218 @@ function startStage3() { startStage4(); } // backwards compat
 async function startStage4() {
   currentStage = 4;
   stage3Step = 0;
-  // Try R API first, fallback to simulation
-  try {
-    var extractionData = getExtractionStudies();
-    stage3SimData = await callRAnalysis(extractionData);
-    stage3SimData._source = 'R';
-    console.log('Galatea: Analisis estadistico calculado con R (metafor)');
-  } catch(e) {
-    console.warn('R API no disponible, usando simulacion:', e);
-    stage3SimData = generateStage3SimData();
-    stage3SimData._source = 'simulacion';
+
+  var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  var needsMA = curCfg ? curCfg.needsMetaAnalysis : true;
+
+  if (needsMA) {
+    // ── Meta-analysis path (RS+MA, DTA) ──
+    try {
+      var extractionData = getExtractionStudies();
+      var rMeasure = curCfg ? curCfg.rMeasure : 'OR';
+      var rModel = curCfg ? curCfg.rModel : 'random';
+      stage3SimData = await callRAnalysis(extractionData, rMeasure, rModel);
+      stage3SimData._source = 'R';
+      console.log('Galatea: Analisis estadistico calculado con R (' + (curCfg ? curCfg.statsTemplate.rPkg : 'metafor') + ')');
+    } catch(e) {
+      console.warn('R API no disponible, usando simulacion:', e);
+      stage3SimData = generateStage3SimData();
+      stage3SimData._source = 'simulacion';
+    }
+    simulationRunning = true;
+    simulationAborted = false;
+    $('projectTitle').textContent = 'Motor de Sintesis Cuantitativa';
+    $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso 0 / 6';
+    renderStage3AgentGrid();
+    runStage3Simulation();
+  } else {
+    // ── Non-meta-analysis path ──
+    simulationRunning = true;
+    simulationAborted = false;
+    stage3SimData = generateStatsPlanByType(curCfg);
+    stage3SimData._source = 'type_adapted';
+    var titleText = curCfg && curCfg.id === 'cualitativo' ? 'Plan de Analisis Tematico' : curCfg && curCfg.id === 'caso_reporte' ? 'Analisis Descriptivo' : 'Plan de Analisis Estadistico';
+    $('projectTitle').textContent = titleText;
+    $('projectMeta').textContent = 'Etapa 4: ' + titleText + ' | Paso 0 / 3';
+    renderStage3AgentGrid();
+    runStage4StatsPlan(curCfg);
   }
-  simulationRunning = true;
-  simulationAborted = false;
-  $('projectTitle').textContent = 'Motor de Sintesis Cuantitativa';
-  $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso 0 / 6';
-  renderStage3AgentGrid();
-  runStage3Simulation();
+}
+
+// ── Generate stats plan data for non-MA study types ──
+function generateStatsPlanByType(cfg) {
+  var typeId = cfg ? cfg.id : 'eca';
+  var result = { studies: [], _studyType: typeId };
+  if (typeId === 'eca') {
+    result.planTitle = 'Plan de Analisis para Ensayo Clinico Aleatorizado';
+    result.primaryTest = 'Chi-cuadrado / t de Student';
+    result.secondaryTests = ['ANOVA para medidas repetidas', 'Regresion de Cox para tiempo al evento', 'Test exacto de Fisher si n < 30'];
+    result.software = 'R (stats, survival) / Stata';
+  } else if (typeId === 'cohorte') {
+    result.planTitle = 'Plan de Analisis para Estudio de Cohorte';
+    result.primaryTest = 'Regresion de Cox (Hazard Ratio)';
+    result.secondaryTests = ['Kaplan-Meier con log-rank test', 'Regresion logistica si no hay datos de tiempo', 'Analisis de subgrupos por covariables'];
+    result.software = 'R (survival) / Stata';
+  } else if (typeId === 'caso_control') {
+    result.planTitle = 'Plan de Analisis para Estudio de Casos y Controles';
+    result.primaryTest = 'Regresion logistica (Odds Ratio)';
+    result.secondaryTests = ['OR crudo y ajustado', 'Analisis estratificado de Mantel-Haenszel', 'Bondad de ajuste de Hosmer-Lemeshow'];
+    result.software = 'R (stats) / Stata';
+  } else if (typeId === 'transversal') {
+    result.planTitle = 'Plan de Analisis para Estudio Transversal';
+    result.primaryTest = 'Chi-cuadrado / Regresion logistica';
+    result.secondaryTests = ['Prevalencia con IC 95%', 'Razon de prevalencia (Poisson con varianza robusta)', 'Estadistica descriptiva'];
+    result.software = 'R (stats) / Stata';
+  } else if (typeId === 'cualitativo') {
+    result.planTitle = 'Plan de Analisis Tematico';
+    result.primaryTest = 'Analisis tematico (Braun & Clarke)';
+    result.secondaryTests = ['Codificacion abierta y axial', 'Triangulacion de fuentes', 'Validacion por participantes (member checking)'];
+    result.software = 'NVivo / ATLAS.ti / Manual';
+  } else if (typeId === 'caso_reporte') {
+    result.planTitle = 'Plan de Analisis Descriptivo';
+    result.primaryTest = 'Descripcion narrativa estructurada (CARE)';
+    result.secondaryTests = ['Timeline clinico', 'Revision de literatura relevante', 'Discusion de diagnosticos diferenciales'];
+    result.software = 'N/A (descriptivo)';
+  }
+  result.certainty = 'No aplica';
+  result.pooled = { or: 0, or_lo: 0, or_hi: 0, p: 0, z: 0 };
+  result.i2 = 0;
+  result.grade = [];
+  return result;
+}
+
+// ── Run Stage 4 for non-meta-analysis study types ──
+async function runStage4StatsPlan(cfg) {
+  try {
+  var sd = stage3SimData;
+  var typeId = cfg ? cfg.id : 'eca';
+  var isQual = typeId === 'cualitativo';
+  var isCase = typeId === 'caso_reporte';
+  var totalSteps = 3;
+
+  // ── PASO 1: Plan de Analisis ──
+  stage3Step = 1;
+  currentSimPhase = 's3_extraccion';
+  setBubbleStatus('thinking', 'Paso 1 — Plan de Analisis');
+  setBubbleThinking();
+  renderStage3Header(); renderStage3AgentGrid();
+  await delay(2500);
+  if (isQual) {
+    await bubbleTypewriter('Preparando el plan de <strong>analisis tematico</strong>. Voy a definir las fases de codificacion: familiarizacion con los datos, generacion de codigos iniciales, busqueda de temas, revision y definicion de temas, y produccion del reporte.', 32);
+  } else if (isCase) {
+    await bubbleTypewriter('Preparando el <strong>analisis descriptivo</strong> del reporte de caso. Voy a estructurar la presentacion clinica, los hallazgos clave y el timeline diagnostico-terapeutico.', 32);
+  } else {
+    await bubbleTypewriter('Preparando el <strong>plan de analisis estadistico</strong> para tu ' + (cfg ? cfg.label : 'estudio') + '. Prueba principal: <strong>' + sd.primaryTest + '</strong>.', 32);
+  }
+  await delay(3000);
+  // Render the stats plan view
+  renderStage4StatsPlanView(sd, cfg);
+  await delay(1500);
+  await awaitStage3Confirmation('1 — Plan de Analisis', 'extraccion');
+  if (simulationAborted) return;
+
+  // ── PASO 2: Variables y Software ──
+  stage3Step = 2;
+  currentSimPhase = 's3_forest';
+  setBubbleStatus('thinking', 'Paso 2 — Variables y Software');
+  setBubbleThinking();
+  renderStage3Header(); renderStage3AgentGrid();
+  await delay(2000);
+  if (isQual) {
+    await bubbleTypewriter('Definiendo las <strong>categorias de analisis</strong> y el esquema de codificacion. Se utilizara <strong>' + sd.software + '</strong> para la gestion de datos cualitativos.', 32);
+  } else {
+    await bubbleTypewriter('Definiendo las <strong>variables del estudio</strong> y el software para el analisis. Se utilizara <strong>' + sd.software + '</strong>.', 32);
+  }
+  await delay(3000);
+  renderStage4StatsPlanView(sd, cfg);
+  await delay(1500);
+  await awaitStage3Confirmation('2 — Variables', 'forest');
+  if (simulationAborted) return;
+
+  // ── PASO 3: Finalizacion ──
+  stage3Step = 3;
+  currentSimPhase = 's3_grade';
+  setBubbleStatus('thinking', 'Paso 3 — Finalizacion');
+  setBubbleThinking();
+  renderStage3Header(); renderStage3AgentGrid();
+  await delay(2000);
+  await bubbleTypewriter('El plan de analisis esta completo. Las pruebas, variables y software han sido definidos segun el diseno <strong>' + (cfg ? cfg.type : '') + '</strong>.', 32);
+  await delay(2000);
+  renderStage4StatsPlanView(sd, cfg);
+  await awaitStage3Confirmation('3 — Completo', 'grade');
+  if (simulationAborted) return;
+
+  // ── FINAL ──
+  stage3Step = 4;
+  currentSimPhase = 's3_done';
+  simulationRunning = false;
+  setBubbleStatus('done', 'Etapa 4 Completada');
+  renderStage3Header(); renderStage3AgentGrid();
+  renderLiveDocPages();
+  await delay(2000);
+  await bubbleTypewriter('El plan de analisis ha sido completado exitosamente para tu <strong>' + (cfg ? cfg.label : 'estudio') + '</strong>. Puedes continuar con la generacion del articulo cientifico.', 28);
+  // Show Stage 5
+  await delay(3000);
+  showStage5TransitionCard();
+  } catch(e) { console.error('runStage4StatsPlan error:', e); showToast('Error Etapa 4: ' + e.message, 'error'); }
+}
+
+// ── Render the stats plan view for non-MA studies ──
+function renderStage4StatsPlanView(sd, cfg) {
+  var views = $('detailedViews');
+  if (!views) return;
+  var typeId = cfg ? cfg.id : 'eca';
+  var isQual = typeId === 'cualitativo';
+  var isCase = typeId === 'caso_reporte';
+
+  var h = '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 fade-up">';
+  h += '<div class="flex items-center gap-3 mb-5">';
+  h += '<div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center"><svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg></div>';
+  h += '<div><h3 class="font-bold text-gray-900">' + (sd.planTitle || 'Plan de Analisis') + '</h3>';
+  h += '<p class="text-[10px] text-gray-400">Adaptado al diseno: ' + (cfg ? cfg.type : '') + '</p></div></div>';
+
+  // Primary method
+  h += '<div class="mb-4 bg-gradient-to-r from-purple-50 to-white rounded-xl p-4 border border-purple-100">';
+  h += '<div class="flex items-center gap-2 mb-2">';
+  h += '<span class="w-6 h-6 rounded-full bg-purple-600 text-white text-xs font-black flex items-center justify-center">1</span>';
+  h += '<span class="text-sm font-bold text-purple-800">' + (isQual ? 'Metodo Principal' : 'Prueba Estadistica Principal') + '</span></div>';
+  h += '<div class="ml-8 text-xs text-gray-700"><strong>' + (sd.primaryTest || '') + '</strong></div>';
+  h += '</div>';
+
+  // Secondary / additional
+  if (sd.secondaryTests && sd.secondaryTests.length > 0) {
+    h += '<div class="mb-4 bg-gradient-to-r from-blue-50 to-white rounded-xl p-4 border border-blue-100">';
+    h += '<div class="flex items-center gap-2 mb-2">';
+    h += '<span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-black flex items-center justify-center">2</span>';
+    h += '<span class="text-sm font-bold text-blue-800">' + (isQual ? 'Tecnicas Complementarias' : 'Pruebas Adicionales') + '</span></div>';
+    h += '<div class="ml-8 space-y-1">';
+    sd.secondaryTests.forEach(function(t) {
+      h += '<div class="text-xs text-gray-600">&#x2022; ' + t + '</div>';
+    });
+    h += '</div></div>';
+  }
+
+  // Software
+  h += '<div class="mb-2 bg-gradient-to-r from-emerald-50 to-white rounded-xl p-4 border border-emerald-100">';
+  h += '<div class="flex items-center gap-2 mb-2">';
+  h += '<span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-black flex items-center justify-center">3</span>';
+  h += '<span class="text-sm font-bold text-emerald-800">Software</span></div>';
+  h += '<div class="ml-8 text-xs text-gray-700"><strong>' + (sd.software || '') + '</strong></div>';
+  h += '</div>';
+
+  // EQUATOR compliance for this type
+  if (cfg && cfg.equator) {
+    h += '<div class="mt-4 p-3 rounded-xl bg-gray-50 border border-gray-200">';
+    h += '<div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Guias EQUATOR Aplicables</div>';
+    h += '<div class="flex flex-wrap gap-2">';
+    cfg.equator.forEach(function(eq) {
+      h += '<span class="text-[10px] px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium">' + eq.guideline + ' (' + eq.items_total + ' items)</span>';
+    });
+    h += '</div></div>';
+  }
+
+  h += '</div>';
+  views.innerHTML = h;
 }
 
 function awaitStage3Confirmation(completedStep, nextPhaseKey) {
@@ -6246,7 +6985,12 @@ async function runStage3Simulation() {
   renderStage3DetailedViews();
   renderLiveDocPages(); // Final update with all Stage 3 data
   await delay(2000);
-  await bubbleTypewriter('He formateado tu proyecto bajo estandares <strong>PRISMA 2020</strong> y <strong>GRADE</strong>. El dossier esta listo para ser enviado a <strong>investigacion.cirugia@fsfb.org.co</strong>.', 28);
+  var maCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  var maGuide = maCfg ? maCfg.equator[0].guideline : 'PRISMA 2020';
+  await bubbleTypewriter('He formateado tu proyecto bajo estandares <strong>' + maGuide + '</strong> y <strong>GRADE</strong>. El dossier esta listo para ser enviado a <strong>investigacion.cirugia@fsfb.org.co</strong>.', 28);
+  // Show Stage 5 transition
+  await delay(3000);
+  showStage5TransitionCard();
   } catch(e) { console.error('runStage3Simulation error:', e); showToast('Error Etapa 4: ' + e.message, 'error'); }
 }
 
@@ -6267,14 +7011,18 @@ function animateFunnelPoints() {
 
 function renderStage3Header() {
   var step = stage3Step || 0;
-  var pct = Math.min(100, Math.round((step / 6) * 100));
-  $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso ' + step + ' / 6';
+  var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  var needsMA = curCfg ? curCfg.needsMetaAnalysis : true;
+  var totalSteps = needsMA ? 6 : 3;
+  var titleText = needsMA ? 'Metaanalisis' : (curCfg && curCfg.id === 'cualitativo' ? 'Analisis Tematico' : curCfg && curCfg.id === 'caso_reporte' ? 'Analisis Descriptivo' : 'Plan Estadistico');
+  var pct = Math.min(100, Math.round((step / totalSteps) * 100));
+  $('projectMeta').textContent = 'Etapa 4: ' + titleText + ' | Paso ' + step + ' / ' + totalSteps;
   var bar = $('progressBar'); if (bar) bar.style.width = pct + '%';
   var pl = $('progressLabel'); if (pl) pl.textContent = pct + '%';
-  var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / 6';
+  var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / ' + totalSteps;
   var badge = $('statusBadge');
   if (badge) {
-    var done = step > 6;
+    var done = step > totalSteps;
     badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ' + (done ? 'bg-verde/10 text-verde' : 'bg-galatea/10 text-galatea');
     badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full ' + (done ? 'bg-verde' : 'bg-galatea animate-pulse') + '"></span>' + (done ? 'Completado' : 'Etapa 4');
   }
@@ -7221,12 +7969,17 @@ function transformApiToReal(picotData, finerData, scoutData, pubmedResult, quest
   if (picotData) {
     real.framework = picotData.framework;
     real.picot = picotData.picot;
+    var realTypeId = selectedStudyTypeId || detectStudyTypeId(picotData.framework || '', question || '');
+    var realCfg = getStudyTypeConfig(realTypeId);
+    real.study_type_id = realTypeId;
     real.study_type = {
-      type: picotData.studyType || '',
-      design_locked: picotData.designLocked || '',
+      type: picotData.studyType || realCfg.type,
+      design_locked: picotData.designLocked || realCfg.design_locked,
       justification: picotData.justification || '',
-      design_details: ''
+      design_details: realCfg.equator.map(function(e){return e.guideline}).join(', ') + '.'
     };
+    real.equator_checklist = realCfg.equator;
+    real.folder_structure = realCfg.folderStructure;
   }
 
   // FINER — from Claude
@@ -8166,6 +8919,41 @@ function renderStatisticalPlan(pd) {
     alternative = 'Regresion logistica si no se dispone de datos de tiempo al evento';
     rCode = 'library(survival)\ncox <- coxph(Surv(time, event) ~ exposure +\n  age + sex, data = df)\nsummary(cox)';
     stataCode = 'stcox exposure age sex, efron\nstcurve, survival';
+  } else if (/caso.?control/i.test(studyType)) {
+    objective = 'Inferencial (asociacion retrospectiva)';
+    testName = 'Regresion logistica (Odds Ratio)';
+    testJustification = 'Estima la asociacion entre exposicion y desenlace en diseno caso-control, ajustando por confusores.';
+    alternative = 'Analisis estratificado de Mantel-Haenszel para evaluacion de confusion';
+    rCode = 'model <- glm(case ~ exposure + age + sex,\n  data = df, family = binomial)\nsummary(model)\nexp(cbind(OR = coef(model), confint(model)))';
+    stataCode = 'logistic case exposure age sex\nlroc\nlfitgof';
+  } else if (/transversal/i.test(studyType)) {
+    objective = 'Descriptivo / Inferencial (prevalencia)';
+    testName = 'Chi-cuadrado / Regresion logistica / Razon de prevalencia';
+    testJustification = 'Estima prevalencia y factores asociados. Regresion de Poisson con varianza robusta si prevalencia >10%.';
+    alternative = 'Regresion de Poisson con varianza robusta para razones de prevalencia';
+    rCode = 'chisq.test(table(exposure, outcome))\n# Prevalencia\nprev <- mean(df$outcome)\nbinom.test(sum(df$outcome), nrow(df))\n# Regresion\nmodel <- glm(outcome ~ exposure + age + sex,\n  data = df, family = binomial)\nexp(coef(model))';
+    stataCode = 'tab exposure outcome, chi2 row\ncs outcome exposure\nlogistic outcome exposure age sex';
+  } else if (/diagnostico|dta|precision/i.test(studyType)) {
+    objective = 'Inferencial (sintesis DTA)';
+    testName = 'Meta-analisis bivariado (Reitsma) / SROC';
+    testJustification = 'Modelo bivariado para sintetizar sensibilidad y especificidad de manera conjunta, generando curva SROC.';
+    alternative = 'Modelo HSROC si hay umbral variable';
+    rCode = 'library(mada)\nfit <- reitsma(data = df,\n  formula = cbind(TP, FN, FP, TN) ~ 1)\nsummary(fit)\nplot(fit, sroclwd = 2)\nforest(madad(df))';
+    stataCode = 'metandi tp fp fn tn\nmidas tp fp fn tn, bsroc';
+  } else if (/cualitativ/i.test(studyType)) {
+    objective = 'Analisis tematico (no cuantitativo)';
+    testName = 'Analisis tematico de Braun & Clarke (6 fases)';
+    testJustification = 'Metodo sistematico para identificar, analizar y reportar patrones (temas) dentro de datos cualitativos.';
+    alternative = 'Teoria fundamentada / Analisis de contenido / Fenomenologia interpretativa';
+    rCode = '# No aplica analisis estadistico\n# Software sugerido: NVivo, ATLAS.ti\n# o codificacion manual con Excel\n\n# Fases del analisis tematico:\n# 1. Familiarizacion con datos\n# 2. Generacion de codigos\n# 3. Busqueda de temas\n# 4. Revision de temas\n# 5. Definicion de temas\n# 6. Produccion del reporte';
+    stataCode = '* No aplica analisis estadistico\n* Usar NVivo o ATLAS.ti\n* para gestion de datos cualitativos';
+  } else if (/caso clinico|reporte de caso|case report|serie de caso/i.test(studyType)) {
+    objective = 'Descriptivo';
+    testName = 'Analisis descriptivo / narrativo estructurado (CARE)';
+    testJustification = 'Descripcion detallada del caso clinico con timeline, hallazgos diagnosticos y terapeuticos, y lecciones aprendidas.';
+    alternative = 'Revision narrativa de la literatura para contextualizar el caso';
+    rCode = '# No aplica analisis estadistico\n# Estructura CARE 2017:\n# - Informacion del paciente\n# - Hallazgos clinicos\n# - Timeline\n# - Evaluacion diagnostica\n# - Intervencion terapeutica\n# - Seguimiento y desenlaces\n# - Discusion\n# - Perspectiva del paciente';
+    stataCode = '* No aplica analisis estadistico\n* Seguir checklist CARE 2017\n* para reportes de caso';
   } else {
     objective = 'Descriptivo / Inferencial';
     testName = 'Regresion logistica / Chi-cuadrado';
