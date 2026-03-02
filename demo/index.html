@@ -1100,64 +1100,62 @@ function getFrameworkLabels(fw) {
 // SIMULATION DATA GENERATOR (same as before)
 // ═══════════════════════════════════════════════════════════════
 function extractPICOTFromQuestion(q) {
-  var ql = q.toLowerCase();
-  // Patterns to detect population
-  var popPatterns = [
-    /(?:en |con )(pacientes|adultos|ni[ñn]os|mujeres|hombres|personas|sujetos|poblaci[oó]n|gestantes|embarazadas|neonatos|adolescentes|ancianos|mayores)[^,.?]*/i,
-    /(?:pacientes|adultos|ni[ñn]os|personas|sujetos) (?:con|que|diagnosticad)[^,.?]*/i,
-    /(?:con )(edema|diabetes|hipertensi|c[aá]ncer|obesidad|depresi|ansiedad|asma|EPOC|insuficiencia|artritis|lupus|VIH|hepatitis|cirrosis|retinopatia|glaucoma|degeneraci)[^,.?]*/i
-  ];
+  // Clean question marks and trim
+  var clean = q.replace(/^[¿?]+|[?]+$/g, '').trim();
+
+  // ── Population: find "pacientes con X" or condition nouns ──
   var P = '';
-  for (var pi = 0; pi < popPatterns.length; pi++) {
-    var pm = q.match(popPatterns[pi]);
-    if (pm) { P = pm[0].replace(/^(en |con )/, '').trim(); P = P.charAt(0).toUpperCase() + P.slice(1); break; }
+  var popM = clean.match(/(?:en |entre )(pacientes|adultos|ni[ñn]os|mujeres|hombres|personas|neonatos|gestantes|embarazadas|adolescentes|ancianos|mayores)(?: (?:con|que padecen|diagnosticados? (?:con|de)) ([^,?]+?))?(?= tras | con tratamiento| mediante | que recib| despues)/i);
+  if (!popM) popM = clean.match(/(?:en |entre )(pacientes|adultos|ni[ñn]os|mujeres|hombres|personas|neonatos|gestantes|embarazadas|adolescentes|ancianos|mayores)(?: (?:con|que padecen|diagnosticados? (?:con|de)) )?([^,?]{3,60}?)(?=\?|$|(?:\s+(?:tras|mediante|usando|con tratamiento|que recib|despu[eé]s)))/i);
+  if (popM) {
+    P = popM[1] + (popM[2] ? ' con ' + popM[2].trim() : '');
+    P = P.charAt(0).toUpperCase() + P.slice(1);
   }
   if (!P) {
-    // Try extracting disease/condition
-    var condMatch = q.match(/(edema macular|retinopatia|diabetes|hipertensi[oó]n|c[aá]ncer|tumor|depresi[oó]n|ansiedad|asma|EPOC|obesidad|insuficiencia|artritis|COVID|VIH|hepatitis|cirrosis|glaucoma|degeneraci[oó]n|infarto|ictus|ACV|esquizofrenia|epilepsia|Parkinson|Alzheimer|fibromialgia|artrosis|osteoporosis|neumon[ií]a|sepsis|meningitis|endometriosis|preeclampsia)[^,.?]*/i);
-    if (condMatch) P = 'Pacientes con ' + condMatch[0].trim().toLowerCase();
-    else P = 'Poblacion de estudio segun la pregunta planteada';
+    var condM = clean.match(/(edema macular[^,?]{0,30}|retinopatia[^,?]{0,30}|diabetes[^,?]{0,30}|hipertensi[oó]n[^,?]{0,20}|c[aá]ncer[^,?]{0,30}|depresi[oó]n[^,?]{0,20}|asma|EPOC|obesidad[^,?]{0,20}|insuficiencia[^,?]{0,30}|artritis[^,?]{0,20}|VIH|hepatitis[^,?]{0,20}|cirrosis[^,?]{0,20}|glaucoma[^,?]{0,20}|infarto[^,?]{0,20}|epilepsia|Parkinson|Alzheimer|preeclampsia|neumon[ií]a|sepsis)/i);
+    if (condM) P = 'Pacientes con ' + condM[1].trim().toLowerCase();
+    else P = 'Poblacion del estudio';
   }
+  // Trim trailing prepositions
+  P = P.replace(/\s+(tras|mediante|usando|con|en|de|del|que)\s*$/i, '').trim();
 
-  // Patterns to detect intervention
-  var intPatterns = [
-    /(?:tras |con |de |del |mediante |usando )(tratamiento|terapia|cirug[ií]a|inyecci[oó]n|inyecciones|administraci[oó]n|implante|dosis|anti-VEGF|bevacizumab|ranibizumab|aflibercept|metformina|insulina|quimioterapia|radioterapia|inmunoterapia|rehabilitaci[oó]n|fisioterapia|psicoterapia|f[aá]rmaco|medicamento|vacuna|stent|by-?pass|transplante|di[aá]lisis|ventilaci[oó]n|oxigenoterapia|Deep Learning|inteligencia artificial|IA|algoritmo)[^,.?]*/i,
-    /(?:eficacia|efectividad|efecto|impacto|precision) (?:de |del )(la |el |los |las )?([^,.?]+)/i
-  ];
+  // ── Intervention: find treatment/drug/procedure ──
   var I = '';
-  for (var ii = 0; ii < intPatterns.length; ii++) {
-    var im = q.match(intPatterns[ii]);
-    if (im) { I = (im[2] || im[0]).replace(/^(tras |con |de |del |mediante |usando )/, '').trim(); I = I.charAt(0).toUpperCase() + I.slice(1); break; }
+  var intM = clean.match(/(?:tras |mediante |usando |con )((?:inyecciones?|tratamiento|terapia|cirug[ií]a|administraci[oó]n|implante|dosis)(?:\s+(?:de\s+|del?\s+|intrav[ií]tre(?:a|o)\s+(?:de\s+)?)?)?(?:anti-VEGF|bevacizumab|ranibizumab|aflibercept|brolucizumab|faricimab|metformina|insulina|quimioterapia|radioterapia|inmunoterapia|corticoides|triamcinolona|dexametasona|[a-z\-]+ab)?[^,?]{0,40}?)(?=\?|$|,| en | sobre | para )/i);
+  if (!intM) intM = clean.match(/(?:tras |mediante |usando |con )((?:anti-VEGF|bevacizumab|ranibizumab|aflibercept|metformina|insulina|quimioterapia|radioterapia|Deep Learning|inteligencia artificial)[^,?]{0,30}?)(?=\?|$|,| en | sobre )/i);
+  if (intM) {
+    I = intM[1].trim();
+    I = I.charAt(0).toUpperCase() + I.slice(1);
   }
   if (!I) {
-    // Heuristic: take words after "de" or "del" or main noun phrases
-    var deMatch = q.match(/(?:ganancia|reducci[oó]n|efecto|eficacia|efectividad|impacto|resultado|precisi[oó]n) .{0,10}(?:de |del |con |tras )((?:la |el |los |las )?[^,.?]{5,80})/i);
-    if (deMatch) I = deMatch[1].trim();
+    var intFallback = clean.match(/(?:eficacia|efectividad|efecto|impacto|precisi[oó]n) (?:de |del )((?:la |el |los |las )?[^,?]{5,60}?)(?=\?|$|,| en | sobre | para )/i);
+    if (intFallback) I = intFallback[1].trim();
     else I = 'Intervencion evaluada en el estudio';
   }
 
-  // Comparator
-  var compPatterns = [
-    /(?:compar|versus|vs\.?|frente a|en comparaci[oó]n con|contra) ([^,.?]+)/i,
-    /(?:placebo|control|est[aá]ndar|convencional|habitual|sham)/i
-  ];
+  // ── Comparator ──
   var C = '';
-  for (var ci = 0; ci < compPatterns.length; ci++) {
-    var cm = q.match(compPatterns[ci]);
-    if (cm) { C = (cm[1] || cm[0]).trim(); C = C.charAt(0).toUpperCase() + C.slice(1); break; }
+  var compM = clean.match(/(?:compar\w+ con|versus|vs\.?|frente a|en comparaci[oó]n con|contra) ([^,?]+?)(?=\?|$|,| en | sobre )/i);
+  if (compM) { C = compM[1].trim(); C = C.charAt(0).toUpperCase() + C.slice(1); }
+  if (!C) {
+    if (clean.match(/placebo/i)) C = 'Placebo';
+    else if (clean.match(/control|est[aá]ndar|convencional/i)) C = 'Tratamiento convencional';
+    else C = 'Tratamiento estandar o placebo';
   }
-  if (!C) C = 'Tratamiento estandar o placebo';
 
-  // Outcome
-  var outPatterns = [
-    /(?:ganancia|reducci[oó]n|mejora|cambio|tasa|incidencia|prevalencia|mortalidad|supervivencia|recurrencia|respuesta|remisi[oó]n|agudeza|espesor|presi[oó]n|HbA1c|IMC|calidad de vida|dolor|funci[oó]n|puntaje|score)[^,.?]*/i
-  ];
+  // ── Outcome: find measurable endpoints ──
   var O = '';
-  for (var oi = 0; oi < outPatterns.length; oi++) {
-    var om = q.match(outPatterns[oi]);
-    if (om) { O = om[0].trim(); O = O.charAt(0).toUpperCase() + O.slice(1); break; }
+  // Try to get multiple outcomes joined by "y"
+  var outM = clean.match(/((?:ganancia|reducci[oó]n|mejora|cambio|tasa de|incidencia|prevalencia|mortalidad|supervivencia|recurrencia|respuesta|remisi[oó]n|agudeza|espesor|presi[oó]n|HbA1c|IMC|calidad de vida|dolor|funci[oó]n|puntaje|score)[^,?]{0,60}?(?:y (?:la |el |los |las )?(?:reducci[oó]n|mejora|cambio|ganancia|agudeza|espesor|presi[oó]n|calidad|mortalidad|supervivencia|tasa|respuesta|dolor|funci[oó]n)[^,?]{0,60})?)(?= en | de pacientes| tras | mediante |\?|$)/i);
+  if (outM) {
+    O = outM[1].trim();
+    O = O.charAt(0).toUpperCase() + O.slice(1);
   }
-  if (!O) O = 'Desenlaces clinicos primarios medibles';
+  if (!O) {
+    var outSimple = clean.match(/(ganancia visual[^,?]{0,30}|reducci[oó]n del espesor[^,?]{0,30}|agudeza visual[^,?]{0,20}|espesor foveal[^,?]{0,30}|presi[oó]n intraocular[^,?]{0,20}|mortalidad[^,?]{0,20}|supervivencia[^,?]{0,20}|calidad de vida[^,?]{0,20}|HbA1c[^,?]{0,20})/i);
+    if (outSimple) { O = outSimple[1].trim(); O = O.charAt(0).toUpperCase() + O.slice(1); }
+    else O = 'Desenlaces clinicos primarios medibles';
+  }
 
   return { P: P, I: I, C: C, O: O };
 }
