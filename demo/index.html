@@ -2976,20 +2976,7 @@ function renderFrameworkSection(pd) {
   h += '<button id="btnRegenerarPregunta" onclick="regenerarPreguntaPicot()" style="display:' + (pd.pregunta_editada ? 'inline-flex' : 'none') + ';" class="items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-galatea/10 text-galatea hover:bg-galatea/20 transition-colors"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M2.985 19.644l3.181-3.183"/></svg>Regenerar desde PICOT</button></div>';
   h += '</div>';
   h += '</div>';
-  // Study Type Selector — interactive cards
-  var currentTypeId = (simData && simData.study_type_id) || selectedStudyTypeId || (st.type ? detectStudyTypeId(fw, '') : 'rs_ma');
-  h += '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">';
-  h += '<div class="flex items-center justify-between mb-3"><h3 class="font-bold text-gray-900">Tipo de Estudio</h3>';
-  h += '<span class="px-3 py-1 rounded-full text-[10px] font-black bg-galatea/10 text-galatea">&#x1F3AF; Selecciona tu diseno</span></div>';
-  if (st.type) {
-    h += '<div class="text-sm font-bold text-galatea mb-1">Detectado: '+esc(st.type)+'</div>';
-    h += '<div class="text-xs text-gray-500 mb-3">'+esc(st.justification||'Puedes cambiar el tipo antes de continuar.')+'</div>';
-  } else {
-    h += '<div class="text-xs text-gray-500 mb-3">Selecciona el diseno metodologico que mejor se ajuste a tu pregunta de investigacion.</div>';
-  }
-  h += '<div id="studyTypeSelector"></div>';
-  h += '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" onload="renderStudyTypeSelectorInner(document.getElementById(\'studyTypeSelector\'),\'' + currentTypeId + '\');this.remove();" style="display:none">';
-  h += '</div>';
+  // Study Type Selector moved to Etapa 2 (Paso 1)
   h += '</div>';
   return h;
 }
@@ -4438,11 +4425,12 @@ var stage2HasExternalInvestigators = false;
 var stage2ConfidentialitySigned = false;
 
 var STAGE2_AGENTS = [
-  { id:5, name:'Regulatorio', phases:[1,3], color:'#DC2626', desc:'Clasificacion del proyecto, ruta de aprobacion y guias institucionales', activeMsg:'Analizando tipo de proyecto y determinando ruta regulatoria...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75a48.36 48.36 0 0 0-7.5.582V21"/></svg>', check: function() { return stage2Step > 3; } },
-  { id:6, name:'Documental', phases:[4,4], color:'#2563EB', desc:'Preparacion de documentacion pre-poblada con datos de Etapa 1', activeMsg:'Generando documentos pre-poblados...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>', check: function() { return stage2Step > 4; } },
+  { id:5, name:'Regulatorio', phases:[1,4], color:'#DC2626', desc:'Tipo de estudio, clasificacion del proyecto, ruta de aprobacion y guias institucionales', activeMsg:'Analizando tipo de estudio y determinando ruta regulatoria...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75a48.36 48.36 0 0 0-7.5.582V21"/></svg>', check: function() { return stage2Step > 4; } },
+  { id:6, name:'Documental', phases:[5,5], color:'#2563EB', desc:'Preparacion de documentacion pre-poblada con datos de Etapa 1', activeMsg:'Generando documentos pre-poblados...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>', check: function() { return stage2Step > 5; } },
 ];
 
 var STAGE2_PHASE_BUTTONS = {
+  study_type: { label: 'Confirmar Tipo de Estudio', icon: 'M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z' },
   tipo_proyecto: { label: 'Confirmar Tipo de Proyecto', icon: 'M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z' },
   ruta: { label: 'Continuar con Ruta Seleccionada', icon: 'M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3' },
   guias: { label: 'Preparar Documentacion', icon: 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z' },
@@ -4454,7 +4442,7 @@ var STAGE2_PHASE_BUTTONS = {
 };
 
 var STAGE2_REASONING = {
-  transition: 'Excelente. La Etapa 1 ha finalizado con exito. Ahora debemos preparar toda la documentacion de tu proyecto siguiendo las <strong>guias del Departamento de Cirugia – FSFB</strong>. Son 4 pasos: clasificacion, ruta, guias y documentacion.',
+  transition: 'Excelente. La Etapa 1 ha finalizado con exito. Ahora debemos preparar toda la documentacion de tu proyecto siguiendo las <strong>guias del Departamento de Cirugia – FSFB</strong>. Son 5 pasos: tipo de estudio, clasificacion, ruta, guias y documentacion.',
   tipo_proyecto_pre: 'Primero necesito clasificar tu proyecto. Segun la naturaleza de tu investigacion, puede ser un Repositorio, un Protocolo, un estudio Multicentrico, un Ensayo Clinico, una Revision Sistematica, un Meta-analisis o un Reporte de Caso. Esta clasificacion determina el formato y los requisitos que debes cumplir.',
   tipo_proyecto_done: function(tipo) { return 'Proyecto clasificado como <strong>' + tipo + '</strong>. Antes de continuar, te recomiendo revisar el documento de viabilidad (FORMATO DE EVALUACION DE VIABILIDAD PARA IDEAS INICIALES DE INVESTIGACION) para confirmar que es factible su realizacion.'; },
   ruta_pre: 'Ahora debo determinar si tu proyecto requiere asesoria previa por la <strong>Subdireccion de Estudios Clinicos y Epidemiologia Clinica</strong>, o si puede pasar directamente al Comite de Etica. Esto depende del tipo de patrocinio, si hay intervenciones con medicamentos, y si es multicentrico.',
@@ -4686,7 +4674,7 @@ function startStage2() {
   simulationAborted = false;
   // Update header for stage 2
   $('projectTitle').textContent = 'Documentacion — FSFB';
-  $('projectMeta').textContent = 'Etapa 2: Documentacion | Paso 0 / 4';
+  $('projectMeta').textContent = 'Etapa 2: Documentacion | Paso 0 / 5';
   showBubble(); // Ensure bubble is visible for Stage 2
   renderStage2AgentGrid();
   runStage2Simulation();
@@ -4694,10 +4682,29 @@ function startStage2() {
 
 async function runStage2Simulation() {
   try {
-  // ── PASO 1: Tipo de Proyecto ──
+  // ── PASO 1: Tipo de Estudio (moved from Etapa 1) ──
   stage2Step = 1;
+  currentSimPhase = 's2_study_type';
+  setBubbleStatus('thinking', 'Paso 1 — Tipo de Estudio');
+  setBubbleThinking();
+  renderStage2Header();
+  renderStage2AgentGrid();
+  await delay(1500);
+  await bubbleTypewriter('Antes de clasificar tu proyecto, necesito confirmar el <strong>tipo de estudio</strong> que vas a realizar. Esto determina la ruta metodologica, los requisitos documentales y el plan de analisis estadistico.', 32);
+  await delay(1000);
+  // Show study type cards and wait for selection
+  await awaitStage2StudyTypeSelection();
+  if (simulationAborted) return;
+  await delay(800);
+  var stCfgSelected = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  await bubbleTypewriter('Tipo de estudio confirmado: <strong>' + (stCfgSelected ? stCfgSelected.label : 'Revision Sistematica con Meta-analisis') + '</strong>. ' + (stCfgSelected && !stCfgSelected.needsMetaAnalysis ? 'Este diseno no requiere meta-analisis; se adaptara el plan de analisis.' : 'Este diseno incluye sintesis cuantitativa con meta-analisis.'), 32);
+  await awaitStage2Confirmation('1 — Tipo de Estudio', 'study_type');
+  if (simulationAborted) return;
+
+  // ── PASO 2: Tipo de Proyecto ──
+  stage2Step = 2;
   currentSimPhase = 's2_tipo';
-  setBubbleStatus('thinking', 'Paso 1 — Tipo de Proyecto');
+  setBubbleStatus('thinking', 'Paso 2 — Tipo de Proyecto');
   setBubbleThinking();
   renderStage2Header();
   renderStage2AgentGrid();
@@ -4709,13 +4716,13 @@ async function runStage2Simulation() {
   if (simulationAborted) return;
   await delay(1000);
   await bubbleTypewriter(STAGE2_REASONING.tipo_proyecto_done(stage2ProjectType), 32);
-  await awaitStage2Confirmation('1 — Tipo de Proyecto', 'tipo_proyecto');
+  await awaitStage2Confirmation('2 — Tipo de Proyecto', 'tipo_proyecto');
   if (simulationAborted) return;
 
-  // ── PASO 2: Ruta de Aprobacion ──
-  stage2Step = 2;
+  // ── PASO 3: Ruta de Aprobacion ──
+  stage2Step = 3;
   currentSimPhase = 's2_ruta';
-  setBubbleStatus('thinking', 'Paso 2 — Ruta de Aprobacion');
+  setBubbleStatus('thinking', 'Paso 3 — Ruta de Aprobacion');
   setBubbleThinking();
   renderStage2Header();
   renderStage2AgentGrid();
@@ -4742,11 +4749,11 @@ async function runStage2Simulation() {
   await awaitStage2Confirmation('2 — Ruta de Aprobacion', 'ruta');
   if (simulationAborted) return;
 
-  // ── PASO 3: Guia Correspondiente ──
-  stage2Step = 3;
+  // ── PASO 4: Guia Correspondiente ──
+  stage2Step = 4;
   currentSimPhase = 's2_guias';
   stage2SimData = generateStage2SimData(stage2ProjectType, stage2Route);
-  setBubbleStatus('thinking', 'Paso 3 — Guias Institucionales');
+  setBubbleStatus('thinking', 'Paso 4 — Guias Institucionales');
   setBubbleThinking();
   renderStage2Header();
   renderStage2AgentGrid();
@@ -4754,13 +4761,13 @@ async function runStage2Simulation() {
   await bubbleTypewriter(STAGE2_REASONING.guias_pre(stage2ProjectType, stage2Route), 32);
   await delay(2000);
   renderStage2DetailedViews();
-  await awaitStage2Confirmation('3 — Guias', 'guias');
+  await awaitStage2Confirmation('4 — Guias', 'guias');
   if (simulationAborted) return;
 
-  // ── PASO 4: Preparar Documentacion ──
-  stage2Step = 4;
+  // ── PASO 5: Preparar Documentacion ──
+  stage2Step = 5;
   currentSimPhase = 's2_documentacion';
-  setBubbleStatus('thinking', 'Paso 4 — Documentacion');
+  setBubbleStatus('thinking', 'Paso 5 — Documentacion');
   setBubbleThinking();
   renderStage2Header();
   renderStage2AgentGrid();
@@ -4773,13 +4780,13 @@ async function runStage2Simulation() {
   await delay(1500);
   renderStage2DetailedViews();
   setBubbleStatus('listening', 'Revisa los documentos');
-  await awaitStage2Confirmation('4 — Documentacion', 'documentacion');
+  await awaitStage2Confirmation('5 — Documentacion', 'documentacion');
   if (simulationAborted) return;
 
-  // Done — Stage 2 ends at Paso 4 (documentation)
+  // Done — Stage 2 ends at Paso 5 (documentation)
   simulationRunning = false;
   currentSimPhase = 's2_done';
-  stage2Step = 5;
+  stage2Step = 6;
   setBubbleStatus('done', 'Etapa 2 Completada');
   await delay(1500);
   await bubbleTypewriter('Documentacion completa. Ahora pasaremos a la <strong>Etapa 3: Ruta Institucional FSFB</strong>, donde tu proyecto sera revisado, sometido a la Subdireccion y al Comite de Etica.', 32);
@@ -5038,6 +5045,30 @@ async function runStage3InstSimulation() {
 }
 
 // Await project type selection (promise-based)
+function awaitStage2StudyTypeSelection() {
+  return new Promise(function(resolve) {
+    window._studyTypeResolve = resolve;
+    renderStage2DetailedViews();
+  });
+}
+
+function renderStage2StudyTypeSelector() {
+  var h = '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 s2-appear">';
+  h += '<div class="flex items-center gap-3 mb-5"><div class="w-8 h-8 rounded-lg bg-galatea/10 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg></div>';
+  h += '<div><h3 class="font-bold text-gray-900">Paso 1 — Tipo de Estudio</h3><p class="text-[10px] text-gray-400">Selecciona el diseno metodologico de tu investigacion</p></div></div>';
+  var detectedId = (simData && simData.study_type_id) || selectedStudyTypeId || 'rs_ma';
+  if (simData && simData.study_type && simData.study_type.type) {
+    h += '<div class="text-sm font-bold text-galatea mb-1">Detectado en Etapa 1: ' + esc(simData.study_type.type) + '</div>';
+    h += '<div class="text-xs text-gray-500 mb-3">Puedes confirmar o cambiar el tipo de estudio antes de continuar.</div>';
+  } else {
+    h += '<div class="text-xs text-gray-500 mb-3">Selecciona el diseno metodologico que mejor se ajuste a tu pregunta de investigacion.</div>';
+  }
+  h += '<div id="studyTypeSelector"></div>';
+  h += '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" onload="renderStudyTypeSelectorInner(document.getElementById(\'studyTypeSelector\'),\'' + detectedId + '\');this.remove();" style="display:none">';
+  h += '</div>';
+  return h;
+}
+
 function awaitProjectTypeSelection() {
   return new Promise(function(resolve) {
     window._projectTypeResolve = resolve;
@@ -5122,14 +5153,14 @@ function animateSubmissionProgress() {
 
 function renderStage2Header() {
   var step = stage2Step || 0;
-  var pct = Math.min(100, Math.round((step / 4) * 100));
-  $('projectMeta').textContent = 'Etapa 2: Documentacion | Paso ' + step + ' / 4';
+  var pct = Math.min(100, Math.round((step / 5) * 100));
+  $('projectMeta').textContent = 'Etapa 2: Documentacion | Paso ' + step + ' / 5';
   var bar = $('progressBar'); if (bar) bar.style.width = pct + '%';
   var pl = $('progressLabel'); if (pl) pl.textContent = pct + '%';
-  var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / 4';
+  var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / 5';
   var badge = $('statusBadge');
   if (badge) {
-    var done = step > 4;
+    var done = step > 5;
     badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ' + (done ? 'bg-verde/10 text-verde' : 'bg-galatea/10 text-galatea');
     badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full ' + (done ? 'bg-verde' : 'bg-galatea animate-pulse') + '"></span>' + (done ? 'Completado' : 'Etapa 2');
   }
@@ -5158,32 +5189,39 @@ function renderStage2DetailedViews() {
   var html = '';
 
   // Collapse completed early steps to keep page short
-  if (stage2Step >= 4) {
-    // Show compact summary of steps 1-3
+  if (stage2Step >= 5) {
+    // Show compact summary of steps 1-4
     html += '<div class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 text-xs text-gray-500">';
-    html += '<div class="flex items-center gap-2 mb-1"><span class="text-verde font-bold">&#x2713;</span><strong>Paso 1:</strong> ' + (stage2ProjectType || 'Protocolo') + '</div>';
-    html += '<div class="flex items-center gap-2 mb-1"><span class="text-verde font-bold">&#x2713;</span><strong>Paso 2:</strong> ' + (stage2Route === 'subdireccion' ? 'Via Subdireccion' : 'Directo a Etica') + '</div>';
-    html += '<div class="flex items-center gap-2"><span class="text-verde font-bold">&#x2713;</span><strong>Paso 3:</strong> Guias revisadas</div>';
+    var stLabel = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId).label : 'No seleccionado';
+    html += '<div class="flex items-center gap-2 mb-1"><span class="text-verde font-bold">&#x2713;</span><strong>Paso 1:</strong> ' + stLabel + '</div>';
+    html += '<div class="flex items-center gap-2 mb-1"><span class="text-verde font-bold">&#x2713;</span><strong>Paso 2:</strong> ' + (stage2ProjectType || 'Protocolo') + '</div>';
+    html += '<div class="flex items-center gap-2 mb-1"><span class="text-verde font-bold">&#x2713;</span><strong>Paso 3:</strong> ' + (stage2Route === 'subdireccion' ? 'Via Subdireccion' : 'Directo a Etica') + '</div>';
+    html += '<div class="flex items-center gap-2"><span class="text-verde font-bold">&#x2713;</span><strong>Paso 4:</strong> Guias revisadas</div>';
     html += '</div>';
   } else {
-    // Paso 1: Type selector (always show if selected)
-    if (currentSimPhase === 's2_tipo' || stage2ProjectType) {
+    // Paso 1: Study Type selector
+    if (currentSimPhase === 's2_study_type' || selectedStudyTypeId) {
+      html += renderStage2StudyTypeSelector();
+    }
+
+    // Paso 2: Project Type selector (always show if selected)
+    if ((currentSimPhase === 's2_tipo' || stage2ProjectType) && stage2Step >= 2) {
       html += renderProjectTypeSelector();
     }
 
-    // Paso 2: Route decision
-    if (stage2Step >= 2) {
+    // Paso 3: Route decision
+    if (stage2Step >= 3) {
       html += renderRouteDecisionTree();
     }
 
-    // Paso 3: Guides
-    if (stage2Step >= 3 && stage2SimData && stage2SimData.guias) {
+    // Paso 4: Guides
+    if (stage2Step >= 4 && stage2SimData && stage2SimData.guias) {
       html += renderGuidesList();
     }
   }
 
-  // Paso 4: Documentation
-  if (stage2Step >= 4 && stage2SimData) {
+  // Paso 5: Documentation
+  if (stage2Step >= 5 && stage2SimData) {
     html += renderDocumentChecklist();
   }
 
@@ -5195,7 +5233,7 @@ function renderStage2DetailedViews() {
 function renderProjectTypeSelector() {
   var h = '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 s2-appear">';
   h += '<div class="flex items-center gap-3 mb-5"><div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"><svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z"/></svg></div>';
-  h += '<div><h3 class="font-bold text-gray-900">Paso 1 — Tipo de Proyecto</h3><p class="text-[10px] text-gray-400">Selecciona la categoria de tu investigacion</p></div></div>';
+  h += '<div><h3 class="font-bold text-gray-900">Paso 2 — Tipo de Proyecto</h3><p class="text-[10px] text-gray-400">Selecciona la categoria de tu investigacion</p></div></div>';
   h += '<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">';
   STAGE2_PROJECT_TYPES.forEach(function(pt) {
     var sel = stage2ProjectType === pt.key;
@@ -5215,7 +5253,7 @@ function renderProjectTypeSelector() {
 
 // ── Paso 2: Route Decision Tree ──
 function renderRouteDecisionTree() {
-  var h = '<div class="phase-divider"><span>Paso 2: Ruta de Aprobacion</span></div>';
+  var h = '<div class="phase-divider"><span>Paso 3: Ruta de Aprobacion</span></div>';
   h += '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 s2-appear">';
   h += '<div class="flex items-center gap-3 mb-5"><h3 class="font-bold text-gray-900">Equipo de Investigadores</h3></div>';
 
@@ -5271,7 +5309,7 @@ function renderRouteDecisionTree() {
 function renderGuidesList() {
   if (!stage2SimData) return '';
   var guias = stage2SimData.guias;
-  var h = '<div class="phase-divider"><span>Paso 3: Guias Institucionales</span></div>';
+  var h = '<div class="phase-divider"><span>Paso 4: Guias Institucionales</span></div>';
   h += '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 s2-appear">';
   h += '<div class="flex items-center gap-3 mb-4"><h3 class="font-bold text-gray-900">Guias y Formatos</h3><span class="text-[10px] text-gray-400">Tipo: ' + stage2ProjectType + ' | Ruta: ' + (stage2Route === 'subdireccion' ? 'Via Subdireccion' : 'Directo Etica') + '</span></div>';
   h += '<div class="space-y-3">';
@@ -6196,7 +6234,7 @@ function galateaAiAssist(idx) {
 function renderDocumentChecklist() {
   if (!stage2SimData) return '';
   var docs = stage2SimData.docsSubdireccion;
-  var h = '<div class="phase-divider"><span>Paso 4: Documentacion Requerida</span></div>';
+  var h = '<div class="phase-divider"><span>Paso 5: Documentacion Requerida</span></div>';
 
   // Galatea intro message
   h += '<div class="bg-galatea/5 border border-galatea/20 rounded-2xl p-5 mb-4 s2-appear">';
@@ -6659,8 +6697,18 @@ async function startStage4() {
   currentStage = 4;
   stage3Step = 0;
 
+  // Auto-detect study type if not yet selected
+  if (!selectedStudyTypeId) {
+    var fw = (simData && simData.framework) || (project && project.phase_data && project.phase_data.framework) || 'PICOT';
+    var q = (simData && simData.question) || (project && project.question) || '';
+    selectedStudyTypeId = detectStudyTypeId(fw, q);
+    console.log('Galatea: Auto-detected study type:', selectedStudyTypeId);
+    if (simData) simData.study_type_id = selectedStudyTypeId;
+  }
+
   var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
   var needsMA = curCfg ? curCfg.needsMetaAnalysis : true;
+  console.log('Galatea Stage4: studyTypeId=' + selectedStudyTypeId + ', needsMA=' + needsMA + ', curCfg=' + (curCfg ? curCfg.label : 'null'));
 
   if (needsMA) {
     // ── Meta-analysis path (RS+MA, DTA) ──
@@ -6668,6 +6716,7 @@ async function startStage4() {
       var extractionData = getExtractionStudies();
       var rMeasure = curCfg ? curCfg.rMeasure : 'OR';
       var rModel = curCfg ? curCfg.rModel : 'random';
+      console.log('Galatea: Calling R API at ' + R_API_URL + '/analyze with measure=' + rMeasure + ', model=' + rModel + ', studies=' + extractionData.length);
       stage3SimData = await callRAnalysis(extractionData, rMeasure, rModel);
       stage3SimData._source = 'R';
       console.log('Galatea: Analisis estadistico calculado con R (' + (curCfg ? curCfg.statsTemplate.rPkg : 'metafor') + ')');
@@ -8734,10 +8783,10 @@ function renderStage5Header() {
   $('projectMeta').textContent = 'Etapa 5: Articulo | Paso ' + step + ' / 4';
   var bar = $('progressBar'); if (bar) bar.style.width = pct + '%';
   var pl = $('progressLabel'); if (pl) pl.textContent = pct + '%';
-  var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / 4';
+  var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / 5';
   var badge = $('statusBadge');
   if (badge) {
-    var done = step > 4;
+    var done = step > 5;
     badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ' + (done ? 'bg-verde/10 text-verde' : 'bg-pink-100 text-pink-700');
     badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full ' + (done ? 'bg-verde' : 'bg-pink-500 animate-pulse') + '"></span>' + (done ? 'Completado' : 'Etapa 5');
   }
