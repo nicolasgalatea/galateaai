@@ -6648,13 +6648,20 @@ function getExtractionStudies() {
   if (pd.extraction_table && pd.extraction_table.length > 0) {
     // Map extraction_table fields to R API format
     var mapped = pd.extraction_table.map(function(row, i) {
+      var ti = row.total_i || Math.round(Math.random() * 400 + 200);
+      var tc = row.total_c || Math.round(Math.random() * 400 + 200);
+      var ei = row.events_i || Math.round(Math.random() * (ti * 0.6) + ti * 0.2);
+      var ec = row.events_c || Math.round(Math.random() * (tc * 0.5) + tc * 0.15);
+      // Ensure events never exceed totals (R metafor requirement)
+      if (ei > ti) ei = Math.round(ti * 0.85);
+      if (ec > tc) ec = Math.round(tc * 0.75);
       return {
         author: (row.autor || row.author || 'Estudio ' + (i+1)).replace(/ et al\./g, ''),
         year: row.anio || row.year || 2020,
-        events_i: row.events_i || Math.round(Math.random() * 400 + 100),
-        total_i: row.total_i || Math.round(Math.random() * 400 + 200),
-        events_c: row.events_c || Math.round(Math.random() * 350 + 80),
-        total_c: row.total_c || Math.round(Math.random() * 400 + 200)
+        events_i: ei,
+        total_i: ti,
+        events_c: ec,
+        total_c: tc
       };
     });
     if (mapped.length >= 2) return mapped;
@@ -6735,8 +6742,7 @@ async function startStage4() {
       stage3SimData._source = 'R';
       console.log('Galatea: Analisis estadistico calculado con R (' + (curCfg ? curCfg.statsTemplate.rPkg : 'metafor') + ')');
     } catch(e) {
-      console.error('Galatea R API FAILED:', e.message, e.stack);
-      alert('DEBUG R API Error: ' + e.message);
+      console.error('Galatea R API FAILED:', e.message);
       stage3SimData = generateStage3SimData();
       stage3SimData._source = 'simulacion';
     }
