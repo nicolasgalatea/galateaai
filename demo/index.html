@@ -6669,6 +6669,20 @@ function getExtractionStudies() {
   ];
 }
 
+// Unwrap R jsonlite single-element arrays recursively: [3.94] → 3.94
+function unwrapR(obj) {
+  if (Array.isArray(obj)) {
+    if (obj.length === 1 && typeof obj[0] !== 'object') return obj[0];
+    return obj.map(unwrapR);
+  }
+  if (obj && typeof obj === 'object') {
+    var out = {};
+    for (var k in obj) { if (obj.hasOwnProperty(k)) out[k] = unwrapR(obj[k]); }
+    return out;
+  }
+  return obj;
+}
+
 async function callRAnalysis(studies, measure, model) {
   var payload = {
     studies: studies,
@@ -6683,6 +6697,9 @@ async function callRAnalysis(studies, measure, model) {
   if (!resp.ok) throw new Error('R API error: ' + resp.status);
   var result = await resp.json();
   if (result.error) throw new Error(result.message || 'R analysis failed');
+  // R's jsonlite wraps scalars in arrays — unwrap them
+  result = unwrapR(result);
+  console.log('Galatea R API: unwrapped result keys:', Object.keys(result), 'pooled.or:', result.pooled && result.pooled.or);
   return result;
 }
 
