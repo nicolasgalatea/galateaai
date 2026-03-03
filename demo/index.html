@@ -6735,7 +6735,8 @@ async function startStage4() {
       stage3SimData._source = 'R';
       console.log('Galatea: Analisis estadistico calculado con R (' + (curCfg ? curCfg.statsTemplate.rPkg : 'metafor') + ')');
     } catch(e) {
-      console.warn('R API no disponible, usando simulacion:', e);
+      console.error('Galatea R API FAILED:', e.message, e.stack);
+      alert('DEBUG R API Error: ' + e.message);
       stage3SimData = generateStage3SimData();
       stage3SimData._source = 'simulacion';
     }
