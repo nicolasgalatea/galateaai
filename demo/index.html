@@ -273,16 +273,10 @@
         <div class="shrink-0 float">
           <div class="relative">
             <div class="w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gradient-to-br from-galatea/30 via-bayer/20 to-verde/30 p-1">
-              <div class="w-full h-full rounded-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center relative overflow-hidden">
-                <!-- Doctora silhouette -->
-                <svg class="w-24 h-24 sm:w-28 sm:h-28 text-white/80" viewBox="0 0 120 120" fill="currentColor">
-                  <circle cx="60" cy="35" r="20" opacity=".9"/>
-                  <path d="M30 95 C30 70, 42 58, 60 58 C78 58, 90 70, 90 95 L90 120 L30 120Z" opacity=".9"/>
-                  <rect x="50" y="68" width="20" height="24" rx="2" fill="#0091DF" opacity=".6"/>
-                  <circle cx="60" cy="75" r="3" fill="white" opacity=".8"/>
-                </svg>
-                <!-- Stethoscope hint -->
-                <div class="absolute bottom-3 right-3 w-6 h-6 rounded-full bg-galatea/40 flex items-center justify-center">
+              <div class="w-full h-full rounded-full overflow-hidden relative">
+                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face" alt="Dra. Galatea — Investigadora Clinica" class="w-full h-full object-cover" loading="eager"/>
+                <!-- Stethoscope badge -->
+                <div class="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-galatea/80 backdrop-blur-sm flex items-center justify-center shadow-lg">
                   <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.3 24.3 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19 14.5"/>
                   </svg>
@@ -303,13 +297,13 @@
           <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-3">
             Galatea <span class="text-transparent bg-clip-text bg-gradient-to-r from-galatea to-verde">AI</span>
           </h1>
-          <h2 class="text-lg sm:text-xl font-bold text-white/60 mb-2">Motor de Evidencia Cientifica</h2>
+          <h2 class="text-lg sm:text-xl font-bold text-white/60 mb-2">Tu copiloto de investigacion clinica</h2>
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 mb-6">
             <span class="w-2 h-2 rounded-full bg-verde animate-pulse"></span>
-            <span class="text-xs font-semibold text-verde/90">4 Agentes Especializados</span>
+            <span class="text-xs font-semibold text-verde/90">De la pregunta al manuscrito</span>
           </div>
           <p class="text-sm sm:text-base text-white/50 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
-            Hola, soy <span class="text-white/80 font-semibold">Galatea</span>. Soy tu asistente de investigacion clinica especializada en revisiones sistematicas. Cuentame tu pregunta y orquestare <span class="text-galatea/80 font-semibold">4 agentes IA</span> en <span class="text-verde/80 font-semibold">10 fases</span> para generar evidencia cientifica verificable bajo estandares <span class="text-verde/80 font-semibold">Cochrane</span> y <span class="text-verde/80 font-semibold">PRISMA</span>.
+            Escribe tu pregunta clinica y Galatea orquesta <span class="text-galatea/80 font-semibold">4 agentes IA</span> que estructuran tu <span class="text-white/80 font-semibold">PICOT</span>, validan la metodologia, preparan la documentacion institucional <span class="text-verde/80 font-semibold">FSFB</span> y generan el analisis estadistico con <span class="text-verde/80 font-semibold">R</span> — todo bajo estandares <span class="text-verde/80 font-semibold">Cochrane</span>, <span class="text-verde/80 font-semibold">PRISMA</span> y <span class="text-verde/80 font-semibold">EQUATOR</span>.
           </p>
 
           <!-- Input area -->
@@ -339,7 +333,7 @@
               Iniciar Analisis
             </button>
             <p class="mt-3 text-[11px] text-white/20 text-center lg:text-left">
-              Al hacer click, Galatea orquesta: Arquitecto → Metodologo → Evidencia → Redactor
+              Arquitecto → Metodologo → Evidencia → Redactor | 5 etapas automatizadas
             </p>
           </div>
         </div>
