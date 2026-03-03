@@ -1482,34 +1482,125 @@ function generateSimulationData(question) {
     { name: '06_documentos_etica', icon: '&#x1F6E1;&#xFE0F;', files: ['Declaracion_conflictos.pdf', 'Aprobacion_institucional.pdf'], color: 'teal' },
   ];
 
-  var searchRegistry = [
-    { database: 'PubMed/MEDLINE', equation: '("Diabetic Retinopathy"[MeSH] OR "diabetic retinopathy"[tiab]) AND ("Deep Learning"[MeSH] OR "artificial intelligence"[tiab] OR "CNN"[tiab]) AND ("sensitivity"[tiab] OR "specificity"[tiab] OR "AUC"[tiab])', results: 312, included: 8, date: '2025-01-15', color: 'blue' },
-    { database: 'Cochrane Library', equation: '"diabetic retinopathy" AND "deep learning" AND "diagnostic accuracy"', results: 45, included: 2, date: '2025-01-15', color: 'indigo' },
-    { database: 'LILACS', equation: '(retinopatia diabetica) AND (aprendizaje profundo OR inteligencia artificial) AND (sensibilidad OR especificidad)', results: 28, included: 1, date: '2025-01-16', color: 'green' },
-    { database: 'Scopus', equation: 'TITLE-ABS-KEY("diabetic retinopathy" AND "deep learning" AND "diagnostic")', results: 289, included: 6, date: '2025-01-16', color: 'amber' },
-    { database: 'Web of Science', equation: 'TS=("diabetic retinopathy" AND "deep learning" AND "accuracy")', results: 198, included: 4, date: '2025-01-17', color: 'purple' },
-    { database: 'IEEE Xplore', equation: '"diabetic retinopathy" AND "convolutional neural network" AND "screening"', results: 87, included: 1, date: '2025-01-17', color: 'rose' },
-  ];
+  // ── Build dynamic search data from PICOT terms ──
+  var searchRegistry, descriptorMapping, prisma, stats;
 
-  var descriptorMapping = [
-    { term: 'Retinopatia diabetica', mesh: 'Diabetic Retinopathy', decs: 'Retinopatia Diabetica', emtree: 'diabetic retinopathy' },
-    { term: 'Deep Learning', mesh: 'Deep Learning', decs: 'Aprendizaje Profundo', emtree: 'deep learning' },
-    { term: 'Inteligencia Artificial', mesh: 'Artificial Intelligence', decs: 'Inteligencia Artificial', emtree: 'artificial intelligence' },
-    { term: 'Tamizaje', mesh: 'Mass Screening', decs: 'Tamizaje Masivo', emtree: 'mass screening' },
-    { term: 'Atencion primaria', mesh: 'Primary Health Care', decs: 'Atencion Primaria de Salud', emtree: 'primary health care' },
-    { term: 'Sensibilidad', mesh: 'Sensitivity and Specificity', decs: 'Sensibilidad y Especificidad', emtree: 'sensitivity and specificity' },
-  ];
+  if (isDefault) {
+    searchRegistry = [
+      { database: 'PubMed/MEDLINE', equation: '("Diabetic Retinopathy"[MeSH] OR "diabetic retinopathy"[tiab]) AND ("Deep Learning"[MeSH] OR "artificial intelligence"[tiab] OR "CNN"[tiab]) AND ("sensitivity"[tiab] OR "specificity"[tiab] OR "AUC"[tiab])', results: 312, included: 8, date: '2025-01-15', color: 'blue' },
+      { database: 'Cochrane Library', equation: '"diabetic retinopathy" AND "deep learning" AND "diagnostic accuracy"', results: 45, included: 2, date: '2025-01-15', color: 'indigo' },
+      { database: 'LILACS', equation: '(retinopatia diabetica) AND (aprendizaje profundo OR inteligencia artificial) AND (sensibilidad OR especificidad)', results: 28, included: 1, date: '2025-01-16', color: 'green' },
+      { database: 'Scopus', equation: 'TITLE-ABS-KEY("diabetic retinopathy" AND "deep learning" AND "diagnostic")', results: 289, included: 6, date: '2025-01-16', color: 'amber' },
+      { database: 'Web of Science', equation: 'TS=("diabetic retinopathy" AND "deep learning" AND "accuracy")', results: 198, included: 4, date: '2025-01-17', color: 'purple' },
+      { database: 'IEEE Xplore', equation: '"diabetic retinopathy" AND "convolutional neural network" AND "screening"', results: 87, included: 1, date: '2025-01-17', color: 'rose' },
+    ];
+    descriptorMapping = [
+      { term: 'Retinopatia diabetica', mesh: 'Diabetic Retinopathy', decs: 'Retinopatia Diabetica', emtree: 'diabetic retinopathy' },
+      { term: 'Deep Learning', mesh: 'Deep Learning', decs: 'Aprendizaje Profundo', emtree: 'deep learning' },
+      { term: 'Inteligencia Artificial', mesh: 'Artificial Intelligence', decs: 'Inteligencia Artificial', emtree: 'artificial intelligence' },
+      { term: 'Tamizaje', mesh: 'Mass Screening', decs: 'Tamizaje Masivo', emtree: 'mass screening' },
+      { term: 'Atencion primaria', mesh: 'Primary Health Care', decs: 'Atencion Primaria de Salud', emtree: 'primary health care' },
+      { term: 'Sensibilidad', mesh: 'Sensitivity and Specificity', decs: 'Sensibilidad y Especificidad', emtree: 'sensitivity and specificity' },
+    ];
+    prisma = { identified: 959, duplicates_removed: 312, screened_title: 647, excluded_title: 478, screened_fulltext: 169, excluded_fulltext: 80, quality_assessed: 89, excluded_quality: 77, included_qualitative: 12, included_quantitative: 9 };
+    stats = {
+      pooled_sensitivity: { value: 93.2, ci_low: 89.8, ci_high: 95.6 },
+      pooled_specificity: { value: 91.1, ci_low: 87.4, ci_high: 93.8 },
+      auc_sroc: { value: 0.967, ci_low: 0.948, ci_high: 0.986 },
+      i2_sensitivity: 72.3, i2_specificity: 68.1, cochran_q_p: 0.003,
+      median_n: 15800, mean_n: 131635, sd_n: 189422,
+      studies_rural: 4, rural_sensitivity: 91.8, rural_specificity: 84.3
+    };
+  } else {
+    // ── DYNAMIC: build from parsed PICOT terms ──
+    var pTerm = (parsed.P || '').replace(/^Pacientes con /i, '').trim();
+    var iTerm = (parsed.I || '').trim();
+    var cTerm = (parsed.C || '').trim();
+    var oTerm = (parsed.O || '').trim();
 
-  var prisma = { identified: 959, duplicates_removed: 312, screened_title: 647, excluded_title: 478, screened_fulltext: 169, excluded_fulltext: 80, quality_assessed: 89, excluded_quality: 77, included_qualitative: 12, included_quantitative: 9 };
+    // Helper: capitalize first letter for MeSH-like terms
+    function meshCapitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(); }
 
-  var stats = {
-    pooled_sensitivity: { value: 93.2, ci_low: 89.8, ci_high: 95.6 },
-    pooled_specificity: { value: 91.1, ci_low: 87.4, ci_high: 93.8 },
-    auc_sroc: { value: 0.967, ci_low: 0.948, ci_high: 0.986 },
-    i2_sensitivity: 72.3, i2_specificity: 68.1, cochran_q_p: 0.003,
-    median_n: 15800, mean_n: 131635, sd_n: 189422,
-    studies_rural: 4, rural_sensitivity: 91.8, rural_specificity: 84.3
-  };
+    // Build PubMed equation dynamically
+    var pubTerms = [];
+    if (pTerm) pubTerms.push('("' + pTerm + '"[tiab])');
+    if (iTerm) pubTerms.push('("' + iTerm + '"[tiab])');
+    if (oTerm) pubTerms.push('("' + oTerm + '"[tiab])');
+    var pubmedEq = pubTerms.join(' AND ') || '("' + q + '"[tiab])';
+
+    // Generate varied but seeded counts based on question hash
+    var qHash = 0;
+    for (var hi = 0; hi < q.length; hi++) qHash = ((qHash << 5) - qHash + q.charCodeAt(hi)) | 0;
+    qHash = Math.abs(qHash);
+    var basePubmed = 80 + (qHash % 400);
+    var baseCochrane = 10 + (qHash % 60);
+    var baseLilacs = 5 + (qHash % 35);
+    var baseScopus = 60 + (qHash % 350);
+    var baseWos = 40 + (qHash % 250);
+
+    // Cochrane equation (plain text)
+    var cochraneEq = [pTerm, iTerm, oTerm].filter(Boolean).map(function(t) { return '"' + t + '"'; }).join(' AND ');
+    // LILACS equation (Spanish DeCS style)
+    var lilacsEq = [pTerm, iTerm].filter(Boolean).map(function(t) { return '(' + t + ')'; }).join(' AND ');
+    if (oTerm) lilacsEq += ' AND (' + oTerm + ')';
+    // Scopus equation
+    var scopusEq = 'TITLE-ABS-KEY(' + [pTerm, iTerm].filter(Boolean).map(function(t) { return '"' + t + '"'; }).join(' AND ') + ')';
+    // WoS equation
+    var wosEq = 'TS=(' + [pTerm, iTerm].filter(Boolean).map(function(t) { return '"' + t + '"'; }).join(' AND ') + ')';
+
+    searchRegistry = [
+      { database: 'PubMed/MEDLINE', equation: pubmedEq, results: basePubmed, included: Math.round(basePubmed * 0.03) + 2, date: '2025-01-15', color: 'blue' },
+      { database: 'Cochrane Library', equation: cochraneEq || '"' + q.substring(0, 60) + '"', results: baseCochrane, included: Math.round(baseCochrane * 0.06) + 1, date: '2025-01-15', color: 'indigo' },
+      { database: 'LILACS', equation: lilacsEq || '(' + q.substring(0, 60) + ')', results: baseLilacs, included: Math.round(baseLilacs * 0.08) + 1, date: '2025-01-16', color: 'green' },
+      { database: 'Scopus', equation: scopusEq, results: baseScopus, included: Math.round(baseScopus * 0.04) + 1, date: '2025-01-16', color: 'amber' },
+      { database: 'Web of Science', equation: wosEq, results: baseWos, included: Math.round(baseWos * 0.04) + 1, date: '2025-01-17', color: 'purple' },
+    ];
+
+    // Build descriptor mapping from PICOT terms
+    var allTerms = [pTerm, iTerm, cTerm, oTerm].filter(function(t) { return t && t.length > 3 && !(/^(Tratamiento estandar|Placebo|Intervencion eval|Desenlaces clinicos|Poblacion del)/i.test(t)); });
+    descriptorMapping = allTerms.map(function(t) {
+      var cap = meshCapitalize(t);
+      return { term: cap, mesh: cap, decs: cap, emtree: t.toLowerCase() };
+    });
+
+    // PRISMA flow: derive from search registry totals
+    var totalIdentifiedSim = searchRegistry.reduce(function(s, r) { return s + r.results; }, 0);
+    var totalIncludedSim = searchRegistry.reduce(function(s, r) { return s + r.included; }, 0);
+    var dupRate = 0.25 + (qHash % 15) / 100;
+    var dupsRemoved = Math.round(totalIdentifiedSim * dupRate);
+    var screenedTitle = totalIdentifiedSim - dupsRemoved;
+    var excludedTitle = Math.round(screenedTitle * (0.65 + (qHash % 15) / 100));
+    var screenedFT = screenedTitle - excludedTitle;
+    var excludedFT = Math.round(screenedFT * (0.40 + (qHash % 20) / 100));
+    var qualAssessed = screenedFT - excludedFT;
+    var excludedQual = Math.max(0, qualAssessed - totalIncludedSim);
+    var inclQuali = totalIncludedSim;
+    var inclQuant = Math.max(2, Math.round(totalIncludedSim * 0.75));
+
+    prisma = {
+      identified: totalIdentifiedSim,
+      duplicates_removed: dupsRemoved,
+      screened_title: screenedTitle,
+      excluded_title: excludedTitle,
+      screened_fulltext: screenedFT,
+      excluded_fulltext: excludedFT,
+      quality_assessed: qualAssessed,
+      excluded_quality: excludedQual,
+      included_qualitative: inclQuali,
+      included_quantitative: inclQuant
+    };
+
+    // Stats: generate plausible values seeded by question
+    var baseOR = 1.2 + (qHash % 30) / 10;
+    var baseI2 = 30 + (qHash % 50);
+    stats = {
+      pooled_sensitivity: { value: 75 + (qHash % 20), ci_low: 68 + (qHash % 15), ci_high: 85 + (qHash % 12) },
+      pooled_specificity: { value: 72 + (qHash % 22), ci_low: 65 + (qHash % 18), ci_high: 82 + (qHash % 15) },
+      auc_sroc: { value: parseFloat((0.75 + (qHash % 20) / 100).toFixed(3)), ci_low: parseFloat((0.68 + (qHash % 15) / 100).toFixed(3)), ci_high: parseFloat((0.88 + (qHash % 10) / 100).toFixed(3)) },
+      i2_sensitivity: baseI2, i2_specificity: baseI2 - 4 + (qHash % 8), cochran_q_p: parseFloat((0.001 + (qHash % 50) / 1000).toFixed(3)),
+      median_n: 200 + (qHash % 5000), mean_n: 800 + (qHash % 10000), sd_n: 400 + (qHash % 8000)
+    };
+  }
 
   var equatorChecklist = [
     { guideline: 'PRISMA-DTA 2018', category: 'Reporte', items_total: 27, items_met: 25, status: 'pass', notes: 'Faltante: protocolo en PROSPERO (en proceso), analisis de publicacion sesgada' },
@@ -1518,18 +1609,56 @@ function generateSimulationData(question) {
     { guideline: 'STARD 2015', category: 'Diagnostico', items_total: 30, items_met: 27, status: 'pass', notes: 'Aplicable a estudios primarios incluidos. 3 items N/A para revision' },
   ];
 
-  var extraction = isDefault ? [
-    { autor:'Gulshan V. et al.', anio:2016, pais:'Estados Unidos', diseno:'DTA', n:'128,175', resultado:'AUC 0.991. Sens 97.5%, Esp 93.4%', sesgo:'bajo' },
-    { autor:'Ting DSW. et al.', anio:2017, pais:'Singapur', diseno:'Cohorte retrospectiva', n:'494,661', resultado:'Sens 90.5%, Esp 91.6%', sesgo:'bajo' },
-    { autor:'Raman R. et al.', anio:2019, pais:'India', diseno:'Transversal rural', n:'301', resultado:'Sens 95.8%, Esp 80.2%', sesgo:'moderado' },
-    { autor:'Rodriguez-Meza D.', anio:2021, pais:'Mexico', diseno:'Piloto prospectivo', n:'1,240', resultado:'Reduccion 40% tiempo. Sens 91.2%', sesgo:'moderado' },
-    { autor:'Bora A. et al.', anio:2023, pais:'Brasil', diseno:'Multicentrico', n:'15,800', resultado:'AUC 0.943, USD 4.2/paciente', sesgo:'bajo' },
-  ] : [
-    { autor:'Autor A.', anio:2021, pais:'Pais 1', diseno:'ECA', n:'250', resultado:'p<0.05', sesgo:'bajo' },
-    { autor:'Autor B.', anio:2022, pais:'Pais 2', diseno:'Cohorte', n:'1,500', resultado:'HR 0.72 (0.58-0.89)', sesgo:'bajo' },
-    { autor:'Autor C.', anio:2023, pais:'Pais 3', diseno:'Transversal', n:'800', resultado:'OR 2.3 (1.5-3.6)', sesgo:'moderado' },
-    { autor:'Autor D.', anio:2024, pais:'Pais 4', diseno:'RS', n:'12 est.', resultado:'SMD 0.45 (0.22-0.68)', sesgo:'bajo' },
-  ];
+  var extraction;
+  if (isDefault) {
+    extraction = [
+      { autor:'Gulshan V. et al.', anio:2016, pais:'Estados Unidos', diseno:'DTA', n:'128,175', resultado:'AUC 0.991. Sens 97.5%, Esp 93.4%', sesgo:'bajo' },
+      { autor:'Ting DSW. et al.', anio:2017, pais:'Singapur', diseno:'Cohorte retrospectiva', n:'494,661', resultado:'Sens 90.5%, Esp 91.6%', sesgo:'bajo' },
+      { autor:'Raman R. et al.', anio:2019, pais:'India', diseno:'Transversal rural', n:'301', resultado:'Sens 95.8%, Esp 80.2%', sesgo:'moderado' },
+      { autor:'Rodriguez-Meza D.', anio:2021, pais:'Mexico', diseno:'Piloto prospectivo', n:'1,240', resultado:'Reduccion 40% tiempo. Sens 91.2%', sesgo:'moderado' },
+      { autor:'Bora A. et al.', anio:2023, pais:'Brasil', diseno:'Multicentrico', n:'15,800', resultado:'AUC 0.943, USD 4.2/paciente', sesgo:'bajo' },
+    ];
+  } else {
+    // ── DYNAMIC extraction table from PICOT + study type ──
+    var lastNames = ['Garcia','Rodriguez','Martinez','Lopez','Hernandez','Gonzalez','Perez','Sanchez','Torres','Ramirez','Flores','Rivera','Gomez','Diaz','Reyes','Morales','Chen','Kim','Wang','Patel','Singh','Li','Anderson','Taylor','Wilson','Johnson','Brown','Miller','Smith','Thompson','Kumar','Nakamura','Tanaka','Park','Muller','Schmidt','Fischer','Silva','Santos','Costa'];
+    var countries = ['Mexico','Colombia','Brasil','Argentina','Peru','Chile','Espana','Estados Unidos','India','China','Japon','Corea del Sur','Alemania','Reino Unido','Canada','Australia','Francia','Italia','Sudafrica','Tailandia'];
+    var designsForType = {
+      rs_ma: ['ECA','Cohorte','Transversal','Caso-control','Cuasi-experimental'],
+      eca: ['ECA','ECA piloto','ECA multicentrico','ECA cruzado'],
+      cohorte: ['Cohorte prospectiva','Cohorte retrospectiva','Cohorte multicentrica'],
+      caso_control: ['Caso-control','Caso-control anidado','Caso-control pareado'],
+      transversal: ['Transversal analitico','Transversal descriptivo','Encuesta poblacional'],
+      dta: ['DTA prospectivo','DTA retrospectivo','DTA multicentrico','Cohorte retrospectiva'],
+      cualitativo: ['Fenomenologico','Teoria fundamentada','Etnografico','Estudio de caso'],
+      caso_reporte: ['Reporte de caso','Serie de casos']
+    };
+    var detectedTypeForExtraction = isDefault ? 'dta' : detectStudyTypeId(framework, q);
+    var availableDesigns = designsForType[detectedTypeForExtraction] || designsForType['rs_ma'];
+    var biasOptions = ['bajo','bajo','bajo','moderado','moderado','alto'];
+    var numStudies = 4 + (qHash % 5); // 4 to 8 studies
+    var resultTemplates = [
+      function(h) { return 'OR ' + (1.1 + (h % 30) / 10).toFixed(2) + ' (IC95% ' + (0.8 + (h % 15) / 10).toFixed(2) + '-' + (2.0 + (h % 25) / 10).toFixed(2) + ')'; },
+      function(h) { return 'HR ' + (0.5 + (h % 40) / 100).toFixed(2) + ' (IC95% ' + (0.3 + (h % 20) / 100).toFixed(2) + '-' + (0.8 + (h % 30) / 100).toFixed(2) + ')'; },
+      function(h) { return 'RR ' + (0.6 + (h % 35) / 100).toFixed(2) + ' (IC95% ' + (0.4 + (h % 25) / 100).toFixed(2) + '-' + (0.9 + (h % 20) / 100).toFixed(2) + ')'; },
+      function(h) { return 'p=' + (0.001 + (h % 40) / 1000).toFixed(3) + ', NNT=' + (3 + h % 15); },
+      function(h) { return 'SMD ' + (0.2 + (h % 50) / 100).toFixed(2) + ' (IC95% ' + (0.05 + (h % 20) / 100).toFixed(2) + '-' + (0.5 + (h % 40) / 100).toFixed(2) + ')'; },
+    ];
+    extraction = [];
+    for (var ei = 0; ei < numStudies; ei++) {
+      var eHash = (qHash * (ei + 7) + ei * 31) & 0x7FFFFFFF;
+      var sampleBase = [120, 250, 480, 800, 1500, 3200, 150, 620];
+      var nVal = sampleBase[ei % sampleBase.length] + (eHash % 300);
+      extraction.push({
+        autor: lastNames[eHash % lastNames.length] + ' ' + String.fromCharCode(65 + (ei % 26)) + '. et al.',
+        anio: 2018 + (eHash % 7),
+        pais: countries[eHash % countries.length],
+        diseno: availableDesigns[eHash % availableDesigns.length],
+        n: nVal.toLocaleString('en'),
+        resultado: resultTemplates[eHash % resultTemplates.length](eHash),
+        sesgo: biasOptions[eHash % biasOptions.length]
+      });
+    }
+  }
 
   // Planteamiento text for typewriter
   var planteamiento = isDefault ?
@@ -1565,8 +1694,8 @@ function generateSimulationData(question) {
     finer_results: finerScores,
     hypothesis: { null_hypothesis: isDefault ? 'No existe diferencia en precision diagnostica entre DL y oftalmologos para RD.' : 'No existe diferencia significativa entre los grupos.', alternative_hypothesis: isDefault ? 'DL presenta precision no inferior (margen 5%) a oftalmologos en atencion primaria rural.' : 'Existe diferencia significativa entre los grupos.', type: isDefault ? 'No inferioridad' : 'Dos colas' },
     folder_structure: stCfg.folderStructure,
-    search_registry: stCfg.needsSystematicSearch ? (isDefault ? searchRegistry : searchRegistry.slice(0,4)) : [],
-    descriptor_mapping: isDefault ? descriptorMapping : descriptorMapping.slice(0,3),
+    search_registry: stCfg.needsSystematicSearch ? searchRegistry : [],
+    descriptor_mapping: descriptorMapping,
     search_strategy: stCfg.needsSystematicSearch ? { databases: stCfg.searchDatabases, boolean_equation: searchRegistry[0].equation, filters: 'Fecha: 2018-2025 | Idiomas: EN, ES, PT | Tipo: originales', prisma: prisma } : { databases: [], boolean_equation: '', filters: '', prisma: null },
     feasibility: {
       dimensions: {
@@ -3232,14 +3361,26 @@ function calculateSampleSize(params) {
   var lossRate = params.lossRate || 0;
   var n = 0, nTotal = 0, formulaDisplay = '', formulaName = '';
 
-  if (formula === 'two_proportions') {
+  if (formula === 'two_proportions' || formula === 'case_control') {
     var p1 = params.p1 || 0.5, p2 = params.p2 || 0.3;
+    var r = params.matchRatio || (formula === 'case_control' ? 1 : 1); // ratio controles:casos
     var diff = p1 - p2;
     if (diff === 0) diff = 0.001;
-    n = Math.ceil(Math.pow(Za + Zb, 2) * (p1*(1-p1) + p2*(1-p2)) / Math.pow(diff, 2));
-    nTotal = n * 2;
-    formulaDisplay = 'n = [(Z\u03B1 + Z\u03B2)\u00B2 \u00D7 (p\u2081(1-p\u2081) + p\u2082(1-p\u2082))] / (p\u2081 - p\u2082)\u00B2';
-    formulaName = 'comparacion de dos proporciones (Fleiss)';
+    if (formula === 'case_control') {
+      // Kelsey formula: n_cases = [(Zα√((r+1)p̄q̄) + Zβ√(r·p1·q1 + p2·q2))² ] / (r·(p1-p2)²)
+      var pBar = (p1 + r * p2) / (1 + r);
+      var qBar = 1 - pBar;
+      var nCases = Math.ceil(Math.pow(Za * Math.sqrt((r + 1) * pBar * qBar) + Zb * Math.sqrt(r * p1 * (1 - p1) + p2 * (1 - p2)), 2) / (r * Math.pow(diff, 2)));
+      n = nCases;
+      nTotal = nCases + Math.ceil(nCases * r);
+      formulaDisplay = 'n = [Z\u03B1\u221A((r+1)p\u0304q\u0304) + Z\u03B2\u221A(r\u00B7p\u2081q\u2081+p\u2082q\u2082)]\u00B2 / r(p\u2081-p\u2082)\u00B2 (Kelsey)';
+      formulaName = 'casos y controles (Kelsey)';
+    } else {
+      n = Math.ceil(Math.pow(Za + Zb, 2) * (p1*(1-p1) + p2*(1-p2)) / Math.pow(diff, 2));
+      nTotal = n * 2;
+      formulaDisplay = 'n = [(Z\u03B1 + Z\u03B2)\u00B2 \u00D7 (p\u2081(1-p\u2081) + p\u2082(1-p\u2082))] / (p\u2081 - p\u2082)\u00B2';
+      formulaName = 'comparacion de dos proporciones (Fleiss)';
+    }
   } else if (formula === 'two_means') {
     var sigma = params.sigma || 1, delta = params.delta || 0.5;
     if (delta === 0) delta = 0.001;
@@ -3260,6 +3401,15 @@ function calculateSampleSize(params) {
 }
 
 function autoDetectFormula(pd) {
+  // Use study type config if available
+  var typeId = pd.study_type_id || (simData && simData.study_type_id) || selectedStudyTypeId;
+  if (typeId) {
+    var cfg = getStudyTypeConfig(typeId);
+    if (cfg && cfg.sampleSizeFormula && cfg.sampleSizeFormula !== 'not_applicable' && cfg.sampleSizeFormula !== 'qualitative_saturation') {
+      return cfg.sampleSizeFormula === 'case_control' ? 'two_proportions' : cfg.sampleSizeFormula;
+    }
+  }
+  // Fallback: text-based detection
   var st = ((pd.study_type || {}).type || '').toLowerCase();
   var dl = ((pd.study_type || {}).design_locked || '').toLowerCase();
   var combined = st + ' ' + dl;
@@ -3328,6 +3478,37 @@ function copySampleSizeToProtocol() {
   // Copy to clipboard
   navigator.clipboard.writeText(text).then(function() {
     showToast('Copiado al portapapeles — pega en §6.4 del protocolo', 'success');
+  }).catch(function() {
+    showToast('Texto generado — selecciona y copia manualmente', 'info');
+  });
+}
+
+function onSaturationChange() {
+  var slider = document.getElementById('ssSatN');
+  if (!slider || !project) return;
+  var n = parseInt(slider.value) || 15;
+  var saveData = { saturationN: n, formula: 'qualitative_saturation' };
+  if (!project.phase_data) project.phase_data = {};
+  project.phase_data.sample_size = Object.assign(project.phase_data.sample_size || {}, saveData);
+  saveSampleSizeToSupabase(saveData);
+}
+
+function copySaturationToProtocol() {
+  var slider = document.getElementById('ssSatN');
+  var n = slider ? parseInt(slider.value) || 15 : 15;
+  var text = 'El tamano de muestra se determinara por el criterio de saturacion teorica. ';
+  text += 'Se estima una muestra inicial de ' + n + ' participantes, ajustable segun la emergencia de nuevas categorias durante el analisis. ';
+  text += 'La saturacion se alcanza cuando no surgen nuevos temas, codigos o categorias relevantes en entrevistas consecutivas (Guest G, Bunce A, Johnson L. How many interviews are enough? Field Methods. 2006;18(1):59-82). ';
+  text += 'El rango recomendado en la literatura es de 12 a 30 participantes para la mayoria de estudios cualitativos.';
+
+  var saveData = { saturationN: n, formula: 'qualitative_saturation', protocol_text: text };
+  if (project && project.phase_data) {
+    project.phase_data.sample_size = Object.assign(project.phase_data.sample_size || {}, saveData);
+  }
+  saveSampleSizeToSupabase(saveData);
+
+  navigator.clipboard.writeText(text).then(function() {
+    showToast('Copiado al portapapeles — pega en \u00A76.4 del protocolo', 'success');
   }).catch(function() {
     showToast('Texto generado — selecciona y copia manualmente', 'info');
   });
@@ -3543,6 +3724,38 @@ function renderConsistencyChecker(pd) {
 }
 
 function renderSampleSizeCalculator(pd) {
+  // Determine study type and check if calculator is needed
+  var typeId = pd.study_type_id || (simData && simData.study_type_id) || selectedStudyTypeId || 'rs_ma';
+  var typeCfg = getStudyTypeConfig(typeId);
+  var sampleFormula = typeCfg.sampleSizeFormula || 'not_applicable';
+
+  // Not applicable: don't render anything
+  if (sampleFormula === 'not_applicable') return '';
+
+  // Qualitative saturation: render special card
+  if (sampleFormula === 'qualitative_saturation') {
+    var savedSat = (pd.sample_size) || {};
+    var satN = savedSat.saturationN || 15;
+    var h = '<div id="sampleSizeCalculator" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">';
+    h += '<div class="flex items-center gap-3 mb-5">';
+    h += '<div class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-md"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg></div>';
+    h += '<div class="flex-1"><h3 class="font-bold text-gray-900">Muestra por Saturacion Teorica</h3><p class="text-[10px] text-gray-400">Investigacion cualitativa — criterio de saturacion</p></div>';
+    h += '<span id="ssBadge" class="px-3 py-1.5 rounded-full text-sm font-black bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-md">N \u2248 ' + satN + '</span>';
+    h += '</div>';
+    h += '<div class="p-4 rounded-xl bg-teal-50/50 border border-teal-100 mb-4">';
+    h += '<p class="text-sm text-gray-700 mb-3">En investigacion cualitativa no se calcula tamano de muestra con formulas estadisticas. Se usa el criterio de <strong>saturacion teorica</strong>: se continua recolectando datos hasta que no emerjan nuevas categorias o temas.</p>';
+    h += '<p class="text-xs text-gray-500 mb-3">Rango recomendado: <strong>12–30 participantes</strong> (Guest, Bunce & Johnson, 2006).</p>';
+    h += '<div><label class="text-[10px] font-bold text-teal-600 uppercase tracking-wider mb-1 block">Participantes estimados: <span id="ssSatVal">' + satN + '</span></label>';
+    h += '<input type="range" id="ssSatN" min="5" max="50" step="1" value="' + satN + '" class="finer-slider w-full" oninput="document.getElementById(\'ssSatVal\').textContent=this.value;document.getElementById(\'ssBadge\').innerHTML=\'N \u2248 \'+this.value;onSaturationChange()"></div>';
+    h += '<div class="flex justify-between text-[10px] text-gray-400 mt-1"><span>5</span><span class="text-teal-600 font-bold">12–30 recomendado</span><span>50</span></div>';
+    h += '</div></div>';
+    h += '<div class="flex justify-center"><button onclick="copySaturationToProtocol()" class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 text-white rounded-xl text-xs font-bold hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">';
+    h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184"/></svg>';
+    h += 'Copiar al Protocolo \u00A76.4</button></div>';
+    h += '</div>';
+    return h;
+  }
+
   var saved = (pd.sample_size) || {};
   var detectedFormula = autoDetectFormula(pd);
   var formula = saved.formula || detectedFormula;
@@ -6583,26 +6796,108 @@ var STAGE3_REASONING = {
 };
 
 function generateStage3SimData() {
-  var studies = [
-    { id:1, author:'Gulshan V.', year:2016, events_i:487, total_i:500, events_c:412, total_c:500, or:2.85, or_lo:1.82, or_hi:4.47, weight:14.2, se:0.23 },
-    { id:2, author:'Ting DSW.', year:2017, events_i:4520, total_i:5000, events_c:4100, total_c:5000, or:2.01, or_lo:1.78, or_hi:2.27, weight:18.5, se:0.06 },
-    { id:3, author:'Raman R.', year:2019, events_i:145, total_i:151, events_c:121, total_c:150, or:5.79, or_lo:2.32, or_hi:14.44, weight:5.8, se:0.47 },
-    { id:4, author:'Li Z.', year:2020, events_i:892, total_i:1000, events_c:810, total_c:1000, or:1.94, or_lo:1.52, or_hi:2.48, weight:16.1, se:0.12 },
-    { id:5, author:'Rodriguez D.', year:2021, events_i:580, total_i:620, events_c:510, total_c:620, or:3.13, or_lo:2.12, or_hi:4.62, weight:12.3, se:0.20 },
-    { id:6, author:'Bora A.', year:2023, events_i:7500, total_i:7900, events_c:6800, total_c:7900, or:3.03, or_lo:2.63, or_hi:3.49, weight:17.9, se:0.07 },
-    { id:7, author:'Chen W.', year:2023, events_i:320, total_i:350, events_c:280, total_c:350, or:2.67, or_lo:1.67, or_hi:4.26, weight:9.4, se:0.24 },
-    { id:8, author:'Patel S.', year:2024, events_i:198, total_i:220, events_c:165, total_c:220, or:3.00, or_lo:1.70, or_hi:5.29, weight:5.8, se:0.29 },
-  ];
+  // ── Try to build studies from the extraction_table if available ──
+  var pd = (project && project.phase_data) || {};
+  var extTable = (simData && simData.extraction_table) || (pd.extraction_table) || [];
+  var studies = [];
 
-  var pooled = { or: 2.41, or_lo: 1.98, or_hi: 2.93, p: 0.0001, z: 7.82 };
-  var i2 = 58.3;
-  var cochran_q = 16.77;
-  var cochran_p = 0.019;
+  if (extTable.length >= 2) {
+    // Build from dynamic extraction table
+    for (var si = 0; si < extTable.length; si++) {
+      var row = extTable[si];
+      var authorName = (row.autor || row.author || 'Estudio ' + (si + 1)).replace(/ et al\.?/g, '');
+      var yearVal = row.anio || row.year || (2018 + si);
+      // Parse n from string like "1,240" or use seeded value
+      var nStr = (row.n || '').replace(/[,.\s]/g, '');
+      var totalN = parseInt(nStr, 10) || (150 + si * 120);
+      var halfN = Math.round(totalN / 2);
+      // Seed from author + year for consistency
+      var sHash = 0;
+      for (var shi = 0; shi < authorName.length; shi++) sHash = ((sHash << 5) - sHash + authorName.charCodeAt(shi)) | 0;
+      sHash = Math.abs(sHash);
+      // Generate events proportional to half-n with some variation
+      var eventRateI = 0.65 + (sHash % 25) / 100; // 0.65-0.90
+      var eventRateC = 0.45 + (sHash % 30) / 100; // 0.45-0.75
+      var evI = Math.min(Math.round(halfN * eventRateI), halfN - 1);
+      var evC = Math.min(Math.round(halfN * eventRateC), halfN - 1);
+      // Calculate OR
+      var orVal = (evI * (halfN - evC)) / (Math.max(1, evC) * Math.max(1, halfN - evI));
+      var logOR = Math.log(orVal);
+      var seLogOR = Math.sqrt(1/Math.max(1,evI) + 1/Math.max(1,halfN-evI) + 1/Math.max(1,evC) + 1/Math.max(1,halfN-evC));
+      var orLo = Math.exp(logOR - 1.96 * seLogOR);
+      var orHi = Math.exp(logOR + 1.96 * seLogOR);
+      var weight = 1 / (seLogOR * seLogOR);
+
+      studies.push({
+        id: si + 1,
+        author: authorName,
+        year: yearVal,
+        events_i: evI,
+        total_i: halfN,
+        events_c: evC,
+        total_c: halfN,
+        or: parseFloat(orVal.toFixed(2)),
+        or_lo: parseFloat(orLo.toFixed(2)),
+        or_hi: parseFloat(orHi.toFixed(2)),
+        weight: parseFloat(weight.toFixed(1)),
+        se: parseFloat(seLogOR.toFixed(2))
+      });
+    }
+  } else {
+    // Fallback: default hardcoded studies
+    studies = [
+      { id:1, author:'Gulshan V.', year:2016, events_i:487, total_i:500, events_c:412, total_c:500, or:2.85, or_lo:1.82, or_hi:4.47, weight:14.2, se:0.23 },
+      { id:2, author:'Ting DSW.', year:2017, events_i:4520, total_i:5000, events_c:4100, total_c:5000, or:2.01, or_lo:1.78, or_hi:2.27, weight:18.5, se:0.06 },
+      { id:3, author:'Raman R.', year:2019, events_i:145, total_i:151, events_c:121, total_c:150, or:5.79, or_lo:2.32, or_hi:14.44, weight:5.8, se:0.47 },
+      { id:4, author:'Li Z.', year:2020, events_i:892, total_i:1000, events_c:810, total_c:1000, or:1.94, or_lo:1.52, or_hi:2.48, weight:16.1, se:0.12 },
+      { id:5, author:'Rodriguez D.', year:2021, events_i:580, total_i:620, events_c:510, total_c:620, or:3.13, or_lo:2.12, or_hi:4.62, weight:12.3, se:0.20 },
+      { id:6, author:'Bora A.', year:2023, events_i:7500, total_i:7900, events_c:6800, total_c:7900, or:3.03, or_lo:2.63, or_hi:3.49, weight:17.9, se:0.07 },
+      { id:7, author:'Chen W.', year:2023, events_i:320, total_i:350, events_c:280, total_c:350, or:2.67, or_lo:1.67, or_hi:4.26, weight:9.4, se:0.24 },
+      { id:8, author:'Patel S.', year:2024, events_i:198, total_i:220, events_c:165, total_c:220, or:3.00, or_lo:1.70, or_hi:5.29, weight:5.8, se:0.29 },
+    ];
+  }
+
+  // ── Calculate pooled OR using inverse-variance weighting ──
+  var totalWeight = 0;
+  var weightedLogOR = 0;
+  for (var pi = 0; pi < studies.length; pi++) {
+    var w = 1 / (studies[pi].se * studies[pi].se || 1);
+    studies[pi].weight = parseFloat(((w / (studies.length * 5)) * 100).toFixed(1)); // normalize to percentages roughly
+    totalWeight += w;
+    weightedLogOR += w * Math.log(studies[pi].or || 1);
+  }
+  // Re-normalize weights to sum ~100
+  var wSum = studies.reduce(function(s, st) { return s + st.weight; }, 0);
+  if (wSum > 0) {
+    studies.forEach(function(st) { st.weight = parseFloat((st.weight / wSum * 100).toFixed(1)); });
+  }
+
+  var pooledLogOR = weightedLogOR / (totalWeight || 1);
+  var pooledSE = Math.sqrt(1 / (totalWeight || 1));
+  var pooledOR = Math.exp(pooledLogOR);
+  var pooledLo = Math.exp(pooledLogOR - 1.96 * pooledSE);
+  var pooledHi = Math.exp(pooledLogOR + 1.96 * pooledSE);
+  var zVal = pooledLogOR / (pooledSE || 0.01);
+  var pVal = Math.max(0.0001, parseFloat(Math.exp(-0.717 * Math.abs(zVal) - 0.416 * zVal * zVal).toFixed(4)));
+
+  var pooled = { or: parseFloat(pooledOR.toFixed(2)), or_lo: parseFloat(pooledLo.toFixed(2)), or_hi: parseFloat(pooledHi.toFixed(2)), p: pVal, z: parseFloat(Math.abs(zVal).toFixed(2)) };
+
+  // ── Heterogeneity: Cochran Q and I² ──
+  var cochranQ = 0;
+  for (var qi = 0; qi < studies.length; qi++) {
+    var wq = 1 / (studies[qi].se * studies[qi].se || 1);
+    var diff = Math.log(studies[qi].or || 1) - pooledLogOR;
+    cochranQ += wq * diff * diff;
+  }
+  var dfQ = Math.max(1, studies.length - 1);
+  var i2 = Math.max(0, parseFloat(((cochranQ - dfQ) / (cochranQ || 1) * 100).toFixed(1)));
+  var cochran_p = Math.max(0.001, parseFloat(Math.exp(-cochranQ / (2 * dfQ)).toFixed(3)));
   var model = 'Efectos Aleatorios (DerSimonian & Laird)';
 
-  var egger_intercept = 1.42;
-  var egger_p = 0.038;
-  var funnel_asymmetry = true;
+  // ── Egger test (simulated from study count) ──
+  var egger_intercept = parseFloat((0.5 + studies.length * 0.12 + (studies.length > 5 ? 0.3 : 0)).toFixed(2));
+  var egger_p = studies.length >= 6 ? parseFloat((0.01 + (studies.length % 5) * 0.008).toFixed(3)) : parseFloat((0.1 + studies.length * 0.02).toFixed(3));
+  var funnel_asymmetry = egger_p < 0.05;
 
   var loo = studies.map(function(s) {
     var shift = (Math.random() - 0.5) * 0.3;
@@ -6610,12 +6905,14 @@ function generateStage3SimData() {
   });
   var maxImpact = loo.reduce(function(max, l) { return Math.abs(parseFloat(l.or) - pooled.or) > Math.abs(parseFloat(max.or) - pooled.or) ? l : max; }, loo[0]);
 
+  // ── GRADE assessment ──
+  var lowBiasCount = studies.filter(function(s) { return s.se < 0.25; }).length;
   var grade = [
-    { domain: 'Riesgo de sesgo', rating: 'No grave', downgrade: 0, notes: '6/8 estudios con riesgo bajo (QUADAS-2)' },
-    { domain: 'Inconsistencia', rating: 'Grave', downgrade: -1, notes: 'I² = ' + i2 + '%, variabilidad moderada entre contextos rurales y urbanos' },
-    { domain: 'Evidencia indirecta', rating: 'No grave', downgrade: 0, notes: 'Poblacion, intervencion y desenlaces alineados con la pregunta PICOS' },
-    { domain: 'Imprecision', rating: 'No grave', downgrade: 0, notes: 'IC 95% estrecho, tamaño muestral adecuado (N = 15,740)' },
-    { domain: 'Sesgo de publicacion', rating: 'Grave', downgrade: -1, notes: 'Asimetria en Funnel Plot (Egger p = ' + egger_p + ')' },
+    { domain: 'Riesgo de sesgo', rating: lowBiasCount >= studies.length * 0.6 ? 'No grave' : 'Grave', downgrade: lowBiasCount >= studies.length * 0.6 ? 0 : -1, notes: lowBiasCount + '/' + studies.length + ' estudios con riesgo bajo' },
+    { domain: 'Inconsistencia', rating: i2 > 50 ? 'Grave' : 'No grave', downgrade: i2 > 50 ? -1 : 0, notes: 'I\u00B2 = ' + i2 + '%' + (i2 > 50 ? ', heterogeneidad sustancial' : ', heterogeneidad aceptable') },
+    { domain: 'Evidencia indirecta', rating: 'No grave', downgrade: 0, notes: 'Poblacion y desenlaces alineados con la pregunta PICOT' },
+    { domain: 'Imprecision', rating: pooled.or_hi - pooled.or_lo > 2 ? 'Grave' : 'No grave', downgrade: pooled.or_hi - pooled.or_lo > 2 ? -1 : 0, notes: 'IC 95%: ' + pooled.or_lo + '-' + pooled.or_hi },
+    { domain: 'Sesgo de publicacion', rating: funnel_asymmetry ? 'Grave' : 'No grave', downgrade: funnel_asymmetry ? -1 : 0, notes: funnel_asymmetry ? 'Asimetria en Funnel Plot (Egger p = ' + egger_p + ')' : 'Sin asimetria detectada (Egger p = ' + egger_p + ')' },
   ];
   var totalDowngrades = grade.reduce(function(s, g) { return s + g.downgrade; }, 0);
   var certainty = totalDowngrades === 0 ? 'Alta' : totalDowngrades >= -1 ? 'Moderada' : totalDowngrades >= -2 ? 'Baja' : 'Muy Baja';
@@ -6624,7 +6921,7 @@ function generateStage3SimData() {
     studies: studies,
     pooled: pooled,
     i2: i2,
-    cochran_q: cochran_q,
+    cochran_q: parseFloat(cochranQ.toFixed(2)),
     cochran_p: cochran_p,
     model: model,
     egger_intercept: egger_intercept,
@@ -6666,7 +6963,30 @@ function getExtractionStudies() {
     });
     if (mapped.length >= 2) return mapped;
   }
-  // Fallback: default studies matching generateStage3SimData
+  // Fallback: try to generate from simData extraction_table (dynamic demo)
+  var simExt = (simData && simData.extraction_table) || [];
+  if (simExt.length >= 2) {
+    return simExt.map(function(row, i) {
+      var nStr = (row.n || '').replace(/[,.\s]/g, '');
+      var totalN = parseInt(nStr, 10) || (150 + i * 120);
+      var halfN = Math.round(totalN / 2);
+      var sHash = 0;
+      var aName = (row.autor || row.author || 'Estudio ' + (i+1)).replace(/ et al\.?/g, '');
+      for (var h = 0; h < aName.length; h++) sHash = ((sHash << 5) - sHash + aName.charCodeAt(h)) | 0;
+      sHash = Math.abs(sHash);
+      var rateI = 0.65 + (sHash % 25) / 100;
+      var rateC = 0.45 + (sHash % 30) / 100;
+      return {
+        author: aName,
+        year: row.anio || row.year || 2020,
+        events_i: Math.min(Math.round(halfN * rateI), halfN - 1),
+        total_i: halfN,
+        events_c: Math.min(Math.round(halfN * rateC), halfN - 1),
+        total_c: halfN
+      };
+    });
+  }
+  // Final fallback: hardcoded defaults
   return [
     { author: 'Gulshan V.', year: 2016, events_i: 487, total_i: 500, events_c: 412, total_c: 500 },
     { author: 'Ting DSW.', year: 2017, events_i: 4520, total_i: 5000, events_c: 4100, total_c: 5000 },
@@ -7998,23 +8318,39 @@ function toggleRealMode() {
 // ═══════════════════════════════════════════════════════════════
 async function callAgentEndpoint(url, body, timeoutMs) {
   timeoutMs = timeoutMs || 60000;
-  var controller = new AbortController();
-  var timer = setTimeout(function() { controller.abort(); }, timeoutMs);
-  try {
-    var response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    return await response.json();
-  } catch (err) {
-    clearTimeout(timer);
-    if (err.name === 'AbortError') throw new Error('Timeout: el servidor tardo mas de ' + Math.round(timeoutMs/1000) + 's');
-    throw err;
+  var maxRetries = 2;
+  var lastErr = null;
+  for (var attempt = 0; attempt < maxRetries; attempt++) {
+    var controller = new AbortController();
+    var timer = setTimeout(function() { controller.abort(); }, timeoutMs);
+    try {
+      var response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      if (!response.ok) {
+        var errBody = '';
+        try { errBody = (await response.json()).error || ''; } catch(e) {}
+        throw new Error('HTTP ' + response.status + (errBody ? ': ' + errBody : ''));
+      }
+      return await response.json();
+    } catch (err) {
+      clearTimeout(timer);
+      lastErr = err;
+      if (err.name === 'AbortError') lastErr = new Error('Timeout: el servidor tardo mas de ' + Math.round(timeoutMs/1000) + 's');
+      // Retry on 429/529/timeout, not on 4xx
+      if (attempt < maxRetries - 1 && (err.name === 'AbortError' || /429|529|timeout|network|fetch/i.test(err.message))) {
+        console.warn('callAgentEndpoint retry ' + (attempt + 1) + ' for ' + url + ': ' + lastErr.message);
+        await new Promise(function(r) { setTimeout(r, 2000 * (attempt + 1)); });
+        continue;
+      }
+      throw lastErr;
+    }
   }
+  throw lastErr;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -8749,17 +9085,33 @@ async function callAgentOrSimulate(question) {
 
   } catch (err) {
     console.error('Real AI error:', err);
-    showToast('Error Real AI: ' + err.message + ' — Cambiando a modo Demo', 'error');
-    // Fallback: switch to demo mode
+    // Show specific error with agent name if available
+    var errMsg = err.message || 'Error desconocido';
+    var isApiKey = /ANTHROPIC_API_KEY|api.?key|401|403/i.test(errMsg);
+    var isNetwork = /network|fetch|ECONNREFUSED|ENOTFOUND/i.test(errMsg);
+    var isTimeout = /timeout|tardo mas/i.test(errMsg);
+
+    var userFriendly = isApiKey ? 'API Key de Anthropic no configurada o invalida. Verifica ANTHROPIC_API_KEY en Vercel.'
+      : isNetwork ? 'No se pudo conectar al servidor. Verifica que el backend este desplegado.'
+      : isTimeout ? 'El servidor tardo demasiado en responder. Intenta de nuevo.'
+      : errMsg;
+
+    showToast('Error Real AI: ' + userFriendly, 'error');
+
+    // Show error detail in bubble instead of silent fallback
+    setBubbleStatus('done', 'Error Real AI');
+    await bubbleTypewriter(
+      '<div class="text-red-600"><strong>Error en modo Real AI:</strong><br>' + esc(userFriendly) + '</div>' +
+      '<div class="mt-2 text-gray-500 text-[10px]">Detalle tecnico: ' + esc(errMsg) + '</div>' +
+      '<div class="mt-2">Cambiando a <strong>modo Demo</strong> con datos dinamicos. Puedes reintentar con el toggle Real AI.</div>', 28);
+
+    // Fallback: switch to demo mode with dynamic data
     REAL_AI_ENABLED = false;
     setModeToggleUI(false);
     simulationRunning = false;
     simData = null;
     currentSimPhase = '';
-    setBubbleStatus('done', 'Fallback Demo');
-    await bubbleTypewriter('Error al conectar con la API: <strong>' + esc(err.message) + '</strong>. Cambiando a <strong>modo Demo</strong> automaticamente. Puedes reintentar con el toggle Real AI.', 28);
     await delay(2000);
-    // Run simulation in demo mode
     simData = generateSimulationData(question);
     return runFullSimulation(question);
   }
