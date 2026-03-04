@@ -324,6 +324,7 @@ async function estimateOtherDatabases(pubmedEquation, pubmedCount, picot, cochra
   const dbsToEstimate = [
     needCochrane ? 'Cochrane Library' : null,
     needLILACS ? 'LILACS' : null,
+    'EMBASE',
     'Scopus',
   ].filter(Boolean).join(', ');
 
@@ -331,6 +332,7 @@ async function estimateOtherDatabases(pubmedEquation, pubmedCount, picot, cochra
   const eqInstructions = [
     needCochrane ? '   - Cochrane: usa sintaxis Cochrane (MeSH descriptor, ti,ab,kw)' : null,
     needLILACS ? '   - LILACS: TRADUCE a espanol/portugues usando DeCS, sintaxis iAH' : null,
+    "   - EMBASE: usa sintaxis Emtree con /exp (ej: 'term'/exp AND 'term'/exp). Nota: EMBASE no tiene API publica, la ecuacion es para ejecucion manual en embase.com",
     '   - Scopus: usa TITLE-ABS-KEY()',
   ].filter(Boolean).join('\n');
 
@@ -350,6 +352,11 @@ async function estimateOtherDatabases(pubmedEquation, pubmedCount, picot, cochra
     "rationale": "<breve justificacion>"
   }`);
   }
+  jsonFields.push(`  "embase": {
+    "equation": "<ecuacion Emtree con /exp para EMBASE>",
+    "estimatedCount": <numero>,
+    "rationale": "<breve justificacion>"
+  }`);
   jsonFields.push(`  "scopus": {
     "equation": "<ecuacion TITLE-ABS-KEY para Scopus>",
     "estimatedCount": <numero>,
@@ -528,6 +535,19 @@ export default async function handler(req, res) {
         equation: estimates.lilacs.equation,
         rationale: estimates.lilacs.rationale,
         color: 'green',
+      });
+    }
+
+    // EMBASE: always estimated by Claude (no public API — manual execution)
+    if (estimates && estimates.embase) {
+      databases.push({
+        database: 'EMBASE',
+        real: false,
+        count: estimates.embase.estimatedCount,
+        included: Math.round(estimates.embase.estimatedCount * 0.10),
+        equation: estimates.embase.equation,
+        rationale: (estimates.embase.rationale || '') + ' — Ejecutar manualmente en embase.com',
+        color: 'orange',
       });
     }
 

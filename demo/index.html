@@ -1063,7 +1063,7 @@ var GALATEA_REASONING = {
   metodologo_pre: 'Iniciando evaluacion de viabilidad con el radar FINER. Voy a analizar si tu estudio es Factible, Interesante, Novel, Etico y Relevante.',
   metodologo_done: 'Los 5 criterios FINER estan evaluados. Puedes <strong>ajustar los sliders</strong> si consideras que algun puntaje no refleja tu realidad. Si bajas algun criterio bajo 50, te lo avisare.',
   finer_warning: function(key,val) { return 'Veo que ajustaste <strong>' + key + '</strong> a ' + val + '. Con este nivel, el riesgo podria aumentar. ¿Estas seguro de proceder? Si necesitas, puedo sugerir ajustes al diseno.'; },
-  evidencia_pre: 'Mapeando descriptores controlados: MeSH (PubMed), DeCS (LILACS) y Emtree (Embase). Puedes <strong>agregar o quitar descriptores</strong> como tags antes de ejecutar la busqueda.',
+  evidencia_pre: 'Mapeando descriptores controlados: MeSH/DeCS (PubMed, LILACS) y Emtree (EMBASE). Puedes <strong>agregar o quitar descriptores</strong> como tags antes de ejecutar la busqueda.',
   evidencia_done: 'Busqueda completada en {n} bases de datos. He generado el registro de auditoria y el diagrama PRISMA. Puedes exportar el log como CSV para tu archivo.',
   redactor_pre: 'Verificando cumplimiento con guias EQUATOR (PRISMA-DTA, QUADAS-2, GRADE-DTA, STARD). Luego redactare el protocolo y manuscrito.',
   redactor_done: 'Investigacion finalizada. El protocolo y manuscrito estan listos para edicion. Puedes modificar cualquier seccion directamente y exportar el documento final.',
@@ -1183,7 +1183,7 @@ var STUDY_TYPE_CONFIGS = {
     needsSystematicSearch: true, needsMetaAnalysis: true,
     rMeasure: 'OR', rModel: 'random',
     sampleSizeFormula: 'not_applicable',
-    searchDatabases: ['PubMed/MEDLINE','Cochrane Library','LILACS','Scopus','Web of Science'],
+    searchDatabases: ['PubMed/MEDLINE','Cochrane Library','EMBASE','LILACS','Scopus','Web of Science'],
     biasTools: ['RoB 2','ROBINS-I'],
     statsTemplate: { test: 'Modelo efectos aleatorios (DerSimonian & Laird)', rPkg: 'metafor', objective: 'Inferencial (sintesis cuantitativa)' },
     protocolSections: ['titulo','registro_prospero','antecedentes','objetivo','criterios','busqueda','calidad','sintesis','guias','cronograma','etica'],
@@ -1312,7 +1312,7 @@ var STUDY_TYPE_CONFIGS = {
     needsSystematicSearch: true, needsMetaAnalysis: true,
     rMeasure: 'DTA', rModel: 'bivariate',
     sampleSizeFormula: 'single_proportion',
-    searchDatabases: ['PubMed/MEDLINE','Cochrane Library','LILACS','Scopus','Web of Science'],
+    searchDatabases: ['PubMed/MEDLINE','Cochrane Library','EMBASE','LILACS','Scopus','Web of Science'],
     biasTools: ['QUADAS-2'],
     statsTemplate: { test: 'Modelo bivariado (Reitsma) / SROC / mada', rPkg: 'mada', objective: 'Inferencial (sintesis DTA)' },
     protocolSections: ['titulo','registro_prospero','antecedentes','objetivo','criterios','busqueda','calidad_quadas','sintesis_bivariada','guias','cronograma','etica'],
@@ -1527,6 +1527,7 @@ function generateSimulationData(question) {
     searchRegistry = [
       { database: 'PubMed/MEDLINE', equation: '("Diabetic Retinopathy"[MeSH] OR "diabetic retinopathy"[tiab]) AND ("Deep Learning"[MeSH] OR "artificial intelligence"[tiab] OR "CNN"[tiab]) AND ("sensitivity"[tiab] OR "specificity"[tiab] OR "AUC"[tiab])', results: 312, included: 8, date: '2025-01-15', color: 'blue' },
       { database: 'Cochrane Library', equation: '"diabetic retinopathy" AND "deep learning" AND "diagnostic accuracy"', results: 45, included: 2, date: '2025-01-15', color: 'indigo' },
+      { database: 'EMBASE', equation: "'diabetic retinopathy'/exp AND 'deep learning'/exp AND 'diagnostic accuracy'/exp", results: 245, included: 5, date: '2025-01-16', color: 'orange' },
       { database: 'LILACS', equation: '(retinopatia diabetica) AND (aprendizaje profundo OR inteligencia artificial) AND (sensibilidad OR especificidad)', results: 28, included: 1, date: '2025-01-16', color: 'green' },
       { database: 'Scopus', equation: 'TITLE-ABS-KEY("diabetic retinopathy" AND "deep learning" AND "diagnostic")', results: 289, included: 6, date: '2025-01-16', color: 'amber' },
       { database: 'Web of Science', equation: 'TS=("diabetic retinopathy" AND "deep learning" AND "accuracy")', results: 198, included: 4, date: '2025-01-17', color: 'purple' },
@@ -1581,6 +1582,10 @@ function generateSimulationData(question) {
     // LILACS equation (Spanish DeCS style)
     var lilacsEq = [pTerm, iTerm].filter(Boolean).map(function(t) { return '(' + t + ')'; }).join(' AND ');
     if (oTerm) lilacsEq += ' AND (' + oTerm + ')';
+    // EMBASE equation (Emtree syntax with /exp)
+    var embaseEq = [pTerm, iTerm].filter(Boolean).map(function(t) { return "'" + t.toLowerCase() + "'/exp"; }).join(' AND ');
+    if (oTerm) embaseEq += " AND '" + oTerm.toLowerCase() + "'/exp";
+    var baseEmbase = Math.round(baseScopus * 0.85);
     // Scopus equation
     var scopusEq = 'TITLE-ABS-KEY(' + [pTerm, iTerm].filter(Boolean).map(function(t) { return '"' + t + '"'; }).join(' AND ') + ')';
     // WoS equation
@@ -1589,6 +1594,7 @@ function generateSimulationData(question) {
     searchRegistry = [
       { database: 'PubMed/MEDLINE', equation: pubmedEq, results: basePubmed, included: Math.round(basePubmed * 0.03) + 2, date: '2025-01-15', color: 'blue' },
       { database: 'Cochrane Library', equation: cochraneEq || '"' + q.substring(0, 60) + '"', results: baseCochrane, included: Math.round(baseCochrane * 0.06) + 1, date: '2025-01-15', color: 'indigo' },
+      { database: 'EMBASE', equation: embaseEq, results: baseEmbase, included: Math.round(baseEmbase * 0.03) + 1, date: '2025-01-16', color: 'orange' },
       { database: 'LILACS', equation: lilacsEq || '(' + q.substring(0, 60) + ')', results: baseLilacs, included: Math.round(baseLilacs * 0.08) + 1, date: '2025-01-16', color: 'green' },
       { database: 'Scopus', equation: scopusEq, results: baseScopus, included: Math.round(baseScopus * 0.04) + 1, date: '2025-01-16', color: 'amber' },
       { database: 'Web of Science', equation: wosEq, results: baseWos, included: Math.round(baseWos * 0.04) + 1, date: '2025-01-17', color: 'purple' },
@@ -3952,7 +3958,7 @@ function renderDescriptorTags(pd) {
   var m=pd.descriptor_mapping||[];
   var h='<div class="phase-divider"><span>Fase 7: Evidencia</span></div><div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">';
   h+='<div class="flex items-center justify-between mb-4"><h3 class="font-bold text-gray-900">Descriptores Controlados</h3><span class="text-[10px] text-gray-400">Haz clic en &#x2716; para quitar o escribe para agregar</span></div>';
-  var types=[{key:'mesh',label:'MeSH',color:'blue'},{key:'decs',label:'DeCS',color:'green'},{key:'emtree',label:'Emtree',color:'purple'}];
+  var types=[{key:'mesh',label:'MeSH/DeCS',color:'blue'},{key:'emtree',label:'Emtree',color:'purple'}];
   types.forEach(function(t){
     h+='<div class="mb-3"><div class="text-[10px] font-bold text-'+t.color+'-600 uppercase tracking-wider mb-2">'+t.label+'</div><div class="flex flex-wrap gap-2" id="tags_'+t.key+'">';
     m.forEach(function(d,i){
@@ -3971,7 +3977,7 @@ function renderSearchRegistry(pd) {
   var liveBadge=hasReal?'<span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-red-600 text-white animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-white inline-block"></span>DATOS EN VIVO</span>':'';
   var h='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center justify-between mb-4"><div><h3 class="font-bold text-gray-900">Log de Auditoria'+liveBadge+'</h3><p class="text-[10px] text-gray-400 mt-0.5">'+reg.length+' bases | '+tr+' resultados | '+ti+' incluidos</p></div>';
   h+='<button onclick="exportSearchCSV()" class="flex items-center gap-1.5 px-4 py-2 bg-verde/10 text-verde rounded-lg text-xs font-bold hover:bg-verde/20 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar CSV</button></div><div class="space-y-3">';
-  reg.forEach(function(r){var c=r.color||'gray';var isReal=r.real===true;var isEst=r.real===false;h+='<div class="border border-'+c+'-100 rounded-xl p-4 bg-'+c+'-50/30"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><div class="db-badge bg-'+c+'-100 text-'+c+'-700">'+esc(r.database)+'</div>'+(isReal?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-verde/10 text-verde border border-verde/30">EN VIVO</span>':'')+(isEst?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200">ESTIMADO</span>':'')+'</div><div class="flex items-center gap-3 text-xs"><span class="text-gray-500">Resultados: <strong>'+r.results+'</strong></span><span class="text-verde font-bold">Incluidos: '+r.included+'</span><span class="text-gray-400">'+esc(r.date||'')+'</span></div></div><div class="text-[11px] font-mono text-gray-600 bg-white/60 rounded-lg p-2 break-all">'+esc(r.equation||'')+'</div>'+(isEst&&r.rationale?'<div class="text-[10px] text-amber-600 mt-1 italic">'+esc(r.rationale)+'</div>':'')+'</div>';});
+  reg.forEach(function(r){var c=r.color||'gray';var isReal=r.real===true;var isEst=r.real===false;var isEmbase=r.database==='EMBASE';h+='<div class="border border-'+c+'-100 rounded-xl p-4 bg-'+c+'-50/30"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><div class="db-badge bg-'+c+'-100 text-'+c+'-700">'+esc(r.database)+'</div>'+(isReal?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-verde/10 text-verde border border-verde/30">EN VIVO</span>':'')+(isEst&&!isEmbase?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200">ESTIMADO</span>':'')+(isEmbase?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-orange-100 text-orange-700 border border-orange-200">MANUAL — ejecutar en embase.com</span>':'')+'</div><div class="flex items-center gap-3 text-xs"><span class="text-gray-500">Resultados: <strong>'+r.results+'</strong></span><span class="text-verde font-bold">Incluidos: '+r.included+'</span><span class="text-gray-400">'+esc(r.date||'')+'</span></div></div><div class="flex items-center gap-2"><div class="text-[11px] font-mono text-gray-600 bg-white/60 rounded-lg p-2 break-all flex-1">'+esc(r.equation||'')+'</div>'+(isEmbase?'<button onclick="navigator.clipboard.writeText(\''+esc((r.equation||'').replace(/'/g,"\\'"))+'\');showToast(\'Ecuacion EMBASE copiada al portapapeles\',\'success\')" class="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-[10px] font-bold hover:bg-orange-200 transition-all" title="Copiar ecuacion"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>Copiar</button>':'')+'</div>'+(isEst&&r.rationale?'<div class="text-[10px] text-amber-600 mt-1 italic">'+esc(r.rationale)+'</div>':'')+'</div>';});
   h+='</div></div>';return h;
 }
 
@@ -4560,8 +4566,7 @@ function addDescriptor(value, type) {
   var m = pd.descriptor_mapping || [];
   var newD = { term: value, mesh: value, decs: value, emtree: value };
   // If adding to a specific type, only set that one
-  if (type === 'mesh') newD = { term: value, mesh: value, decs: '', emtree: '' };
-  else if (type === 'decs') newD = { term: value, mesh: '', decs: value, emtree: '' };
+  if (type === 'mesh') newD = { term: value, mesh: value, decs: value, emtree: '' };
   else if (type === 'emtree') newD = { term: value, mesh: '', decs: '', emtree: value };
   m.push(newD);
   pd.descriptor_mapping = m;
@@ -6290,7 +6295,7 @@ function prefillFromStage1(docIndex) {
     // Descriptores ← MeSH terms
     if (!c.descriptores && s1.descriptor_mapping) {
       c.descriptores = s1.descriptor_mapping.map(function(dm) {
-        return dm.mesh + ' / ' + dm.decs;
+        return dm.mesh || dm.decs;
       }).join('\n');
     }
     // Diseno ← study type
