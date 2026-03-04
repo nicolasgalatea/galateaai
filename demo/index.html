@@ -311,6 +311,15 @@
 
           <!-- Input area -->
           <div class="max-w-xl mx-auto lg:mx-0">
+            <div class="mb-5">
+              <label class="block text-sm font-semibold text-white/80 mb-3">
+                1. Elige el tipo de estudio
+              </label>
+              <div id="landingStudyTypeSelector"></div>
+            </div>
+            <label class="block text-sm font-semibold text-white/80 mb-2">
+              2. Escribe tu pregunta de investigacion
+            </label>
             <div class="relative">
               <textarea id="questionInput"
                 class="w-full h-28 sm:h-32 bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-sm placeholder-white/25 resize-none focus:outline-none focus:border-galatea/50 focus:bg-white/8 transition-all"
@@ -1436,6 +1445,35 @@ function renderStudyTypeSelectorInner(container, selectedId) {
   container.innerHTML = h;
 }
 
+function renderLandingStudyTypeSelector() {
+  var container = document.getElementById('landingStudyTypeSelector');
+  if (!container) return;
+  var types = ['rs_ma','eca','cohorte','caso_control','transversal','dta','cualitativo','caso_reporte'];
+  var h = '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">';
+  types.forEach(function(tid) {
+    var cfg = STUDY_TYPE_CONFIGS[tid];
+    var sel = tid === selectedStudyTypeId;
+    var borderClass = sel ? 'border-galatea ring-2 ring-galatea/30 bg-galatea/10' : 'border-white/10 hover:border-galatea/40 hover:bg-white/10 bg-white/5';
+    h += '<button onclick="selectLandingStudyType(\'' + tid + '\')" class="relative text-left p-3 rounded-xl border-2 transition-all duration-200 ' + borderClass + '">';
+    if (sel) h += '<div class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-galatea flex items-center justify-center"><svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div>';
+    h += '<div class="text-lg mb-1">' + cfg.icon + '</div>';
+    h += '<div class="text-[11px] font-bold text-white mb-0.5">' + cfg.shortLabel + '</div>';
+    h += '<span class="text-[8px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/60 font-medium">' + cfg.design_locked + '</span>';
+    h += '</button>';
+  });
+  h += '</div>';
+  container.innerHTML = h;
+}
+
+function selectLandingStudyType(typeId) {
+  if (selectedStudyTypeId === typeId) {
+    selectedStudyTypeId = null;
+  } else {
+    selectedStudyTypeId = typeId;
+  }
+  renderLandingStudyTypeSelector();
+}
+
 function awaitStudyTypeSelection() {
   return new Promise(function(resolve) {
     window._studyTypeResolve = resolve;
@@ -2124,6 +2162,14 @@ async function runFullSimulation(question) {
     }
     simData = generateSimulationData(question);
   }
+  // Apply pre-selected study type from landing selector
+  if (selectedStudyTypeId && simData) {
+    var stCfg = getStudyTypeConfig(selectedStudyTypeId);
+    simData.study_type = { type: stCfg.type, design_locked: stCfg.design_locked, justification: 'Tipo de estudio pre-seleccionado por el investigador.', design_details: stCfg.equator.map(function(e){return e.guideline}).join(', ') + '.' };
+    simData.study_type_id = selectedStudyTypeId;
+    simData.equator_checklist = stCfg.equator;
+    simData.folder_structure = stCfg.folderStructure;
+  }
   simulationRunning = true;
   simulationAborted = false;
 
@@ -2428,7 +2474,9 @@ async function createNewProject(question) {
   btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg> Creando...';
   btn.disabled = true;
   var id = crypto.randomUUID();
-  var insertData = { project_id: id, title: question, research_question: question, current_phase: 0, status: 'executing', phase_data: {}, user_edits: {} };
+  var phaseData = {};
+  if (selectedStudyTypeId) { phaseData.study_type_id = selectedStudyTypeId; }
+  var insertData = { project_id: id, title: question, research_question: question, current_phase: 0, status: 'executing', phase_data: phaseData, user_edits: {} };
   if (currentUser) { insertData.department_id = currentUser.department_id; insertData.created_by = currentUser.email; }
   try {
     var { data, error } = await sb.from(TABLE).insert(insertData).select().single();
@@ -2735,6 +2783,8 @@ function goToNewProject() {
   var lp = document.getElementById('landingPage');
   lp.classList.remove('page-hidden'); lp.classList.add('page-visible');
   lp.style.opacity = '1'; lp.style.transform = 'scale(1)';
+  selectedStudyTypeId = null;
+  renderLandingStudyTypeSelector();
 }
 
 function openProjectFromList(projectId) {
@@ -4616,6 +4666,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }).catch(function(e) {
     console.warn('Supabase session check failed (expected in demo mode):', e.message);
   });
+  // Render landing study type selector (will be visible when user navigates to landing)
+  renderLandingStudyTypeSelector();
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -8357,10 +8409,12 @@ async function callAgentEndpoint(url, body, timeoutMs) {
 // REAL AI — Call orchestrator endpoint (all agents in one call)
 // ═══════════════════════════════════════════════════════════════
 async function callOrchestrator(question) {
-  var res = await callAgentEndpoint('/api/orchestrator', {
+  var orchestratorPayload = {
     projectId: rowId || activeProjectId,
-    researchQuestion: question
-  }, 60000);
+    researchQuestion: question,
+    studyTypeId: selectedStudyTypeId || null
+  };
+  var res = await callAgentEndpoint('/api/orchestrator', orchestratorPayload, 60000);
   if (!res.success) throw new Error(res.error || 'Orchestrator failed');
   return res.results; // { picot, finer, literatureScout, pubmed }
 }
