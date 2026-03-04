@@ -19,6 +19,7 @@
   </script>
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/docx@9.5.0/build/index.umd.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { font-family: 'Inter', system-ui, sans-serif; }
@@ -1706,8 +1707,8 @@ function generateSimulationData(question) {
 
   // Planteamiento text for typewriter
   var planteamiento = isDefault ?
-    'La retinopatia diabetica (RD) es la principal causa de ceguera prevenible en adultos en edad laboral. En Colombia, la prevalencia de diabetes tipo 2 alcanza el 10.6% en areas urbanas y aproximadamente el 8% en zonas rurales, donde el acceso a oftalmologos especializados es extremadamente limitado.\n\nLos algoritmos de Deep Learning, particularmente las redes neuronales convolucionales (CNN), han demostrado precision comparable a especialistas en la deteccion de RD en entornos controlados. Sin embargo, existe una brecha critica: la evidencia sobre su rendimiento en contextos de atencion primaria rural en paises de ingreso medio es escasa.\n\nEsta revision sistematica con meta-analisis evaluara la precision diagnostica de algoritmos de DL comparada con la lectura por oftalmologos certificados, con enfasis en contextos rurales de America Latina.'
-    : 'Pregunta de investigacion: ' + q + '\n\nEsta revision aborda una pregunta clinica relevante. La poblacion de interes son ' + fwData.P.toLowerCase() + '. La intervencion o exposicion evaluada es: ' + fwData.I + '. Se comparara contra: ' + fwData.C.toLowerCase() + '.\n\nEl desenlace principal a evaluar es: ' + fwData.O + '. Se realizara una busqueda sistematica en bases de datos biomedicas internacionales (PubMed, Cochrane, LILACS, Scopus) para identificar la mejor evidencia disponible.\n\nEl marco metodologico seleccionado (' + framework + ') permitira estructurar la busqueda y sintesis de evidencia de manera rigurosa y reproducible.';
+    'La retinopatia diabetica (RD) es la principal causa de ceguera prevenible en adultos en edad laboral. En Colombia, la prevalencia de diabetes tipo 2 alcanza el 10.6% en areas urbanas y aproximadamente el 8% en zonas rurales, donde el acceso a oftalmologos especializados es extremadamente limitado [1-3].\n\nLos algoritmos de Deep Learning, particularmente las redes neuronales convolucionales (CNN), han demostrado precision comparable a especialistas en la deteccion de RD en entornos controlados. Sin embargo, existe una brecha critica: la evidencia sobre su rendimiento en contextos de atencion primaria rural en paises de ingreso medio es escasa [4-7].\n\nEsta revision sistematica con meta-analisis evaluara la precision diagnostica de algoritmos de DL comparada con la lectura por oftalmologos certificados, con enfasis en contextos rurales de America Latina [8-10].'
+    : injectCitationsInPlanteamiento('Pregunta de investigacion: ' + q + '\n\nEsta revision aborda una pregunta clinica relevante. La poblacion de interes son ' + fwData.P.toLowerCase() + '. La intervencion o exposicion evaluada es: ' + fwData.I + '. Se comparara contra: ' + fwData.C.toLowerCase() + '.\n\nEl desenlace principal a evaluar es: ' + fwData.O + '. Se realizara una busqueda sistematica en bases de datos biomedicas internacionales (PubMed, Cochrane, LILACS, Scopus) para identificar la mejor evidencia disponible.\n\nEl marco metodologico seleccionado (' + framework + ') permitira estructurar la busqueda y sintesis de evidencia de manera rigurosa y reproducible.', extraction.length);
 
   // ── Detect study type and apply config ──
   var detectedTypeId = isDefault ? 'dta' : detectStudyTypeId(framework, q);
@@ -2207,9 +2208,18 @@ async function runFullSimulation(question) {
       '<div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div>' +
       '<h3 class="font-bold text-gray-900">Fase 1 — Planteamiento del Problema</h3>' +
     '</div>' +
-    '<pre id="typewriterPlanteamiento" class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed"></pre></div>';
+    '<pre id="typewriterPlanteamiento" class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed"></pre>' +
+    '<div id="planteamientoRefs" class="mt-4 pt-4 border-t border-gray-100 hidden"><h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Referencias</h4><div id="planteamientoRefsList" class="space-y-1"></div></div></div>';
   $('detailedViews').innerHTML = planHtml;
   await typewriter('typewriterPlanteamiento', simData.planteamiento, 30);
+  // Show references after typewriter finishes
+  var twRefs = getProjectVancouverRefs(simData);
+  if (twRefs && twRefs.length > 0) {
+    var refsList = $('planteamientoRefsList');
+    if (refsList) { twRefs.forEach(function(r) { refsList.innerHTML += '<div class="text-xs text-gray-600">' + esc(r) + '</div>'; }); }
+    var refsDiv = $('planteamientoRefs');
+    if (refsDiv) { refsDiv.classList.remove('hidden'); refsDiv.classList.add('fade-up'); }
+  }
   await delay(2000);
   if (simulationAborted) return;
 
@@ -2311,6 +2321,7 @@ async function runFullSimulation(question) {
               simData.search_registry[0].real = true;
             }
             simData._pubmed_real = true;
+            simData._pubmed_articles = pubmedResult.articles;
             await bubbleTypewriter('Encontrados <strong>' + pubmedResult.count + '</strong> resultados en PubMed. Se extrajeron <strong>' + pubmedResult.articles.length + '</strong> articulos.', 28);
           }
         }
@@ -2450,6 +2461,7 @@ async function simulateEvidencia() {
   pd.search_strategy = simData.search_strategy; pd.extraction_table = simData.extraction_table;
   pd.search_registry = simData.search_registry; pd.descriptor_mapping = simData.descriptor_mapping;
   if (simData._pubmed_real) pd._pubmed_real = true;
+  if (simData._pubmed_articles) pd._pubmed_articles = simData._pubmed_articles;
   var r = await sb.from(TABLE).update({ phase_data: pd, current_phase: 7, updated_at: new Date().toISOString() }).eq('id', rowId);
   if (r.error) return;
   project.phase_data = pd; project.current_phase = 7;
@@ -3121,7 +3133,14 @@ function renderGatekeeper() {
 }
 
 function renderPlanteamiento(pd) {
-  return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div><h3 class="font-bold text-gray-900">Fase 1 — Planteamiento</h3></div><pre class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed" contenteditable="true" onblur="debounceSave(\'planteamiento\',this.textContent)">' + esc(pd.planteamiento) + '</pre></div>';
+  var refsHtml = '';
+  var refs = getProjectVancouverRefs(pd);
+  if (refs && refs.length > 0) {
+    refsHtml = '<div class="mt-4 pt-4 border-t border-gray-100"><h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Referencias</h4><div class="space-y-1">';
+    refs.forEach(function(r) { refsHtml += '<div class="text-xs text-gray-600">' + esc(r) + '</div>'; });
+    refsHtml += '</div></div>';
+  }
+  return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div><h3 class="font-bold text-gray-900">Fase 1 — Planteamiento</h3></div><pre class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed" contenteditable="true" onblur="debounceSave(\'planteamiento\',this.textContent)">' + esc(pd.planteamiento) + '</pre>' + refsHtml + '</div>';
 }
 
 function renderFrameworkSection(pd) {
@@ -4229,7 +4248,8 @@ function buildManuscriptSections(pd, ue) {
 
   // Referencias
   var refs = '';
-  VANCOUVER_REFS.forEach(function(ref) { refs += ref + '\n'; });
+  var msRefs = getProjectVancouverRefs((project && project.phase_data) || {});
+  msRefs.forEach(function(ref) { refs += ref + '\n'; });
   sections[7].content = refs.trim(); sections[7].complete = true;
 
   // Apply user edits override
@@ -4414,7 +4434,7 @@ function regenerarPreguntaPicot() {
   delete pd.pregunta_editada;
   project.phase_data = pd;
   // Re-render to show auto-generated question
-  renderStage1DetailedViews();
+  renderDetailedViews();
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async function() {
     var r = await sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
@@ -5802,9 +5822,73 @@ function downloadPresupuestoExcel(docIndex) {
   showToast('Excel descargado', 'success');
 }
 
+function buildDocxFromSections(docName, sections, content) {
+  var children = [];
+  // Header: FSFB
+  children.push(new docx.Paragraph({
+    children: [new docx.TextRun({ text: 'Fundacion Santa Fe de Bogota — Departamento de Cirugia', bold: true, size: 20, color: 'FFFFFF' })],
+    shading: { type: docx.ShadingType.SOLID, color: '1a365d' },
+    spacing: { after: 300 }
+  }));
+  // Title
+  children.push(new docx.Paragraph({
+    children: [new docx.TextRun({ text: docName, bold: true, size: 32, color: '1a365d' })],
+    heading: docx.HeadingLevel.HEADING_1,
+    border: { bottom: { color: '2563eb', style: docx.BorderStyle.SINGLE, size: 3 } },
+    spacing: { after: 300 }
+  }));
+  // Sections
+  sections.forEach(function(sec) {
+    children.push(new docx.Paragraph({
+      children: [new docx.TextRun({ text: sec.title, bold: true, size: 26, color: '1e40af' })],
+      heading: docx.HeadingLevel.HEADING_2,
+      spacing: { before: 300, after: 150 }
+    }));
+    sec.fields.forEach(function(f) {
+      var val = content[f.key] || '';
+      // Field label
+      children.push(new docx.Paragraph({
+        children: [new docx.TextRun({ text: f.label, bold: true, size: 20, color: '374151' })],
+        spacing: { before: 100 }
+      }));
+      // Field value (split by newlines for multi-line fields)
+      var lines = val ? val.split('\n') : [''];
+      lines.forEach(function(line) {
+        children.push(new docx.Paragraph({
+          children: [new docx.TextRun({ text: line || ' ', size: 22 })],
+          border: { bottom: { color: 'd1d5db', style: docx.BorderStyle.SINGLE, size: 1 } },
+          spacing: { after: 50 }
+        }));
+      });
+    });
+  });
+  // Footer
+  children.push(new docx.Paragraph({
+    children: [new docx.TextRun({ text: 'Documento generado por Galatea AI — Fundacion Santa Fe de Bogota — Departamento de Cirugia', italics: true, size: 16, color: '888888' })],
+    spacing: { before: 600 },
+    border: { top: { color: 'cccccc', style: docx.BorderStyle.SINGLE, size: 1 } }
+  }));
+
+  var doc = new docx.Document({
+    sections: [{ properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } }, children: children }]
+  });
+  return doc;
+}
+
+async function downloadDocxBlob(doc, filename) {
+  var blob = await docx.Packer.toBlob(doc);
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function downloadChecklistDoc(docIndex) {
   if (!stage2SimData || !stage2SimData.docsSubdireccion[docIndex]) return;
-  // Presupuesto → Excel
   var dName = stage2SimData.docsSubdireccion[docIndex].name;
   if (dName.indexOf('Cronograma y presupuesto') >= 0) { downloadPresupuestoExcel(docIndex); return; }
   if (dName.indexOf('Matriz de Variables') >= 0) { downloadMatrizVariablesExcel(docIndex); return; }
@@ -5814,36 +5898,11 @@ function downloadChecklistDoc(docIndex) {
   var d = stage2SimData.docsSubdireccion[docIndex];
   var content = stage2DocContent[docIndex] || {};
   var sections = getDocTemplateSections(d.name);
-  var styles = 'body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.6; margin: 2.5cm; color: #222; }'
-    + 'h1 { font-size: 16pt; color: #1a365d; border-bottom: 2px solid #2563eb; padding-bottom: 8px; margin-bottom: 20px; }'
-    + 'h2 { font-size: 13pt; color: #1e40af; margin-top: 24px; margin-bottom: 8px; }'
-    + '.header-bar { background: #1a365d; color: white; padding: 12px 20px; font-size: 10pt; margin: -2.5cm -2.5cm 20px -2.5cm; }'
-    + '.field { margin-bottom: 10px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px; min-height: 24px; background: #f9fafb; white-space: pre-wrap; }'
-    + '.field-label { font-weight: bold; font-size: 10pt; color: #374151; margin-bottom: 4px; }'
-    + '.footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid #ccc; font-size: 9pt; color: #888; }';
-  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">';
-  html += '<head><meta charset="utf-8"><style>' + styles + '</style></head><body>';
-  html += '<div class="header-bar">Fundacion Santa Fe de Bogota &mdash; Departamento de Cirugia &mdash; Subdireccion de Estudios Clinicos y Epidemiologia Clinica</div>';
-  html += '<h1>' + esc(d.name) + '</h1>';
-  sections.forEach(function(sec) {
-    html += '<h2>' + sec.title + '</h2>';
-    sec.fields.forEach(function(f) {
-      var val = content[f.key] || '';
-      html += '<div class="field-label">' + esc(f.label) + '</div>';
-      html += '<div class="field">' + (val ? esc(val) : '&nbsp;') + '</div>';
-    });
-  });
-  html += '<div class="footer">Documento generado por Galatea AI &mdash; Fundacion Santa Fe de Bogota &mdash; Departamento de Cirugia</div>';
-  html += '</body></html>';
-  var blob = new Blob([html], { type: 'application/msword' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = d.name.replace(/[^a-zA-Z0-9_ .-]/g, '').replace(/\s+/g, '_') + '_FSFB.doc';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Build real DOCX
+  var doc = buildDocxFromSections(d.name, sections, content);
+  var filename = d.name.replace(/[^a-zA-Z0-9_ .-]/g, '').replace(/\s+/g, '_') + '_FSFB.docx';
+  downloadDocxBlob(doc, filename);
+  showToast('DOCX descargado: ' + d.name, 'success');
 }
 
 // ── Paso 4: Document Checklist ──
@@ -6333,11 +6392,10 @@ function prefillFromStage1(docIndex) {
     if (!c.obj_general && s1.hypothesis) {
       c.obj_general = s1.hypothesis.alternative_hypothesis || '';
     }
-    // Bibliografia ← real PubMed references from extraction_table
-    if (!c.bibliografia && s1.extraction_table) {
-      c.bibliografia = s1.extraction_table.map(function(e, i) {
-        return (i + 1) + '. ' + e.autor + ' (' + e.anio + '). ' + e.pais + '. ' + e.diseno + '. N=' + e.n + '. ' + e.resultado;
-      }).join('\n');
+    // Bibliografia ← Vancouver format from PubMed articles or extraction_table
+    if (!c.bibliografia) {
+      var bibRefs = getProjectVancouverRefs(s1);
+      c.bibliografia = bibRefs.join('\n');
     }
     // Poblacion ← from PICOT P
     if (!c.poblacion && s1.picot && s1.picot.P) {
@@ -6541,7 +6599,7 @@ function renderDocumentChecklist() {
     h += '</div>';
     // Download + expand buttons
     var isExcel = d.name.indexOf('Cronograma y presupuesto') >= 0 || d.name.indexOf('Matriz de Variables') >= 0;
-    var dlLabel = isExcel ? '.xlsx' : '.doc';
+    var dlLabel = isExcel ? '.xlsx' : '.docx';
     var dlColor = isExcel ? 'bg-green-600/10 text-green-700 hover:bg-green-600/20' : 'bg-galatea/10 text-galatea hover:bg-galatea/20';
     h += '<button onclick="event.stopPropagation(); downloadChecklistDoc(' + idx + ')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ' + dlColor + ' text-[11px] font-bold transition-colors mr-2">';
     h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>' + dlLabel + '</button>';
@@ -7095,6 +7153,477 @@ async function callRAnalysis(studies, measure, model) {
   return result;
 }
 
+// ═══ STAGE 4 DATA UPLOAD UTILITIES ═══
+var stage4UploadedData = null;
+
+function parseUploadedFile(file, callback) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var workbook = XLSX.read(data, { type: 'array' });
+      var firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      var jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+      callback(null, jsonData);
+    } catch(err) {
+      callback(err, null);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderDataPreview(data, containerId) {
+  var container = document.getElementById(containerId);
+  if (!container || !data || data.length === 0) return;
+  var cols = Object.keys(data[0]);
+  var previewRows = data.slice(0, 5);
+  var h = '<div class="overflow-x-auto"><table class="w-full text-xs border-collapse">';
+  h += '<thead><tr>';
+  cols.forEach(function(c) { h += '<th class="px-2 py-1.5 bg-gray-100 border border-gray-200 font-bold text-gray-700 text-left">' + c + '</th>'; });
+  h += '</tr></thead><tbody>';
+  previewRows.forEach(function(row) {
+    h += '<tr>';
+    cols.forEach(function(c) { h += '<td class="px-2 py-1 border border-gray-200 text-gray-600">' + (row[c] !== undefined ? row[c] : '') + '</td>'; });
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+  h += '<p class="text-[10px] text-gray-400 mt-2">Mostrando ' + previewRows.length + ' de ' + data.length + ' filas | ' + cols.length + ' columnas</p>';
+  container.innerHTML = h;
+}
+
+function downloadExtractionTemplate(studyTypeId) {
+  var isDTA = studyTypeId === 'dta';
+  var headers, example;
+  if (isDTA) {
+    headers = ['Autor', 'Anio', 'TP', 'FP', 'FN', 'TN'];
+    example = ['Ejemplo A.', 2023, 85, 10, 15, 90];
+  } else {
+    headers = ['Autor', 'Anio', 'Eventos_Intervencion', 'Total_Intervencion', 'Eventos_Control', 'Total_Control'];
+    example = ['Ejemplo A.', 2023, 45, 100, 30, 100];
+  }
+  var wsData = [headers, example];
+  for (var i = 0; i < 19; i++) wsData.push([]);
+  var ws = XLSX.utils.aoa_to_sheet(wsData);
+  // Set column widths
+  ws['!cols'] = headers.map(function() { return { wch: 22 }; });
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Extraccion');
+  XLSX.writeFile(wb, 'Plantilla_Extraccion_' + (isDTA ? 'DTA' : 'MA') + '.xlsx');
+}
+
+async function callRPrimaryAnalysis(data, studyType, outcomeVar, groupVar, covariates) {
+  var payload = {
+    data: data,
+    study_type: studyType || 'eca',
+    outcome_var: outcomeVar || null,
+    group_var: groupVar || null,
+    covariates: covariates || []
+  };
+  var resp = await fetch(R_API_URL + '/analyze-primary', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) throw new Error('R API error: ' + resp.status);
+  var result = await resp.json();
+  if (result.error) throw new Error(result.message || 'Primary analysis failed');
+  return unwrapR(result);
+}
+
+// ═══ VIA A: Primary data upload (ECA, Cohorte, Caso-control, Transversal) ═══
+function showStage4ViaA(curCfg) {
+  var views = $('detailedViews');
+  if (!views) return;
+  var card = document.createElement('div');
+  card.id = 'stage4UploadCard';
+  card.className = 'bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 fade-up';
+
+  var h = '<div class="flex items-center gap-3 mb-5">';
+  h += '<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg></div>';
+  h += '<div><h3 class="font-black text-gray-900">Sube tu base de datos</h3>';
+  h += '<p class="text-[10px] text-gray-400">Datos primarios para analisis — ' + (curCfg ? curCfg.label : 'Estudio') + '</p></div></div>';
+
+  h += '<div class="mb-4 p-4 rounded-xl bg-blue-50 border border-blue-100">';
+  h += '<p class="text-xs text-blue-800 mb-3">Sube tu archivo con los datos del estudio. <strong>Formatos:</strong> CSV, Excel (.xlsx). Cada fila = un sujeto. Primera fila = nombres de variables.</p>';
+  h += '<label class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-blue-300 bg-white cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all">';
+  h += '<svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>';
+  h += '<span class="text-sm font-medium text-blue-600">Seleccionar archivo CSV o Excel</span>';
+  h += '<input type="file" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleViaAUpload(this.files[0])">';
+  h += '</label></div>';
+
+  h += '<div id="viaAPreview" class="mb-4"></div>';
+  h += '<div id="viaAControls" class="hidden mb-4">';
+  h += '<div class="grid grid-cols-2 gap-3 mb-3">';
+  h += '<div><label class="text-[10px] font-bold text-gray-500 uppercase">Variable de desenlace (outcome)</label>';
+  h += '<select id="viaAOutcome" class="w-full mt-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5"></select></div>';
+  h += '<div><label class="text-[10px] font-bold text-gray-500 uppercase">Variable de grupo</label>';
+  h += '<select id="viaAGroup" class="w-full mt-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5"><option value="">(ninguna)</option></select></div>';
+  h += '</div>';
+  h += '<button onclick="runViaAAnalysis()" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-lg text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2">';
+  h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75Z M9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625Z M16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>';
+  h += 'Analizar datos</button></div>';
+
+  h += '<div id="viaAResults" class="mb-4"></div>';
+
+  h += '<div class="border-t border-gray-100 pt-4">';
+  h += '<button onclick="skipViaAUpload()" class="text-xs text-gray-400 hover:text-gray-600 transition-colors underline">Continuar sin datos (demo)</button></div>';
+
+  card.innerHTML = h;
+  views.appendChild(card);
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function handleViaAUpload(file) {
+  if (!file) return;
+  parseUploadedFile(file, function(err, data) {
+    if (err) { showToast('Error al leer archivo: ' + err.message, 'error'); return; }
+    if (!data || data.length === 0) { showToast('El archivo esta vacio', 'error'); return; }
+    stage4UploadedData = data;
+    // Save summary in project
+    if (project && project.phase_data) {
+      project.phase_data.uploaded_data_summary = { rows: data.length, columns: Object.keys(data[0]), file_name: file.name };
+    }
+    renderDataPreview(data, 'viaAPreview');
+    // Populate variable selectors
+    var cols = Object.keys(data[0]);
+    var outcomeSelect = document.getElementById('viaAOutcome');
+    var groupSelect = document.getElementById('viaAGroup');
+    if (outcomeSelect) {
+      outcomeSelect.innerHTML = '';
+      cols.forEach(function(c) { outcomeSelect.innerHTML += '<option value="' + c + '">' + c + '</option>'; });
+    }
+    if (groupSelect) {
+      groupSelect.innerHTML = '<option value="">(ninguna)</option>';
+      cols.forEach(function(c) { groupSelect.innerHTML += '<option value="' + c + '">' + c + '</option>'; });
+    }
+    document.getElementById('viaAControls').classList.remove('hidden');
+  });
+}
+
+async function runViaAAnalysis() {
+  if (!stage4UploadedData) { showToast('No hay datos cargados', 'error'); return; }
+  var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  var outcomeVar = document.getElementById('viaAOutcome') ? document.getElementById('viaAOutcome').value : null;
+  var groupVar = document.getElementById('viaAGroup') ? document.getElementById('viaAGroup').value : null;
+  if (!groupVar) groupVar = null;
+
+  var resultsDiv = document.getElementById('viaAResults');
+  resultsDiv.innerHTML = '<div class="flex items-center gap-2 p-4 bg-blue-50 rounded-xl"><div class="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div><span class="text-xs text-blue-700">Analizando datos con R...</span></div>';
+
+  try {
+    var rResult = await callRPrimaryAnalysis(stage4UploadedData, selectedStudyTypeId, outcomeVar, groupVar, []);
+    rResult = unwrapR(rResult);
+    renderViaAResults(rResult, resultsDiv);
+    // Inject real data into stage3SimData for continuation
+    stage3SimData = generateStatsPlanByType(curCfg);
+    stage3SimData._source = 'R_primary';
+    stage3SimData._primaryResults = rResult;
+  } catch(e) {
+    console.error('Via A R analysis failed:', e);
+    resultsDiv.innerHTML = '<div class="p-4 bg-amber-50 border border-amber-200 rounded-xl"><p class="text-xs text-amber-800"><strong>No se pudo conectar con R API.</strong> ' + e.message + '</p><p class="text-xs text-amber-600 mt-1">Continuando con datos de simulacion...</p></div>';
+    stage3SimData = generateStatsPlanByType(curCfg);
+    stage3SimData._source = 'type_adapted';
+  }
+
+  // Show continue button
+  var contBtn = document.createElement('div');
+  contBtn.className = 'mt-4';
+  contBtn.innerHTML = '<button onclick="continueViaAToStatsPlan()" class="bg-gradient-to-r from-galatea to-verde hover:shadow-lg text-white px-8 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2 btn-attention">' +
+    '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>' +
+    'Continuar con Plan Estadistico</button>';
+  resultsDiv.appendChild(contBtn);
+}
+
+function renderViaAResults(rResult, container) {
+  var h = '<div class="space-y-3">';
+  h += '<div class="bg-gradient-to-r from-emerald-50 to-white rounded-xl p-4 border border-emerald-100">';
+  h += '<h4 class="text-sm font-bold text-emerald-800 mb-3">Resultados del Analisis Descriptivo</h4>';
+  h += '<div class="grid grid-cols-3 gap-2 mb-3">';
+  h += '<div class="bg-white rounded-lg p-2 border border-gray-100 text-center"><div class="text-lg font-black text-gray-900">' + (rResult.n || '?') + '</div><div class="text-[10px] text-gray-400">Observaciones</div></div>';
+  var numVars = 0, catVars = 0;
+  if (rResult.variables) {
+    for (var k in rResult.variables) {
+      if (rResult.variables[k].type === 'numeric') numVars++;
+      else catVars++;
+    }
+  }
+  h += '<div class="bg-white rounded-lg p-2 border border-gray-100 text-center"><div class="text-lg font-black text-blue-600">' + numVars + '</div><div class="text-[10px] text-gray-400">Var. Numericas</div></div>';
+  h += '<div class="bg-white rounded-lg p-2 border border-gray-100 text-center"><div class="text-lg font-black text-purple-600">' + catVars + '</div><div class="text-[10px] text-gray-400">Var. Categoricas</div></div>';
+  h += '</div>';
+
+  // Variable details
+  if (rResult.variables) {
+    h += '<div class="space-y-2">';
+    for (var vk in rResult.variables) {
+      var v = rResult.variables[vk];
+      h += '<div class="bg-white rounded-lg p-3 border border-gray-100">';
+      h += '<div class="flex items-center gap-2 mb-1"><span class="text-[10px] px-1.5 py-0.5 rounded ' + (v.type === 'numeric' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700') + ' font-bold">' + v.type + '</span>';
+      h += '<span class="text-xs font-bold text-gray-800">' + v.name + '</span></div>';
+      if (v.type === 'numeric') {
+        h += '<div class="grid grid-cols-4 gap-1 text-[10px] text-gray-600">';
+        h += '<div>Media: <strong>' + v.mean + '</strong></div>';
+        h += '<div>DE: <strong>' + v.sd + '</strong></div>';
+        h += '<div>IC 95%: <strong>' + v.ci_lo + ' - ' + v.ci_hi + '</strong></div>';
+        h += '<div>Shapiro p: <strong>' + (v.shapiro_p !== undefined ? v.shapiro_p : 'N/A') + '</strong> ' + (v.normal ? '<span class="text-emerald-600">Normal</span>' : v.normal === false ? '<span class="text-amber-600">No normal</span>' : '') + '</div>';
+        h += '</div>';
+      } else {
+        h += '<div class="text-[10px] text-gray-600">';
+        if (v.levels) v.levels.forEach(function(lv, li) { h += lv + ': <strong>' + v.counts[li] + '</strong> (' + (v.proportions[li] * 100).toFixed(1) + '%) '; });
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+
+  // Inferential results
+  if (rResult.inferential) {
+    var inf = rResult.inferential;
+    h += '<div class="bg-gradient-to-r from-purple-50 to-white rounded-xl p-4 border border-purple-100 mt-3">';
+    h += '<h4 class="text-sm font-bold text-purple-800 mb-3">Resultados Inferenciales</h4>';
+    h += '<div class="space-y-2">';
+    if (inf.t_test) {
+      h += '<div class="bg-white rounded-lg p-3 border border-gray-100"><span class="text-xs font-bold text-gray-700">t-test: </span>';
+      h += '<span class="text-xs text-gray-600">t = ' + inf.t_test.statistic + ', p = <strong class="' + (inf.t_test.p < 0.05 ? 'text-emerald-600' : 'text-gray-700') + '">' + inf.t_test.p + '</strong>';
+      h += ' | IC 95%: ' + inf.t_test.ci_lo + ' a ' + inf.t_test.ci_hi + '</span></div>';
+    }
+    if (inf.wilcoxon) {
+      h += '<div class="bg-white rounded-lg p-3 border border-gray-100"><span class="text-xs font-bold text-gray-700">Wilcoxon: </span>';
+      h += '<span class="text-xs text-gray-600">W = ' + inf.wilcoxon.statistic + ', p = <strong class="' + (inf.wilcoxon.p < 0.05 ? 'text-emerald-600' : 'text-gray-700') + '">' + inf.wilcoxon.p + '</strong></span></div>';
+    }
+    if (inf.anova) {
+      h += '<div class="bg-white rounded-lg p-3 border border-gray-100"><span class="text-xs font-bold text-gray-700">ANOVA: </span>';
+      h += '<span class="text-xs text-gray-600">F = ' + inf.anova.f_statistic + ', p = <strong class="' + (inf.anova.p < 0.05 ? 'text-emerald-600' : 'text-gray-700') + '">' + inf.anova.p + '</strong></span></div>';
+    }
+    if (inf.chi_squared) {
+      h += '<div class="bg-white rounded-lg p-3 border border-gray-100"><span class="text-xs font-bold text-gray-700">Chi-cuadrado: </span>';
+      h += '<span class="text-xs text-gray-600">&chi;&sup2; = ' + inf.chi_squared.statistic + ', p = <strong class="' + (inf.chi_squared.p < 0.05 ? 'text-emerald-600' : 'text-gray-700') + '">' + inf.chi_squared.p + '</strong></span></div>';
+    }
+    if (inf.logistic) {
+      h += '<div class="bg-white rounded-lg p-3 border border-gray-100"><span class="text-xs font-bold text-gray-700">Regresion Logistica: </span>';
+      h += '<span class="text-xs text-gray-600">OR = ' + inf.logistic.or + ' (IC 95%: ' + inf.logistic.or_lo + ' - ' + inf.logistic.or_hi + '), p = <strong class="' + (inf.logistic.p < 0.05 ? 'text-emerald-600' : 'text-gray-700') + '">' + inf.logistic.p + '</strong></span></div>';
+    }
+    if (inf.cox) {
+      h += '<div class="bg-white rounded-lg p-3 border border-gray-100"><span class="text-xs font-bold text-gray-700">Cox (HR): </span>';
+      h += '<span class="text-xs text-gray-600">HR = ' + inf.cox.hr + ' (IC 95%: ' + inf.cox.hr_lo + ' - ' + inf.cox.hr_hi + '), p = <strong>' + inf.cox.p + '</strong></span></div>';
+    }
+    if (inf.prevalence) {
+      h += '<div class="bg-white rounded-lg p-3 border border-gray-100"><span class="text-xs font-bold text-gray-700">Prevalencia: </span>';
+      h += '<span class="text-xs text-gray-600">' + (inf.prevalence.prevalence * 100).toFixed(1) + '% (IC 95%: ' + (inf.prevalence.ci_lo * 100).toFixed(1) + '% - ' + (inf.prevalence.ci_hi * 100).toFixed(1) + '%)</span></div>';
+    }
+    h += '</div></div>';
+  }
+
+  // Plots
+  if (rResult.plots) {
+    if (rResult.plots.histogram || rResult.plots.boxplot) {
+      h += '<div class="mt-3 grid grid-cols-2 gap-3">';
+      if (rResult.plots.histogram) h += '<div class="bg-white rounded-lg p-2 border border-gray-100"><img src="' + rResult.plots.histogram + '" class="w-full rounded" alt="Histograma"></div>';
+      if (rResult.plots.boxplot) h += '<div class="bg-white rounded-lg p-2 border border-gray-100"><img src="' + rResult.plots.boxplot + '" class="w-full rounded" alt="Boxplot"></div>';
+      h += '</div>';
+    }
+  }
+  h += '</div>';
+  container.innerHTML = h;
+}
+
+function continueViaAToStatsPlan() {
+  // Remove upload card
+  var uploadCard = document.getElementById('stage4UploadCard');
+  if (uploadCard) { uploadCard.style.opacity = '0'; uploadCard.style.transition = 'opacity .3s'; setTimeout(function() { uploadCard.remove(); }, 300); }
+  var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  if (!stage3SimData) {
+    stage3SimData = generateStatsPlanByType(curCfg);
+    stage3SimData._source = 'type_adapted';
+  }
+  simulationRunning = true;
+  simulationAborted = false;
+  var titleText = 'Plan de Analisis Estadistico';
+  $('projectTitle').textContent = titleText;
+  $('projectMeta').textContent = 'Etapa 4: ' + titleText + ' | Paso 0 / 3';
+  renderStage3AgentGrid();
+  runStage4StatsPlan(curCfg);
+}
+
+function skipViaAUpload() {
+  var uploadCard = document.getElementById('stage4UploadCard');
+  if (uploadCard) { uploadCard.style.opacity = '0'; uploadCard.style.transition = 'opacity .3s'; setTimeout(function() { uploadCard.remove(); }, 300); }
+  stage4UploadedData = null;
+  var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  stage3SimData = generateStatsPlanByType(curCfg);
+  stage3SimData._source = 'type_adapted';
+  simulationRunning = true;
+  simulationAborted = false;
+  var titleText = 'Plan de Analisis Estadistico';
+  $('projectTitle').textContent = titleText;
+  $('projectMeta').textContent = 'Etapa 4: ' + titleText + ' | Paso 0 / 3';
+  renderStage3AgentGrid();
+  runStage4StatsPlan(curCfg);
+}
+
+// ═══ VIA B: Extraction template upload (RS+MA, DTA) ═══
+function showStage4ViaB(curCfg) {
+  var views = $('detailedViews');
+  if (!views) return;
+  var card = document.createElement('div');
+  card.id = 'stage4UploadCard';
+  card.className = 'bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 fade-up';
+
+  var isDTA = curCfg && curCfg.id === 'dta';
+  var h = '<div class="flex items-center gap-3 mb-5">';
+  h += '<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M10.875 12c-.621 0-1.125.504-1.125 1.125M12 10.875c-.621 0-1.125.504-1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 1.5c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m-2.25 0c-.621 0-1.125.504-1.125 1.125"/></svg></div>';
+  h += '<div><h3 class="font-black text-gray-900">Tabla de Extraccion de Datos</h3>';
+  h += '<p class="text-[10px] text-gray-400">Datos para meta-analisis — ' + (curCfg ? curCfg.label : 'RS + MA') + '</p></div></div>';
+
+  h += '<div class="mb-4 p-4 rounded-xl bg-purple-50 border border-purple-100">';
+  h += '<p class="text-xs text-purple-800 mb-3">Descarga la plantilla, completala con los datos de los estudios incluidos, y luego subela para ejecutar el meta-analisis.</p>';
+  h += '<div class="flex gap-3">';
+  h += '<button onclick="downloadExtractionTemplate(\'' + (curCfg ? curCfg.id : 'rs_ma') + '\')" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-all">';
+  h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
+  h += 'Descargar plantilla Excel</button></div></div>';
+
+  if (isDTA) {
+    h += '<p class="text-[10px] text-gray-400 mb-3">Columnas requeridas: Autor, Anio, TP, FP, FN, TN</p>';
+  } else {
+    h += '<p class="text-[10px] text-gray-400 mb-3">Columnas requeridas: Autor, Anio, Eventos_Intervencion, Total_Intervencion, Eventos_Control, Total_Control</p>';
+  }
+
+  h += '<div class="mb-4">';
+  h += '<label class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-purple-300 bg-white cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-all">';
+  h += '<svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>';
+  h += '<span class="text-sm font-medium text-purple-600">Subir plantilla completada</span>';
+  h += '<input type="file" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleViaBUpload(this.files[0])">';
+  h += '</label></div>';
+
+  h += '<div id="viaBPreview" class="mb-4"></div>';
+  h += '<div id="viaBControls" class="hidden mb-4">';
+  h += '<button onclick="runViaBMetaAnalysis()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-lg text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2">';
+  h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75Z M9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625Z M16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>';
+  h += 'Ejecutar Meta-analisis</button></div>';
+
+  h += '<div class="border-t border-gray-100 pt-4">';
+  h += '<button onclick="skipViaBUpload()" class="text-xs text-gray-400 hover:text-gray-600 transition-colors underline">Continuar con datos de ejemplo (demo)</button></div>';
+
+  card.innerHTML = h;
+  views.appendChild(card);
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function handleViaBUpload(file) {
+  if (!file) return;
+  var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  var isDTA = curCfg && curCfg.id === 'dta';
+  parseUploadedFile(file, function(err, data) {
+    if (err) { showToast('Error al leer archivo: ' + err.message, 'error'); return; }
+    if (!data || data.length === 0) { showToast('El archivo esta vacio', 'error'); return; }
+
+    // Validate required columns
+    var cols = Object.keys(data[0]);
+    var colsLower = cols.map(function(c) { return c.toLowerCase().replace(/[^a-z0-9]/g, ''); });
+    var valid = true;
+    if (isDTA) {
+      ['tp', 'fp', 'fn', 'tn'].forEach(function(req) { if (colsLower.indexOf(req) === -1) valid = false; });
+    } else {
+      if (colsLower.indexOf('autor') === -1 && colsLower.indexOf('author') === -1) {
+        // Check if first column could be author
+        if (typeof data[0][cols[0]] !== 'string') valid = false;
+      }
+    }
+
+    // Map columns to standard format
+    var mapped = data.filter(function(row) {
+      // Skip empty rows
+      var vals = Object.values(row);
+      return vals.some(function(v) { return v !== '' && v !== null && v !== undefined; });
+    }).map(function(row, i) {
+      var r = {};
+      cols.forEach(function(c, ci) {
+        var cl = c.toLowerCase().replace(/[^a-z0-9_]/g, '');
+        if (cl === 'autor' || cl === 'author') r.autor = row[c];
+        else if (cl === 'anio' || cl === 'year' || cl === 'ano') r.anio = parseInt(row[c]) || 2020;
+        else if (cl === 'eventosintervencion' || cl === 'eventsi' || cl === 'eventos_intervencion') r.events_i = parseInt(row[c]) || 0;
+        else if (cl === 'totalintervencion' || cl === 'totali' || cl === 'total_intervencion') r.total_i = parseInt(row[c]) || 0;
+        else if (cl === 'eventoscontrol' || cl === 'eventsc' || cl === 'eventos_control') r.events_c = parseInt(row[c]) || 0;
+        else if (cl === 'totalcontrol' || cl === 'totalc' || cl === 'total_control') r.total_c = parseInt(row[c]) || 0;
+        else if (cl === 'tp') r.tp = parseInt(row[c]) || 0;
+        else if (cl === 'fp') r.fp = parseInt(row[c]) || 0;
+        else if (cl === 'fn') r.fn = parseInt(row[c]) || 0;
+        else if (cl === 'tn') r.tn = parseInt(row[c]) || 0;
+      });
+      if (!r.autor) r.autor = 'Estudio ' + (i + 1);
+      if (!r.anio) r.anio = 2020;
+      return r;
+    });
+
+    if (mapped.length < 2) { showToast('Se necesitan al menos 2 estudios para el meta-analisis', 'error'); return; }
+
+    // Save to project extraction_table
+    if (project && project.phase_data) {
+      project.phase_data.extraction_table = mapped;
+    }
+
+    // Show preview
+    renderDataPreview(data.filter(function(row) { return Object.values(row).some(function(v) { return v !== '' && v !== null; }); }), 'viaBPreview');
+    var previewDiv = document.getElementById('viaBPreview');
+    previewDiv.innerHTML += '<div class="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200"><span class="text-xs text-emerald-700 font-bold">' + mapped.length + ' estudios detectados</span></div>';
+
+    document.getElementById('viaBControls').classList.remove('hidden');
+  });
+}
+
+async function runViaBMetaAnalysis() {
+  var uploadCard = document.getElementById('stage4UploadCard');
+  if (uploadCard) { uploadCard.style.opacity = '0'; uploadCard.style.transition = 'opacity .3s'; setTimeout(function() { uploadCard.remove(); }, 300); }
+
+  var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  // Now run the standard MA flow — getExtractionStudies() will read from project.phase_data.extraction_table
+  try {
+    var extractionData = getExtractionStudies();
+    var rMeasure = curCfg ? curCfg.rMeasure : 'OR';
+    var rModel = curCfg ? curCfg.rModel : 'random';
+    console.log('Galatea ViaB: Calling R API with ' + extractionData.length + ' studies from uploaded data');
+    stage3SimData = await callRAnalysis(extractionData, rMeasure, rModel);
+    stage3SimData._source = 'R';
+  } catch(e) {
+    console.error('Galatea R API FAILED:', e.message);
+    stage3SimData = generateStage3SimData();
+    stage3SimData._source = 'simulacion';
+  }
+  simulationRunning = true;
+  simulationAborted = false;
+  $('projectTitle').textContent = 'Motor de Sintesis Cuantitativa';
+  $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso 0 / 6';
+  renderStage3AgentGrid();
+  runStage3Simulation();
+}
+
+function skipViaBUpload() {
+  var uploadCard = document.getElementById('stage4UploadCard');
+  if (uploadCard) { uploadCard.style.opacity = '0'; uploadCard.style.transition = 'opacity .3s'; setTimeout(function() { uploadCard.remove(); }, 300); }
+
+  var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
+  // Use existing simulated data
+  (async function() {
+    try {
+      var extractionData = getExtractionStudies();
+      var rMeasure = curCfg ? curCfg.rMeasure : 'OR';
+      var rModel = curCfg ? curCfg.rModel : 'random';
+      stage3SimData = await callRAnalysis(extractionData, rMeasure, rModel);
+      stage3SimData._source = 'R';
+    } catch(e) {
+      stage3SimData = generateStage3SimData();
+      stage3SimData._source = 'simulacion';
+    }
+    simulationRunning = true;
+    simulationAborted = false;
+    $('projectTitle').textContent = 'Motor de Sintesis Cuantitativa';
+    $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso 0 / 6';
+    renderStage3AgentGrid();
+    runStage3Simulation();
+  })();
+}
+
 function startStage3() { startStage4(); } // backwards compat
 async function startStage4() {
   currentStage = 4;
@@ -7111,40 +7640,27 @@ async function startStage4() {
 
   var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
   var needsMA = curCfg ? curCfg.needsMetaAnalysis : true;
+  var isQualitative = curCfg && curCfg.id === 'cualitativo';
+  var isCaseReport = curCfg && curCfg.id === 'caso_reporte';
   console.log('Galatea Stage4: studyTypeId=' + selectedStudyTypeId + ', needsMA=' + needsMA + ', curCfg=' + (curCfg ? curCfg.label : 'null'));
 
-  if (needsMA) {
-    // ── Meta-analysis path (RS+MA, DTA) ──
-    try {
-      var extractionData = getExtractionStudies();
-      var rMeasure = curCfg ? curCfg.rMeasure : 'OR';
-      var rModel = curCfg ? curCfg.rModel : 'random';
-      console.log('Galatea: Calling R API at ' + R_API_URL + '/analyze with measure=' + rMeasure + ', model=' + rModel + ', studies=' + extractionData.length);
-      stage3SimData = await callRAnalysis(extractionData, rMeasure, rModel);
-      stage3SimData._source = 'R';
-      console.log('Galatea: Analisis estadistico calculado con R (' + (curCfg ? curCfg.statsTemplate.rPkg : 'metafor') + ')');
-    } catch(e) {
-      console.error('Galatea R API FAILED:', e.message);
-      stage3SimData = generateStage3SimData();
-      stage3SimData._source = 'simulacion';
-    }
-    simulationRunning = true;
-    simulationAborted = false;
-    $('projectTitle').textContent = 'Motor de Sintesis Cuantitativa';
-    $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso 0 / 6';
-    renderStage3AgentGrid();
-    runStage3Simulation();
-  } else {
-    // ── Non-meta-analysis path ──
+  if (isQualitative || isCaseReport) {
+    // ── Qualitative / Case report — skip upload, go straight to stats plan ──
     simulationRunning = true;
     simulationAborted = false;
     stage3SimData = generateStatsPlanByType(curCfg);
     stage3SimData._source = 'type_adapted';
-    var titleText = curCfg && curCfg.id === 'cualitativo' ? 'Plan de Analisis Tematico' : curCfg && curCfg.id === 'caso_reporte' ? 'Analisis Descriptivo' : 'Plan de Analisis Estadistico';
+    var titleText = isQualitative ? 'Plan de Analisis Tematico' : 'Analisis Descriptivo';
     $('projectTitle').textContent = titleText;
     $('projectMeta').textContent = 'Etapa 4: ' + titleText + ' | Paso 0 / 3';
     renderStage3AgentGrid();
     runStage4StatsPlan(curCfg);
+  } else if (needsMA) {
+    // ── VIA B — RS+MA / DTA: show extraction template upload ──
+    showStage4ViaB(curCfg);
+  } else {
+    // ── VIA A — Primary studies (ECA, Cohorte, Caso-control, Transversal): show data upload ──
+    showStage4ViaA(curCfg);
   }
 }
 
@@ -7935,6 +8451,66 @@ var liveDocOpen = false;
 var manuscriptItems = { picot:null, metodos:null, busqueda:null, prisma:null, protocolo:null, forest:null, funnel:null, grade:null, equator:null };
 var manuscriptFigureCount = 0;
 
+// ── Vancouver Utilities ──
+function formatVancouver(article, index) {
+  var a = article || {};
+  var authStr = '';
+  if (a.authors && a.authors.length > 0) {
+    if (a.authors.length <= 6) {
+      authStr = a.authors.join(', ');
+    } else {
+      authStr = a.authors.slice(0, 6).join(', ') + ', et al';
+    }
+  }
+  var t = (a.title || 'Untitled').replace(/\.\s*$/, '') + '.';
+  var j = a.journal ? ' ' + a.journal.replace(/\.\s*$/, '') + '.' : '';
+  var y = a.year ? ' ' + a.year + ';' : '';
+  var d = a.doi ? ' doi:' + a.doi + '.' : '';
+  return index + '. ' + authStr + '. ' + t + j + y + d;
+}
+
+function getProjectVancouverRefs(pd) {
+  pd = pd || {};
+  if (pd._pubmed_articles && pd._pubmed_articles.length > 0) {
+    return pd._pubmed_articles.map(function(a, i) {
+      return formatVancouver(a, i + 1);
+    });
+  }
+  if (pd.extraction_table && pd.extraction_table.length > 0 && pd.extraction_table[0].pmid) {
+    return pd.extraction_table.map(function(e, i) {
+      return (i + 1) + '. ' + e.autor + '. ' + e.resultado + '. ' + (e.anio || '') + '.' + (e.doi ? ' doi:' + e.doi + '.' : '');
+    });
+  }
+  return VANCOUVER_REFS;
+}
+
+function injectCitationsInPlanteamiento(text, numRefs) {
+  if (!text || numRefs < 1) return text;
+  var paras = text.split('\n\n');
+  var third = Math.max(1, Math.ceil(numRefs / 3));
+  var r1end = Math.min(third, numRefs);
+  var r2end = Math.min(third * 2, numRefs);
+  function refTag(a, b) {
+    if (a === b) return ' [' + a + ']';
+    return ' [' + a + '-' + b + ']';
+  }
+  function appendBeforePeriod(p, tag) {
+    var trimmed = p.replace(/\.\s*$/, '');
+    return trimmed + tag + '.';
+  }
+  if (paras.length >= 3) {
+    paras[0] = appendBeforePeriod(paras[0], refTag(1, r1end));
+    paras[1] = appendBeforePeriod(paras[1], refTag(r1end + 1, r2end));
+    paras[2] = appendBeforePeriod(paras[2], refTag(1, numRefs));
+  } else if (paras.length === 2) {
+    paras[0] = appendBeforePeriod(paras[0], refTag(1, Math.ceil(numRefs / 2)));
+    paras[1] = appendBeforePeriod(paras[1], refTag(1, numRefs));
+  } else {
+    paras[0] = appendBeforePeriod(paras[0], refTag(1, numRefs));
+  }
+  return paras.join('\n\n');
+}
+
 // ── Vancouver References (strict format) ──
 var VANCOUVER_REFS = [
   '1. Page MJ, McKenzie JE, Bossuyt PM, et al. The PRISMA 2020 statement: an updated guideline for reporting systematic reviews. BMJ. 2021;372:n71.',
@@ -8111,7 +8687,8 @@ function renderLiveDocPages() {
   h += '<div class="doc-page"><div class="doc-draft-badge">Borrador Galatea AI</div>';
   h += '<div class="doc-page-header"><div class="doc-institution">Fundacion Santa Fe de Bogota</div><div class="doc-dept">Departamento de Cirugia | Protocolo de Investigacion</div></div>';
   h += '<div class="doc-section-title">Referencias</div><div id="docSection_biblio">';
-  VANCOUVER_REFS.forEach(function(ref) { h += '<div class="doc-ref">' + esc(ref) + '</div>'; });
+  var liveDocRefs = getProjectVancouverRefs(project.phase_data || {});
+  liveDocRefs.forEach(function(ref) { h += '<div class="doc-ref">' + esc(ref) + '</div>'; });
   h += '</div></div>';
   el.innerHTML = h;
 }
@@ -8159,7 +8736,8 @@ function exportProtocolPDF() {
     html += '</table>';
   }
   html += '<h2>Referencias</h2>';
-  VANCOUVER_REFS.forEach(function(ref) { html += '<div class="ref">' + esc(ref) + '</div>'; });
+  var wordRefs = getProjectVancouverRefs((project && project.phase_data) || {});
+  wordRefs.forEach(function(ref) { html += '<div class="ref">' + esc(ref) + '</div>'; });
   html += '<div class="firma"><div class="firma-line">Investigador Principal<br>Departamento de Cirugia &mdash; FSFB</div></div>';
   html += '</body></html>';
   var blob = new Blob([html], { type: 'application/msword' });
@@ -8571,6 +9149,8 @@ function transformApiToReal(picotData, finerData, scoutData, pubmedResult, quest
         doi: a.doi || ''
       };
     });
+    real._pubmed_real = true;
+    real._pubmed_articles = arts;
   }
 
   // Planteamiento — from Claude or placeholder
@@ -8738,6 +9318,8 @@ async function executeRealPubMed() {
         resultado: a.title || '', sesgo: 'pendiente', pmid: a.pmid || '', doi: a.doi || ''
       };
     });
+    simData._pubmed_real = true;
+    simData._pubmed_articles = arts;
 
     // Save to Supabase
     if (rowId) {
@@ -8745,6 +9327,8 @@ async function executeRealPubMed() {
       pd.search_registry = simData.search_registry;
       pd.search_strategy = simData.search_strategy;
       pd.extraction_table = simData.extraction_table;
+      pd._pubmed_real = true;
+      pd._pubmed_articles = arts;
       pd.pubmed_real_count = exactCount;
       sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
       project.phase_data = pd;
