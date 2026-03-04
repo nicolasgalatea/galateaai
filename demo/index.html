@@ -4712,6 +4712,7 @@ var stage2DocExpanded = {};
 var stage2DocContent = {};
 var stage2DocViewMode = {}; // idx → 'plaintext' | 'fields' — default plaintext
 var stage2DocPrefilled = {}; // idx → true once prefilled
+var mendeleyRefs = []; // Imported Mendeley BibTeX references
 var stage2Step = 0;
 var stage2HasExternalInvestigators = false;
 var stage2ConfidentialitySigned = false;
@@ -5732,6 +5733,15 @@ function downloadMatrizVariablesExcel(docIndex) {
   ws['!cols'] = [{wch:22},{wch:30},{wch:35},{wch:14},{wch:18},{wch:25},{wch:14},{wch:14}];
   ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:1,c:0},e:{r:1,c:7}},{s:{r:2,c:0},e:{r:2,c:7}}];
   XLSX.utils.book_append_sheet(wb, ws, 'Matriz de Variables');
+  // References sheet
+  var allRefs = getAllProjectRefs();
+  if (allRefs.length > 0) {
+    var refsData = [['REFERENCIAS BIBLIOGRAFICAS (Mendeley / Vancouver)'], []];
+    allRefs.forEach(function(r) { refsData.push([r]); });
+    var wsRefs = XLSX.utils.aoa_to_sheet(refsData);
+    wsRefs['!cols'] = [{wch:120}];
+    XLSX.utils.book_append_sheet(wb, wsRefs, 'Referencias');
+  }
   XLSX.writeFile(wb, 'Matriz_Variables_FSFB.xlsx');
   showToast('Excel Matriz de Variables descargado', 'success');
 }
@@ -5817,6 +5827,16 @@ function downloadPresupuestoExcel(docIndex) {
 
   XLSX.utils.book_append_sheet(wb, wsPpto, 'Presupuesto');
 
+  // References sheet
+  var allRefs = getAllProjectRefs();
+  if (allRefs.length > 0) {
+    var refsData = [['REFERENCIAS BIBLIOGRAFICAS (Mendeley / Vancouver)'], []];
+    allRefs.forEach(function(r) { refsData.push([r]); });
+    var wsRefs = XLSX.utils.aoa_to_sheet(refsData);
+    wsRefs['!cols'] = [{wch:120}];
+    XLSX.utils.book_append_sheet(wb, wsRefs, 'Referencias');
+  }
+
   // Download
   XLSX.writeFile(wb, 'Cronograma_Presupuesto_FSFB.xlsx');
   showToast('Excel descargado', 'success');
@@ -5862,6 +5882,23 @@ function buildDocxFromSections(docName, sections, content) {
       });
     });
   });
+  // References section (Mendeley + PubMed combined)
+  var allRefs = getAllProjectRefs();
+  if (allRefs.length > 0) {
+    children.push(new docx.Paragraph({
+      children: [new docx.TextRun({ text: 'Referencias Bibliograficas (Mendeley / Vancouver)', bold: true, size: 26, color: '1e40af' })],
+      heading: docx.HeadingLevel.HEADING_2,
+      spacing: { before: 400, after: 200 },
+      border: { bottom: { color: '2563eb', style: docx.BorderStyle.SINGLE, size: 2 } }
+    }));
+    allRefs.forEach(function(ref) {
+      children.push(new docx.Paragraph({
+        children: [new docx.TextRun({ text: ref, size: 20 })],
+        spacing: { after: 80 }
+      }));
+    });
+  }
+
   // Footer
   children.push(new docx.Paragraph({
     children: [new docx.TextRun({ text: 'Documento generado por Galatea AI — Fundacion Santa Fe de Bogota — Departamento de Cirugia', italics: true, size: 16, color: '888888' })],
@@ -6070,6 +6107,9 @@ function getDocTemplateSections(docName) {
       {label:'Investigador — Institucion', key:'firma_inv_inst', placeholder:''},
       {label:'Investigador FSFB — Nombre', key:'firma_fsfb_nombre', placeholder:''},
       {label:'Investigador FSFB — Institucion', key:'firma_fsfb_inst', placeholder:'Fundacion Santa Fe de Bogota'}
+    ]},
+    { id:'conf_refs', title:'Referencias Bibliograficas', fields:[
+      {label:'Referencias (Normas Vancouver / Mendeley)', key:'bibliografia', placeholder:'Las referencias se importan automaticamente desde Mendeley y/o PubMed.', large:true}
     ]}
   ];
   if (docName.indexOf('Consentimientos informados') >= 0) return [
@@ -6238,6 +6278,9 @@ function getDocTemplateSections(docName) {
       {label:'Padre — Nombre, C.C., Firma, Direccion, Fecha y Hora', key:'m_firma_padre', placeholder:''},
       {label:'Testigo No.1 — Nombre, C.C., Firma, Parentesco, Fecha', key:'m_firma_testigo1', placeholder:''},
       {label:'Testigo No.2 — Nombre, C.C., Firma, Parentesco, Fecha', key:'m_firma_testigo2', placeholder:''}
+    ]},
+    { id:'icf_refs', title:'Referencias Bibliograficas', fields:[
+      {label:'Referencias (Normas Vancouver / Mendeley)', key:'bibliografia', placeholder:'Las referencias se importan automaticamente desde Mendeley y/o PubMed.', large:true}
     ]}
   ];
   if (docName.indexOf('Matriz de Variables') >= 0) return [
@@ -6306,6 +6349,9 @@ function getDocTemplateSections(docName) {
     ]},
     { id:'crf_obs', title:'Seccion D: Observaciones', fields:[
       {label:'Observaciones adicionales', key:'observaciones', placeholder:'Espacio para observaciones del recolector', large:true}
+    ]},
+    { id:'crf_refs', title:'Referencias Bibliograficas', fields:[
+      {label:'Referencias (Normas Vancouver / Mendeley)', key:'bibliografia', placeholder:'Las referencias se importan automaticamente desde Mendeley y/o PubMed.', large:true}
     ]}
   ];
   // Generic for multicentrico/repositorio docs
@@ -6431,10 +6477,11 @@ function prefillFromStage1(docIndex) {
     }
   }
 
-  // Consentimientos informados: titulo + IP
+  // Consentimientos informados: titulo + IP + refs
   if (d.name.indexOf('Consentimientos informados') >= 0) {
     var q2 = (document.getElementById('questionInput') || {}).value || '';
     if (!c.titulo && q2) c.titulo = q2;
+    if (!c.bibliografia) { c.bibliografia = getAllProjectRefs().join('\n'); }
   }
 
   // Matriz de Variables: titulo
@@ -6443,10 +6490,16 @@ function prefillFromStage1(docIndex) {
     if (!c.titulo && q3) c.titulo = q3;
   }
 
-  // Instrumento de recoleccion: titulo
+  // Instrumento de recoleccion: titulo + refs
   if (d.name.indexOf('Instrumento de recoleccion') >= 0) {
     var q4 = (document.getElementById('questionInput') || {}).value || '';
     if (!c.titulo && q4) c.titulo = q4;
+    if (!c.bibliografia) { c.bibliografia = getAllProjectRefs().join('\n'); }
+  }
+
+  // Acuerdo de confidencialidad: refs
+  if (d.name.indexOf('Acuerdo de confidencialidad') >= 0) {
+    if (!c.bibliografia) { c.bibliografia = getAllProjectRefs().join('\n'); }
   }
 
   stage2DocPrefilled[docIndex] = true;
@@ -6571,6 +6624,24 @@ function renderDocumentChecklist() {
   h += '<div class="flex items-start gap-3"><div class="w-8 h-8 rounded-lg bg-galatea/10 flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg></div>';
   h += '<div><p class="text-sm text-gray-700"><strong class="text-galatea">Galatea:</strong> He preparado los documentos requeridos por la Subdireccion de Estudios Clinicos, <strong>pre-poblados con los datos de tu Etapa 1</strong> (PICOT, MeSH, PubMed, marco teorico). Haz clic en cada documento para verlo como texto plano editable — tambien puedes cambiar a vista de campos. Cuando termines, descarga el .doc listo para someter.</p>';
   h += '<p class="text-[10px] text-gray-400 mt-1">Los documentos se abren en modo Texto Plano por defecto. Usa el boton "Galatea AI Assist" para refinar secciones.</p></div></div></div>';
+
+  // Mendeley Import Panel
+  h += '<div class="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50 rounded-2xl p-4 mb-4 s2-appear">';
+  h += '<div class="flex items-center gap-3">';
+  h += '<div class="w-9 h-9 rounded-xl bg-red-600/10 flex items-center justify-center flex-shrink-0">';
+  h += '<svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>';
+  h += '<div class="flex-1">';
+  h += '<div class="flex items-center gap-2 flex-wrap">';
+  h += '<span class="font-bold text-sm text-red-800">Mendeley Reference Manager</span>';
+  h += '<span class="text-[9px] px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-bold">CONECTADO</span>';
+  if (mendeleyRefs.length > 0) h += '<span class="text-[9px] px-2 py-0.5 rounded-full bg-verde/10 text-verde font-bold">' + mendeleyRefs.length + ' refs importadas</span>';
+  h += '</div>';
+  h += '<p class="text-[11px] text-gray-600 mt-1">Exporte sus referencias desde Mendeley como <strong>.bib</strong> (File → Export) y carguelas aqui. Se incluiran automaticamente en <strong>todos</strong> los documentos en formato Vancouver (ICMJE).</p>';
+  h += '</div>';
+  h += '<button onclick="importMendeleyFile()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 transition-all hover:shadow-lg hover:shadow-red-600/25 flex-shrink-0">';
+  h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>';
+  h += 'Importar .bib</button>';
+  h += '</div></div>';
 
   var completed = 0;
   docs.forEach(function(d, idx) {
@@ -8441,6 +8512,93 @@ function showForestTooltip(event, idx) {
 function hideForestTooltip() {
   var tip = $('forestTooltip');
   if (tip) tip.classList.remove('visible');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MENDELEY / BIBTEX IMPORT
+// ═══════════════════════════════════════════════════════════════
+
+function parseBibTeX(text) {
+  var entries = [];
+  var entryRegex = /@\w+\s*\{[^@]*\}/g;
+  var matches = text.match(entryRegex);
+  if (!matches) return entries;
+  matches.forEach(function(block) {
+    var entry = {};
+    // Extract fields: key = {value} or key = "value"
+    var fieldRegex = /(\w+)\s*=\s*[\{"]([^}"]*)[\}"]/g;
+    var m;
+    while ((m = fieldRegex.exec(block)) !== null) {
+      entry[m[1].toLowerCase()] = m[2].replace(/\s+/g, ' ').trim();
+    }
+    if (entry.title || entry.author) entries.push(entry);
+  });
+  return entries;
+}
+
+function formatBibEntryVancouver(entry, index) {
+  var authStr = '';
+  if (entry.author) {
+    var authors = entry.author.split(/\s+and\s+/i);
+    if (authors.length <= 6) {
+      authStr = authors.join(', ');
+    } else {
+      authStr = authors.slice(0, 6).join(', ') + ', et al';
+    }
+  }
+  var t = (entry.title || 'Untitled').replace(/[{}]/g, '').replace(/\.\s*$/, '') + '.';
+  var j = entry.journal ? ' ' + entry.journal.replace(/[{}]/g, '').replace(/\.\s*$/, '') + '.' : '';
+  var y = entry.year ? ' ' + entry.year + ';' : '';
+  var v = entry.volume ? entry.volume : '';
+  var p = entry.pages ? ':' + entry.pages.replace('--', '-') : '';
+  var vp = v ? v + p : '';
+  var d = entry.doi ? ' doi:' + entry.doi + '.' : '';
+  return index + '. ' + authStr + '. ' + t + j + y + vp + '.' + d;
+}
+
+function getAllProjectRefs() {
+  var refs = [];
+  // PubMed / Stage 1 refs
+  var s1 = (typeof simData !== 'undefined' && simData) ? simData : {};
+  var pubmedRefs = getProjectVancouverRefs(s1);
+  pubmedRefs.forEach(function(r) { refs.push(r); });
+  // Mendeley imported refs (re-numbered after PubMed)
+  var offset = refs.length;
+  mendeleyRefs.forEach(function(entry, i) {
+    refs.push(formatBibEntryVancouver(entry, offset + i + 1));
+  });
+  return refs;
+}
+
+function importMendeleyFile() {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.bib,.bibtex,.txt';
+  input.onchange = function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var parsed = parseBibTeX(ev.target.result);
+      if (parsed.length === 0) {
+        showToast('No se encontraron referencias en el archivo', 'error');
+        return;
+      }
+      mendeleyRefs = parsed;
+      showToast(parsed.length + ' referencias importadas desde Mendeley', 'success');
+      // Update bibliography field in all docs that have it
+      if (stage2SimData && stage2SimData.docsSubdireccion) {
+        var allRefs = getAllProjectRefs();
+        stage2SimData.docsSubdireccion.forEach(function(d, idx) {
+          if (!stage2DocContent[idx]) stage2DocContent[idx] = {};
+          stage2DocContent[idx].bibliografia = allRefs.join('\n');
+        });
+      }
+      if(currentStage===3){renderStage3InstDetailedViews();}else{renderStage2DetailedViews();}
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 // ═══════════════════════════════════════════════════════════════
