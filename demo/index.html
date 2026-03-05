@@ -586,6 +586,20 @@
         </div>
       </div>
 
+      <!-- Mendeley Export Section -->
+      <div class="mb-6 p-4 rounded-xl bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
+            <span class="text-sm font-bold text-rose-800">Exportar a Mendeley / Zotero</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="exportMendeleyRIS()" class="text-[10px] font-bold text-rose-700 bg-white border border-rose-200 rounded-lg px-3 py-2 hover:bg-rose-50 transition-all text-left">RIS — Mendeley / EndNote</button>
+          <button onclick="exportMendeleyBibTeX()" class="text-[10px] font-bold text-rose-700 bg-white border border-rose-200 rounded-lg px-3 py-2 hover:bg-rose-50 transition-all text-left">BibTeX — LaTeX / Overleaf</button>
+        </div>
+      </div>
+
       <!-- REDCap Sync Section -->
       <div class="mb-6 p-4 rounded-xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200">
         <div class="flex items-center justify-between mb-3">
@@ -2728,6 +2742,9 @@ function renderJefeView() {
   h += '<button onclick="exportToREDCap()" class="bg-gradient-to-r from-red-500 to-orange-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-2">';
   h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>';
   h += 'REDCap</button>';
+  h += '<button onclick="showMendeleyExportModal()" class="bg-gradient-to-r from-rose-500 to-pink-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-2">';
+  h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>';
+  h += 'Mendeley</button>';
   h += '</div></div>';
 
   // Department summary grid
@@ -4015,7 +4032,7 @@ function renderSearchRegistry(pd) {
   var hasReal=reg.some(function(r){return r.real===true;});
   var liveBadge=hasReal?'<span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-red-600 text-white animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-white inline-block"></span>DATOS EN VIVO</span>':'';
   var h='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center justify-between mb-4"><div><h3 class="font-bold text-gray-900">Log de Auditoria'+liveBadge+'</h3><p class="text-[10px] text-gray-400 mt-0.5">'+reg.length+' bases | '+tr+' resultados | '+ti+' incluidos</p></div>';
-  h+='<div class="flex items-center gap-2"><button onclick="exportSearchCSV()" class="flex items-center gap-1.5 px-4 py-2 bg-verde/10 text-verde rounded-lg text-xs font-bold hover:bg-verde/20 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar CSV</button>'+renderREDCapExportBtn('exportSearchDataToREDCap()','REDCap')+'</div></div><div class="space-y-3">';
+  h+='<div class="flex items-center gap-2"><button onclick="exportSearchCSV()" class="flex items-center gap-1.5 px-4 py-2 bg-verde/10 text-verde rounded-lg text-xs font-bold hover:bg-verde/20 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar CSV</button>'+renderREDCapExportBtn('exportSearchDataToREDCap()','REDCap')+renderMendeleyBtn('Mendeley')+'</div></div><div class="space-y-3">';
   reg.forEach(function(r){var c=r.color||'gray';var isReal=r.real===true;var isEst=r.real===false;var isEmbase=r.database==='EMBASE';h+='<div class="border border-'+c+'-100 rounded-xl p-4 bg-'+c+'-50/30"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><div class="db-badge bg-'+c+'-100 text-'+c+'-700">'+esc(r.database)+'</div>'+(isReal?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-verde/10 text-verde border border-verde/30">EN VIVO</span>':'')+(isEst&&!isEmbase?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200">ESTIMADO</span>':'')+(isEmbase?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-orange-100 text-orange-700 border border-orange-200">MANUAL — ejecutar en embase.com</span>':'')+'</div><div class="flex items-center gap-3 text-xs"><span class="text-gray-500">Resultados: <strong>'+r.results+'</strong></span><span class="text-verde font-bold">Incluidos: '+r.included+'</span><span class="text-gray-400">'+esc(r.date||'')+'</span></div></div><div class="flex items-center gap-2"><div class="text-[11px] font-mono text-gray-600 bg-white/60 rounded-lg p-2 break-all flex-1">'+esc(r.equation||'')+'</div>'+(isEmbase?'<button onclick="navigator.clipboard.writeText(\''+esc((r.equation||'').replace(/'/g,"\\'"))+'\');showToast(\'Ecuacion EMBASE copiada al portapapeles\',\'success\')" class="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-[10px] font-bold hover:bg-orange-200 transition-all" title="Copiar ecuacion"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>Copiar</button>':'')+'</div>'+(isEst&&r.rationale?'<div class="text-[10px] text-amber-600 mt-1 italic">'+esc(r.rationale)+'</div>':'')+'</div>';});
   h+='</div></div>';return h;
 }
@@ -4069,7 +4086,7 @@ function renderProtocol(pd, ue) {
   var h = '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">';
   h += '<div class="flex items-center justify-between mb-5"><div class="flex items-center gap-3"><svg class="w-5 h-5 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>';
   h += '<h3 class="font-bold text-gray-900 text-lg">Justificacion del Estudio</h3></div>';
-  h += '<div class="flex items-center gap-2"><button onclick="exportProtocol()" class="flex items-center gap-1.5 text-xs bg-galatea/10 text-galatea px-4 py-2 rounded-lg font-bold hover:bg-galatea/20"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar .doc</button>' + renderREDCapExportBtn('exportProtocolToREDCap()', 'REDCap') + '</div></div>';
+  h += '<div class="flex items-center gap-2"><button onclick="exportProtocol()" class="flex items-center gap-1.5 text-xs bg-galatea/10 text-galatea px-4 py-2 rounded-lg font-bold hover:bg-galatea/20"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar .doc</button>' + renderREDCapExportBtn('exportProtocolToREDCap()', 'REDCap') + renderMendeleyBtn('Mendeley') + '</div></div>';
 
   // ── 1. Pregunta estructurada ──
   h += '<div class="mb-5 p-4 rounded-xl bg-blue-50/50 border border-blue-100">';
@@ -4350,6 +4367,7 @@ function renderManuscriptGenerator(pd, ue) {
   h += '<button onclick="exportManuscriptDOCX()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] rounded-lg px-3 py-1.5 font-medium transition-colors">\u{1F4E5} DOCX</button>';
   h += '<button onclick="exportManuscriptPDF()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] rounded-lg px-3 py-1.5 font-medium transition-colors">\u{1F4E5} PDF</button>';
   h += renderREDCapExportBtn('exportManuscriptToREDCap()', 'REDCap');
+  h += renderMendeleyBtn('Mendeley');
   h += '</div>';
 
   // Sections
@@ -7579,6 +7597,7 @@ function showStage4ViaA(curCfg) {
   h += '<input type="file" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleViaAUpload(this.files[0])">';
   h += '</label>';
   h += renderREDCapButton('viaA');
+  h += '<div class="flex gap-2 mt-2">' + renderMendeleyBtn('Mendeley (RIS)') + '</div>';
   h += '</div>';
 
   h += '<div id="viaAPreview" class="mb-4"></div>';
@@ -7819,6 +7838,7 @@ function showStage4ViaB(curCfg) {
   h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
   h += 'Descargar .xlsx</button>';
   h += renderREDCapExportBtn("exportViaBDocToREDCap('banco')", 'REDCap');
+  h += renderMendeleyBtn('Mendeley');
   h += '</div></div>';
 
   // 2. Cribado
@@ -7831,6 +7851,7 @@ function showStage4ViaB(curCfg) {
   h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
   h += 'Descargar .xlsx</button>';
   h += renderREDCapExportBtn("exportViaBDocToREDCap('cribado')", 'REDCap');
+  h += renderMendeleyBtn('Mendeley');
   h += '</div></div>';
 
   // 3. Evaluacion de Calidad
@@ -7847,6 +7868,7 @@ function showStage4ViaB(curCfg) {
   h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
   h += 'Descargar .xlsx</button>';
   h += renderREDCapExportBtn("exportViaBDocToREDCap('calidad')", 'REDCap');
+  h += renderMendeleyBtn('Mendeley');
   h += '</div></div>';
 
   // 4. Extraccion de Datos
@@ -7859,6 +7881,7 @@ function showStage4ViaB(curCfg) {
   h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
   h += 'Descargar .xlsx</button>';
   h += renderREDCapExportBtn("exportViaBDocToREDCap('extraccion')", 'REDCap');
+  h += renderMendeleyBtn('Mendeley');
   h += '</div></div>';
 
   h += '</div>';
@@ -7882,6 +7905,7 @@ function showStage4ViaB(curCfg) {
   h += '<input type="file" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleViaBUpload(this.files[0])">';
   h += '</label>';
   h += renderREDCapButton('viaB');
+  h += '<div class="flex gap-2 mt-2">' + renderMendeleyBtn('Mendeley (RIS)') + '</div>';
   h += '</div>';
 
   h += '<div id="viaBPreview" class="mb-4"></div>';
@@ -9868,6 +9892,119 @@ function renderREDCapExportBtn(onclick, label) {
   return '<button onclick="showREDCapConfigModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-400 text-[10px] font-bold hover:bg-gray-100 transition-all"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>REDCap</button>';
 }
 
+// ═══════════════════════════════════════════════════════════════
+// MENDELEY INTEGRATION — RIS / BibTeX Export
+// ═══════════════════════════════════════════════════════════════
+
+function getProjectArticles() {
+  var pd = (project && project.phase_data) || {};
+  var articles = (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
+  if (articles.length > 0) return articles;
+  var ext = (simData && simData.extraction_table) || pd.extraction_table || [];
+  if (ext.length > 0) {
+    return ext.map(function(e) {
+      return { title: e.resultado || e.title || '', authors: e.autor ? [e.autor] : (e.authors || []), year: e.anio || e.year || '', journal: e.journal || '', doi: e.doi || '', pmid: e.pmid || '', abstract: e.abstract || '' };
+    });
+  }
+  return [];
+}
+
+function articleToRIS(a, idx) {
+  var lines = [];
+  lines.push('TY  - JOUR');
+  if (a.title) lines.push('TI  - ' + a.title);
+  var auths = a.authors || [];
+  if (typeof auths === 'string') auths = [auths];
+  auths.forEach(function(au) { lines.push('AU  - ' + au); });
+  if (a.journal) lines.push('JO  - ' + a.journal);
+  if (a.year) lines.push('PY  - ' + a.year);
+  if (a.doi) lines.push('DO  - ' + a.doi);
+  if (a.pmid) lines.push('AN  - ' + a.pmid);
+  if (a.abstract) lines.push('AB  - ' + a.abstract);
+  lines.push('DB  - GalateaAI');
+  lines.push('ER  - ');
+  return lines.join('\n');
+}
+
+function articleToBibTeX(a, idx) {
+  var firstAuthor = (a.authors && a.authors[0]) ? a.authors[0].replace(/[^a-zA-Z]/g, '') : 'unknown';
+  var key = firstAuthor.toLowerCase() + (a.year || '') + '_' + (idx + 1);
+  var lines = ['@article{' + key + ','];
+  if (a.title) lines.push('  title = {' + a.title + '},');
+  if (a.authors) {
+    var auths = typeof a.authors === 'string' ? a.authors : a.authors.join(' and ');
+    lines.push('  author = {' + auths + '},');
+  }
+  if (a.journal) lines.push('  journal = {' + a.journal + '},');
+  if (a.year) lines.push('  year = {' + a.year + '},');
+  if (a.doi) lines.push('  doi = {' + a.doi + '},');
+  if (a.pmid) lines.push('  pmid = {' + a.pmid + '},');
+  if (a.abstract) lines.push('  abstract = {' + a.abstract.substring(0, 2000) + '},');
+  lines.push('}');
+  return lines.join('\n');
+}
+
+function exportMendeleyRIS(customArticles) {
+  var articles = customArticles || getProjectArticles();
+  if (articles.length === 0) { showToast('No hay referencias para exportar', 'error'); return; }
+  var ris = articles.map(function(a, i) { return articleToRIS(a, i); }).join('\n\n');
+  var blob = new Blob([ris], { type: 'application/x-research-info-systems' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url; a.download = 'GalateaAI_referencias.ris'; a.click(); URL.revokeObjectURL(url);
+  showToast(articles.length + ' referencias exportadas en formato RIS (Mendeley)', 'success');
+}
+
+function exportMendeleyBibTeX(customArticles) {
+  var articles = customArticles || getProjectArticles();
+  if (articles.length === 0) { showToast('No hay referencias para exportar', 'error'); return; }
+  var bib = articles.map(function(a, i) { return articleToBibTeX(a, i); }).join('\n\n');
+  var blob = new Blob([bib], { type: 'application/x-bibtex' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url; a.download = 'GalateaAI_referencias.bib'; a.click(); URL.revokeObjectURL(url);
+  showToast(articles.length + ' referencias exportadas en formato BibTeX (Mendeley)', 'success');
+}
+
+function showMendeleyExportModal(customArticles) {
+  var articles = customArticles || getProjectArticles();
+  var overlay = document.createElement('div');
+  overlay.id = 'mendeleyExportOverlay';
+  overlay.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] fade-up';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+  var h = '<div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">';
+  h += '<div class="flex items-center gap-3 mb-5">';
+  h += '<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div>';
+  h += '<div><h3 class="font-black text-gray-900">Exportar a Mendeley</h3>';
+  h += '<p class="text-[10px] text-gray-400">' + articles.length + ' referencias disponibles</p></div></div>';
+
+  h += '<p class="text-xs text-gray-600 mb-4">Descarga tus referencias en formato compatible con <strong>Mendeley, Zotero, EndNote</strong> y cualquier gestor bibliografico.</p>';
+
+  h += '<div class="space-y-3 mb-5">';
+  h += '<button onclick="exportMendeleyRIS();document.getElementById(\'mendeleyExportOverlay\').remove()" class="w-full flex items-center gap-4 bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-200 rounded-xl p-4 hover:shadow-lg hover:border-rose-400 transition-all text-left">';
+  h += '<div class="w-11 h-11 rounded-xl bg-rose-600 flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-black">RIS</span></div>';
+  h += '<div><div class="font-bold text-rose-800 text-sm">Formato RIS</div>';
+  h += '<div class="text-[10px] text-rose-600">Mendeley, Zotero, EndNote — importacion directa</div></div></button>';
+
+  h += '<button onclick="exportMendeleyBibTeX();document.getElementById(\'mendeleyExportOverlay\').remove()" class="w-full flex items-center gap-4 bg-gradient-to-r from-pink-50 to-fuchsia-50 border-2 border-pink-200 rounded-xl p-4 hover:shadow-lg hover:border-pink-400 transition-all text-left">';
+  h += '<div class="w-11 h-11 rounded-xl bg-pink-600 flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-black">BIB</span></div>';
+  h += '<div><div class="font-bold text-pink-800 text-sm">Formato BibTeX</div>';
+  h += '<div class="text-[10px] text-pink-600">LaTeX, Overleaf, Mendeley, Zotero</div></div></button>';
+  h += '</div>';
+
+  h += '<div class="p-3 rounded-lg bg-gray-50 border border-gray-100 mb-4">';
+  h += '<p class="text-[10px] text-gray-500"><strong>Instrucciones Mendeley:</strong> Abre Mendeley Desktop o Web &rarr; File &rarr; Import &rarr; selecciona el archivo .ris o .bib descargado.</p></div>';
+
+  h += '<button onclick="document.getElementById(\'mendeleyExportOverlay\').remove()" class="w-full px-4 py-2.5 rounded-xl text-sm font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">Cerrar</button>';
+  h += '</div>';
+
+  overlay.innerHTML = h;
+  document.body.appendChild(overlay);
+}
+
+function renderMendeleyBtn(label) {
+  return '<button onclick="showMendeleyExportModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 text-rose-700 text-[10px] font-bold hover:border-rose-400 transition-all"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>' + (label || 'Mendeley') + '</button>';
+}
+
 function exportREDCapDict() {
   var header = 'Variable / Field Name,Form Name,Section Header,Field Type,Field Label,"Choices, Calculations, OR Slider Labels",Field Note,Text Validation Type OR Show Slider Number,Text Validation Min,Text Validation Max,Identifier?,Branching Logic (Show field only if...),Required Field?,Custom Alignment,Question Number (surveys only),Matrix Group Name,Matrix Ranking?,Field Annotation\n';
   var rows = [
@@ -11180,6 +11317,20 @@ function renderStage5ExportPanel() {
     h += '<div class="text-[10px] text-gray-400">Conecta tu proyecto para exportar</div></div></button>';
   }
   h += '</div>';
+
+  // ── Mendeley Export ──
+  h += '<div class="mt-4 pt-4 border-t border-gray-100">';
+  h += '<p class="text-xs font-bold text-gray-600 mb-3">Exportar a Mendeley / Zotero</p>';
+  h += '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">';
+  h += '<button onclick="exportMendeleyRIS()" class="flex items-center gap-3 bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 rounded-xl p-3 hover:shadow-md hover:border-rose-400 transition-all text-left">';
+  h += '<div class="w-9 h-9 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-black">RIS</span></div>';
+  h += '<div><div class="text-xs font-bold text-rose-800">Formato RIS</div>';
+  h += '<div class="text-[10px] text-rose-600">Mendeley, Zotero, EndNote</div></div></button>';
+  h += '<button onclick="exportMendeleyBibTeX()" class="flex items-center gap-3 bg-gradient-to-r from-pink-50 to-fuchsia-50 border border-pink-200 rounded-xl p-3 hover:shadow-md hover:border-pink-400 transition-all text-left">';
+  h += '<div class="w-9 h-9 rounded-lg bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-black">BIB</span></div>';
+  h += '<div><div class="text-xs font-bold text-pink-800">Formato BibTeX</div>';
+  h += '<div class="text-[10px] text-pink-600">LaTeX, Overleaf</div></div></button>';
+  h += '</div></div>';
 
   h += '</div>';
   return h;
