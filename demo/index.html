@@ -7282,6 +7282,242 @@ function downloadExtractionTemplate(studyTypeId) {
   XLSX.writeFile(wb, 'Plantilla_Extraccion_' + (isDTA ? 'DTA' : 'MA') + '.xlsx');
 }
 
+// ═══ ETAPA 4 VIA B — 4 Excel Descargables (Templates Reales) ═══
+
+function getVancouverCitation(art) {
+  var a = art || {};
+  var authorStr = '';
+  if (a.authors && a.authors.length > 0) {
+    authorStr = a.authors.slice(0, 6).join(', ');
+    if (a.authors.length > 6) authorStr += ', et al';
+  } else { authorStr = a.autor || 'N/A'; }
+  var title = a.title || a.resultado || '';
+  var journal = a.journal || '';
+  var year = a.year || a.anio || '';
+  var doi = a.doi || '';
+  var cite = authorStr + '. ' + title + '. ' + journal + '. ' + year + '.';
+  if (doi) cite += ' doi: ' + doi;
+  return cite;
+}
+
+function downloadBancoDeDatos() {
+  var pd = (project && project.phase_data) || {};
+  var articles = (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
+  var extTable = (simData && simData.extraction_table) || pd.extraction_table || [];
+  var source = articles.length > 0 ? articles : extTable;
+
+  var headersTodo = ['Base de datos / ID', 'Title', 'Authors', 'Journal', 'Year', 'Citation (Vancouver)', 'First author', 'Create Date', 'DOI'];
+  var dataTodo = [headersTodo];
+  source.forEach(function(a) {
+    var authors = a.authors ? a.authors.join('; ') : (a.autor || '');
+    var firstAuthor = a.authors ? a.authors[0] : (a.autor || '').split(' et al')[0];
+    dataTodo.push([
+      a.pmid ? 'PubMed / ' + a.pmid : 'PubMed',
+      a.title || a.resultado || '',
+      authors,
+      a.journal || '',
+      a.year || a.anio || '',
+      getVancouverCitation(a),
+      firstAuthor,
+      '',
+      a.doi || ''
+    ]);
+  });
+
+  var headersSinDup = headersTodo.concat(['Revisor 1', 'Revisor 2', 'FINAL']);
+  var dataSinDup = [headersSinDup];
+  source.forEach(function(a) {
+    var authors = a.authors ? a.authors.join('; ') : (a.autor || '');
+    var firstAuthor = a.authors ? a.authors[0] : (a.autor || '').split(' et al')[0];
+    dataSinDup.push([
+      a.pmid ? 'PubMed / ' + a.pmid : 'PubMed',
+      a.title || a.resultado || '', authors, a.journal || '',
+      a.year || a.anio || '', getVancouverCitation(a), firstAuthor, '', a.doi || '',
+      '', '', ''
+    ]);
+  });
+
+  var headersLectura = headersTodo.concat(['Evaluacion (Si/No)']);
+  var dataLectura = [headersLectura];
+  source.forEach(function(a) {
+    var authors = a.authors ? a.authors.join('; ') : (a.autor || '');
+    var firstAuthor = a.authors ? a.authors[0] : (a.autor || '').split(' et al')[0];
+    dataLectura.push([
+      a.pmid ? 'PubMed / ' + a.pmid : 'PubMed',
+      a.title || a.resultado || '', authors, a.journal || '',
+      a.year || a.anio || '', getVancouverCitation(a), firstAuthor, '', a.doi || '',
+      ''
+    ]);
+  });
+
+  var dataCodigos = [
+    ['Codigo', 'Motivo de exclusion'],
+    [1, 'No cumple criterios de inclusion (poblacion)'],
+    [2, 'No cumple criterios de inclusion (intervencion/exposicion)'],
+    [3, 'No cumple criterios de inclusion (comparador)'],
+    [4, 'No cumple criterios de inclusion (desenlace)'],
+    [5, 'Tipo de estudio no elegible']
+  ];
+
+  var wb = XLSX.utils.book_new();
+  var wsTodo = XLSX.utils.aoa_to_sheet(dataTodo);
+  wsTodo['!cols'] = headersTodo.map(function(h) { return { wch: h === 'Citation (Vancouver)' ? 50 : (h === 'Title' ? 40 : 20) }; });
+  XLSX.utils.book_append_sheet(wb, wsTodo, 'Todo');
+
+  var wsSinDup = XLSX.utils.aoa_to_sheet(dataSinDup);
+  wsSinDup['!cols'] = headersSinDup.map(function(h) { return { wch: h === 'Citation (Vancouver)' ? 50 : (h === 'Title' ? 40 : 20) }; });
+  XLSX.utils.book_append_sheet(wb, wsSinDup, 'Sin duplicados');
+
+  var wsLectura = XLSX.utils.aoa_to_sheet(dataLectura);
+  wsLectura['!cols'] = headersLectura.map(function(h) { return { wch: h === 'Citation (Vancouver)' ? 50 : (h === 'Title' ? 40 : 20) }; });
+  XLSX.utils.book_append_sheet(wb, wsLectura, 'Lectura Completa');
+
+  var wsCodigos = XLSX.utils.aoa_to_sheet(dataCodigos);
+  wsCodigos['!cols'] = [{ wch: 10 }, { wch: 55 }];
+  XLSX.utils.book_append_sheet(wb, wsCodigos, 'Codigos');
+
+  XLSX.writeFile(wb, 'Banco_de_Datos_GalateaAI.xlsx');
+  showToast('Banco de Datos descargado (4 hojas)', 'success');
+}
+
+function downloadCribado() {
+  var pd = (project && project.phase_data) || {};
+  var ss = (simData && simData.search_strategy) || pd.search_strategy || {};
+  var prisma = ss.prisma || {};
+
+  var headers = ['Base de Datos', 'Ecuacion', 'Resultados', 'Filtros', 'Resultados (post-filtro)', 'Fecha de descarga', 'Sin duplicados', 'Titulo y Abstract', 'Lectura completa'];
+  var data = [headers];
+
+  // PubMed row with real data
+  var equation = ss.boolean_equation || '';
+  var identified = prisma.identified || '';
+  var filters = '';
+  if (ss.filters) { filters = ss.filters; }
+  else if (equation) { filters = 'Humans; 10 years'; }
+
+  data.push(['PubMed', equation, identified, filters, prisma.screened_title || '', '', '', '', '']);
+  // Additional empty rows for other databases
+  ['EMBASE', 'Cochrane Library', 'ClinicalTrials.gov', 'LILACS', 'Scopus'].forEach(function(db) {
+    data.push([db, '', '', '', '', '', '', '', '']);
+  });
+  // Total row
+  data.push(['TOTAL', '', '', '', '', '', '', '', '']);
+
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = headers.map(function(h) { return { wch: h === 'Ecuacion' ? 60 : (h === 'Base de Datos' ? 22 : 18) }; });
+  XLSX.utils.book_append_sheet(wb, ws, 'Cribado');
+  XLSX.writeFile(wb, 'Cribado_GalateaAI.xlsx');
+  showToast('Cribado descargado', 'success');
+}
+
+function downloadEvaluacionCalidad() {
+  var pd = (project && project.phase_data) || {};
+  var typeId = selectedStudyTypeId || (simData && simData.study_type_id) || pd.study_type_id || 'rs_ma';
+  var extTable = (simData && simData.extraction_table) || pd.extraction_table || [];
+  var articles = (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
+  var source = articles.length > 0 ? articles : extTable;
+
+  // Get author list for pre-populating
+  var autores = source.map(function(a) {
+    var author = a.authors ? a.authors[0] : (a.autor || '').split(' et al')[0];
+    var year = a.year || a.anio || '';
+    return author + (year ? ' ' + year : '');
+  });
+
+  var headers, data, toolName;
+
+  if (typeId === 'cohorte' || typeId === 'caso_control') {
+    // Newcastle-Ottawa Scale (NOS)
+    toolName = 'NOS';
+    headers = ['Autor', 'Seleccion (0-4)', 'Comparabilidad (0-1)', 'Resultados (0-3)', 'Total (0-8)', 'Calidad global'];
+    data = [headers];
+    autores.forEach(function(a) { data.push([a, '', '', '', '', '']); });
+  } else if (typeId === 'dta') {
+    // QUADAS-2
+    toolName = 'QUADAS-2';
+    headers = ['Autor', 'D1 Seleccion pacientes', 'D2 Prueba indice', 'D3 Estandar referencia', 'D4 Flujo y timing', 'Riesgo de sesgo', 'Aplicabilidad'];
+    data = [headers];
+    autores.forEach(function(a) { data.push([a, '', '', '', '', '', '']); });
+  } else {
+    // RoB 2.0 (eca, rs_ma)
+    toolName = 'RoB 2.0';
+    headers = ['Autor', 'D1 Aleatorizacion', 'D2 Desviaciones intervenciones', 'D3 Datos faltantes', 'D4 Medicion outcome', 'D5 Seleccion resultados', 'Overall', 'Justificacion'];
+    data = [headers];
+    autores.forEach(function(a) { data.push([a, '', '', '', '', '', '', '']); });
+  }
+
+  // Add empty rows if no articles
+  if (autores.length === 0) { for (var i = 0; i < 10; i++) data.push([]); }
+
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = headers.map(function(h) { return { wch: h === 'Justificacion' ? 35 : (h === 'Autor' ? 25 : 22) }; });
+  XLSX.utils.book_append_sheet(wb, ws, toolName);
+  XLSX.writeFile(wb, 'Evaluacion_Calidad_' + toolName.replace(/[\s.]/g, '_') + '_GalateaAI.xlsx');
+  showToast('Evaluacion de Calidad (' + toolName + ') descargada', 'success');
+}
+
+function downloadExtraccionDatos() {
+  var pd = (project && project.phase_data) || {};
+  var picot = (simData && simData.picot) || pd.picot || {};
+  var extTable = (simData && simData.extraction_table) || pd.extraction_table || [];
+  var articles = (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
+  var source = articles.length > 0 ? articles : extTable;
+
+  // Fixed columns
+  var fixedHeaders = ['Nombre del articulo', 'Autores', 'Revista', 'Ano', 'Bibliografia (Vancouver)', 'Autor principal', 'DOI', 'Pais', 'Metodologia', 'Pacientes', 'Edad media', 'N hombres', 'N mujeres'];
+
+  // Dynamic columns from PICOT Outcome
+  var outcomeStr = picot.O || '';
+  var dynamicCols = [];
+  if (outcomeStr) {
+    // Parse outcomes separated by comma, semicolon, punto, "y", or "and"
+    var parts = outcomeStr.split(/[,;]+|\s+y\s+|\s+and\s+/i).map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+    dynamicCols = parts;
+  }
+  if (dynamicCols.length === 0) dynamicCols = ['Outcome primario'];
+
+  var headers = fixedHeaders.concat(dynamicCols);
+  var data = [headers];
+
+  // Pre-populate with articles
+  source.forEach(function(a) {
+    var authors = a.authors ? a.authors.join('; ') : (a.autor || '');
+    var firstAuthor = a.authors ? a.authors[0] : (a.autor || '').split(' et al')[0];
+    var row = [
+      a.title || a.resultado || '',
+      authors,
+      a.journal || '',
+      a.year || a.anio || '',
+      getVancouverCitation(a),
+      firstAuthor,
+      a.doi || '',
+      a.pais || a.country || '',
+      a.diseno || a.design || '',
+      a.n || '',
+      '', '', '' // edad, hombres, mujeres
+    ];
+    // Empty cells for dynamic outcome columns
+    dynamicCols.forEach(function() { row.push(''); });
+    data.push(row);
+  });
+
+  // Add empty rows if no articles
+  if (source.length === 0) { for (var i = 0; i < 15; i++) data.push([]); }
+
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = headers.map(function(h) {
+    if (h === 'Nombre del articulo' || h === 'Bibliografia (Vancouver)') return { wch: 50 };
+    if (h === 'Autores') return { wch: 35 };
+    return { wch: 20 };
+  });
+  XLSX.utils.book_append_sheet(wb, ws, 'Extraccion de Datos');
+  XLSX.writeFile(wb, 'Extraccion_Datos_GalateaAI.xlsx');
+  showToast('Extraccion de Datos descargada (' + dynamicCols.length + ' columnas PICOT)', 'success');
+}
+
 async function callRPrimaryAnalysis(data, studyType, outcomeVar, groupVar, covariates) {
   var payload = {
     data: data,
@@ -7544,23 +7780,67 @@ function showStage4ViaB(curCfg) {
   var isDTA = curCfg && curCfg.id === 'dta';
   var h = '<div class="flex items-center gap-3 mb-5">';
   h += '<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M10.875 12c-.621 0-1.125.504-1.125 1.125M12 10.875c-.621 0-1.125.504-1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 1.5c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m-2.25 0c-.621 0-1.125.504-1.125 1.125"/></svg></div>';
-  h += '<div><h3 class="font-black text-gray-900">Tabla de Extraccion de Datos</h3>';
-  h += '<p class="text-[10px] text-gray-400">Datos para meta-analisis — ' + (curCfg ? curCfg.label : 'RS + MA') + '</p></div></div>';
+  h += '<div><h3 class="font-black text-gray-900">Documentos de Analisis — Via B</h3>';
+  h += '<p class="text-[10px] text-gray-400">Plantillas pre-pobladas para revision sistematica — ' + (curCfg ? curCfg.label : 'RS + MA') + '</p></div></div>';
 
-  h += '<div class="mb-4 p-4 rounded-xl bg-purple-50 border border-purple-100">';
-  h += '<p class="text-xs text-purple-800 mb-3">Descarga la plantilla, completala con los datos de los estudios incluidos, y luego subela para ejecutar el meta-analisis.</p>';
-  h += '<div class="flex gap-3">';
-  h += '<button onclick="downloadExtractionTemplate(\'' + (curCfg ? curCfg.id : 'rs_ma') + '\')" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-all">';
-  h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
-  h += 'Descargar plantilla Excel</button></div></div>';
+  // ── 4 downloadable documents ──
+  h += '<div class="space-y-3 mb-5">';
 
+  // 1. Banco de Datos
+  h += '<div class="flex items-center justify-between p-3 rounded-xl bg-purple-50 border border-purple-100">';
+  h += '<div class="flex items-center gap-3"><span class="w-7 h-7 rounded-lg bg-purple-600 text-white text-xs font-bold flex items-center justify-center">1</span>';
+  h += '<div><div class="text-sm font-bold text-gray-800">Banco de Datos</div>';
+  h += '<div class="text-[10px] text-gray-400">4 hojas, pre-poblado con articulos PubMed</div></div></div>';
+  h += '<button onclick="downloadBancoDeDatos()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-all">';
+  h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
+  h += 'Descargar .xlsx</button></div>';
+
+  // 2. Cribado
+  h += '<div class="flex items-center justify-between p-3 rounded-xl bg-purple-50 border border-purple-100">';
+  h += '<div class="flex items-center gap-3"><span class="w-7 h-7 rounded-lg bg-purple-600 text-white text-xs font-bold flex items-center justify-center">2</span>';
+  h += '<div><div class="text-sm font-bold text-gray-800">Cribado</div>';
+  h += '<div class="text-[10px] text-gray-400">Registro de busqueda por base de datos</div></div></div>';
+  h += '<button onclick="downloadCribado()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-all">';
+  h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
+  h += 'Descargar .xlsx</button></div>';
+
+  // 3. Evaluacion de Calidad
+  var qualTool = 'NOS / RoB 2.0 / QUADAS-2';
+  if (isDTA) qualTool = 'QUADAS-2';
+  else if (selectedStudyTypeId === 'cohorte' || selectedStudyTypeId === 'caso_control') qualTool = 'NOS';
+  else qualTool = 'RoB 2.0';
+  h += '<div class="flex items-center justify-between p-3 rounded-xl bg-purple-50 border border-purple-100">';
+  h += '<div class="flex items-center gap-3"><span class="w-7 h-7 rounded-lg bg-purple-600 text-white text-xs font-bold flex items-center justify-center">3</span>';
+  h += '<div><div class="text-sm font-bold text-gray-800">Evaluacion de Calidad</div>';
+  h += '<div class="text-[10px] text-gray-400">' + qualTool + ' segun tipo de estudio</div></div></div>';
+  h += '<button onclick="downloadEvaluacionCalidad()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-all">';
+  h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
+  h += 'Descargar .xlsx</button></div>';
+
+  // 4. Extraccion de Datos
+  h += '<div class="flex items-center justify-between p-3 rounded-xl bg-purple-50 border border-purple-100">';
+  h += '<div class="flex items-center gap-3"><span class="w-7 h-7 rounded-lg bg-purple-600 text-white text-xs font-bold flex items-center justify-center">4</span>';
+  h += '<div><div class="text-sm font-bold text-gray-800">Extraccion de Datos</div>';
+  h += '<div class="text-[10px] text-gray-400">Columnas dinamicas segun PICOT Outcome</div></div></div>';
+  h += '<button onclick="downloadExtraccionDatos()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-all">';
+  h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
+  h += 'Descargar .xlsx</button></div>';
+
+  h += '</div>';
+
+  // ── Upload section (original functionality preserved) ──
+  h += '<div class="border-t border-gray-100 pt-4 mb-4">';
+  h += '<p class="text-xs font-bold text-gray-600 mb-3">Subir plantilla completada para Meta-analisis</p>';
   if (isDTA) {
-    h += '<p class="text-[10px] text-gray-400 mb-3">Columnas requeridas: Autor, Anio, TP, FP, FN, TN</p>';
+    h += '<p class="text-[10px] text-gray-400 mb-2">Columnas requeridas: Autor, Anio, TP, FP, FN, TN</p>';
   } else {
-    h += '<p class="text-[10px] text-gray-400 mb-3">Columnas requeridas: Autor, Anio, Eventos_Intervencion, Total_Intervencion, Eventos_Control, Total_Control</p>';
+    h += '<p class="text-[10px] text-gray-400 mb-2">Columnas requeridas: Autor, Anio, Eventos_Intervencion, Total_Intervencion, Eventos_Control, Total_Control</p>';
   }
+  h += '<div class="flex gap-3 mb-2">';
+  h += '<button onclick="downloadExtractionTemplate(\'' + (curCfg ? curCfg.id : 'rs_ma') + '\')" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-200 transition-all">';
+  h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
+  h += 'Plantilla MA basica</button></div>';
 
-  h += '<div class="mb-4">';
   h += '<label class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-purple-300 bg-white cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-all">';
   h += '<svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>';
   h += '<span class="text-sm font-medium text-purple-600">Subir plantilla completada</span>';
@@ -8903,67 +9183,271 @@ function exportProtocolPDF() {
   showToast('Protocolo exportado', 'success');
 }
 
+// ═══ ETAPA 5 — Table 1, 2, 3 como DOCX reales ═══
+
+function buildDocxTable(headers, rows) {
+  var D = docx;
+  var headerCells = headers.map(function(h) {
+    return new D.TableCell({
+      children: [new D.Paragraph({ children: [new D.TextRun({ text: h, bold: true, size: 18, font: 'Arial' })], spacing: { after: 40 } })],
+      shading: { fill: 'F1F5F9' },
+      borders: { top: { style: D.BorderStyle.SINGLE, size: 1 }, bottom: { style: D.BorderStyle.SINGLE, size: 1 }, left: { style: D.BorderStyle.SINGLE, size: 1 }, right: { style: D.BorderStyle.SINGLE, size: 1 } }
+    });
+  });
+  var tableRows = [new D.TableRow({ children: headerCells, tableHeader: true })];
+  rows.forEach(function(row) {
+    var cells = row.map(function(val) {
+      return new D.TableCell({
+        children: [new D.Paragraph({ children: [new D.TextRun({ text: String(val || ''), size: 18, font: 'Arial' })], spacing: { after: 20 } })],
+        borders: { top: { style: D.BorderStyle.SINGLE, size: 1 }, bottom: { style: D.BorderStyle.SINGLE, size: 1 }, left: { style: D.BorderStyle.SINGLE, size: 1 }, right: { style: D.BorderStyle.SINGLE, size: 1 } }
+      });
+    });
+    tableRows.push(new D.TableRow({ children: cells }));
+  });
+  return new D.Table({ rows: tableRows, width: { size: 100, type: D.WidthType.PERCENTAGE } });
+}
+
+function downloadTable1DOCX() {
+  var pd = (project && project.phase_data) || {};
+  var typeId = selectedStudyTypeId || (simData && simData.study_type_id) || pd.study_type_id || 'rs_ma';
+  var studies = (stage3SimData && stage3SimData.studies) || [];
+  var extTable = (simData && simData.extraction_table) || pd.extraction_table || [];
+  var source = studies.length > 0 ? studies : extTable;
+
+  var autores = source.map(function(s) {
+    var author = s.author || s.autor || '';
+    var year = s.year || s.anio || '';
+    return (author + ' ' + year).trim();
+  });
+
+  var headers, rows = [];
+  var toolName;
+
+  if (typeId === 'cohorte' || typeId === 'caso_control') {
+    toolName = 'Newcastle-Ottawa Scale (NOS)';
+    headers = ['Autor', 'Seleccion (0-4)', 'Comparabilidad (0-1)', 'Resultados (0-3)', 'Total (0-8)', 'Calidad'];
+    autores.forEach(function(a) { rows.push([a, '', '', '', '', '']); });
+  } else if (typeId === 'dta') {
+    toolName = 'QUADAS-2';
+    headers = ['Autor', 'D1 Seleccion', 'D2 Prueba indice', 'D3 Estandar ref.', 'D4 Flujo/timing', 'Riesgo sesgo', 'Aplicabilidad'];
+    autores.forEach(function(a) { rows.push([a, '', '', '', '', '', '']); });
+  } else {
+    toolName = 'Risk of Bias 2.0 (RoB 2.0)';
+    headers = ['Autor', 'D1 Aleatorizacion', 'D2 Desviaciones', 'D3 Datos faltantes', 'D4 Medicion', 'D5 Seleccion', 'Overall'];
+    autores.forEach(function(a) { rows.push([a, '', '', '', '', '', '']); });
+  }
+
+  var D = docx;
+  var doc = new D.Document({
+    sections: [{
+      children: [
+        new D.Paragraph({ children: [new D.TextRun({ text: 'Table 1. Evaluacion de Calidad Metodologica — ' + toolName, bold: true, size: 22, font: 'Arial' })], spacing: { after: 200 } }),
+        buildDocxTable(headers, rows)
+      ]
+    }]
+  });
+  D.Packer.toBlob(doc).then(function(blob) {
+    var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'Table_1_Calidad_Metodologica.docx'; a.click(); URL.revokeObjectURL(url);
+    showToast('Table 1 descargada (DOCX)', 'success');
+  });
+}
+
+function downloadTable2DOCX() {
+  var pd = (project && project.phase_data) || {};
+  var extTable = (simData && simData.extraction_table) || pd.extraction_table || [];
+  var studies = (stage3SimData && stage3SimData.studies) || [];
+  var articles = (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
+  var source = articles.length > 0 ? articles : (extTable.length > 0 ? extTable : studies);
+
+  var headers = ['Primary author', 'Country', 'Patients (n)', 'Age', 'Gender', 'Previous intervention', 'Most frequent diagnosis'];
+  var rows = [];
+  source.forEach(function(s) {
+    var author = s.authors ? s.authors[0] : (s.author || s.autor || '');
+    var year = s.year || s.anio || '';
+    rows.push([
+      author + (year ? ' ' + year : ''),
+      s.pais || s.country || '',
+      s.n || s.total_i ? String((s.total_i || 0) + (s.total_c || 0)) : '',
+      '', '', '', ''
+    ]);
+  });
+
+  var D = docx;
+  var doc = new D.Document({
+    sections: [{
+      children: [
+        new D.Paragraph({ children: [new D.TextRun({ text: 'Table 2. Caracteristicas de los Estudios Incluidos', bold: true, size: 22, font: 'Arial' })], spacing: { after: 200 } }),
+        buildDocxTable(headers, rows)
+      ]
+    }]
+  });
+  D.Packer.toBlob(doc).then(function(blob) {
+    var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'Table_2_Caracteristicas_Estudios.docx'; a.click(); URL.revokeObjectURL(url);
+    showToast('Table 2 descargada (DOCX)', 'success');
+  });
+}
+
+function downloadTable3DOCX() {
+  var pd = (project && project.phase_data) || {};
+  var picot = (simData && simData.picot) || pd.picot || {};
+  var studies = (stage3SimData && stage3SimData.studies) || [];
+
+  // Fixed columns
+  var fixedHeaders = ['Primary author', 'Follow-up', 'Mortality', 'Morbidity', 'Reinterventions'];
+
+  // Dynamic columns from PICOT Outcome
+  var dynamicCols = [];
+  var outcomeStr = picot.O || '';
+  if (outcomeStr) {
+    var parts = outcomeStr.split(/[,;]+|\s+y\s+|\s+and\s+/i).map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+    dynamicCols = parts;
+  }
+
+  var headers = fixedHeaders.concat(dynamicCols);
+  var rows = [];
+  studies.forEach(function(s) {
+    var author = s.author || s.autor || '';
+    var year = s.year || s.anio || '';
+    var orStr = s.or ? s.or.toFixed(2) + ' [' + s.or_lo.toFixed(2) + '-' + s.or_hi.toFixed(2) + ']' : '';
+    var row = [
+      author + (year ? ' ' + year : ''),
+      '', // follow-up
+      '', // mortality
+      '', // morbidity
+      ''  // reinterventions
+    ];
+    // Dynamic columns — first one gets OR data, rest empty
+    dynamicCols.forEach(function(col, i) { row.push(i === 0 ? orStr : ''); });
+    rows.push(row);
+  });
+
+  // Add pooled row if data available
+  if (stage3SimData && stage3SimData.pooled) {
+    var pooledRow = ['POOLED (Global)', '', '', '', ''];
+    dynamicCols.forEach(function(col, i) {
+      pooledRow.push(i === 0 ? stage3SimData.pooled.or + ' [' + stage3SimData.pooled.or_lo + '-' + stage3SimData.pooled.or_hi + ']' : '');
+    });
+    rows.push(pooledRow);
+  }
+
+  var D = docx;
+  var doc = new D.Document({
+    sections: [{
+      children: [
+        new D.Paragraph({ children: [new D.TextRun({ text: 'Table 3. Resultados Clinicos', bold: true, size: 22, font: 'Arial' })], spacing: { after: 200 } }),
+        buildDocxTable(headers, rows)
+      ]
+    }]
+  });
+  D.Packer.toBlob(doc).then(function(blob) {
+    var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'Table_3_Resultados_Clinicos.docx'; a.click(); URL.revokeObjectURL(url);
+    showToast('Table 3 descargada (DOCX)', 'success');
+  });
+}
+
 function exportManuscriptDOCX() {
   var pd = (project && project.phase_data) || {};
   var ue = (project && project.user_edits) || {};
   var q = (project && project.research_question) || 'Proyecto de Investigacion';
   var sections = buildManuscriptSections(pd, ue);
   var comp = detectEditorialCompliance(pd);
+  var D = docx;
 
-  var html = '<html><head><meta charset="UTF-8"><style>';
-  html += 'body{font-family:Georgia,serif;font-size:12pt;margin:60px 72px;color:#1a1a1a;line-height:2.0}';
-  html += 'h1{font-family:Arial,sans-serif;font-size:16pt;text-align:center;margin:20px 0}';
-  html += 'h2{font-family:Arial,sans-serif;font-size:13pt;margin-top:24px;color:#0f172a;border-bottom:1px solid #e2e8f0;padding-bottom:4px}';
-  html += 'table{width:100%;border-collapse:collapse;margin:12px 0;font-size:10pt}';
-  html += 'th{background:#f1f5f9;border:1px solid #d1d5db;padding:6px 8px;text-align:left;font-family:Arial,sans-serif}';
-  html += 'td{border:1px solid #d1d5db;padding:6px 8px}';
-  html += '.ref{font-size:10pt;text-indent:-24px;padding-left:24px;margin:4px 0}';
-  html += '.compliance{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:8px 12px;margin:12px 0;font-size:10pt;font-family:Arial,sans-serif}';
-  html += '.section-content{white-space:pre-line;margin:8px 0}';
-  html += '</style></head><body>';
+  var sectionLabels = { titulo: 'Titulo', abstract: 'Resumen', introduccion: 'Introduccion', metodos: 'Metodos', resultados: 'Resultados', discusion: 'Discusion', conclusion: 'Conclusion', referencias: 'Referencias' };
 
-  // Header
-  html += '<h1>' + esc(q) + '</h1>';
-  html += '<p style="text-align:center;font-size:10pt;color:#666">Manuscrito IMRyD preparado segun normas Vancouver</p>';
+  var docChildren = [];
+
+  // Title
+  docChildren.push(new D.Paragraph({
+    children: [new D.TextRun({ text: q, bold: true, size: 32, font: 'Arial' })],
+    alignment: D.AlignmentType.CENTER, spacing: { after: 100 }
+  }));
+  docChildren.push(new D.Paragraph({
+    children: [new D.TextRun({ text: 'Manuscrito IMRyD preparado segun normas Vancouver', size: 20, color: '666666', font: 'Arial' })],
+    alignment: D.AlignmentType.CENTER, spacing: { after: 100 }
+  }));
+
+  // Authors
   if (stage2SimData && stage2SimData.investigators) {
-    html += '<p style="text-align:center;font-size:10pt">';
-    stage2SimData.investigators.forEach(function(inv, i) { html += esc(inv.name) + '<sup>' + (i + 1) + '</sup>' + (i < stage2SimData.investigators.length - 1 ? ', ' : ''); });
-    html += '</p>';
+    var authRuns = [];
+    stage2SimData.investigators.forEach(function(inv, i) {
+      authRuns.push(new D.TextRun({ text: inv.name, size: 20, font: 'Arial' }));
+      authRuns.push(new D.TextRun({ text: String(i + 1), superScript: true, size: 16, font: 'Arial' }));
+      if (i < stage2SimData.investigators.length - 1) authRuns.push(new D.TextRun({ text: ', ', size: 20, font: 'Arial' }));
+    });
+    docChildren.push(new D.Paragraph({ children: authRuns, alignment: D.AlignmentType.CENTER, spacing: { after: 200 } }));
   }
 
-  // Compliance badge
+  // Compliance
   if (comp.totalItems > 0) {
-    html += '<div class="compliance"><strong>' + comp.guideline + '</strong> &mdash; ' + comp.fullName + ' | Compliance: ' + comp.compliance + '% (' + comp.metItems + '/' + comp.totalItems + ' items)</div>';
+    docChildren.push(new D.Paragraph({
+      children: [new D.TextRun({ text: comp.guideline + ' — ' + comp.fullName + ' | Compliance: ' + comp.compliance + '% (' + comp.metItems + '/' + comp.totalItems + ' items)', size: 20, font: 'Arial' })],
+      spacing: { after: 200 }, border: { bottom: { style: D.BorderStyle.SINGLE, size: 1 } }
+    }));
   }
 
   // IMRyD sections
-  var sectionLabels = { titulo: 'Titulo', abstract: 'Resumen', introduccion: 'Introduccion', metodos: 'Metodos', resultados: 'Resultados', discusion: 'Discusion', conclusion: 'Conclusion', referencias: 'Referencias' };
   sections.forEach(function(sec) {
     if (sec.key === 'titulo') {
-      html += '<h1>' + esc(sec.content) + '</h1>';
+      docChildren.push(new D.Paragraph({
+        children: [new D.TextRun({ text: sec.content, bold: true, size: 28, font: 'Arial' })],
+        alignment: D.AlignmentType.CENTER, spacing: { before: 200, after: 200 }
+      }));
     } else if (sec.key === 'referencias') {
-      html += '<h2>' + (sectionLabels[sec.key] || sec.label) + '</h2>';
-      sec.content.split('\n').forEach(function(line) { if (line.trim()) html += '<div class="ref">' + esc(line) + '</div>'; });
+      docChildren.push(new D.Paragraph({
+        children: [new D.TextRun({ text: sectionLabels[sec.key] || sec.label, bold: true, size: 26, font: 'Arial' })],
+        spacing: { before: 300, after: 100 }
+      }));
+      sec.content.split('\n').forEach(function(line) {
+        if (line.trim()) {
+          docChildren.push(new D.Paragraph({
+            children: [new D.TextRun({ text: line.trim(), size: 20, font: 'Georgia' })],
+            indent: { hanging: 480, left: 480 }, spacing: { after: 40 }
+          }));
+        }
+      });
     } else {
-      html += '<h2>' + (sectionLabels[sec.key] || sec.label) + '</h2>';
-      html += '<div class="section-content">' + esc(sec.content) + '</div>';
+      docChildren.push(new D.Paragraph({
+        children: [new D.TextRun({ text: sectionLabels[sec.key] || sec.label, bold: true, size: 26, font: 'Arial' })],
+        spacing: { before: 300, after: 100 },
+        border: { bottom: { style: D.BorderStyle.SINGLE, size: 1, color: 'E2E8F0' } }
+      }));
+      sec.content.split('\n').forEach(function(para) {
+        if (para.trim()) {
+          docChildren.push(new D.Paragraph({
+            children: [new D.TextRun({ text: para.trim(), size: 24, font: 'Georgia' })],
+            spacing: { after: 80, line: 480 }
+          }));
+        }
+      });
     }
   });
 
-  // Extraction table if available
+  // Studies table if available
   var ext = pd.extraction_table || [];
   if (ext.length > 0 && stage3SimData) {
     var sd = stage3SimData;
-    html += '<h2>Tabla de Estudios Incluidos</h2>';
-    html += '<table><tr><th>Estudio</th><th>Eventos (I)</th><th>Total (I)</th><th>Eventos (C)</th><th>Total (C)</th><th>OR [IC 95%]</th><th>Peso (%)</th></tr>';
-    sd.studies.forEach(function(s) { html += '<tr><td>' + esc(s.author) + ' ' + s.year + '</td><td style="text-align:center">' + s.events_i + '</td><td style="text-align:center">' + s.total_i + '</td><td style="text-align:center">' + s.events_c + '</td><td style="text-align:center">' + s.total_c + '</td><td style="text-align:center">' + s.or.toFixed(2) + ' [' + s.or_lo.toFixed(2) + '-' + s.or_hi.toFixed(2) + ']</td><td style="text-align:center">' + s.weight + '</td></tr>'; });
-    html += '<tr style="font-weight:bold;border-top:2px solid #333"><td>Global</td><td colspan="4"></td><td style="text-align:center">' + sd.pooled.or + ' [' + sd.pooled.or_lo + '-' + sd.pooled.or_hi + ']</td><td style="text-align:center">100</td></tr></table>';
+    docChildren.push(new D.Paragraph({
+      children: [new D.TextRun({ text: 'Tabla de Estudios Incluidos', bold: true, size: 26, font: 'Arial' })],
+      spacing: { before: 300, after: 100 }
+    }));
+    var studyHeaders = ['Estudio', 'Eventos (I)', 'Total (I)', 'Eventos (C)', 'Total (C)', 'OR [IC 95%]', 'Peso (%)'];
+    var studyRows = sd.studies.map(function(s) {
+      return [s.author + ' ' + s.year, String(s.events_i), String(s.total_i), String(s.events_c), String(s.total_c),
+        s.or.toFixed(2) + ' [' + s.or_lo.toFixed(2) + '-' + s.or_hi.toFixed(2) + ']', String(s.weight)];
+    });
+    studyRows.push(['Global', '', '', '', '', sd.pooled.or + ' [' + sd.pooled.or_lo + '-' + sd.pooled.or_hi + ']', '100']);
+    docChildren.push(buildDocxTable(studyHeaders, studyRows));
   }
 
-  html += '</body></html>';
-  var blob = new Blob([html], { type: 'application/msword' });
-  var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'Manuscrito_IMRyD_GalateaAI.doc'; a.click(); URL.revokeObjectURL(url);
-  showToast('Manuscrito IMRyD exportado', 'success');
+  var doc = new D.Document({
+    sections: [{ properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } }, children: docChildren }]
+  });
+
+  D.Packer.toBlob(doc).then(function(blob) {
+    var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'Manuscrito_IMRyD_GalateaAI.docx'; a.click(); URL.revokeObjectURL(url);
+    showToast('Manuscrito IMRyD exportado (.docx)', 'success');
+  });
 }
 
 function exportManuscriptPDF() {
@@ -10291,7 +10775,31 @@ function renderStage5ExportPanel() {
   h += '<div class="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center flex-shrink-0"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg></div>';
   h += '<div><div class="font-bold text-red-800">Descargar PDF</div>';
   h += '<div class="text-xs text-red-600">Formato final — no editable</div></div></button>';
+  h += '</div>';
+
+  // ── Table 1, 2, 3 buttons ──
+  h += '<div class="mt-4 pt-4 border-t border-gray-100">';
+  h += '<p class="text-xs font-bold text-gray-600 mb-3">Tablas para publicacion (DOCX)</p>';
+  h += '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">';
+
+  h += '<button onclick="downloadTable1DOCX()" class="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-amber-100/50 border border-amber-200 rounded-xl p-3 hover:shadow-md hover:border-amber-400 transition-all text-left">';
+  h += '<div class="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-black">T1</span></div>';
+  h += '<div><div class="text-xs font-bold text-amber-800">Table 1</div>';
+  h += '<div class="text-[10px] text-amber-600">Calidad metodologica</div></div></button>';
+
+  h += '<button onclick="downloadTable2DOCX()" class="flex items-center gap-3 bg-gradient-to-r from-teal-50 to-teal-100/50 border border-teal-200 rounded-xl p-3 hover:shadow-md hover:border-teal-400 transition-all text-left">';
+  h += '<div class="w-9 h-9 rounded-lg bg-teal-500 flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-black">T2</span></div>';
+  h += '<div><div class="text-xs font-bold text-teal-800">Table 2</div>';
+  h += '<div class="text-[10px] text-teal-600">Caracteristicas estudios</div></div></button>';
+
+  h += '<button onclick="downloadTable3DOCX()" class="flex items-center gap-3 bg-gradient-to-r from-violet-50 to-violet-100/50 border border-violet-200 rounded-xl p-3 hover:shadow-md hover:border-violet-400 transition-all text-left">';
+  h += '<div class="w-9 h-9 rounded-lg bg-violet-500 flex items-center justify-center flex-shrink-0"><span class="text-white text-xs font-black">T3</span></div>';
+  h += '<div><div class="text-xs font-bold text-violet-800">Table 3</div>';
+  h += '<div class="text-[10px] text-violet-600">Resultados clinicos</div></div></button>';
+
   h += '</div></div>';
+
+  h += '</div>';
   return h;
 }
 
