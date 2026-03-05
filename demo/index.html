@@ -1739,7 +1739,7 @@ function generateSimulationData(question) {
   // Planteamiento text for typewriter
   var planteamiento = isDefault ?
     'La retinopatia diabetica (RD) es la principal causa de ceguera prevenible en adultos en edad laboral. En Colombia, la prevalencia de diabetes tipo 2 alcanza el 10.6% en areas urbanas y aproximadamente el 8% en zonas rurales, donde el acceso a oftalmologos especializados es extremadamente limitado [1-3].\n\nLos algoritmos de Deep Learning, particularmente las redes neuronales convolucionales (CNN), han demostrado precision comparable a especialistas en la deteccion de RD en entornos controlados. Sin embargo, existe una brecha critica: la evidencia sobre su rendimiento en contextos de atencion primaria rural en paises de ingreso medio es escasa [4-7].\n\nEsta revision sistematica con meta-analisis evaluara la precision diagnostica de algoritmos de DL comparada con la lectura por oftalmologos certificados, con enfasis en contextos rurales de America Latina [8-10].'
-    : injectCitationsInPlanteamiento('Pregunta de investigacion: ' + q + '\n\nEsta revision aborda una pregunta clinica relevante. La poblacion de interes son ' + fwData.P.toLowerCase() + '. La intervencion o exposicion evaluada es: ' + fwData.I + '. Se comparara contra: ' + fwData.C.toLowerCase() + '.\n\nEl desenlace principal a evaluar es: ' + fwData.O + '. Se realizara una busqueda sistematica en bases de datos biomedicas internacionales (PubMed, Cochrane, LILACS, Scopus) para identificar la mejor evidencia disponible.\n\nEl marco metodologico seleccionado (' + framework + ') permitira estructurar la busqueda y sintesis de evidencia de manera rigurosa y reproducible.', extraction.length);
+    : injectCitationsInPlanteamiento('Pregunta de investigacion: ' + q + '.\n\nContexto clinico: La poblacion de interes son ' + fwData.P.toLowerCase() + '. Estudios previos han evaluado diferentes abordajes en esta poblacion. La intervencion o exposicion evaluada es: ' + fwData.I + '. Esta se comparara contra: ' + fwData.C.toLowerCase() + '. La evidencia disponible sugiere la necesidad de una sintesis sistematica para establecer conclusiones robustas.\n\nDesenlace y metodologia: El desenlace principal a evaluar es: ' + fwData.O + '. Se realizara una busqueda sistematica en bases de datos biomedicas internacionales (PubMed/MEDLINE, Cochrane Library, LILACS, Scopus, Web of Science) para identificar la mejor evidencia disponible. Los estudios incluidos seran evaluados con herramientas validadas de riesgo de sesgo.\n\nEl marco metodologico seleccionado (' + framework + ') permitira estructurar la busqueda y sintesis de evidencia de manera rigurosa y reproducible. Se seguiran las guias PRISMA 2020 para el reporte de la revision sistematica.', extraction.length);
 
   // ── Detect study type and apply config ──
   var detectedTypeId = isDefault ? 'dta' : detectStudyTypeId(framework, q);
@@ -2200,6 +2200,32 @@ async function runFullSimulation(question) {
     }
     simData = generateSimulationData(question);
   }
+
+  // ── Early PubMed fetch: get real articles for references BEFORE planteamiento ──
+  if (!simData._pubmed_articles || simData._pubmed_articles.length === 0) {
+    try {
+      var earlyPicot = simData.picot || {};
+      var earlyQuery = buildPubMedQuery(earlyPicot);
+      if (earlyQuery) {
+        var earlyPubmed = await searchPubMedDirect(earlyQuery, 10);
+        if (earlyPubmed.articles.length > 0) {
+          simData._pubmed_articles = earlyPubmed.articles;
+          // Update extraction table with real articles
+          simData.extraction_table = earlyPubmed.articles.map(function(a) {
+            var authorStr = (a.authors && a.authors.length > 0) ? a.authors[0] + (a.authors.length > 1 ? ' et al.' : '') : 'N/A';
+            return { autor: authorStr, anio: parseInt(a.year) || 0, pais: '', diseno: '', n: '', resultado: a.title, sesgo: 'pendiente', pmid: a.pmid, doi: a.doi };
+          });
+          // Re-inject citations in planteamiento with real article count
+          simData.planteamiento = injectCitationsInPlanteamiento(
+            simData.planteamiento.replace(/\s*\[\d+(?:-\d+)?\]/g, ''),
+            earlyPubmed.articles.length
+          );
+          simData._pubmed_real = true;
+        }
+      }
+    } catch(earlyErr) { console.warn('Early PubMed fetch failed:', earlyErr); }
+  }
+
   // Apply pre-selected study type from landing selector
   if (selectedStudyTypeId && simData) {
     var stCfg = getStudyTypeConfig(selectedStudyTypeId);
@@ -2339,9 +2365,14 @@ async function runFullSimulation(question) {
         var picot = pd.picot || {};
         var query = buildPubMedQuery(picot);
         if (query) {
-          await bubbleTypewriter('Buscando estudios reales en PubMed...', 28);
+          if (simData._pubmed_real && simData._pubmed_articles && simData._pubmed_articles.length > 0) {
+            await bubbleTypewriter('Se encontraron <strong>' + simData._pubmed_articles.length + '</strong> articulos reales de PubMed (cargados previamente).', 28);
+          } else {
+            await bubbleTypewriter('Buscando estudios reales en PubMed...', 28);
+          }
           var pubmedResult = await searchPubMedDirect(query, 15);
           if (pubmedResult.articles.length > 0) {
+            simData._pubmed_articles = pubmedResult.articles;
             simData.extraction_table = pubmedResult.articles.map(function(a) {
               var authorStr = (a.authors && a.authors.length > 0) ? a.authors[0] + (a.authors.length > 1 ? ' et al.' : '') : 'N/A';
               return { autor: authorStr, anio: parseInt(a.year) || 0, pais: '', diseno: '', n: '', resultado: a.title, sesgo: 'pendiente', pmid: a.pmid, doi: a.doi };
@@ -9206,28 +9237,51 @@ function getProjectVancouverRefs(pd) {
 
 function injectCitationsInPlanteamiento(text, numRefs) {
   if (!text || numRefs < 1) return text;
+  // Remove any existing citation tags first
+  text = text.replace(/\s*\[\d+(?:-\d+)?\]\s*/g, ' ');
   var paras = text.split('\n\n');
-  var third = Math.max(1, Math.ceil(numRefs / 3));
-  var r1end = Math.min(third, numRefs);
-  var r2end = Math.min(third * 2, numRefs);
-  function refTag(a, b) {
-    if (a === b) return ' [' + a + ']';
-    return ' [' + a + '-' + b + ']';
+  var refIdx = 1;
+
+  function refTag(start, end) {
+    if (start === end) return ' [' + start + ']';
+    return ' [' + start + '-' + end + ']';
   }
-  function appendBeforePeriod(p, tag) {
-    var trimmed = p.replace(/\.\s*$/, '');
-    return trimmed + tag + '.';
+
+  // Inject citations after sentences (at periods) within each paragraph
+  for (var pi = 0; pi < paras.length; pi++) {
+    var sentences = paras[pi].split(/(?<=\.)\s+/);
+    if (sentences.length <= 1) {
+      // Single sentence paragraph — add ref at the end
+      if (refIdx <= numRefs) {
+        var end = Math.min(refIdx + 1, numRefs);
+        paras[pi] = paras[pi].replace(/\.\s*$/, '') + refTag(refIdx, end) + '.';
+        refIdx = end + 1;
+      }
+      continue;
+    }
+
+    // Multi-sentence: inject citations after every 1-2 sentences
+    var rebuilt = [];
+    for (var si = 0; si < sentences.length; si++) {
+      rebuilt.push(sentences[si]);
+      // Add citation after every 2nd sentence, or at the last sentence
+      if (refIdx <= numRefs && (si % 2 === 1 || si === sentences.length - 1)) {
+        var refsToAdd = Math.min(2, numRefs - refIdx + 1);
+        var endRef = refIdx + refsToAdd - 1;
+        var lastSentence = rebuilt[rebuilt.length - 1];
+        rebuilt[rebuilt.length - 1] = lastSentence.replace(/\.\s*$/, '') + refTag(refIdx, endRef) + '.';
+        refIdx = endRef + 1;
+      }
+    }
+    paras[pi] = rebuilt.join(' ');
   }
-  if (paras.length >= 3) {
-    paras[0] = appendBeforePeriod(paras[0], refTag(1, r1end));
-    paras[1] = appendBeforePeriod(paras[1], refTag(r1end + 1, r2end));
-    paras[2] = appendBeforePeriod(paras[2], refTag(1, numRefs));
-  } else if (paras.length === 2) {
-    paras[0] = appendBeforePeriod(paras[0], refTag(1, Math.ceil(numRefs / 2)));
-    paras[1] = appendBeforePeriod(paras[1], refTag(1, numRefs));
-  } else {
-    paras[0] = appendBeforePeriod(paras[0], refTag(1, numRefs));
+
+  // If we still have unused refs, add them at the very end
+  if (refIdx <= numRefs) {
+    var lastPara = paras[paras.length - 1];
+    paras[paras.length - 1] = lastPara.replace(/\.\s*$/, '') + refTag(refIdx, numRefs) + '.';
   }
+
   return paras.join('\n\n');
 }
 
