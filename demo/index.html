@@ -4013,16 +4013,45 @@ function renderHypothesis(pd) {
 function renderDescriptorTags(pd) {
   var m=pd.descriptor_mapping||[];
   var h='<div class="phase-divider"><span>Fase 7: Evidencia</span></div><div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">';
-  h+='<div class="flex items-center justify-between mb-4"><h3 class="font-bold text-gray-900">Descriptores Controlados</h3><span class="text-[10px] text-gray-400">Haz clic en &#x2716; para quitar o escribe para agregar</span></div>';
-  var types=[{key:'mesh',label:'MeSH/DeCS',color:'blue'},{key:'emtree',label:'Emtree',color:'purple'}];
-  types.forEach(function(t){
-    h+='<div class="mb-3"><div class="text-[10px] font-bold text-'+t.color+'-600 uppercase tracking-wider mb-2">'+t.label+'</div><div class="flex flex-wrap gap-2" id="tags_'+t.key+'">';
-    m.forEach(function(d,i){
-      h+='<span class="descriptor-tag bg-'+t.color+'-50 text-'+t.color+'-700 border-'+t.color+'-200">'+esc(d[t.key])+'<span class="tag-remove" onclick="removeDescriptor('+i+',\''+t.key+'\')" title="Quitar">&#x2716;</span></span>';
-    });
-    h+='<input type="text" class="text-xs border border-dashed border-'+t.color+'-300 rounded-full px-3 py-1 w-32 placeholder-'+t.color+'-300 focus:outline-none focus:border-'+t.color+'-500" placeholder="+ Agregar..." onkeydown="if(event.key===\'Enter\'){addDescriptor(this.value,\''+t.key+'\');this.value=\'\';}">';
-    h+='</div></div>';
+  h+='<div class="flex items-center justify-between mb-4"><div><h3 class="font-bold text-gray-900">Descriptores Controlados</h3>';
+  h+='<p class="text-[10px] text-gray-400 mt-0.5">Conectado a <a href="https://id.nlm.nih.gov/mesh/" target="_blank" class="text-blue-500 underline">NLM MeSH</a>, <a href="https://decs.bvsalud.org" target="_blank" class="text-blue-500 underline">DeCS/BVS</a> y <a href="https://www.embase.com" target="_blank" class="text-purple-500 underline">Emtree/EMBASE</a></p></div>';
+  h+='<button onclick="validateAllDescriptors()" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-bold hover:bg-blue-100 transition-all border border-blue-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>Validar todos</button></div>';
+
+  // MeSH/DeCS section
+  h+='<div class="mb-4"><div class="flex items-center gap-2 mb-2"><div class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">MeSH / DeCS</div>';
+  h+='<a href="https://decs.bvsalud.org" target="_blank" class="text-[9px] text-blue-400 hover:text-blue-600 underline">decs.bvsalud.org</a></div>';
+  h+='<div class="flex flex-wrap gap-2" id="tags_mesh">';
+  m.forEach(function(d,i){
+    var validated = d._meshValidated ? ' border-green-400 bg-green-50 text-green-800' : '';
+    var meshId = d._meshId ? ' title="MeSH ID: '+d._meshId+'"' : '';
+    var badge = d._meshValidated ? '<span class="ml-1 text-green-500 text-[8px]">&#x2713;</span>' : '';
+    var decsLabel = d.decs && d.decs !== d.mesh ? '<span class="text-[8px] text-gray-400 ml-1">(DeCS: '+esc(d.decs)+')</span>' : '';
+    h+='<span class="descriptor-tag'+validated+' border bg-blue-50 text-blue-700 border-blue-200"'+meshId+'>'+esc(d.mesh)+decsLabel+badge+'<span class="tag-remove" onclick="removeDescriptor('+i+',\'mesh\')" title="Quitar">&#x2716;</span></span>';
   });
+  h+='<div class="relative inline-block"><input type="text" id="meshSearchInput" class="text-xs border border-dashed border-blue-300 rounded-full px-3 py-1 w-44 placeholder-blue-300 focus:outline-none focus:border-blue-500 focus:w-64 transition-all" placeholder="+ Buscar MeSH/DeCS..." oninput="searchMeSHLive(this.value)" onkeydown="if(event.key===\'Enter\'){addDescriptorFromSearch(\'mesh\');event.preventDefault();}" onfocus="this.classList.add(\'w-64\')" onblur="setTimeout(function(){document.getElementById(\'meshSearchInput\').classList.remove(\'w-64\');hideMeshSuggestions();},200)">';
+  h+='<div id="meshSuggestions" class="hidden absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 w-80 max-h-60 overflow-y-auto"></div></div>';
+  h+='</div></div>';
+
+  // Emtree section
+  h+='<div class="mb-3"><div class="flex items-center gap-2 mb-2"><div class="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Emtree (EMBASE)</div>';
+  h+='<a href="https://www.embase.com" target="_blank" class="text-[9px] text-purple-400 hover:text-purple-600 underline">embase.com</a></div>';
+  h+='<div class="flex flex-wrap gap-2" id="tags_emtree">';
+  m.forEach(function(d,i){
+    var emtreeLink = d.emtree ? 'https://www.embase.com/search/results?subaction=viewrecord&term='+encodeURIComponent(d.emtree) : '#';
+    h+='<span class="descriptor-tag bg-purple-50 text-purple-700 border border-purple-200">'+esc(d.emtree);
+    h+='<a href="https://www.embase.com/#search/query=\''+encodeURIComponent(d.emtree)+'\'" target="_blank" class="ml-1 text-purple-400 hover:text-purple-600 text-[8px]" title="Buscar en EMBASE" onclick="event.stopPropagation()">&#x2197;</a>';
+    h+='<span class="tag-remove" onclick="removeDescriptor('+i+',\'emtree\')" title="Quitar">&#x2716;</span></span>';
+  });
+  h+='<input type="text" class="text-xs border border-dashed border-purple-300 rounded-full px-3 py-1 w-44 placeholder-purple-300 focus:outline-none focus:border-purple-500" placeholder="+ Agregar Emtree..." onkeydown="if(event.key===\'Enter\'){addDescriptor(this.value,\'emtree\');this.value=\'\';}">';
+  h+='</div></div>';
+
+  // DeCS direct link section
+  h+='<div class="mt-3 pt-3 border-t border-gray-100 flex items-center gap-3">';
+  h+='<a href="https://decs.bvsalud.org/es/" target="_blank" class="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-50 text-cyan-700 rounded-lg text-[10px] font-bold hover:bg-cyan-100 transition-all border border-cyan-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>Consultar DeCS/BVS</a>';
+  h+='<a href="https://www.embase.com" target="_blank" class="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg text-[10px] font-bold hover:bg-purple-100 transition-all border border-purple-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>Buscar Emtree en EMBASE</a>';
+  h+='<a href="https://meshb.nlm.nih.gov/search" target="_blank" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-bold hover:bg-blue-100 transition-all border border-blue-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>MeSH Browser NLM</a>';
+  h+='</div>';
+
   h+='</div>';
   return h;
 }
@@ -4624,7 +4653,6 @@ function addDescriptor(value, type) {
   var pd = project.phase_data || {};
   var m = pd.descriptor_mapping || [];
   var newD = { term: value, mesh: value, decs: value, emtree: value };
-  // If adding to a specific type, only set that one
   if (type === 'mesh') newD = { term: value, mesh: value, decs: value, emtree: '' };
   else if (type === 'emtree') newD = { term: value, mesh: '', decs: '', emtree: value };
   m.push(newD);
@@ -4632,6 +4660,199 @@ function addDescriptor(value, type) {
   project.phase_data = pd;
   renderDetailedViews();
   showToast('Descriptor agregado: ' + value, 'success');
+  if (rowId) {
+    sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REAL MeSH/DeCS LOOKUP — NLM API + DeCS/BVS
+// ═══════════════════════════════════════════════════════════════
+var _meshSearchTimeout = null;
+var _meshSuggestionCache = {};
+
+async function searchMeSHLive(query) {
+  query = (query || '').trim();
+  if (query.length < 2) { hideMeshSuggestions(); return; }
+
+  // Debounce 300ms
+  clearTimeout(_meshSearchTimeout);
+  _meshSearchTimeout = setTimeout(async function() {
+    // Check cache
+    if (_meshSuggestionCache[query]) {
+      renderMeshSuggestions(_meshSuggestionCache[query], query);
+      return;
+    }
+
+    var sugDiv = document.getElementById('meshSuggestions');
+    if (sugDiv) {
+      sugDiv.classList.remove('hidden');
+      sugDiv.innerHTML = '<div class="p-3 flex items-center gap-2"><div class="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div><span class="text-[10px] text-gray-500">Buscando en NLM MeSH...</span></div>';
+    }
+
+    try {
+      var resp = await fetch('/api/mesh/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query, type: 'search', limit: 8 })
+      });
+      var result = await resp.json();
+      if (result.success && result.data) {
+        _meshSuggestionCache[query] = result.data;
+        renderMeshSuggestions(result.data, query);
+      } else {
+        if (sugDiv) sugDiv.innerHTML = '<div class="p-3 text-[10px] text-gray-400">Sin resultados</div>';
+      }
+    } catch (e) {
+      if (sugDiv) sugDiv.innerHTML = '<div class="p-3 text-[10px] text-red-400">Error: ' + e.message + '</div>';
+    }
+  }, 300);
+}
+
+function renderMeshSuggestions(data, query) {
+  var sugDiv = document.getElementById('meshSuggestions');
+  if (!sugDiv) return;
+
+  var meshResults = (data.mesh || []).concat(data.meshTerms || []);
+  // Deduplicate by label
+  var seen = {};
+  meshResults = meshResults.filter(function(r) {
+    if (seen[r.label]) return false;
+    seen[r.label] = true;
+    return true;
+  });
+
+  var decsResults = data.decs || [];
+
+  if (meshResults.length === 0 && decsResults.length === 0) {
+    sugDiv.innerHTML = '<div class="p-3 text-[10px] text-gray-400">Sin resultados para "' + esc(query) + '"</div>';
+    sugDiv.classList.remove('hidden');
+    return;
+  }
+
+  var h = '';
+  if (meshResults.length > 0) {
+    h += '<div class="px-3 pt-2 pb-1"><span class="text-[9px] font-bold text-blue-600 uppercase">MeSH — NLM</span></div>';
+    meshResults.forEach(function(r) {
+      h += '<button onclick="selectMeshSuggestion(\'' + esc(r.label).replace(/'/g, "\\'") + '\',\'' + esc(r.meshId || '') + '\')" class="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 transition-colors flex items-center justify-between border-b border-gray-50">';
+      h += '<div><span class="font-medium text-gray-800">' + esc(r.label) + '</span>';
+      if (r.meshId) h += '<span class="text-[9px] text-gray-400 ml-2">' + esc(r.meshId) + '</span>';
+      h += '</div>';
+      h += '<span class="text-[9px] text-blue-500 font-bold">+ Agregar</span></button>';
+    });
+  }
+  if (decsResults.length > 0) {
+    h += '<div class="px-3 pt-2 pb-1"><span class="text-[9px] font-bold text-cyan-600 uppercase">DeCS — BVS</span></div>';
+    decsResults.forEach(function(r) {
+      h += '<button onclick="selectDecsSuggestion(\'' + esc(r.label).replace(/'/g, "\\'") + '\')" class="w-full text-left px-3 py-2 text-xs hover:bg-cyan-50 transition-colors flex items-center justify-between border-b border-gray-50">';
+      h += '<span class="font-medium text-gray-800">' + esc(r.label) + '</span>';
+      h += '<span class="text-[9px] text-cyan-500 font-bold">+ Agregar</span></button>';
+    });
+  }
+
+  h += '<div class="px-3 py-2 bg-gray-50 border-t border-gray-100 flex items-center gap-2">';
+  h += '<a href="https://decs.bvsalud.org/es/" target="_blank" class="text-[9px] text-cyan-600 hover:underline">DeCS/BVS</a>';
+  h += '<span class="text-gray-300">|</span>';
+  h += '<a href="https://meshb.nlm.nih.gov/search" target="_blank" class="text-[9px] text-blue-600 hover:underline">MeSH Browser</a>';
+  h += '<span class="text-gray-300">|</span>';
+  h += '<a href="https://www.embase.com" target="_blank" class="text-[9px] text-purple-600 hover:underline">EMBASE Emtree</a>';
+  h += '</div>';
+
+  sugDiv.innerHTML = h;
+  sugDiv.classList.remove('hidden');
+}
+
+function hideMeshSuggestions() {
+  var sugDiv = document.getElementById('meshSuggestions');
+  if (sugDiv) sugDiv.classList.add('hidden');
+}
+
+function selectMeshSuggestion(label, meshId) {
+  if (!project) return;
+  var pd = project.phase_data || {};
+  var m = pd.descriptor_mapping || [];
+  var newD = { term: label, mesh: label, decs: label, emtree: label.toLowerCase(), _meshValidated: true, _meshId: meshId };
+  m.push(newD);
+  pd.descriptor_mapping = m;
+  project.phase_data = pd;
+  hideMeshSuggestions();
+  var input = document.getElementById('meshSearchInput');
+  if (input) input.value = '';
+  renderDetailedViews();
+  showToast('MeSH descriptor validado: ' + label + (meshId ? ' (' + meshId + ')' : ''), 'success');
+  if (rowId) {
+    sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+  }
+}
+
+function selectDecsSuggestion(label) {
+  if (!project) return;
+  var pd = project.phase_data || {};
+  var m = pd.descriptor_mapping || [];
+  var newD = { term: label, mesh: label, decs: label, emtree: label.toLowerCase(), _decsValidated: true };
+  m.push(newD);
+  pd.descriptor_mapping = m;
+  project.phase_data = pd;
+  hideMeshSuggestions();
+  var input = document.getElementById('meshSearchInput');
+  if (input) input.value = '';
+  renderDetailedViews();
+  showToast('DeCS descriptor validado: ' + label, 'success');
+  if (rowId) {
+    sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+  }
+}
+
+function addDescriptorFromSearch(type) {
+  var input = document.getElementById('meshSearchInput');
+  if (!input) return;
+  var value = input.value.trim();
+  if (!value) return;
+  addDescriptor(value, type);
+  input.value = '';
+  hideMeshSuggestions();
+}
+
+async function validateAllDescriptors() {
+  if (!project) return;
+  var pd = project.phase_data || {};
+  var m = pd.descriptor_mapping || [];
+  if (m.length === 0) { showToast('No hay descriptores para validar', 'info'); return; }
+
+  showToast('Validando ' + m.length + ' descriptores en NLM MeSH...', 'info');
+  var validated = 0;
+
+  for (var i = 0; i < m.length; i++) {
+    var d = m[i];
+    if (d._meshValidated) { validated++; continue; }
+    try {
+      var resp = await fetch('/api/mesh/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: d.mesh || d.term, type: 'search', limit: 3 })
+      });
+      var result = await resp.json();
+      if (result.success && result.data && result.data.mesh && result.data.mesh.length > 0) {
+        var best = result.data.mesh[0];
+        d.mesh = best.label;
+        d._meshValidated = true;
+        d._meshId = best.meshId;
+        if (!d.decs || d.decs === d.term) d.decs = best.label;
+        if (!d.emtree) d.emtree = best.label.toLowerCase();
+        validated++;
+      }
+      // Check DeCS too
+      if (result.data && result.data.decs && result.data.decs.length > 0) {
+        d.decs = result.data.decs[0].label;
+        d._decsValidated = true;
+      }
+    } catch (e) { /* continue with next */ }
+  }
+
+  pd.descriptor_mapping = m;
+  project.phase_data = pd;
+  renderDetailedViews();
+  showToast(validated + '/' + m.length + ' descriptores validados con NLM MeSH', validated === m.length ? 'success' : 'info');
   if (rowId) {
     sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
   }
