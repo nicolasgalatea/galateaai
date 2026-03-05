@@ -586,6 +586,23 @@
         </div>
       </div>
 
+      <!-- REDCap Sync Section -->
+      <div class="mb-6 p-4 rounded-xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125v-3.75"/></svg>
+            <span class="text-sm font-bold text-red-800">Sincronizar con REDCap</span>
+          </div>
+          <button onclick="showREDCapConfigModal()" class="text-[10px] text-red-600 font-bold underline hover:text-red-800">Configurar</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="exportProtocolToREDCap()" class="text-[10px] font-bold text-red-700 bg-white border border-red-200 rounded-lg px-3 py-2 hover:bg-red-50 transition-all text-left">Protocolo</button>
+          <button onclick="exportManuscriptToREDCap()" class="text-[10px] font-bold text-red-700 bg-white border border-red-200 rounded-lg px-3 py-2 hover:bg-red-50 transition-all text-left">Manuscrito</button>
+          <button onclick="exportSearchDataToREDCap()" class="text-[10px] font-bold text-red-700 bg-white border border-red-200 rounded-lg px-3 py-2 hover:bg-red-50 transition-all text-left">Log de Busqueda</button>
+          <button onclick="exportToREDCap()" class="text-[10px] font-bold text-red-700 bg-white border border-red-200 rounded-lg px-3 py-2 hover:bg-red-50 transition-all text-left">Datos / Records</button>
+        </div>
+      </div>
+
       <div class="p-4 rounded-xl bg-gradient-to-r from-galatea/5 to-verde/5 border border-galatea/10">
         <div class="flex items-center gap-2 text-xs text-galatea font-semibold">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg>
@@ -2708,6 +2725,9 @@ function renderJefeView() {
   h += '<button onclick="exportConsolidatedReport()" class="bg-gradient-to-r from-verde to-esmeralda text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-2">';
   h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>';
   h += 'Exportar CSV</button>';
+  h += '<button onclick="exportToREDCap()" class="bg-gradient-to-r from-red-500 to-orange-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-2">';
+  h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>';
+  h += 'REDCap</button>';
   h += '</div></div>';
 
   // Department summary grid
@@ -3995,7 +4015,7 @@ function renderSearchRegistry(pd) {
   var hasReal=reg.some(function(r){return r.real===true;});
   var liveBadge=hasReal?'<span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-red-600 text-white animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-white inline-block"></span>DATOS EN VIVO</span>':'';
   var h='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center justify-between mb-4"><div><h3 class="font-bold text-gray-900">Log de Auditoria'+liveBadge+'</h3><p class="text-[10px] text-gray-400 mt-0.5">'+reg.length+' bases | '+tr+' resultados | '+ti+' incluidos</p></div>';
-  h+='<button onclick="exportSearchCSV()" class="flex items-center gap-1.5 px-4 py-2 bg-verde/10 text-verde rounded-lg text-xs font-bold hover:bg-verde/20 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar CSV</button></div><div class="space-y-3">';
+  h+='<div class="flex items-center gap-2"><button onclick="exportSearchCSV()" class="flex items-center gap-1.5 px-4 py-2 bg-verde/10 text-verde rounded-lg text-xs font-bold hover:bg-verde/20 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar CSV</button>'+renderREDCapExportBtn('exportSearchDataToREDCap()','REDCap')+'</div></div><div class="space-y-3">';
   reg.forEach(function(r){var c=r.color||'gray';var isReal=r.real===true;var isEst=r.real===false;var isEmbase=r.database==='EMBASE';h+='<div class="border border-'+c+'-100 rounded-xl p-4 bg-'+c+'-50/30"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><div class="db-badge bg-'+c+'-100 text-'+c+'-700">'+esc(r.database)+'</div>'+(isReal?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-verde/10 text-verde border border-verde/30">EN VIVO</span>':'')+(isEst&&!isEmbase?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200">ESTIMADO</span>':'')+(isEmbase?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-orange-100 text-orange-700 border border-orange-200">MANUAL — ejecutar en embase.com</span>':'')+'</div><div class="flex items-center gap-3 text-xs"><span class="text-gray-500">Resultados: <strong>'+r.results+'</strong></span><span class="text-verde font-bold">Incluidos: '+r.included+'</span><span class="text-gray-400">'+esc(r.date||'')+'</span></div></div><div class="flex items-center gap-2"><div class="text-[11px] font-mono text-gray-600 bg-white/60 rounded-lg p-2 break-all flex-1">'+esc(r.equation||'')+'</div>'+(isEmbase?'<button onclick="navigator.clipboard.writeText(\''+esc((r.equation||'').replace(/'/g,"\\'"))+'\');showToast(\'Ecuacion EMBASE copiada al portapapeles\',\'success\')" class="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-[10px] font-bold hover:bg-orange-200 transition-all" title="Copiar ecuacion"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>Copiar</button>':'')+'</div>'+(isEst&&r.rationale?'<div class="text-[10px] text-amber-600 mt-1 italic">'+esc(r.rationale)+'</div>':'')+'</div>';});
   h+='</div></div>';return h;
 }
@@ -4049,7 +4069,7 @@ function renderProtocol(pd, ue) {
   var h = '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">';
   h += '<div class="flex items-center justify-between mb-5"><div class="flex items-center gap-3"><svg class="w-5 h-5 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>';
   h += '<h3 class="font-bold text-gray-900 text-lg">Justificacion del Estudio</h3></div>';
-  h += '<button onclick="exportProtocol()" class="flex items-center gap-1.5 text-xs bg-galatea/10 text-galatea px-4 py-2 rounded-lg font-bold hover:bg-galatea/20"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar .doc</button></div>';
+  h += '<div class="flex items-center gap-2"><button onclick="exportProtocol()" class="flex items-center gap-1.5 text-xs bg-galatea/10 text-galatea px-4 py-2 rounded-lg font-bold hover:bg-galatea/20"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar .doc</button>' + renderREDCapExportBtn('exportProtocolToREDCap()', 'REDCap') + '</div></div>';
 
   // ── 1. Pregunta estructurada ──
   h += '<div class="mb-5 p-4 rounded-xl bg-blue-50/50 border border-blue-100">';
@@ -4329,6 +4349,7 @@ function renderManuscriptGenerator(pd, ue) {
   h += '<div class="flex gap-2 mb-5">';
   h += '<button onclick="exportManuscriptDOCX()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] rounded-lg px-3 py-1.5 font-medium transition-colors">\u{1F4E5} DOCX</button>';
   h += '<button onclick="exportManuscriptPDF()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] rounded-lg px-3 py-1.5 font-medium transition-colors">\u{1F4E5} PDF</button>';
+  h += renderREDCapExportBtn('exportManuscriptToREDCap()', 'REDCap');
   h += '</div>';
 
   // Sections
@@ -7793,18 +7814,24 @@ function showStage4ViaB(curCfg) {
   h += '<div class="flex items-center gap-3"><span class="w-7 h-7 rounded-lg bg-purple-600 text-white text-xs font-bold flex items-center justify-center">1</span>';
   h += '<div><div class="text-sm font-bold text-gray-800">Banco de Datos</div>';
   h += '<div class="text-[10px] text-gray-400">4 hojas, pre-poblado con articulos PubMed</div></div></div>';
+  h += '<div class="flex items-center gap-2">';
   h += '<button onclick="downloadBancoDeDatos()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-all">';
   h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
-  h += 'Descargar .xlsx</button></div>';
+  h += 'Descargar .xlsx</button>';
+  h += renderREDCapExportBtn("exportViaBDocToREDCap('banco')", 'REDCap');
+  h += '</div></div>';
 
   // 2. Cribado
   h += '<div class="flex items-center justify-between p-3 rounded-xl bg-purple-50 border border-purple-100">';
   h += '<div class="flex items-center gap-3"><span class="w-7 h-7 rounded-lg bg-purple-600 text-white text-xs font-bold flex items-center justify-center">2</span>';
   h += '<div><div class="text-sm font-bold text-gray-800">Cribado</div>';
   h += '<div class="text-[10px] text-gray-400">Registro de busqueda por base de datos</div></div></div>';
+  h += '<div class="flex items-center gap-2">';
   h += '<button onclick="downloadCribado()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-all">';
   h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
-  h += 'Descargar .xlsx</button></div>';
+  h += 'Descargar .xlsx</button>';
+  h += renderREDCapExportBtn("exportViaBDocToREDCap('cribado')", 'REDCap');
+  h += '</div></div>';
 
   // 3. Evaluacion de Calidad
   var qualTool = 'NOS / RoB 2.0 / QUADAS-2';
@@ -7815,18 +7842,24 @@ function showStage4ViaB(curCfg) {
   h += '<div class="flex items-center gap-3"><span class="w-7 h-7 rounded-lg bg-purple-600 text-white text-xs font-bold flex items-center justify-center">3</span>';
   h += '<div><div class="text-sm font-bold text-gray-800">Evaluacion de Calidad</div>';
   h += '<div class="text-[10px] text-gray-400">' + qualTool + ' segun tipo de estudio</div></div></div>';
+  h += '<div class="flex items-center gap-2">';
   h += '<button onclick="downloadEvaluacionCalidad()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-all">';
   h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
-  h += 'Descargar .xlsx</button></div>';
+  h += 'Descargar .xlsx</button>';
+  h += renderREDCapExportBtn("exportViaBDocToREDCap('calidad')", 'REDCap');
+  h += '</div></div>';
 
   // 4. Extraccion de Datos
   h += '<div class="flex items-center justify-between p-3 rounded-xl bg-purple-50 border border-purple-100">';
   h += '<div class="flex items-center gap-3"><span class="w-7 h-7 rounded-lg bg-purple-600 text-white text-xs font-bold flex items-center justify-center">4</span>';
   h += '<div><div class="text-sm font-bold text-gray-800">Extraccion de Datos</div>';
   h += '<div class="text-[10px] text-gray-400">Columnas dinamicas segun PICOT Outcome</div></div></div>';
+  h += '<div class="flex items-center gap-2">';
   h += '<button onclick="downloadExtraccionDatos()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-all">';
   h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12M12 16.5V3"/></svg>';
-  h += 'Descargar .xlsx</button></div>';
+  h += 'Descargar .xlsx</button>';
+  h += renderREDCapExportBtn("exportViaBDocToREDCap('extraccion')", 'REDCap');
+  h += '</div></div>';
 
   h += '</div>';
 
@@ -9755,6 +9788,84 @@ function renderREDCapButton(target) {
   }
   h += '</div>';
   return h;
+}
+
+async function exportSearchDataToREDCap() {
+  var cfg = getREDCapConfig();
+  if (!cfg.connected) { showREDCapConfigModal(); return; }
+  var pd = (project && project.phase_data) || {};
+  var reg = pd.search_registry || [];
+  if (reg.length === 0) { showToast('No hay datos de busqueda para exportar', 'error'); return; }
+  var records = reg.map(function(r, i) {
+    return { record_id: String(i + 1), database: r.database || '', search_date: r.date || '', results_count: String(r.results || 0), included_count: String(r.included || 0), search_equation: r.equation || '' };
+  });
+  showToast('Exportando log de busqueda a REDCap...', 'info');
+  var result = await callREDCapProxy({ content: 'record', action: 'import', format: 'json', type: 'flat', overwriteBehavior: 'normal', forceAutoNumber: 'true', data: JSON.stringify(records), returnFormat: 'json', returnContent: 'count' });
+  if (result !== null) { showToast((result.count || records.length) + ' registros de busqueda exportados a REDCap', 'success'); }
+}
+
+async function exportProtocolToREDCap() {
+  var cfg = getREDCapConfig();
+  if (!cfg.connected) { showREDCapConfigModal(); return; }
+  var pd = (project && project.phase_data) || {};
+  var picot = pd.picot || {};
+  var record = { record_id: '1', research_question: project.research_question || '', population: picot.P || '', intervention: picot.I || '', comparator: picot.C || '', outcome: picot.O || '', time_frame: picot.T || picot.S || '', framework: pd.framework || '', study_type: (pd.study_type && pd.study_type.type) || '', hypothesis: (pd.hypothesis && pd.hypothesis.text) || '', planteamiento: (pd.planteamiento || '').substring(0, 5000) };
+  showToast('Exportando protocolo a REDCap...', 'info');
+  var result = await callREDCapProxy({ content: 'record', action: 'import', format: 'json', type: 'flat', overwriteBehavior: 'overwrite', forceAutoNumber: 'false', data: JSON.stringify([record]), returnFormat: 'json', returnContent: 'count' });
+  if (result !== null) { showToast('Protocolo exportado a REDCap exitosamente', 'success'); }
+}
+
+async function exportViaBDocToREDCap(docType) {
+  var cfg = getREDCapConfig();
+  if (!cfg.connected) { showREDCapConfigModal(); return; }
+  var pd = (project && project.phase_data) || {};
+  var records = [];
+  if (docType === 'banco') {
+    var ext = pd.extraction_table || [];
+    records = ext.map(function(row, i) { return { record_id: String(i + 1), author: row.autor || '', year: String(row.anio || ''), country: row.pais || '', design: row.diseno || '', sample_size: String(row.n || ''), result: row.resultado || '', bias_risk: row.sesgo || '' }; });
+  } else if (docType === 'cribado') {
+    var reg = pd.search_registry || [];
+    records = reg.map(function(r, i) { return { record_id: String(i + 1), database: r.database || '', results: String(r.results || 0), included: String(r.included || 0), equation: r.equation || '', date: r.date || '' }; });
+  } else if (docType === 'calidad') {
+    var ext2 = pd.extraction_table || [];
+    records = ext2.map(function(row, i) { return { record_id: String(i + 1), study: (row.autor || '') + ' ' + (row.anio || ''), bias_assessment: row.sesgo || 'pendiente' }; });
+  } else if (docType === 'extraccion') {
+    var ext3 = pd.extraction_table || [];
+    records = ext3.map(function(row, i) {
+      var rec = { record_id: String(i + 1) };
+      Object.keys(row).forEach(function(k) { rec[k.toLowerCase().replace(/[^a-z0-9_]/g, '_').substring(0, 100)] = row[k] !== undefined ? String(row[k]) : ''; });
+      return rec;
+    });
+  }
+  if (records.length === 0) { showToast('No hay datos de ' + docType + ' para exportar', 'error'); return; }
+  showToast('Exportando ' + docType + ' a REDCap...', 'info');
+  var result = await callREDCapProxy({ content: 'record', action: 'import', format: 'json', type: 'flat', overwriteBehavior: 'normal', forceAutoNumber: 'true', data: JSON.stringify(records), returnFormat: 'json', returnContent: 'count' });
+  if (result !== null) { showToast((result.count || records.length) + ' registros exportados a REDCap', 'success'); }
+}
+
+async function exportManuscriptToREDCap() {
+  var cfg = getREDCapConfig();
+  if (!cfg.connected) { showREDCapConfigModal(); return; }
+  var pd = (project && project.phase_data) || {};
+  var record = { record_id: '1', manuscript_title: project.research_question || '', manuscript_text: (pd.manuscript || '').substring(0, 10000), protocol_draft: (pd.protocol_draft || '').substring(0, 10000) };
+  if (stage3SimData) {
+    record.pooled_or = String(stage3SimData.pooled.or || '');
+    record.pooled_ci_lo = String(stage3SimData.pooled.or_lo || '');
+    record.pooled_ci_hi = String(stage3SimData.pooled.or_hi || '');
+    record.certainty = stage3SimData.certainty || '';
+    record.num_studies = String(stage3SimData.studies ? stage3SimData.studies.length : 0);
+  }
+  showToast('Exportando manuscrito a REDCap...', 'info');
+  var result = await callREDCapProxy({ content: 'record', action: 'import', format: 'json', type: 'flat', overwriteBehavior: 'overwrite', forceAutoNumber: 'false', data: JSON.stringify([record]), returnFormat: 'json', returnContent: 'count' });
+  if (result !== null) { showToast('Manuscrito exportado a REDCap exitosamente', 'success'); }
+}
+
+function renderREDCapExportBtn(onclick, label) {
+  var cfg = getREDCapConfig();
+  if (cfg.connected) {
+    return '<button onclick="' + onclick + '" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 text-red-700 text-[10px] font-bold hover:border-red-400 transition-all"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>' + (label || 'REDCap') + '</button>';
+  }
+  return '<button onclick="showREDCapConfigModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-400 text-[10px] font-bold hover:bg-gray-100 transition-all"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>REDCap</button>';
 }
 
 function exportREDCapDict() {
