@@ -2273,10 +2273,12 @@ async function runFullSimulation(question) {
     '<pre id="typewriterPlanteamiento" class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed"></pre>' +
     '<div id="planteamientoRefs" class="mt-4 pt-4 border-t border-gray-100 hidden"><h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Referencias</h4><div id="planteamientoRefsList" class="space-y-1"></div></div></div>';
   $('detailedViews').innerHTML = planHtml;
-  // Ensure citations are injected before typewriter
-  var twArts = simData._pubmed_articles || [];
-  if (twArts.length > 0 && !/\[\d+\]/.test(simData.planteamiento || '')) {
-    simData.planteamiento = injectCitationsInPlanteamiento(simData.planteamiento, twArts.length);
+  // Ensure citations are injected before typewriter — use any available ref count
+  var twNumRefs = (simData._pubmed_articles || []).length || (simData.extraction_table || []).length || 10;
+  if (!/\[\d+\]/.test(simData.planteamiento || '')) {
+    console.log('[Galatea] Injecting citations: numRefs=' + twNumRefs + ', textLen=' + (simData.planteamiento || '').length);
+    simData.planteamiento = injectCitationsInPlanteamiento(simData.planteamiento, twNumRefs);
+    console.log('[Galatea] After injection, has [N]:', /\[\d+\]/.test(simData.planteamiento));
   }
   await typewriter('typewriterPlanteamiento', simData.planteamiento, 30);
   // Show references after typewriter finishes
@@ -3213,11 +3215,11 @@ function renderGatekeeper() {
 
 function renderPlanteamiento(pd) {
   var rawText = pd.planteamiento || '';
-  // Get available articles for citation count
+  // Get available articles for citation count — fallback to extraction table or default 10
   var arts = (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
-  var numRefs = arts.length;
-  // If text has no citations yet and we have refs, inject them now
-  if (numRefs > 0 && !/\[\d+\]/.test(rawText)) {
+  var numRefs = arts.length || (pd.extraction_table || []).length || 10;
+  // If text has no citations yet, inject them now
+  if (!/\[\d+\]/.test(rawText)) {
     rawText = injectCitationsInPlanteamiento(rawText, numRefs);
     // Save back so it persists
     pd.planteamiento = rawText;
