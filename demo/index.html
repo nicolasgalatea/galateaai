@@ -3214,7 +3214,9 @@ function renderPlanteamiento(pd) {
     refs.forEach(function(r) { refsHtml += '<div class="text-xs text-gray-600">' + esc(r) + '</div>'; });
     refsHtml += '</div></div>';
   }
-  return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div><h3 class="font-bold text-gray-900">Fase 1 — Planteamiento</h3></div><pre class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed" contenteditable="true" onblur="debounceSave(\'planteamiento\',this.textContent)">' + esc(pd.planteamiento) + '</pre>' + refsHtml + '</div>';
+  // Highlight citation numbers [N] in the planteamiento text
+  var plantText = esc(pd.planteamiento || '').replace(/\[(\d+(?:-\d+)?)\]/g, '<sup class="text-blue-600 font-bold cursor-pointer hover:text-blue-800" title="Referencia $1">[$1]</sup>');
+  return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div><h3 class="font-bold text-gray-900">Fase 1 — Planteamiento</h3></div><div class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed" contenteditable="true" onblur="debounceSave(\'planteamiento\',this.textContent)">' + plantText + '</div>' + refsHtml + '</div>';
 }
 
 function renderFrameworkSection(pd) {
@@ -3276,7 +3278,7 @@ function renderFinerRadar(pd) {
   h+='<polygon id="radarPolygon" points="'+pts.join(' ')+'" class="'+(fc>=2?'radar-fill-fail':'radar-fill')+'"/>';
   dps.forEach(function(d){h+='<circle cx="'+d.x.toFixed(1)+'" cy="'+d.y.toFixed(1)+'" class="'+(d.p?'radar-dot':'radar-dot-fail')+'"/>';});
   h+='</svg></div><div class="flex-1 space-y-3">';
-  ls.forEach(function(l,i){var it=f[l]||{},s=scores[l],p=s>=50;h+='<div class="p-3 rounded-xl '+(p?'bg-verde/5 border border-verde/20':'bg-red-50 border border-red-200')+'"><div class="flex items-center justify-between mb-1"><span class="text-xs font-bold '+(p?'text-verde':'text-red-600')+'">'+ln[i]+'</span><span class="text-xs font-black '+(p?'text-verde':'text-red-600')+'" id="finerScore_'+l+'">'+s+'</span></div><input type="range" min="0" max="100" value="'+s+'" class="finer-slider w-full" oninput="updateFinerSlider(\''+l+'\',this.value)"><div class="text-[10px] text-gray-500 mt-1">'+esc(it.note||'')+'</div></div>';});
+  ls.forEach(function(l,i){var it=f[l]||{},s=scores[l],p=s>=50;h+='<div class="p-3 rounded-xl '+(p?'bg-verde/5 border border-verde/20':'bg-red-50 border border-red-200')+'"><div class="flex items-center justify-between mb-1"><span class="text-xs font-bold '+(p?'text-verde':'text-red-600')+'">'+ln[i]+'</span><span class="text-xs font-black '+(p?'text-verde':'text-red-600')+'" id="finerScore_'+l+'">'+s+'</span></div><input type="range" min="0" max="100" value="'+s+'" class="finer-slider w-full" oninput="updateFinerSlider(\''+l+'\',this.value)"><div class="text-[10px] text-gray-500 mt-1">'+highlightCitations(it.note||'')+'</div></div>';});
   h+='</div></div>';
 
   // ── Explicacion metodologica del analisis FINER ──
@@ -3305,14 +3307,14 @@ function renderFinerRadar(pd) {
   var fNote = (f.feasible||{}).note || '';
   h += '<div class="flex items-start gap-2"><span class="font-bold text-blue-700 min-w-[80px]">Factible (' + scores.feasible + '):</span><span>';
   h += 'Se evaluo la disponibilidad de recursos (bases de datos, acceso a pacientes o registros, equipo humano, tiempo e infraestructura). ';
-  if (fNote) h += esc(fNote) + ' ';
+  if (fNote) h += highlightCitations(fNote) + ' ';
   h += 'Un puntaje &ge;70 indica que el proyecto es ejecutable con los recursos disponibles sin requerir financiacion externa significativa.</span></div>';
 
   // Interesting
   var iNote = (f.interesting||{}).note || '';
   h += '<div class="flex items-start gap-2"><span class="font-bold text-blue-700 min-w-[80px]">Interesante (' + scores.interesting + '):</span><span>';
   h += 'Se analizo si la pregunta aborda un tema de interes actual para la comunidad cientifica y clinica, evaluando publicaciones recientes, tendencias de investigacion y prioridades institucionales. ';
-  if (iNote) h += esc(iNote) + ' ';
+  if (iNote) h += highlightCitations(iNote) + ' ';
   h += '</span></div>';
 
   // Novel
@@ -3329,21 +3331,21 @@ function renderFinerRadar(pd) {
   } else {
     h += 'Se evaluo si los resultados esperados aportarian conocimiento nuevo o confirmarian/refutarian hallazgos previos con evidencia insuficiente. ';
   }
-  if (nNote) h += esc(nNote) + ' ';
+  if (nNote) h += highlightCitations(nNote) + ' ';
   h += '</span></div>';
 
   // Ethical
   var eNote = (f.ethical||{}).note || '';
   h += '<div class="flex items-start gap-2"><span class="font-bold text-blue-700 min-w-[80px]">Etico (' + scores.ethical + '):</span><span>';
   h += 'Se evaluo el cumplimiento de principios bioeticos (autonomia, beneficencia, no maleficencia, justicia) y normatividad vigente (Resolucion 8430/1993, Declaracion de Helsinki, Ley 1581/2012 de proteccion de datos). ';
-  if (eNote) h += esc(eNote) + ' ';
+  if (eNote) h += highlightCitations(eNote) + ' ';
   h += '</span></div>';
 
   // Relevant
   var rNote = (f.relevant||{}).note || '';
   h += '<div class="flex items-start gap-2"><span class="font-bold text-blue-700 min-w-[80px]">Relevante (' + scores.relevant + '):</span><span>';
   h += 'Se determino si los resultados potenciales tendrian impacto en la toma de decisiones clinicas, guias de practica clinica o politicas de salud publica. Se considero la alineacion con las lineas de investigacion del Departamento de Cirugia FSFB. ';
-  if (rNote) h += esc(rNote) + ' ';
+  if (rNote) h += highlightCitations(rNote) + ' ';
   h += '</span></div>';
 
   h += '</div>';
@@ -3414,7 +3416,7 @@ function renderFeasibility(pd) {
     h += '<div class="flex items-center gap-2"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold ' + c.text + ' ' + c.light + '">' + d.risk + '</span><span class="text-xs font-black ' + c.text + '">' + d.score + '</span></div>';
     h += '</div>';
     h += '<div class="w-full bg-gray-200 rounded-full h-2"><div class="' + c.bg + ' h-2 rounded-full transition-all" style="width:' + d.score + '%"></div></div>';
-    if (d.note) h += '<div class="text-[10px] text-gray-500 mt-1.5">' + esc(d.note) + '</div>';
+    if (d.note) h += '<div class="text-[10px] text-gray-500 mt-1.5">' + highlightCitations(d.note) + '</div>';
     h += '</div>';
   });
   h += '</div>';
@@ -3423,7 +3425,7 @@ function renderFeasibility(pd) {
   if (f.summary) {
     h += '<div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200">';
     h += '<div class="text-xs font-bold text-slate-700 mb-1">Resumen</div>';
-    h += '<div class="text-[11px] text-slate-600 leading-relaxed">' + esc(f.summary) + '</div>';
+    h += '<div class="text-[11px] text-slate-600 leading-relaxed">' + highlightCitations(f.summary) + '</div>';
     h += '</div>';
   }
 
@@ -3431,7 +3433,7 @@ function renderFeasibility(pd) {
     h += '<div class="mt-3 p-3 rounded-xl bg-red-50 border border-red-200">';
     h += '<div class="text-[10px] font-bold text-red-700 mb-1">&#x26A0; Riesgos Criticos</div>';
     h += '<ul class="text-[10px] text-red-600 space-y-0.5 list-disc list-inside">';
-    f.critical_risks.forEach(function(r) { h += '<li>' + esc(r) + '</li>'; });
+    f.critical_risks.forEach(function(r) { h += '<li>' + highlightCitations(r) + '</li>'; });
     h += '</ul></div>';
   }
 
@@ -3439,7 +3441,7 @@ function renderFeasibility(pd) {
     h += '<div class="mt-3 p-3 rounded-xl bg-blue-50 border border-blue-200">';
     h += '<div class="text-[10px] font-bold text-blue-700 mb-1">&#x1F4A1; Recomendaciones</div>';
     h += '<ul class="text-[10px] text-blue-600 space-y-0.5 list-disc list-inside">';
-    f.recommendations.forEach(function(r) { h += '<li>' + esc(r) + '</li>'; });
+    f.recommendations.forEach(function(r) { h += '<li>' + highlightCitations(r) + '</li>'; });
     h += '</ul></div>';
   }
 
@@ -4050,7 +4052,7 @@ function onSSChange() {
 }
 
 function renderHypothesis(pd) {
-  var h=pd.hypothesis||{};var out='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><h3 class="font-bold text-gray-900 mb-4">Hipotesis</h3><div class="grid md:grid-cols-2 gap-4"><div class="p-4 rounded-xl bg-blue-50 border border-blue-100"><div class="text-[10px] font-bold text-blue-600 uppercase mb-1">H&#x2080; Nula</div><div class="text-sm text-gray-800" contenteditable="true" onblur="debounceSave(\'hypothesis.null\',this.textContent)">'+esc(h.null_hypothesis||'')+'</div></div><div class="p-4 rounded-xl bg-amber-50 border border-amber-100"><div class="text-[10px] font-bold text-amber-600 uppercase mb-1">H&#x2081; Alternativa</div><div class="text-sm text-gray-800" contenteditable="true" onblur="debounceSave(\'hypothesis.alt\',this.textContent)">'+esc(h.alternative_hypothesis||'')+'</div></div></div>'+(h.type?'<div class="mt-3 text-xs text-gray-500">Tipo: <strong>'+esc(h.type)+'</strong></div>':'')+renderReferencesFooter(pd)+'</div>';return out;
+  var h=pd.hypothesis||{};var out='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><h3 class="font-bold text-gray-900 mb-4">Hipotesis</h3><div class="grid md:grid-cols-2 gap-4"><div class="p-4 rounded-xl bg-blue-50 border border-blue-100"><div class="text-[10px] font-bold text-blue-600 uppercase mb-1">H&#x2080; Nula</div><div class="text-sm text-gray-800" contenteditable="true" onblur="debounceSave(\'hypothesis.null\',this.textContent)">'+highlightCitations(h.null_hypothesis||'')+'</div></div><div class="p-4 rounded-xl bg-amber-50 border border-amber-100"><div class="text-[10px] font-bold text-amber-600 uppercase mb-1">H&#x2081; Alternativa</div><div class="text-sm text-gray-800" contenteditable="true" onblur="debounceSave(\'hypothesis.alt\',this.textContent)">'+highlightCitations(h.alternative_hypothesis||'')+'</div></div></div>'+(h.type?'<div class="mt-3 text-xs text-gray-500">Tipo: <strong>'+esc(h.type)+'</strong></div>':'')+renderReferencesFooter(pd)+'</div>';return out;
 }
 
 // ── Descriptors as editable TAGS ──
@@ -4204,7 +4206,7 @@ function renderProtocol(pd, ue) {
       h += '<div class="flex items-center gap-3 text-sm"><span class="font-bold min-w-[80px] ' + (sc >= 50 ? 'text-verde' : 'text-red-600') + '">' + fNames[i] + '</span>';
       h += '<div class="flex-1 h-1.5 bg-gray-200 rounded-full"><div class="h-full rounded-full ' + (sc >= 50 ? 'bg-verde' : 'bg-red-400') + '" style="width:' + sc + '%"></div></div>';
       h += '<span class="text-xs font-bold min-w-[30px] text-right ' + (sc >= 50 ? 'text-verde' : 'text-red-600') + '">' + sc + '</span>';
-      if (it.note) h += '<span class="text-[10px] text-gray-500 hidden lg:inline">' + esc(it.note) + '</span>';
+      if (it.note) h += '<span class="text-[10px] text-gray-500 hidden lg:inline">' + highlightCitations(it.note) + '</span>';
       h += '</div>';
     });
     h += '</div></div>';
@@ -9309,6 +9311,11 @@ function enrichSimDataWithCitations(sd) {
   sd._citations_enriched = true;
 }
 
+// ── Highlight [N] citations as blue superscript ──
+function highlightCitations(text) {
+  return esc(text).replace(/\[(\d+(?:-\d+)?)\]/g, '<sup class="text-blue-600 font-bold">[$1]</sup>');
+}
+
 // ── Render references footer (Vancouver format) for any section ──
 function renderReferencesFooter(pd) {
   var arts = (simData && simData._pubmed_articles) || (pd && pd._pubmed_articles) || [];
@@ -9330,25 +9337,23 @@ function renderReferencesFooter(pd) {
 
 function injectCitationsInPlanteamiento(text, numRefs) {
   if (!text || numRefs < 1) return text;
-  // Remove any existing citation tags first
-  text = text.replace(/\s*\[\d+(?:-\d+)?\]\s*/g, ' ').replace(/\s+/g, ' ');
+  // Remove any existing citation tags first, preserve paragraph breaks
+  text = text.replace(/\s*\[\d+(?:-\d+)?\]/g, '');
   var paras = text.split('\n\n');
   var refIdx = 1;
 
-  function refTag(idx) {
-    if (idx > numRefs) idx = ((idx - 1) % numRefs) + 1; // cycle refs if more sentences than refs
-    return ' [' + idx + ']';
-  }
-
-  // Inject a citation after EVERY sentence
+  // Inject a citation [N] after EVERY sentence in every paragraph
   for (var pi = 0; pi < paras.length; pi++) {
+    // Split by sentence-ending periods followed by space or end
     var sentences = paras[pi].split(/(?<=\.)\s+/);
     var rebuilt = [];
     for (var si = 0; si < sentences.length; si++) {
       var s = sentences[si].trim();
       if (!s) continue;
-      // Add citation number at end of each sentence
-      s = s.replace(/\.\s*$/, '') + refTag(refIdx) + '.';
+      // Cycle through refs if more sentences than references
+      var rn = ((refIdx - 1) % numRefs) + 1;
+      // Remove trailing period, add citation, re-add period
+      s = s.replace(/\.\s*$/, '') + ' [' + rn + '].';
       refIdx++;
       rebuilt.push(s);
     }
