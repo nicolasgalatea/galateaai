@@ -2098,7 +2098,10 @@ function parsePubMedXML(xml) {
       var doi = (block.match(/<ArticleId IdType="doi">([^<]+)<\/ArticleId>/) || [])[1] || '';
       var authors = extractXMLAuthors(block);
       var abstract = extractXMLAbstract(block);
-      articles.push({ pmid: pmid, title: cleanXMLText(title), authors: authors, abstract: cleanXMLText(abstract), journal: cleanXMLText(journal), year: year, doi: doi });
+      var volume = extractXMLTag(block, 'Volume') || '';
+      var issue = extractXMLTag(block, 'Issue') || '';
+      var pages = extractXMLTag(block, 'MedlinePgn') || '';
+      articles.push({ pmid: pmid, title: cleanXMLText(title), authors: authors, abstract: cleanXMLText(abstract), journal: cleanXMLText(journal), year: year, doi: doi, volume: volume, issue: issue, pages: pages });
     } catch(e) { /* skip malformed */ }
   });
   return articles;
@@ -9228,9 +9231,14 @@ function formatVancouver(article, index) {
   }
   var t = (a.title || 'Untitled').replace(/\.\s*$/, '') + '.';
   var j = a.journal ? ' ' + a.journal.replace(/\.\s*$/, '') + '.' : '';
-  var y = a.year ? ' ' + a.year + ';' : '';
+  var y = a.year ? ' ' + a.year : '';
+  var vol = a.volume ? ';' + a.volume : '';
+  var iss = a.issue ? '(' + a.issue + ')' : '';
+  var pg = a.pages ? ':' + a.pages.replace('--', '-') : '';
+  var volBlock = vol + iss + pg;
+  if (!volBlock && y) volBlock = ';';
   var d = a.doi ? ' doi:' + a.doi + '.' : '';
-  return index + '. ' + authStr + '. ' + t + j + y + d;
+  return index + '. ' + authStr + '. ' + t + j + (y ? ' ' + y : '') + volBlock + '.' + d;
 }
 
 function getProjectVancouverRefs(pd) {
@@ -9290,23 +9298,18 @@ function enrichSimDataWithCitations(sd) {
   sd._citations_enriched = true;
 }
 
-// ── Render references footer for any section ──
+// ── Render references footer (Vancouver format) for any section ──
 function renderReferencesFooter(pd) {
   var arts = (simData && simData._pubmed_articles) || (pd && pd._pubmed_articles) || [];
   if (arts.length < 1) return '';
   var h = '<div class="mt-4 pt-3 border-t border-gray-100">';
-  h += '<div class="flex items-center justify-between mb-2"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Referencias (' + arts.length + ')</span>';
+  h += '<div class="flex items-center justify-between mb-2"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Referencias Vancouver (' + arts.length + ')</span>';
   h += '<div class="flex items-center gap-2">' + renderMendeleyBtn('Mendeley') + '</div></div>';
-  h += '<div class="space-y-1 max-h-40 overflow-y-auto">';
+  h += '<div class="space-y-1 max-h-48 overflow-y-auto">';
   arts.forEach(function(a, i) {
-    var authStr = (a.authors && a.authors.length > 0) ? a.authors[0] + (a.authors.length > 1 ? ' et al.' : '') : 'N/A';
-    var yr = a.year || '';
-    var ttl = a.title || '';
-    var jnl = a.journal || a.source || '';
-    var doi = a.doi || '';
+    var vanc = formatVancouver(a, i + 1);
     h += '<div class="text-[9px] text-gray-500 leading-relaxed">';
-    h += '<span class="font-bold text-gray-600">' + (i + 1) + '.</span> ' + esc(authStr) + '. ' + esc(ttl) + '. <em>' + esc(jnl) + '</em>. ' + esc(yr) + '.';
-    if (doi) h += ' doi:<a href="https://doi.org/' + esc(doi) + '" target="_blank" class="text-blue-500 hover:underline">' + esc(doi) + '</a>';
+    h += esc(vanc);
     if (a.pmid) h += ' <a href="https://pubmed.ncbi.nlm.nih.gov/' + esc(a.pmid) + '/" target="_blank" class="text-blue-400 hover:underline">[PubMed]</a>';
     h += '</div>';
   });
