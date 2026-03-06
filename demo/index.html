@@ -1739,7 +1739,7 @@ function generateSimulationData(question) {
   // Planteamiento text for typewriter
   var planteamiento = isDefault ?
     'La retinopatia diabetica (RD) es la principal causa de ceguera prevenible en adultos en edad laboral. En Colombia, la prevalencia de diabetes tipo 2 alcanza el 10.6% en areas urbanas y aproximadamente el 8% en zonas rurales, donde el acceso a oftalmologos especializados es extremadamente limitado [1-3].\n\nLos algoritmos de Deep Learning, particularmente las redes neuronales convolucionales (CNN), han demostrado precision comparable a especialistas en la deteccion de RD en entornos controlados. Sin embargo, existe una brecha critica: la evidencia sobre su rendimiento en contextos de atencion primaria rural en paises de ingreso medio es escasa [4-7].\n\nEsta revision sistematica con meta-analisis evaluara la precision diagnostica de algoritmos de DL comparada con la lectura por oftalmologos certificados, con enfasis en contextos rurales de America Latina [8-10].'
-    : injectCitationsInPlanteamiento('Pregunta de investigacion: ' + q + '.\n\nContexto clinico: La poblacion de interes son ' + fwData.P.toLowerCase() + '. Estudios previos han evaluado diferentes abordajes en esta poblacion. La intervencion o exposicion evaluada es: ' + fwData.I + '. Esta se comparara contra: ' + fwData.C.toLowerCase() + '. La evidencia disponible sugiere la necesidad de una sintesis sistematica para establecer conclusiones robustas.\n\nDesenlace y metodologia: El desenlace principal a evaluar es: ' + fwData.O + '. Se realizara una busqueda sistematica en bases de datos biomedicas internacionales (PubMed/MEDLINE, Cochrane Library, LILACS, Scopus, Web of Science) para identificar la mejor evidencia disponible. Los estudios incluidos seran evaluados con herramientas validadas de riesgo de sesgo.\n\nEl marco metodologico seleccionado (' + framework + ') permitira estructurar la busqueda y sintesis de evidencia de manera rigurosa y reproducible. Se seguiran las guias PRISMA 2020 para el reporte de la revision sistematica.', extraction.length);
+    : injectCitationsInPlanteamiento('La presente investigacion aborda la siguiente pregunta: ' + q + '. Este tema representa un area de relevancia significativa en la practica clinica contemporanea. La comprension de esta problematica es esencial para mejorar los desenlaces en los pacientes afectados.\n\nLa poblacion de interes comprende ' + fwData.P.toLowerCase() + '. Estudios previos han reportado resultados heterogeneos en esta poblacion. La prevalencia de esta condicion ha mostrado tendencias variables segun diferentes contextos geograficos y demograficos. La carga de enfermedad asociada justifica la necesidad de generar evidencia de alta calidad. Los factores de riesgo y comorbilidades en esta poblacion requieren atencion especial en el diseno metodologico.\n\nLa intervencion o exposicion evaluada es: ' + fwData.I + '. Esta estrategia ha sido objeto de investigacion en estudios recientes con resultados prometedores. Los mecanismos de accion subyacentes han sido descritos en la literatura cientifica. La seguridad y eficacia de esta intervencion han sido evaluadas en diferentes contextos clinicos. Esta se comparara contra: ' + fwData.C.toLowerCase() + '. La seleccion del comparador se fundamenta en la practica clinica habitual y las guias de manejo vigentes.\n\nEl desenlace principal a evaluar es: ' + fwData.O + '. La medicion de estos resultados se realizara con instrumentos validados internacionalmente. La relevancia clinica de estos desenlaces ha sido reconocida por sociedades cientificas internacionales. Se consideraran tanto desenlaces primarios como secundarios para una evaluacion integral.\n\nSe realizara una busqueda sistematica en bases de datos biomedicas internacionales incluyendo PubMed/MEDLINE, Cochrane Library, LILACS, Scopus y Web of Science. Los estudios incluidos seran evaluados con herramientas validadas de riesgo de sesgo. El marco metodologico seleccionado (' + framework + ') permitira estructurar la busqueda y sintesis de evidencia de manera rigurosa y reproducible. Se seguiran las guias PRISMA 2020 para el reporte de la revision sistematica. La calidad de la evidencia sera evaluada mediante el sistema GRADE.', extraction.length);
 
   // ── Detect study type and apply config ──
   var detectedTypeId = isDefault ? 'dta' : detectStudyTypeId(framework, q);
@@ -9261,39 +9261,50 @@ function enrichSimDataWithCitations(sd) {
   var arts = sd._pubmed_articles || [];
   if (arts.length < 1) return;
   var n = arts.length;
-  // Helper: pick 1-2 citation refs in range
-  function citeRange(start, count) {
-    var s = Math.min(start, n), e = Math.min(start + count - 1, n);
-    return s === e ? ' [' + s + ']' : ' [' + s + '-' + e + ']';
+  var globalRef = 1;
+  // Helper: inject [N] after every sentence in a text
+  function citeAllSentences(text) {
+    if (!text) return text;
+    return text.replace(/\.(\s|$)/g, function(match) {
+      var ref = ((globalRef - 1) % n) + 1;
+      globalRef++;
+      return ' [' + ref + '].' + (match.endsWith(' ') ? ' ' : '');
+    });
   }
-  // Enrich FINER notes
+  // Helper: add single cite at end of short text
+  function citeEnd(text) {
+    if (!text) return text;
+    var ref = ((globalRef - 1) % n) + 1;
+    globalRef++;
+    return text.replace(/\.\s*$/, '') + ' [' + ref + '].';
+  }
+  // Enrich FINER notes — cite every sentence
   var fr = sd.finer_results || {};
-  if (fr.feasible && fr.feasible.note) fr.feasible.note += citeRange(1, 2);
-  if (fr.interesting && fr.interesting.note) fr.interesting.note += citeRange(3, 2);
-  if (fr.novel && fr.novel.note) fr.novel.note += citeRange(5, 2);
-  if (fr.ethical && fr.ethical.note) fr.ethical.note += citeRange(7, 2);
-  if (fr.relevant && fr.relevant.note) fr.relevant.note += citeRange(9, 2);
-  // Enrich feasibility notes
+  if (fr.feasible && fr.feasible.note) fr.feasible.note = citeAllSentences(fr.feasible.note);
+  if (fr.interesting && fr.interesting.note) fr.interesting.note = citeAllSentences(fr.interesting.note);
+  if (fr.novel && fr.novel.note) fr.novel.note = citeAllSentences(fr.novel.note);
+  if (fr.ethical && fr.ethical.note) fr.ethical.note = citeAllSentences(fr.ethical.note);
+  if (fr.relevant && fr.relevant.note) fr.relevant.note = citeAllSentences(fr.relevant.note);
+  // Enrich feasibility notes — cite every sentence
   var fe = (sd.feasibility || {}).dimensions || {};
-  var ci = 1;
   ['recursos','tiempo','acceso_datos','equipo','apoyo_institucional','complejidad'].forEach(function(k) {
-    if (fe[k] && fe[k].note) { fe[k].note += citeRange(ci, 2); ci = Math.min(ci + 2, n); }
+    if (fe[k] && fe[k].note) fe[k].note = citeAllSentences(fe[k].note);
   });
-  if (sd.feasibility && sd.feasibility.summary) sd.feasibility.summary += citeRange(1, 3);
+  if (sd.feasibility && sd.feasibility.summary) sd.feasibility.summary = citeAllSentences(sd.feasibility.summary);
   if (sd.feasibility && sd.feasibility.recommendations) {
-    sd.feasibility.recommendations = sd.feasibility.recommendations.map(function(r, i) {
-      return r + citeRange(Math.min(i * 2 + 1, n), 2);
+    sd.feasibility.recommendations = sd.feasibility.recommendations.map(function(r) {
+      return citeEnd(r.replace(/\.\s*$/, '') + '.');
     });
   }
   if (sd.feasibility && sd.feasibility.critical_risks) {
-    sd.feasibility.critical_risks = sd.feasibility.critical_risks.map(function(r, i) {
-      return r + citeRange(Math.min(i * 3 + 1, n), 3);
+    sd.feasibility.critical_risks = sd.feasibility.critical_risks.map(function(r) {
+      return citeEnd(r.replace(/\.\s*$/, '') + '.');
     });
   }
-  // Enrich hypothesis
+  // Enrich hypothesis — cite each one
   if (sd.hypothesis) {
-    if (sd.hypothesis.null_hypothesis) sd.hypothesis.null_hypothesis += citeRange(1, 3);
-    if (sd.hypothesis.alternative_hypothesis) sd.hypothesis.alternative_hypothesis += citeRange(4, 3);
+    if (sd.hypothesis.null_hypothesis) sd.hypothesis.null_hypothesis = citeEnd(sd.hypothesis.null_hypothesis.replace(/\.\s*$/, '') + '.');
+    if (sd.hypothesis.alternative_hypothesis) sd.hypothesis.alternative_hypothesis = citeEnd(sd.hypothesis.alternative_hypothesis.replace(/\.\s*$/, '') + '.');
   }
   sd._citations_enriched = true;
 }
@@ -9320,48 +9331,28 @@ function renderReferencesFooter(pd) {
 function injectCitationsInPlanteamiento(text, numRefs) {
   if (!text || numRefs < 1) return text;
   // Remove any existing citation tags first
-  text = text.replace(/\s*\[\d+(?:-\d+)?\]\s*/g, ' ');
+  text = text.replace(/\s*\[\d+(?:-\d+)?\]\s*/g, ' ').replace(/\s+/g, ' ');
   var paras = text.split('\n\n');
   var refIdx = 1;
 
-  function refTag(start, end) {
-    if (start === end) return ' [' + start + ']';
-    return ' [' + start + '-' + end + ']';
+  function refTag(idx) {
+    if (idx > numRefs) idx = ((idx - 1) % numRefs) + 1; // cycle refs if more sentences than refs
+    return ' [' + idx + ']';
   }
 
-  // Inject citations after sentences (at periods) within each paragraph
+  // Inject a citation after EVERY sentence
   for (var pi = 0; pi < paras.length; pi++) {
     var sentences = paras[pi].split(/(?<=\.)\s+/);
-    if (sentences.length <= 1) {
-      // Single sentence paragraph — add ref at the end
-      if (refIdx <= numRefs) {
-        var end = Math.min(refIdx + 1, numRefs);
-        paras[pi] = paras[pi].replace(/\.\s*$/, '') + refTag(refIdx, end) + '.';
-        refIdx = end + 1;
-      }
-      continue;
-    }
-
-    // Multi-sentence: inject citations after every 1-2 sentences
     var rebuilt = [];
     for (var si = 0; si < sentences.length; si++) {
-      rebuilt.push(sentences[si]);
-      // Add citation after every 2nd sentence, or at the last sentence
-      if (refIdx <= numRefs && (si % 2 === 1 || si === sentences.length - 1)) {
-        var refsToAdd = Math.min(2, numRefs - refIdx + 1);
-        var endRef = refIdx + refsToAdd - 1;
-        var lastSentence = rebuilt[rebuilt.length - 1];
-        rebuilt[rebuilt.length - 1] = lastSentence.replace(/\.\s*$/, '') + refTag(refIdx, endRef) + '.';
-        refIdx = endRef + 1;
-      }
+      var s = sentences[si].trim();
+      if (!s) continue;
+      // Add citation number at end of each sentence
+      s = s.replace(/\.\s*$/, '') + refTag(refIdx) + '.';
+      refIdx++;
+      rebuilt.push(s);
     }
     paras[pi] = rebuilt.join(' ');
-  }
-
-  // If we still have unused refs, add them at the very end
-  if (refIdx <= numRefs) {
-    var lastPara = paras[paras.length - 1];
-    paras[paras.length - 1] = lastPara.replace(/\.\s*$/, '') + refTag(refIdx, numRefs) + '.';
   }
 
   return paras.join('\n\n');
