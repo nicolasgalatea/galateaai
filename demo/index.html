@@ -2273,6 +2273,11 @@ async function runFullSimulation(question) {
     '<pre id="typewriterPlanteamiento" class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed"></pre>' +
     '<div id="planteamientoRefs" class="mt-4 pt-4 border-t border-gray-100 hidden"><h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Referencias</h4><div id="planteamientoRefsList" class="space-y-1"></div></div></div>';
   $('detailedViews').innerHTML = planHtml;
+  // Ensure citations are injected before typewriter
+  var twArts = simData._pubmed_articles || [];
+  if (twArts.length > 0 && !/\[\d+\]/.test(simData.planteamiento || '')) {
+    simData.planteamiento = injectCitationsInPlanteamiento(simData.planteamiento, twArts.length);
+  }
   await typewriter('typewriterPlanteamiento', simData.planteamiento, 30);
   // Show references after typewriter finishes
   var twRefs = getProjectVancouverRefs(simData);
@@ -3207,15 +3212,21 @@ function renderGatekeeper() {
 }
 
 function renderPlanteamiento(pd) {
-  var refsHtml = '';
-  var refs = getProjectVancouverRefs(pd);
-  if (refs && refs.length > 0) {
-    refsHtml = '<div class="mt-4 pt-4 border-t border-gray-100"><h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Referencias</h4><div class="space-y-1">';
-    refs.forEach(function(r) { refsHtml += '<div class="text-xs text-gray-600">' + esc(r) + '</div>'; });
-    refsHtml += '</div></div>';
+  var rawText = pd.planteamiento || '';
+  // Get available articles for citation count
+  var arts = (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
+  var numRefs = arts.length;
+  // If text has no citations yet and we have refs, inject them now
+  if (numRefs > 0 && !/\[\d+\]/.test(rawText)) {
+    rawText = injectCitationsInPlanteamiento(rawText, numRefs);
+    // Save back so it persists
+    pd.planteamiento = rawText;
+    if (simData) simData.planteamiento = rawText;
   }
-  // Highlight citation numbers [N] in the planteamiento text
-  var plantText = esc(pd.planteamiento || '').replace(/\[(\d+(?:-\d+)?)\]/g, '<sup class="text-blue-600 font-bold cursor-pointer hover:text-blue-800" title="Referencia $1">[$1]</sup>');
+  // Build Vancouver references footer
+  var refsHtml = renderReferencesFooter(pd);
+  // Highlight citation numbers [N] as blue superscript
+  var plantText = esc(rawText).replace(/\[(\d+(?:-\d+)?)\]/g, '<sup class="text-blue-600 font-bold cursor-pointer hover:text-blue-800" title="Referencia $1">[$1]</sup>');
   return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div><h3 class="font-bold text-gray-900">Fase 1 — Planteamiento</h3></div><div class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed" contenteditable="true" onblur="debounceSave(\'planteamiento\',this.textContent)">' + plantText + '</div>' + refsHtml + '</div>';
 }
 
@@ -10644,11 +10655,17 @@ function transformApiToReal(picotData, finerData, scoutData, pubmedResult, quest
     real._pubmed_articles = arts;
   }
 
-  // Planteamiento — from Claude or placeholder
+  // Planteamiento — from Claude or placeholder, inject citations
   if (extra.planteamientoData && extra.planteamientoData.planteamiento) {
-    real.planteamiento = extra.planteamientoData.planteamiento;
+    var ptxt = extra.planteamientoData.planteamiento;
+    if (arts.length > 0 && !/\[\d+\]/.test(ptxt)) {
+      ptxt = injectCitationsInPlanteamiento(ptxt, arts.length);
+    }
+    real.planteamiento = ptxt;
   } else {
-    real.planteamiento = 'Pregunta de investigacion analizada por Galatea AI con datos reales.\n\n' + q;
+    var fallbackPlant = 'Pregunta de investigacion analizada por Galatea AI con datos reales.\n\n' + q;
+    if (arts.length > 0) fallbackPlant = injectCitationsInPlanteamiento(fallbackPlant, arts.length);
+    real.planteamiento = fallbackPlant;
   }
 
   // Sample Size — passthrough from saved data
@@ -10712,6 +10729,11 @@ function transformApiToReal(picotData, finerData, scoutData, pubmedResult, quest
     real.manuscript = extra.manuscriptData.manuscript;
   } else {
     real.manuscript = 'MANUSCRITO — ' + q + '\n\nResumen: Pendiente de redaccion por el agente Redactor (Deploy 3).\n\nLos datos de PICOT, FINER y estrategia de busqueda ya fueron generados con IA real.\nLos resultados de PubMed son verificables.';
+  }
+
+  // Enrich all sections with inline citations [N]
+  if (arts.length > 0 && !real._citations_enriched) {
+    enrichSimDataWithCitations(real);
   }
 
   return real;
