@@ -9278,11 +9278,22 @@ function enrichSimDataWithCitations(sd) {
   // Helper: inject [N] after every sentence in a text
   function citeAllSentences(text) {
     if (!text) return text;
-    return text.replace(/\.(\s|$)/g, function(match) {
-      var ref = ((globalRef - 1) % n) + 1;
-      globalRef++;
-      return ' [' + ref + '].' + (match.endsWith(' ') ? ' ' : '');
-    });
+    // Remove existing citations first
+    text = text.replace(/\s*\[\d+(?:-\d+)?\]/g, '');
+    var result = '';
+    for (var ci = 0; ci < text.length; ci++) {
+      result += text[ci];
+      if (text[ci] === '.' && (ci === text.length - 1 || text[ci + 1] === ' ' || text[ci + 1] === '\n')) {
+        var isAbbrev = /\b(al|vs|Dr|etc)\s*$/i.test(result.slice(0, -1));
+        var isNum = ci > 0 && /\d/.test(text[ci - 1]) && ci < text.length - 1 && /\d/.test(text[ci + 1]);
+        if (!isAbbrev && !isNum) {
+          var ref = ((globalRef - 1) % n) + 1;
+          globalRef++;
+          result = result.slice(0, -1) + ' [' + ref + '].';
+        }
+      }
+    }
+    return result;
   }
   // Helper: add single cite at end of short text
   function citeEnd(text) {
@@ -9353,22 +9364,29 @@ function injectCitationsInPlanteamiento(text, numRefs) {
   var paras = text.split('\n\n');
   var refIdx = 1;
 
-  // Inject a citation [N] after EVERY sentence in every paragraph
+  // Inject a citation [N] after EVERY sentence-ending period
   for (var pi = 0; pi < paras.length; pi++) {
-    // Split by sentence-ending periods followed by space or end
-    var sentences = paras[pi].split(/(?<=\.)\s+/);
-    var rebuilt = [];
-    for (var si = 0; si < sentences.length; si++) {
-      var s = sentences[si].trim();
-      if (!s) continue;
-      // Cycle through refs if more sentences than references
-      var rn = ((refIdx - 1) % numRefs) + 1;
-      // Remove trailing period, add citation, re-add period
-      s = s.replace(/\.\s*$/, '') + ' [' + rn + '].';
-      refIdx++;
-      rebuilt.push(s);
+    var p = paras[pi];
+    // Replace each period followed by space or end-of-string with period + citation
+    var result = '';
+    var i = 0;
+    while (i < p.length) {
+      result += p[i];
+      // Check if this is a sentence-ending period (followed by space, newline, or end)
+      if (p[i] === '.' && (i === p.length - 1 || p[i + 1] === ' ' || p[i + 1] === '\n')) {
+        // Skip abbreviations like "et al.", "Dr.", "vs.", numbers like "1.5"
+        var prevChars = result.slice(-4, -1);
+        var isAbbrev = /\b(al|vs|Dr|Sr|Sra|etc|Vol|No|ed|pp)\s*$/i.test(result.slice(0, -1));
+        var isNumber = i > 0 && /\d/.test(p[i - 1]) && i < p.length - 1 && /\d/.test(p[i + 1]);
+        if (!isAbbrev && !isNumber) {
+          var rn = ((refIdx - 1) % numRefs) + 1;
+          result = result.slice(0, -1) + ' [' + rn + '].';
+          refIdx++;
+        }
+      }
+      i++;
     }
-    paras[pi] = rebuilt.join(' ');
+    paras[pi] = result;
   }
 
   return paras.join('\n\n');
