@@ -1534,13 +1534,23 @@ function generateSimulationData(question) {
   var studyType = isDefault ? 'Revision sistematica con meta-analisis' : (framework === 'SPIDER' ? 'Estudio cualitativo' : framework === 'ECLIPSE' ? 'Evaluacion de servicios de salud' : 'Revision sistematica');
   var designLocked = framework === 'PICO' ? 'Ensayo clinico' : framework === 'PICOS' ? 'Revision sistematica DTA' : framework === 'SPIDER' ? 'Cualitativo fenomenologico' : 'Mixto';
 
-  var finerScores = {
-    feasible: { pass: true, score: isDefault ? 92 : 85, note: isDefault ? 'Datos accesibles via PubMed, Cochrane, LILACS. Sin necesidad de comite de etica. Costo estimado: bajo.' : 'Factible con recursos disponibles.' },
-    interesting: { pass: true, score: isDefault ? 88 : 78, note: isDefault ? 'Brecha en implementacion de IA para tamizaje en atencion primaria rural LATAM.' : 'Tema con relevancia actual.' },
-    novel: { pass: true, score: isDefault ? 85 : 72, note: isDefault ? 'Solo 3 estudios evaluan DL en contextos rurales. Ningun meta-analisis previo LATAM.' : 'Brecha identificada.' },
-    ethical: { pass: true, score: isDefault ? 95 : 90, note: isDefault ? 'Revision de literatura publicada. Sin intervencion directa. Cumple beneficencia.' : 'Sin conflictos eticos.' },
-    relevant: { pass: true, score: isDefault ? 90 : 80, note: isDefault ? 'Alineado con ODS 3, Plan Decenal de Salud Colombia, OMS 2020-2025.' : 'Contribuira a decisiones clinicas.' }
-  };
+  var finerScores = (function() {
+    if (isDefault) return {
+      feasible: { pass: true, score: 92, note: 'Datos accesibles via PubMed, Cochrane, LILACS. Sin necesidad de comite de etica. Costo estimado: bajo.' },
+      interesting: { pass: true, score: 88, note: 'Brecha en implementacion de IA para tamizaje en atencion primaria rural LATAM.' },
+      novel: { pass: true, score: 85, note: 'Solo 3 estudios evaluan DL en contextos rurales. Ningun meta-analisis previo LATAM.' },
+      ethical: { pass: true, score: 95, note: 'Revision de literatura publicada. Sin intervencion directa. Cumple beneficencia.' },
+      relevant: { pass: true, score: 90, note: 'Alineado con ODS 3, Plan Decenal de Salud Colombia, OMS 2020-2025.' }
+    };
+    var P = fwData.P || 'la poblacion de estudio', I = fwData.I || 'la intervencion', C = fwData.C || 'el comparador', O = fwData.O || 'los desenlaces';
+    return {
+      feasible: { pass: true, score: 85, note: 'La busqueda en bases de datos biomedicas (PubMed, Cochrane, LILACS) es factible con acceso institucional. El acceso a datos de ' + P.toLowerCase() + ' depende de la disponibilidad de estudios publicados. No requiere financiacion externa significativa para una revision sistematica. Los recursos computacionales y estadisticos necesarios estan disponibles.' },
+      interesting: { pass: true, score: 78, note: 'La comparacion entre ' + I.toLowerCase() + ' y ' + C.toLowerCase() + ' responde a una pregunta clinicamente relevante en la practica actual. Existe interes creciente en la comunidad cientifica por evaluar intervenciones en ' + P.toLowerCase() + '. Los resultados podrian influir directamente en las decisiones terapeuticas de los clinicos.' },
+      novel: { pass: true, score: 72, note: 'La busqueda preliminar en PubMed muestra evidencia limitada sobre la comparacion directa entre ' + I.toLowerCase() + ' y ' + C.toLowerCase() + ' en esta poblacion especifica. Existe una brecha en la literatura que justifica la realizacion de este estudio. No se identificaron revisiones sistematicas previas que aborden exactamente esta pregunta.' },
+      ethical: { pass: true, score: 90, note: 'Revision sistematica de literatura publicada que no involucra intervencion directa sobre pacientes. Cumple principios de beneficencia y no maleficencia. No requiere aprobacion de comite de etica por ser analisis de datos secundarios. Se declara ausencia de conflictos de interes.' },
+      relevant: { pass: true, score: 80, note: 'Los resultados sobre ' + O.toLowerCase() + ' contribuiran directamente a la toma de decisiones clinicas en ' + P.toLowerCase() + '. La evidencia generada podria influir en guias de practica clinica y protocolos institucionales. Se alinea con prioridades de investigacion en salud.' }
+    };
+  })();
 
   var folderStructure = [
     { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_v1.docx', 'PROSPERO_registro.pdf'], color: 'blue' },
@@ -1739,7 +1749,20 @@ function generateSimulationData(question) {
   // Planteamiento text for typewriter
   var planteamiento = isDefault ?
     'La retinopatia diabetica (RD) es la principal causa de ceguera prevenible en adultos en edad laboral. En Colombia, la prevalencia de diabetes tipo 2 alcanza el 10.6% en areas urbanas y aproximadamente el 8% en zonas rurales, donde el acceso a oftalmologos especializados es extremadamente limitado [1-3].\n\nLos algoritmos de Deep Learning, particularmente las redes neuronales convolucionales (CNN), han demostrado precision comparable a especialistas en la deteccion de RD en entornos controlados. Sin embargo, existe una brecha critica: la evidencia sobre su rendimiento en contextos de atencion primaria rural en paises de ingreso medio es escasa [4-7].\n\nEsta revision sistematica con meta-analisis evaluara la precision diagnostica de algoritmos de DL comparada con la lectura por oftalmologos certificados, con enfasis en contextos rurales de America Latina [8-10].'
-    : injectCitationsInPlanteamiento('La presente investigacion aborda la siguiente pregunta: ' + q + '. Este tema representa un area de relevancia significativa en la practica clinica contemporanea. La comprension de esta problematica es esencial para mejorar los desenlaces en los pacientes afectados.\n\nLa poblacion de interes comprende ' + fwData.P.toLowerCase() + '. Estudios previos han reportado resultados heterogeneos en esta poblacion. La prevalencia de esta condicion ha mostrado tendencias variables segun diferentes contextos geograficos y demograficos. La carga de enfermedad asociada justifica la necesidad de generar evidencia de alta calidad. Los factores de riesgo y comorbilidades en esta poblacion requieren atencion especial en el diseno metodologico.\n\nLa intervencion o exposicion evaluada es: ' + fwData.I + '. Esta estrategia ha sido objeto de investigacion en estudios recientes con resultados prometedores. Los mecanismos de accion subyacentes han sido descritos en la literatura cientifica. La seguridad y eficacia de esta intervencion han sido evaluadas en diferentes contextos clinicos. Esta se comparara contra: ' + fwData.C.toLowerCase() + '. La seleccion del comparador se fundamenta en la practica clinica habitual y las guias de manejo vigentes.\n\nEl desenlace principal a evaluar es: ' + fwData.O + '. La medicion de estos resultados se realizara con instrumentos validados internacionalmente. La relevancia clinica de estos desenlaces ha sido reconocida por sociedades cientificas internacionales. Se consideraran tanto desenlaces primarios como secundarios para una evaluacion integral.\n\nSe realizara una busqueda sistematica en bases de datos biomedicas internacionales incluyendo PubMed/MEDLINE, Cochrane Library, LILACS, Scopus y Web of Science. Los estudios incluidos seran evaluados con herramientas validadas de riesgo de sesgo. El marco metodologico seleccionado (' + framework + ') permitira estructurar la busqueda y sintesis de evidencia de manera rigurosa y reproducible. Se seguiran las guias PRISMA 2020 para el reporte de la revision sistematica. La calidad de la evidencia sera evaluada mediante el sistema GRADE.', extraction.length);
+    : injectCitationsInPlanteamiento((function() {
+      var P = fwData.P || '', I = fwData.I || '', C = fwData.C || '', O = fwData.O || '', S = fwData.S || '';
+      var t = '';
+      t += P + ' representa una condicion clinica de relevancia significativa en la practica medica contemporanea, con implicaciones directas en la morbimortalidad y calidad de vida de los pacientes afectados. La prevalencia de esta condicion y su carga de enfermedad asociada han sido documentadas en multiples estudios observacionales y revisiones sistematicas previas. Los factores de riesgo, comorbilidades y determinantes clinicos en esta poblacion requieren una evaluacion rigurosa para optimizar las estrategias terapeuticas disponibles.';
+      t += '\n\n';
+      t += I + ' ha sido objeto de investigacion clinica en estudios recientes, con resultados que sugieren un potencial beneficio en esta poblacion especifica. Los mecanismos de accion, el perfil de seguridad y la eficacia de esta intervencion han sido descritos en la literatura, aunque la evidencia disponible presenta limitaciones metodologicas que dificultan la generalizacion de los hallazgos. Cuando se compara con ' + C.toLowerCase() + ', los datos existentes muestran resultados heterogeneos que requieren una sintesis sistematica para establecer conclusiones robustas. La seleccion del comparador se fundamenta en la practica clinica habitual y las guias de manejo vigentes, lo que permite una evaluacion clinicamente relevante.';
+      t += '\n\n';
+      t += 'Los desenlaces principales incluyen ' + O.toLowerCase() + ', los cuales han sido reconocidos como indicadores clinicamente significativos por sociedades cientificas internacionales y organismos regulatorios. La medicion estandarizada de estos resultados mediante instrumentos validados es esencial para garantizar la comparabilidad entre estudios y la aplicabilidad clinica de los hallazgos.';
+      t += '\n\n';
+      t += 'Existe una brecha importante en la literatura respecto a la comparacion directa entre estas intervenciones en la poblacion especifica de interes. La mayoria de los estudios publicados presentan limitaciones en tamano muestral, seguimiento o diseno metodologico que impiden extraer conclusiones definitivas. Esta investigacion se justifica por la necesidad de generar evidencia de alta calidad que permita a los profesionales de salud tomar decisiones clinicas informadas basadas en datos objetivos y reproducibles.';
+      t += '\n\n';
+      t += 'Se realizara una busqueda sistematica en bases de datos biomedicas internacionales incluyendo PubMed/MEDLINE, Cochrane Library, LILACS, Scopus y Web of Science. Los estudios incluidos seran evaluados con herramientas validadas de riesgo de sesgo y la calidad de la evidencia sera clasificada mediante el sistema GRADE. El marco metodologico ' + framework + ' permitira estructurar la busqueda y sintesis de manera rigurosa, siguiendo las guias PRISMA 2020 para el reporte de la revision sistematica.';
+      return t;
+    })(), extraction.length);
 
   // ── Detect study type and apply config ──
   var detectedTypeId = isDefault ? 'dta' : detectStudyTypeId(framework, q);
@@ -1768,27 +1791,42 @@ function generateSimulationData(question) {
     study_type_id: detectedTypeId,
     study_type: { type: stCfg.type, design_locked: stCfg.design_locked, justification: isDefault ? 'Pregunta de precision diagnostica con multiples estudios primarios disponibles. El meta-analisis bivariado permite sintetizar sensibilidad y especificidad.' : 'Diseno seleccionado automaticamente segun el tipo de pregunta detectada.', design_details: stCfg.equator.map(function(e){return e.guideline}).join(', ') + '.' },
     finer_results: finerScores,
-    hypothesis: { null_hypothesis: isDefault ? 'No existe diferencia en precision diagnostica entre DL y oftalmologos para RD.' : 'No existe diferencia significativa entre los grupos.', alternative_hypothesis: isDefault ? 'DL presenta precision no inferior (margen 5%) a oftalmologos en atencion primaria rural.' : 'Existe diferencia significativa entre los grupos.', type: isDefault ? 'No inferioridad' : 'Dos colas' },
+    hypothesis: { null_hypothesis: isDefault ? 'No existe diferencia en precision diagnostica entre DL y oftalmologos para RD.' : 'No existe diferencia estadisticamente significativa en ' + (fwData.O || 'los desenlaces evaluados').toLowerCase() + ' entre ' + (fwData.P || 'los pacientes').toLowerCase() + ' tratados con ' + (fwData.I || 'la intervencion').toLowerCase() + ' versus ' + (fwData.C || 'el comparador').toLowerCase() + '.', alternative_hypothesis: isDefault ? 'DL presenta precision no inferior (margen 5%) a oftalmologos en atencion primaria rural.' : 'Existe diferencia estadisticamente significativa en ' + (fwData.O || 'los desenlaces evaluados').toLowerCase() + ' entre ' + (fwData.P || 'los pacientes').toLowerCase() + ' tratados con ' + (fwData.I || 'la intervencion').toLowerCase() + ' versus ' + (fwData.C || 'el comparador').toLowerCase() + '.', type: isDefault ? 'No inferioridad' : 'Bilateral' },
     folder_structure: stCfg.folderStructure,
     search_registry: stCfg.needsSystematicSearch ? searchRegistry : [],
     descriptor_mapping: descriptorMapping,
     search_strategy: stCfg.needsSystematicSearch ? { databases: stCfg.searchDatabases, boolean_equation: searchRegistry[0].equation, filters: 'Fecha: 2018-2025 | Idiomas: EN, ES, PT | Tipo: originales', prisma: prisma } : { databases: [], boolean_equation: '', filters: '', prisma: null },
-    feasibility: {
-      dimensions: {
-        recursos: { score: isDefault ? 88 : 70, risk: isDefault ? 'bajo' : 'bajo', note: isDefault ? 'Revision sistematica requiere acceso a bases de datos (disponible via institucional) y software estadistico R/mada (gratuito).' : 'Recursos basicos disponibles.' },
-        tiempo: { score: isDefault ? 82 : 65, risk: isDefault ? 'bajo' : 'moderado', note: isDefault ? 'Cronograma de 8-12 semanas es realista para RS con meta-analisis de DTA.' : 'Cronograma ajustado pero factible.' },
-        acceso_datos: { score: isDefault ? 90 : 75, risk: isDefault ? 'bajo' : 'bajo', note: isDefault ? 'Datos accesibles via PubMed, Cochrane, LILACS y Scopus. No requiere datos primarios.' : 'Datos accesibles con permisos estandar.' },
-        equipo: { score: isDefault ? 78 : 60, risk: isDefault ? 'bajo' : 'moderado', note: isDefault ? 'Requiere competencias en meta-analisis bivariado y uso de R. Capacitacion disponible.' : 'Equipo con competencias basicas, puede requerir asesoria.' },
-        apoyo_institucional: { score: isDefault ? 85 : 72, risk: isDefault ? 'bajo' : 'bajo', note: isDefault ? 'RS de literatura publicada no requiere aprobacion de comite de etica. Registro PROSPERO recomendado.' : 'Apoyo institucional disponible.' },
-        complejidad: { score: isDefault ? 75 : 55, risk: isDefault ? 'bajo' : 'moderado', note: isDefault ? 'Meta-analisis bivariado (Reitsma) requiere experiencia intermedia. Herramientas estandarizadas disponibles.' : 'Complejidad moderada, abordable con guias existentes.' }
-      },
-      overall_score: isDefault ? 83 : 66,
-      viable: true,
-      verdict: isDefault ? 'viable' : 'viable_con_reservas',
-      critical_risks: isDefault ? [] : ['Cronograma ajustado para el tipo de estudio'],
-      recommendations: isDefault ? ['Registrar protocolo en PROSPERO antes de iniciar extraccion', 'Considerar capacitacion en meta-analisis bivariado con R/mada'] : ['Asegurar disponibilidad del equipo investigador', 'Planificar cronograma con margenes de contingencia'],
-      summary: isDefault ? 'El proyecto es operativamente viable. Los recursos necesarios para una revision sistematica con meta-analisis estan disponibles. Se recomienda registro PROSPERO y capacitacion en herramientas estadisticas especificas.' : 'Proyecto viable con reservas. Se recomienda reforzar el equipo y ajustar cronograma.'
-    },
+    feasibility: (function() {
+      if (isDefault) return {
+        dimensions: {
+          recursos: { score: 88, risk: 'bajo', note: 'Revision sistematica requiere acceso a bases de datos (disponible via institucional) y software estadistico R/mada (gratuito).' },
+          tiempo: { score: 82, risk: 'bajo', note: 'Cronograma de 8-12 semanas es realista para RS con meta-analisis de DTA.' },
+          acceso_datos: { score: 90, risk: 'bajo', note: 'Datos accesibles via PubMed, Cochrane, LILACS y Scopus. No requiere datos primarios.' },
+          equipo: { score: 78, risk: 'bajo', note: 'Requiere competencias en meta-analisis bivariado y uso de R. Capacitacion disponible.' },
+          apoyo_institucional: { score: 85, risk: 'bajo', note: 'RS de literatura publicada no requiere aprobacion de comite de etica. Registro PROSPERO recomendado.' },
+          complejidad: { score: 75, risk: 'bajo', note: 'Meta-analisis bivariado (Reitsma) requiere experiencia intermedia. Herramientas estandarizadas disponibles.' }
+        },
+        overall_score: 83, viable: true, verdict: 'viable',
+        critical_risks: [],
+        recommendations: ['Registrar protocolo en PROSPERO antes de iniciar extraccion', 'Considerar capacitacion en meta-analisis bivariado con R/mada'],
+        summary: 'El proyecto es operativamente viable. Los recursos necesarios para una revision sistematica con meta-analisis estan disponibles. Se recomienda registro PROSPERO y capacitacion en herramientas estadisticas especificas.'
+      };
+      var P = fwData.P || '', I = fwData.I || '', C = fwData.C || '', O = fwData.O || '';
+      return {
+        dimensions: {
+          recursos: { score: 70, risk: 'bajo', note: 'Se requiere acceso institucional a bases de datos biomedicas (PubMed, Cochrane, Scopus, LILACS). Software estadistico R y paquetes especializados (metafor, mada) son de acceso libre. No se requiere financiacion externa significativa para la realizacion de la revision sistematica.' },
+          tiempo: { score: 65, risk: 'moderado', note: 'Se estima un cronograma de 10-16 semanas para completar la revision sistematica sobre ' + I.toLowerCase() + '. La fase de busqueda y cribado requiere 3-4 semanas, la extraccion de datos 2-3 semanas, y el analisis estadistico y redaccion 4-6 semanas adicionales.' },
+          acceso_datos: { score: 75, risk: 'bajo', note: 'Los datos necesarios provienen de estudios publicados sobre ' + P.toLowerCase() + ' accesibles en bases de datos internacionales. No se requieren datos primarios ni acceso a historias clinicas. La disponibilidad de textos completos depende del acceso institucional a revistas especializadas.' },
+          equipo: { score: 60, risk: 'moderado', note: 'Se requiere un equipo con competencias en revision sistematica, extraccion de datos y meta-analisis. Se necesitan al menos dos revisores independientes para el cribado y evaluacion de calidad. Puede requerirse asesoria bioestadistica para el analisis de ' + O.toLowerCase() + '.' },
+          apoyo_institucional: { score: 72, risk: 'bajo', note: 'La revision sistematica de literatura publicada no requiere aprobacion de comite de etica por tratarse de datos secundarios. Se recomienda el registro del protocolo en PROSPERO para garantizar transparencia y evitar duplicacion de esfuerzos.' },
+          complejidad: { score: 55, risk: 'moderado', note: 'La complejidad del meta-analisis depende de la heterogeneidad de los estudios sobre ' + I.toLowerCase() + ' versus ' + C.toLowerCase() + '. Se requiere experiencia en evaluacion de riesgo de sesgo, analisis de heterogeneidad (I2, Q de Cochran) y evaluacion GRADE de la certeza de la evidencia.' }
+        },
+        overall_score: 66, viable: true, verdict: 'viable_con_reservas',
+        critical_risks: ['La heterogeneidad entre estudios sobre ' + I.toLowerCase() + ' podria limitar la viabilidad del meta-analisis cuantitativo.', 'El numero limitado de estudios comparativos directos entre ' + I.toLowerCase() + ' y ' + C.toLowerCase() + ' podria reducir el poder estadistico del analisis.'],
+        recommendations: ['Registrar el protocolo en PROSPERO antes de iniciar la extraccion de datos para garantizar transparencia metodologica.', 'Establecer criterios de inclusion y exclusion claros basados en la poblacion de ' + P.toLowerCase() + ' y los desenlaces de interes.', 'Planificar analisis de sensibilidad y subgrupos para abordar la heterogeneidad potencial entre estudios.', 'Considerar contacto con autores de estudios primarios para obtener datos adicionales no publicados.'],
+        summary: 'El proyecto es viable con reservas. La busqueda sistematica sobre ' + I.toLowerCase() + ' en ' + P.toLowerCase() + ' es factible con recursos institucionales disponibles. Las principales limitaciones son la posible escasez de estudios comparativos directos y la heterogeneidad metodologica. Se recomienda registro en PROSPERO, conformacion de equipo con experiencia en meta-analisis y planificacion de cronograma con margenes de contingencia.'
+      };
+    })(),
     sample_size: {
       formula: stCfg.sampleSizeFormula || 'single_proportion',
       alpha: 0.05, power: 0.80, tails: 'bilateral',
