@@ -2316,21 +2316,10 @@ async function runFullSimulation(question) {
   // Strip [N] markers for clean typewriter display
   var twCleanText = (simData.planteamiento || '').replace(/\s*\[\d+(?:-\d+)?\]/g, '');
   await typewriter('typewriterPlanteamiento', twCleanText, 30);
-  // After typewriter, replace plain text with HTML that has <sup> citation tags
+  // After typewriter, replace plain text with HTML <sup> citations
   var twEl = $('typewriterPlanteamiento');
   if (twEl) {
-    var twEscaped = esc(twCleanText);
-    var twRC = {n: 1};
-    var twCited = twEscaped.replace(/\.(\s)/g, function(m, sp) {
-      var rn = ((twRC.n - 1) % twNumRefs) + 1;
-      twRC.n++;
-      return ' <sup class="text-blue-600 font-bold">[' + rn + ']</sup>.' + sp;
-    });
-    if (/\.$/.test(twCited)) {
-      var rn2 = ((twRC.n - 1) % twNumRefs) + 1;
-      twCited = twCited.replace(/\.$/, ' <sup class="text-blue-600 font-bold">[' + rn2 + ']</sup>.');
-    }
-    twEl.innerHTML = twCited;
+    twEl.innerHTML = buildCitedHTML(twCleanText, twNumRefs);
   }
   // Show references after typewriter finishes
   var twRefs = getProjectVancouverRefs(simData);
@@ -3268,26 +3257,7 @@ function renderPlanteamiento(pd) {
   var rawText = pd.planteamiento || '';
   var arts = (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
   var numRefs = arts.length || (pd.extraction_table || []).length || 10;
-
-  // DIRECT citation injection at render time — guaranteed to work
-  // First escape the text for safe HTML
-  var escaped = esc(rawText);
-  // Remove any existing citation markers
-  escaped = escaped.replace(/\s*\[\d+(?:-\d+)?\]/g, '');
-  // Split into sentences by ". " or ".\n" or at end "."
-  var refCounter = {n: 1};
-  var withCites = escaped.replace(/\.(\s)/g, function(match, space) {
-    var rn = ((refCounter.n - 1) % numRefs) + 1;
-    refCounter.n++;
-    return ' <sup class="text-blue-600 font-bold cursor-pointer hover:text-blue-800" title="Referencia ' + rn + '">[' + rn + ']</sup>.' + space;
-  });
-  // Also handle the very last period at end of text
-  if (/\.$/.test(withCites)) {
-    var rn = ((refCounter.n - 1) % numRefs) + 1;
-    withCites = withCites.replace(/\.$/, ' <sup class="text-blue-600 font-bold cursor-pointer hover:text-blue-800" title="Referencia ' + rn + '">[' + rn + ']</sup>.');
-  }
-
-  // Build Vancouver references footer
+  var withCites = buildCitedHTML(rawText, numRefs);
   var refsHtml = renderReferencesFooter(pd);
   return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div><h3 class="font-bold text-gray-900">Fase 1 — Planteamiento</h3></div><div class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">' + withCites + '</div>' + refsHtml + '</div>';
 }
@@ -9395,27 +9365,45 @@ function enrichSimDataWithCitations(sd) {
   sd._citations_enriched = true;
 }
 
-// ── Highlight citations: inject <sup> after every sentence at RENDER TIME ──
+// ── BULLETPROOF citation injector: char-by-char, inline styles, manual escape ──
+function buildCitedHTML(text, numRefs) {
+  if (!text) return '';
+  if (!numRefs || numRefs < 1) numRefs = 10;
+  // Strip existing [N] markers from raw text
+  text = text.replace(/\s*\[\d+(?:-\d+)?\]/g, '');
+  var h = '';
+  var cn = 1;
+  for (var i = 0; i < text.length; i++) {
+    var c = text.charAt(i);
+    // Manual HTML escape
+    if (c === '<') { h += '&lt;'; }
+    else if (c === '>') { h += '&gt;'; }
+    else if (c === '&') { h += '&amp;'; }
+    else { h += c; }
+    // Check if this is a sentence-ending period
+    if (c === '.') {
+      var next = (i < text.length - 1) ? text.charAt(i + 1) : '';
+      var isSentenceEnd = (next === ' ' || next === '\n' || next === '\r' || i === text.length - 1);
+      // Skip abbreviations and decimal numbers
+      if (isSentenceEnd && i > 0) {
+        var prev = text.charAt(i - 1);
+        var isDecimal = (prev >= '0' && prev <= '9') && (next >= '0' && next <= '9');
+        if (!isDecimal) {
+          var rn = ((cn - 1) % numRefs) + 1;
+          cn++;
+          h += '<sup style="color:#2563EB;font-weight:700;vertical-align:super;font-size:0.75em;cursor:pointer" title="Ref ' + rn + '"> [' + rn + ']</sup>';
+        }
+      }
+    }
+  }
+  return h;
+}
+// Wrapper used by FINER, Feasibility, Hypotheses renderers
 function highlightCitations(text) {
   if (!text) return '';
   var arts = (simData && simData._pubmed_articles) || [];
-  var numRefs = arts.length || (simData && simData.extraction_table || []).length || 10;
-  var escaped = esc(text);
-  // Strip any existing plain [N] markers
-  escaped = escaped.replace(/\s*\[\d+(?:-\d+)?\]/g, '');
-  // Inject <sup> citations after every sentence-ending period
-  var rc = {n: 1};
-  var result = escaped.replace(/\.(\s)/g, function(m, sp) {
-    var rn = ((rc.n - 1) % numRefs) + 1;
-    rc.n++;
-    return ' <sup class="text-blue-600 font-bold">[' + rn + ']</sup>.' + sp;
-  });
-  // Handle last period at end of text
-  if (/\.$/.test(result)) {
-    var rn = ((rc.n - 1) % numRefs) + 1;
-    result = result.replace(/\.$/, ' <sup class="text-blue-600 font-bold">[' + rn + ']</sup>.');
-  }
-  return result;
+  var numRefs = arts.length || ((simData && simData.extraction_table) || []).length || 10;
+  return buildCitedHTML(text, numRefs);
 }
 
 // ── Render references footer (Vancouver format) for any section ──
