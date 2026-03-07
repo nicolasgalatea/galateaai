@@ -6988,28 +6988,44 @@ function toggleDocViewMode(idx) {
   if(currentStage===3){renderStage3InstDetailedViews();}else{renderStage2DetailedViews();}
 }
 
-function galateaAiAssist(idx) {
+async function galateaAiAssist(idx) {
   var ta = document.getElementById('plaintextDoc_' + idx);
   if (!ta) return;
-  // Save current text
   savePlainTextDoc(idx, ta.value);
-  // Show a simple prompt
   var instruction = prompt('Galatea AI Assist \u2014 Describe que quieres mejorar o completar en este documento:\n\n(Ej: "Completa la seccion de marco teorico", "Mejora la redaccion del resumen", "Agrega criterios de exclusion")');
   if (!instruction || !instruction.trim()) return;
-  // Simulate AI refinement with a visual feedback
   var oldText = ta.value;
   ta.style.opacity = '0.5';
   ta.disabled = true;
-  setTimeout(function() {
-    // In a real implementation, this would call the Galatea AI API
-    // For now, add a note at the relevant section
-    var note = '\n\n[Galatea AI Assist — Instruccion recibida: "' + instruction.trim() + '"]\n[En una implementacion completa, Galatea procesaria el documento y aplicaria los cambios solicitados automaticamente.]\n';
-    ta.value = oldText + note;
-    ta.style.opacity = '1';
-    ta.disabled = false;
-    ta.focus();
-    savePlainTextDoc(idx, ta.value);
-  }, 1500);
+  // Show loading indicator
+  var btn = ta.parentElement ? ta.parentElement.querySelector('[onclick*="galateaAiAssist"]') : null;
+  var btnOldHtml = '';
+  if (btn) { btnOldHtml = btn.innerHTML; btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg> Procesando...'; btn.disabled = true; }
+  try {
+    var context = (project && project.research_question) ? project.research_question : '';
+    var resp = await fetch('/api/ai-assist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: oldText, instruction: instruction.trim(), context: context })
+    });
+    var result = await resp.json();
+    if (result.success && result.text) {
+      ta.value = result.text;
+      savePlainTextDoc(idx, ta.value);
+      var dur = result.metrics ? Math.round(result.metrics.duration / 1000) : 0;
+      showToast('Documento actualizado por Galatea AI (' + dur + 's)', 'success');
+    } else {
+      throw new Error(result.error || 'Error desconocido');
+    }
+  } catch (err) {
+    console.error('AI Assist error:', err);
+    showToast('Error AI Assist: ' + err.message, 'error');
+    ta.value = oldText;
+  }
+  ta.style.opacity = '1';
+  ta.disabled = false;
+  ta.focus();
+  if (btn) { btn.innerHTML = btnOldHtml; btn.disabled = false; }
 }
 
 function renderDocumentChecklist() {
