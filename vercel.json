@@ -1,5 +1,5 @@
 {
-  "buildCommand": "mkdir -p dist && cp demo/index.html dist/index.html",
+  "buildCommand": "mkdir -p dist/demo && cp public/landing.html dist/index.html && cp demo/index.html dist/demo/index.html && cp public/favicon.ico dist/favicon.ico",
   "outputDirectory": "dist",
   "functions": {
     "api/**/*.js": {
@@ -17,6 +17,8 @@
   "rewrites": [
     { "source": "/api/agents/:agent", "destination": "/api/agents/[agent]?agent=:agent" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/demo", "destination": "/demo/index.html" },
+    { "source": "/demo/(.*)", "destination": "/demo/index.html" },
+    { "source": "/((?!demo|api).*)", "destination": "/index.html" }
   ]
 }
