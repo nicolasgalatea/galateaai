@@ -1750,17 +1750,17 @@ function generateSimulationData(question) {
   var planteamiento = isDefault ?
     'La retinopatia diabetica (RD) es la principal causa de ceguera prevenible en adultos en edad laboral. En Colombia, la prevalencia de diabetes tipo 2 alcanza el 10.6% en areas urbanas y aproximadamente el 8% en zonas rurales, donde el acceso a oftalmologos especializados es extremadamente limitado [1-3].\n\nLos algoritmos de Deep Learning, particularmente las redes neuronales convolucionales (CNN), han demostrado precision comparable a especialistas en la deteccion de RD en entornos controlados. Sin embargo, existe una brecha critica: la evidencia sobre su rendimiento en contextos de atencion primaria rural en paises de ingreso medio es escasa [4-7].\n\nEsta revision sistematica con meta-analisis evaluara la precision diagnostica de algoritmos de DL comparada con la lectura por oftalmologos certificados, con enfasis en contextos rurales de America Latina [8-10].'
     : injectCitationsInPlanteamiento((function() {
-      var P = fwData.P || '', I = fwData.I || '', C = fwData.C || '', O = fwData.O || '', S = fwData.S || '';
+      var P = fwData.P || 'la poblacion de estudio', I = fwData.I || 'la intervencion', C = fwData.C || 'el comparador', O = fwData.O || 'los desenlaces', S = fwData.S || '';
       var t = '';
-      t += P + ' representa una condicion clinica de relevancia significativa en la practica medica contemporanea, con implicaciones directas en la morbimortalidad y calidad de vida de los pacientes afectados. La prevalencia de esta condicion y su carga de enfermedad asociada han sido documentadas en multiples estudios observacionales y revisiones sistematicas previas. Los factores de riesgo, comorbilidades y determinantes clinicos en esta poblacion requieren una evaluacion rigurosa para optimizar las estrategias terapeuticas disponibles.';
+      t += 'En ' + P.toLowerCase() + ', el manejo clinico actual enfrenta desafios relacionados con la seleccion optima de estrategias terapeuticas. La carga de enfermedad asociada a esta condicion ha sido documentada en estudios epidemiologicos que reportan tasas de morbilidad y mortalidad significativas, con impacto directo en los sistemas de salud y en la calidad de vida de los pacientes.';
       t += '\n\n';
-      t += I + ' ha sido objeto de investigacion clinica en estudios recientes, con resultados que sugieren un potencial beneficio en esta poblacion especifica. Los mecanismos de accion, el perfil de seguridad y la eficacia de esta intervencion han sido descritos en la literatura, aunque la evidencia disponible presenta limitaciones metodologicas que dificultan la generalizacion de los hallazgos. Cuando se compara con ' + C.toLowerCase() + ', los datos existentes muestran resultados heterogeneos que requieren una sintesis sistematica para establecer conclusiones robustas. La seleccion del comparador se fundamenta en la practica clinica habitual y las guias de manejo vigentes, lo que permite una evaluacion clinicamente relevante.';
+      t += 'La utilizacion de ' + I.toLowerCase() + ' se ha propuesto como una alternativa con potencial para mejorar los resultados clinicos en esta poblacion. Estudios preliminares han descrito su perfil de eficacia y seguridad, aunque la evidencia disponible proviene principalmente de series de casos y estudios observacionales con limitaciones metodologicas. Cuando se compara con ' + C.toLowerCase() + ', que constituye el estandar de atencion actual segun las guias de practica clinica vigentes, los resultados publicados muestran diferencias que requieren una evaluacion sistematica y cuantitativa para determinar su significancia clinica.';
       t += '\n\n';
-      t += 'Los desenlaces principales incluyen ' + O.toLowerCase() + ', los cuales han sido reconocidos como indicadores clinicamente significativos por sociedades cientificas internacionales y organismos regulatorios. La medicion estandarizada de estos resultados mediante instrumentos validados es esencial para garantizar la comparabilidad entre estudios y la aplicabilidad clinica de los hallazgos.';
+      t += 'Los desenlaces de interes incluyen ' + O.toLowerCase() + '. Estos indicadores han sido seleccionados por su relevancia clinica directa y su capacidad para reflejar diferencias clinicamente significativas entre las estrategias comparadas. La medicion estandarizada de estos resultados es fundamental para permitir la comparabilidad entre estudios y la aplicabilidad de los hallazgos a la practica clinica.';
       t += '\n\n';
-      t += 'Existe una brecha importante en la literatura respecto a la comparacion directa entre estas intervenciones en la poblacion especifica de interes. La mayoria de los estudios publicados presentan limitaciones en tamano muestral, seguimiento o diseno metodologico que impiden extraer conclusiones definitivas. Esta investigacion se justifica por la necesidad de generar evidencia de alta calidad que permita a los profesionales de salud tomar decisiones clinicas informadas basadas en datos objetivos y reproducibles.';
+      t += 'Existe una brecha especifica en la literatura: no se dispone de una sintesis sistematica que compare directamente ' + I.toLowerCase() + ' versus ' + C.toLowerCase() + ' en ' + P.toLowerCase() + ', evaluando especificamente ' + O.toLowerCase() + '. Los estudios publicados hasta la fecha presentan heterogeneidad en diseno, poblaciones y definiciones de desenlaces, lo que impide extraer conclusiones definitivas sin una revision sistematica formal.';
       t += '\n\n';
-      t += 'Se realizara una busqueda sistematica en bases de datos biomedicas internacionales incluyendo PubMed/MEDLINE, Cochrane Library, LILACS, Scopus y Web of Science. Los estudios incluidos seran evaluados con herramientas validadas de riesgo de sesgo y la calidad de la evidencia sera clasificada mediante el sistema GRADE. El marco metodologico ' + framework + ' permitira estructurar la busqueda y sintesis de manera rigurosa, siguiendo las guias PRISMA 2020 para el reporte de la revision sistematica.';
+      t += 'Esta investigacion se estructura bajo el marco ' + framework + ' y se ejecutara mediante una busqueda sistematica en PubMed/MEDLINE, Cochrane Library, LILACS, Scopus y Web of Science. La evaluacion del riesgo de sesgo se realizara con herramientas validadas y la calidad de la evidencia se clasificara mediante el sistema GRADE, siguiendo las guias PRISMA 2020.';
       return t;
     })(), extraction.length);
 
@@ -10763,10 +10763,11 @@ function transformApiToReal(picotData, finerData, scoutData, pubmedResult, quest
   }
 
   // PubMed — REAL numbers, zero hallucination
+  var arts = [];
   if (pubmedResult && pubmedResult.data) {
     var pm = pubmedResult.data;
     var exactCount = pm.count; // THE truth
-    var arts = pm.articles || [];
+    arts = pm.articles || [];
 
     // Update PubMed entry in search_registry with EXACT count
     if (real.search_registry) {
