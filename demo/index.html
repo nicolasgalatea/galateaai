@@ -459,6 +459,11 @@
       </div>
     </div>
 
+    <!-- Stage Navigation Tabs -->
+    <div id="stageNavBar" class="mb-6 fade-up d1 hidden">
+      <div class="flex items-center gap-2 flex-wrap" id="stageNavTabs"></div>
+    </div>
+
     <!-- Agent Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10" id="agentGrid"></div>
 
@@ -2494,6 +2499,7 @@ async function runFullSimulation(question) {
 
   simulationRunning = false;
   currentSimPhase = 'done';
+  maxStageReached = Math.max(maxStageReached, 1);
   setBubbleStatus('done', 'Etapa 1 Completada');
   renderLiveDocPages(); // Update Live Doc with protocol + manuscript
   await delay(1500);
@@ -3021,7 +3027,7 @@ function exportConsolidatedReport() {
 
 function goToLanding() {
   simulationAborted = true;
-  currentStage = 1; stage2Step = 0; stage2ProjectType = ''; stage2Route = ''; stage2DocChecks = {}; stage2HasExternalInvestigators = false; stage3InstStep = 0; stage3Step = 0; stage3SimData = null;
+  currentStage = 1; maxStageReached = 1; stage2Step = 0; stage2ProjectType = ''; stage2Route = ''; stage2DocChecks = {}; stage2HasExternalInvestigators = false; stage3InstStep = 0; stage3Step = 0; stage3SimData = null;
   liveDocOpen = false; manuscriptItems = { picot:null, metodos:null, busqueda:null, prisma:null, protocolo:null, forest:null, funnel:null, grade:null, equator:null }; manuscriptFigureCount = 0;
   var ldp = $('liveDocPanel'); if (ldp) ldp.classList.remove('open');
   closeExportCenter();
@@ -3228,9 +3234,85 @@ function exportDossier() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// STAGE NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+var STAGE_NAV_ITEMS = [
+  { id: 1, label: 'Etapa 1', sub: 'Metodologia', icon: '&#x1F9EC;' },
+  { id: 2, label: 'Etapa 2', sub: 'Documentacion', icon: '&#x1F4CB;' },
+  { id: 3, label: 'Etapa 3', sub: 'Ruta Institucional', icon: '&#x1F3E5;' },
+  { id: 4, label: 'Etapa 4', sub: 'Sintesis', icon: '&#x1F4CA;' },
+  { id: 5, label: 'Etapa 5', sub: 'Articulo', icon: '&#x1F4DD;' }
+];
+
+function renderStageNav() {
+  var bar = $('stageNavBar');
+  var tabs = $('stageNavTabs');
+  if (!bar || !tabs) return;
+  if (maxStageReached < 2) { bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  var html = '';
+  STAGE_NAV_ITEMS.forEach(function(s) {
+    var isActive = (s.id === currentStage);
+    var isReachable = (s.id <= maxStageReached);
+    var cls, onclick;
+    if (isActive) {
+      cls = 'bg-gradient-to-r from-galatea to-verde text-white shadow-md shadow-galatea/20';
+      onclick = '';
+    } else if (isReachable) {
+      cls = 'bg-white border border-gray-200 text-gray-700 hover:border-galatea/50 hover:bg-blue-50 cursor-pointer shadow-sm';
+      onclick = ' onclick="navigateToStage(' + s.id + ')"';
+    } else {
+      cls = 'bg-gray-50 border border-gray-100 text-gray-300 cursor-not-allowed';
+      onclick = '';
+    }
+    html += '<div class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ' + cls + '"' + onclick + '>';
+    html += '<span class="text-sm">' + s.icon + '</span>';
+    html += '<div><div>' + s.label + '</div><div class="text-[9px] font-normal opacity-70">' + s.sub + '</div></div>';
+    if (isActive) html += '<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse ml-1"></span>';
+    html += '</div>';
+  });
+  tabs.innerHTML = html;
+}
+
+function navigateToStage(targetStage) {
+  if (targetStage === currentStage) return;
+  if (targetStage > maxStageReached) return;
+  if (simulationRunning) {
+    showToast('Espera a que termine el proceso actual antes de navegar', 'warning');
+    return;
+  }
+  currentStage = targetStage;
+  var views = $('detailedViews');
+  if (views) views.innerHTML = '';
+  if (targetStage === 1) {
+    renderHeader();
+    renderAgentGrid();
+    renderDetailedViews();
+  } else if (targetStage === 2) {
+    renderStage2Header();
+    renderStage2AgentGrid();
+    renderStage2DetailedViews();
+  } else if (targetStage === 3) {
+    renderStage3InstHeader();
+    renderStage3InstAgentGrid();
+    renderStage3InstDetailedViews();
+  } else if (targetStage === 4) {
+    renderStage3Header();
+    renderStage3AgentGrid();
+    renderStage3DetailedViews();
+  } else if (targetStage === 5) {
+    renderStage5Header();
+    renderStage5AgentGrid();
+    renderStage5DetailedViews();
+  }
+  renderStageNav();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════════════════════
 // RENDER ENGINE
 // ═══════════════════════════════════════════════════════════════
-function renderAll() { if (!project) return; renderHeader(); renderAgentGrid(); renderDetailedViews(); }
+function renderAll() { if (!project) return; renderHeader(); renderAgentGrid(); renderDetailedViews(); renderStageNav(); }
 
 function renderHeader() {
   if (!project) return;
@@ -5102,6 +5184,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ETAPA 2: CONSTANTS + DATA
 // ═══════════════════════════════════════════════════════════════
 var currentStage = 1;
+var maxStageReached = 1;
 var stage2SimData = null;
 var stage2ProjectType = '';
 var stage2Route = '';
@@ -5353,6 +5436,7 @@ function awaitStage2Confirmation(completedStep, nextPhaseKey) {
 
 function startStage2() {
   currentStage = 2;
+  maxStageReached = Math.max(maxStageReached, 2);
   stage2Step = 0;
   stage2ProjectType = '';
   stage2Route = '';
@@ -5368,6 +5452,7 @@ function startStage2() {
   $('projectMeta').textContent = 'Etapa 2: Documentacion | Paso 0 / 5';
   showBubble(); // Ensure bubble is visible for Stage 2
   renderStage2AgentGrid();
+  renderStageNav();
   runStage2Simulation();
 }
 
@@ -5566,6 +5651,7 @@ var STAGE3_INST_AGENTS = [
 
 function startStage3Institutional() {
   currentStage = 3;
+  maxStageReached = Math.max(maxStageReached, 3);
   stage3InstStep = 0;
   simulationRunning = true;
   simulationAborted = false;
@@ -5573,6 +5659,7 @@ function startStage3Institutional() {
   $('projectMeta').textContent = 'Etapa 3: Ruta Institucional | Paso 0 / 6';
   showBubble();
   renderStage3InstAgentGrid();
+  renderStageNav();
   runStage3InstSimulation();
 }
 
@@ -8414,6 +8501,7 @@ function skipViaBUpload() {
 function startStage3() { startStage4(); } // backwards compat
 async function startStage4() {
   currentStage = 4;
+  maxStageReached = Math.max(maxStageReached, 4);
   stage3Step = 0;
 
   // Auto-detect study type if not yet selected
@@ -8441,13 +8529,16 @@ async function startStage4() {
     $('projectTitle').textContent = titleText;
     $('projectMeta').textContent = 'Etapa 4: ' + titleText + ' | Paso 0 / 3';
     renderStage3AgentGrid();
+    renderStageNav();
     runStage4StatsPlan(curCfg);
   } else if (needsMA) {
     // ── VIA B — RS+MA / DTA: show extraction template upload ──
     showStage4ViaB(curCfg);
+    renderStageNav();
   } else {
     // ── VIA A — Primary studies (ECA, Cohorte, Caso-control, Transversal): show data upload ──
     showStage4ViaA(curCfg);
+    renderStageNav();
   }
 }
 
@@ -11451,12 +11542,14 @@ function showStage5TransitionCard() {
 
 function startStage5() {
   currentStage = 5;
+  maxStageReached = Math.max(maxStageReached, 5);
   stage5Step = 0;
   simulationRunning = true;
   simulationAborted = false;
   $('projectTitle').textContent = 'Articulo Cientifico IMRyD';
   $('projectMeta').textContent = 'Etapa 5: Articulo | Paso 0 / 4';
   renderStage5AgentGrid();
+  renderStageNav();
   runStage5Simulation();
 }
 
