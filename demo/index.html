@@ -2310,7 +2310,7 @@ function transitionToDashboard() {
     d.style.opacity = '0'; d.style.transform = 'translateY(20px)'; void d.offsetWidth;
     d.style.transition = 'opacity .5s ease, transform .5s ease';
     d.style.opacity = '1'; d.style.transform = 'translateY(0)';
-    loadProject().then(function() { subscribeRealtime(); renderLiveDocPages(); if (isNewProject && project) callAgentOrSimulate(project.research_question); });
+    loadProject().then(function() { subscribeRealtime(); renderLiveDocPages(); if (isNewProject && project) callAgentOrSimulate(project.research_question); }).catch(function(e) { console.error('loadProject error:', e); showToast('Error cargando proyecto', 'error'); });
   }, 500);
 }
 
@@ -2677,7 +2677,7 @@ function openProjectFromList(projectId) {
     d.style.opacity = '0'; d.style.transform = 'translateY(20px)'; void d.offsetWidth;
     d.style.transition = 'opacity .5s ease, transform .5s ease';
     d.style.opacity = '1'; d.style.transform = 'translateY(0)';
-    loadProject().then(function() { subscribeRealtime(); renderLiveDocPages(); });
+    loadProject().then(function() { subscribeRealtime(); renderLiveDocPages(); }).catch(function(e) { console.error('loadProject error:', e); showToast('Error cargando proyecto', 'error'); });
   }, 500);
 }
 
@@ -2729,7 +2729,7 @@ function goToLanding() {
   },400);
 }
 
-function showToast(msg,type){var colors={success:'bg-verde text-white',error:'bg-red-500 text-white',info:'bg-galatea text-white'};var el=document.createElement('div');el.className='toast px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg flex items-center gap-2 '+(colors[type]||colors.info);el.innerHTML=msg;$('toastContainer').appendChild(el);setTimeout(function(){el.remove();},3500);}
+function showToast(msg,type){var colors={success:'bg-verde text-white',error:'bg-red-500 text-white',info:'bg-galatea text-white',warning:'bg-yellow-500 text-white'};var el=document.createElement('div');el.className='toast px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg flex items-center gap-2 '+(colors[type]||colors.info);el.textContent=msg;$('toastContainer').appendChild(el);setTimeout(function(){el.remove();},3500);}
 
 async function saveUserEdits(path,value){if(!rowId)return;var ce=project.user_edits||{};var keys=path.split('.');var obj=ce;for(var i=0;i<keys.length-1;i++){if(!obj[keys[i]]||typeof obj[keys[i]]!=='object')obj[keys[i]]={};obj=obj[keys[i]];}obj[keys[keys.length-1]]=value;var r=await sb.from(TABLE).update({user_edits:ce,updated_at:new Date().toISOString()}).eq('id',rowId);if(!r.error){project.user_edits=ce;showToast('Guardado','success');}else{showToast('Error','error');}}
 function debounceSave(p,v){clearTimeout(saveTimeout);saveTimeout=setTimeout(function(){saveUserEdits(p,v);},800);}
