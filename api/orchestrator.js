@@ -6,7 +6,7 @@ import { PROMPTS } from '../prompts/system-prompts.js';
 const AGENT_NAME = 'orchestrator';
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://galatea-v2-prod.vercel.app',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
@@ -105,9 +105,18 @@ export default async function handler(req, res) {
   const totalStart = Date.now();
   const results = {};
   const errors = [];
+  const VERCEL_TIMEOUT = 55000; // Leave margin before Vercel's 60s limit
 
   try {
     logAgent(AGENT_NAME, 'info', 'Starting orchestration', { projectId });
+
+    // Helper: check if we're running out of time
+    function timeRemaining() { return VERCEL_TIMEOUT - (Date.now() - totalStart); }
+    function checkTimeout(agentName) {
+      if (timeRemaining() < 5000) {
+        throw new Error(`Orchestrator timeout: not enough time for ${agentName} (${Math.round((Date.now() - totalStart) / 1000)}s elapsed)`);
+      }
+    }
 
     // ── Agent 1: PICOT Builder ──
     logAgent(AGENT_NAME, 'info', 'Running PICOT Builder');
@@ -151,6 +160,7 @@ export default async function handler(req, res) {
     }
 
     // ── Agent 2: Planteamiento Builder ──
+    checkTimeout('planteamiento-builder');
     logAgent(AGENT_NAME, 'info', 'Running Planteamiento Builder');
     try {
       const planteamientoResult = await callClaude(
@@ -273,6 +283,7 @@ export default async function handler(req, res) {
     }
 
     // ── Agent 7: Literature Scout ──
+    checkTimeout('literature-scout');
     logAgent(AGENT_NAME, 'info', 'Running Literature Scout');
     let scoutData;
     try {
@@ -411,6 +422,7 @@ export default async function handler(req, res) {
     }
 
     // ── Agents 12+13: Protocol Writer + Manuscript Writer (parallel) ──
+    checkTimeout('writers');
     logAgent(AGENT_NAME, 'info', 'Running Protocol Writer + Manuscript Writer in parallel');
 
     // Gather all context for writers
