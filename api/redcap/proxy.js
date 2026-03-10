@@ -3,7 +3,7 @@ import { logAgent, logError } from '../utils/logger.js';
 const AGENT_NAME = 'redcap-proxy';
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://galatea-v2-prod.vercel.app',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
@@ -57,11 +57,15 @@ export default async function handler(req, res) {
 
     const start = Date.now();
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
     const response = await fetch(redcap_url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: formParams.toString(),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     const duration = Date.now() - start;
     const text = await response.text();

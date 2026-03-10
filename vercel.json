@@ -1,6 +1,7 @@
 {
-  "buildCommand": "mkdir -p dist/demo && cp public/landing.html dist/index.html && cp demo/index.html dist/demo/index.html && cp public/favicon.ico dist/favicon.ico",
-  "outputDirectory": "dist",
+  "framework": null,
+  "buildCommand": "",
+  "outputDirectory": ".",
   "functions": {
     "api/**/*.js": {
       "maxDuration": 60
@@ -10,7 +11,12 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
       ]
     }
   ],
@@ -18,7 +24,6 @@
     { "source": "/api/agents/:agent", "destination": "/api/agents/[agent]?agent=:agent" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/demo", "destination": "/demo/index.html" },
-    { "source": "/demo/(.*)", "destination": "/demo/index.html" },
-    { "source": "/((?!demo|api).*)", "destination": "/index.html" }
+    { "source": "/demo/(.*)", "destination": "/demo/index.html" }
   ]
 }

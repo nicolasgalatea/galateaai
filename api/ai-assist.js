@@ -4,7 +4,7 @@ import { logAgent, logError } from './utils/logger.js';
 const AGENT_NAME = 'ai-assist';
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://galatea-v2-prod.vercel.app',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
@@ -34,10 +34,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { text, instruction, context } = req.body || {};
+  const { text: rawText, instruction, context: rawContext } = req.body || {};
+  const text = typeof rawText === 'string' ? rawText.slice(0, 10000) : '';
+  const context = typeof rawContext === 'string' ? rawContext.slice(0, 5000) : '';
 
-  if (!instruction) {
+  if (!instruction || typeof instruction !== 'string') {
     return res.status(400).json({ success: false, error: 'Missing instruction' });
+  }
+  if (instruction.length > 2000) {
+    return res.status(400).json({ success: false, error: 'Instruction too long (max 2000 chars)' });
   }
 
   try {

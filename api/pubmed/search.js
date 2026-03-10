@@ -4,7 +4,7 @@ const AGENT_NAME = 'pubmed-search';
 const EUTILS_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://galatea-v2-prod.vercel.app',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
@@ -134,10 +134,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { query, maxResults = 20, filters = '' } = req.body || {};
+  const { query, maxResults: rawMax = 20, filters = '' } = req.body || {};
+  const maxResults = Math.min(Math.max(parseInt(rawMax, 10) || 20, 1), 100);
 
-  if (!query) {
+  if (!query || typeof query !== 'string') {
     return res.status(400).json({ success: false, error: 'Missing query' });
+  }
+  if (query.length > 2000) {
+    return res.status(400).json({ success: false, error: 'Query too long (max 2000 chars)' });
   }
 
   try {

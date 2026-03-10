@@ -1809,19 +1809,28 @@ function parsePubMedXML(xml) {
 
 async function searchPubMedDirect(query, maxResults) {
   maxResults = maxResults || 15;
-  var searchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=' + encodeURIComponent(query) + '&retmax=' + maxResults + '&retmode=json&sort=relevance';
-  var searchResp = await fetch(searchUrl);
-  var searchData = await searchResp.json();
-  var pmids = searchData.esearchresult.idlist || [];
-  var totalCount = parseInt(searchData.esearchresult.count, 10);
+  var controller = new AbortController();
+  var timer = setTimeout(function() { controller.abort(); }, 20000);
+  try {
+    var searchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=' + encodeURIComponent(query) + '&retmax=' + maxResults + '&retmode=json&sort=relevance';
+    var searchResp = await fetch(searchUrl, { signal: controller.signal });
+    var searchData = await searchResp.json();
+    var pmids = searchData.esearchresult.idlist || [];
+    var totalCount = parseInt(searchData.esearchresult.count, 10);
 
-  if (pmids.length === 0) return { count: totalCount, articles: [] };
+    if (pmids.length === 0) { clearTimeout(timer); return { count: totalCount, articles: [] }; }
 
-  var fetchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=' + pmids.join(',') + '&retmode=xml';
-  var fetchResp = await fetch(fetchUrl);
-  var xml = await fetchResp.text();
-  var articles = parsePubMedXML(xml);
-  return { count: totalCount, articles: articles };
+    var fetchUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=' + pmids.join(',') + '&retmode=xml';
+    var fetchResp = await fetch(fetchUrl, { signal: controller.signal });
+    var xml = await fetchResp.text();
+    var articles = parsePubMedXML(xml);
+    clearTimeout(timer);
+    return { count: totalCount, articles: articles };
+  } catch(e) {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') throw new Error('PubMed: timeout tras 20s');
+    throw e;
+  }
 }
 // ── End PubMed Direct Search ────────────────────────────────────
 
@@ -2329,7 +2338,7 @@ function setCurrentUser(authUser, userInfo) {
   };
 }
 
-var DEMO_PASSWORD = 'Galatea2024';
+// Pilot password validated server-side via /api/auth/pilot-login (not exposed in client)
 
 async function handleLogin() {
   var email = document.getElementById('loginEmail').value.trim().toLowerCase();
@@ -2342,14 +2351,34 @@ async function handleLogin() {
 
   var userInfo = FSFB_USERS[email];
 
-  // Modo demo: si el email esta en FSFB_USERS y password es correcto, simular login sin Supabase Auth
-  if (userInfo && password === DEMO_PASSWORD) {
-    var demoId = 'demo-' + email.split('@')[0];
-    setCurrentUser({ id: demoId, email: email }, userInfo);
-    localStorage.setItem('galatea_demo_user', JSON.stringify({ id: demoId, email: email }));
-    btn.disabled = false; btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg> Ingresar';
-    showProjectListPage();
-    return;
+  // Pilot login: validate password server-side, never expose in client code
+  if (userInfo) {
+    try {
+      var authResp = await fetch('/api/auth/pilot-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password })
+      });
+      var authData = await authResp.json();
+      if (authData.success) {
+        var demoId = 'pilot-' + email.split('@')[0];
+        setCurrentUser({ id: demoId, email: email }, userInfo);
+        sessionStorage.setItem('galatea_pilot_user', JSON.stringify({ id: demoId, email: email }));
+        btn.disabled = false; btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg> Ingresar';
+        showProjectListPage();
+        return;
+      } else {
+        errEl.textContent = authData.error || 'Contrasena incorrecta';
+        errEl.classList.remove('hidden');
+        btn.disabled = false; btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg> Ingresar';
+        return;
+      }
+    } catch (authErr) {
+      errEl.textContent = 'Error de conexion. Intenta de nuevo.';
+      errEl.classList.remove('hidden');
+      btn.disabled = false; btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg> Ingresar';
+      return;
+    }
   }
 
   // Modo real: Supabase Auth
@@ -2372,7 +2401,7 @@ async function handleLogin() {
 }
 
 async function handleLogout() {
-  localStorage.removeItem('galatea_demo_user');
+  sessionStorage.removeItem('galatea_pilot_user');
   try { await sb.auth.signOut(); } catch(e) {}
   currentUser = null;
   userProjects = [];
@@ -4803,7 +4832,7 @@ function updateDebug() {
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
   // Check demo session in localStorage
-  var savedDemo = localStorage.getItem('galatea_demo_user');
+  var savedDemo = sessionStorage.getItem('galatea_pilot_user');
   if (savedDemo) {
     try {
       var parsed = JSON.parse(savedDemo);
@@ -7190,17 +7219,9 @@ function generateStage3SimData() {
       });
     }
   } else {
-    // Fallback: default hardcoded studies
-    studies = [
-      { id:1, author:'Gulshan V.', year:2016, events_i:487, total_i:500, events_c:412, total_c:500, or:2.85, or_lo:1.82, or_hi:4.47, weight:14.2, se:0.23 },
-      { id:2, author:'Ting DSW.', year:2017, events_i:4520, total_i:5000, events_c:4100, total_c:5000, or:2.01, or_lo:1.78, or_hi:2.27, weight:18.5, se:0.06 },
-      { id:3, author:'Raman R.', year:2019, events_i:145, total_i:151, events_c:121, total_c:150, or:5.79, or_lo:2.32, or_hi:14.44, weight:5.8, se:0.47 },
-      { id:4, author:'Li Z.', year:2020, events_i:892, total_i:1000, events_c:810, total_c:1000, or:1.94, or_lo:1.52, or_hi:2.48, weight:16.1, se:0.12 },
-      { id:5, author:'Rodriguez D.', year:2021, events_i:580, total_i:620, events_c:510, total_c:620, or:3.13, or_lo:2.12, or_hi:4.62, weight:12.3, se:0.20 },
-      { id:6, author:'Bora A.', year:2023, events_i:7500, total_i:7900, events_c:6800, total_c:7900, or:3.03, or_lo:2.63, or_hi:3.49, weight:17.9, se:0.07 },
-      { id:7, author:'Chen W.', year:2023, events_i:320, total_i:350, events_c:280, total_c:350, or:2.67, or_lo:1.67, or_hi:4.26, weight:9.4, se:0.24 },
-      { id:8, author:'Patel S.', year:2024, events_i:198, total_i:220, events_c:165, total_c:220, or:3.00, or_lo:1.70, or_hi:5.29, weight:5.8, se:0.29 },
-    ];
+    // No fallback to fake data — show error if no real extraction data
+    showToast('No hay datos de extraccion reales para el meta-analisis. Ejecuta la busqueda primero.', 'error');
+    return;
   }
 
   // ── Calculate pooled OR using inverse-variance weighting ──
@@ -7332,17 +7353,8 @@ function getExtractionStudies() {
       };
     });
   }
-  // Final fallback: hardcoded defaults
-  return [
-    { author: 'Gulshan V.', year: 2016, events_i: 487, total_i: 500, events_c: 412, total_c: 500 },
-    { author: 'Ting DSW.', year: 2017, events_i: 4520, total_i: 5000, events_c: 4100, total_c: 5000 },
-    { author: 'Raman R.', year: 2019, events_i: 145, total_i: 151, events_c: 121, total_c: 150 },
-    { author: 'Li Z.', year: 2020, events_i: 892, total_i: 1000, events_c: 810, total_c: 1000 },
-    { author: 'Rodriguez D.', year: 2021, events_i: 580, total_i: 620, events_c: 510, total_c: 620 },
-    { author: 'Bora A.', year: 2023, events_i: 7500, total_i: 7900, events_c: 6800, total_c: 7900 },
-    { author: 'Chen W.', year: 2023, events_i: 320, total_i: 350, events_c: 280, total_c: 350 },
-    { author: 'Patel S.', year: 2024, events_i: 198, total_i: 220, events_c: 165, total_c: 220 }
-  ];
+  // No fake fallback — return empty array and let UI show appropriate message
+  return [];
 }
 
 // Unwrap R jsonlite single-element arrays recursively: [3.94] → 3.94
@@ -7785,7 +7797,7 @@ async function runViaAAnalysis() {
     stage3SimData._primaryResults = rResult;
   } catch(e) {
     console.error('Via A R analysis failed:', e);
-    resultsDiv.innerHTML = '<div class="p-4 bg-amber-50 border border-amber-200 rounded-xl"><p class="text-xs text-amber-800"><strong>No se pudo conectar con R API.</strong> ' + e.message + '</p><p class="text-xs text-amber-600 mt-1">Continuando con datos de simulacion...</p></div>';
+    resultsDiv.innerHTML = '<div class="p-4 bg-amber-50 border border-amber-200 rounded-xl"><p class="text-xs text-amber-800"><strong>No se pudo conectar con R API.</strong> ' + esc(e.message) + '</p><p class="text-xs text-amber-600 mt-1">Continuando con plan estadistico estimado. Conecte el API R para analisis real.</p></div>';
     stage3SimData = generateStatsPlanByType(curCfg);
     stage3SimData._source = 'type_adapted';
   }
@@ -8116,7 +8128,7 @@ async function runViaBMetaAnalysis() {
   } catch(e) {
     console.error('Galatea R API FAILED:', e.message);
     stage3SimData = generateStage3SimData();
-    stage3SimData._source = 'simulacion';
+    stage3SimData._source = 'estimado';
   }
   simulationRunning = true;
   simulationAborted = false;
@@ -8141,7 +8153,7 @@ function skipViaBUpload() {
       stage3SimData._source = 'R';
     } catch(e) {
       stage3SimData = generateStage3SimData();
-      stage3SimData._source = 'simulacion';
+      stage3SimData._source = 'estimado';
     }
     simulationRunning = true;
     simulationAborted = false;
@@ -8579,10 +8591,10 @@ function renderStage3DetailedViews() {
     html += '<svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
     html += '<span class="text-xs font-bold text-emerald-700">Analisis real — R Statistical Computing (metafor)</span>';
     html += '</div>';
-  } else if (sd._source === 'simulacion') {
-    html += '<div class="flex items-center gap-2 mb-4 p-3 rounded-xl bg-gray-50 border border-gray-200">';
-    html += '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>';
-    html += '<span class="text-xs font-medium text-gray-500">Datos simulados (demo) — Conecte el API R para analisis real</span>';
+  } else if (sd._source === 'simulacion' || sd._source === 'estimado') {
+    html += '<div class="flex items-center gap-2 mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200">';
+    html += '<svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>';
+    html += '<span class="text-xs font-medium text-amber-700">Plan estadistico estimado — Conecte el API R para analisis real</span>';
     html += '</div>';
   }
 

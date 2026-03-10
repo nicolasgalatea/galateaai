@@ -3,7 +3,7 @@ import { logAgent, logError } from '../utils/logger.js';
 const AGENT_NAME = 'mesh-decs-lookup';
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://galatea-v2-prod.vercel.app',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
@@ -17,9 +17,10 @@ const DECS_BASE_URL = 'https://api.bvsalud.org/decs/v2/search-by-words';
  * Search NLM MeSH descriptors
  */
 async function searchMeSH(query, limit = 10) {
-  const url = `${MESH_LOOKUP_URL}?label=${encodeURIComponent(query)}&match=contains&limit=${limit}`;
+  const url = `${MESH_LOOKUP_URL}?label=${encodeURIComponent(query)}&match=contains&limit=${Math.min(limit, 50)}`;
   const response = await fetch(url, {
     headers: { 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(15000),
   });
   if (!response.ok) throw new Error(`MeSH lookup failed: ${response.status}`);
   const data = await response.json();
@@ -38,6 +39,7 @@ async function searchMeSH(query, limit = 10) {
 async function suggestMeSH(query, limit = 10) {
   const url = `${MESH_SUGGEST_URL}?label=${encodeURIComponent(query)}&match=contains&limit=${limit}`;
   const response = await fetch(url, {
+    signal: AbortSignal.timeout(15000),
     headers: { 'Accept': 'application/json' },
   });
   if (!response.ok) throw new Error(`MeSH suggest failed: ${response.status}`);
@@ -56,6 +58,7 @@ async function suggestMeSH(query, limit = 10) {
 async function getMeSHDetails(meshId) {
   const url = `https://id.nlm.nih.gov/mesh/${meshId}.json`;
   const response = await fetch(url, {
+    signal: AbortSignal.timeout(15000),
     headers: { 'Accept': 'application/json' },
   });
   if (!response.ok) return null;
@@ -72,6 +75,7 @@ async function searchDeCS(query, lang = 'es') {
     // Try the public DeCS search endpoint
     const url = `${DECS_BASE_URL}?words=${encodeURIComponent(query)}&lang=${lang}&format=json`;
     const response = await fetch(url, {
+    signal: AbortSignal.timeout(15000),
       headers: { 'Accept': 'application/json' },
     });
     if (!response.ok) return [];
