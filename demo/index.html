@@ -7,13 +7,14 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Galatea AI — Motor de Evidencia Científica</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+  <link rel="icon" href="/public/galatea-logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: { extend: {
-        colors: { galatea: '#0091DF', verde: '#89BA17', morado: '#7C3AED', ambar: '#D97706', esmeralda: '#059669', bayer: '#10857F' },
-        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+        colors: { galatea: '#4DA8A1', verde: '#89BA17', morado: '#7C3AED', ambar: '#D97706', esmeralda: '#059669', bayer: '#10857F', cream: { 50: '#FDFCF9', 100: '#F7F4ED', 200: '#EDE8DD' } },
+        fontFamily: { serif: ['"Source Serif 4"', 'Georgia', 'serif'], sans: ['"DM Sans"', 'system-ui', 'sans-serif'] }
       }}
     }
   </script>
@@ -101,13 +102,13 @@
     /* Galatea approval card */
     .galatea-approval {
       background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%);
-      border: 2px solid #0091DF;
+      border: 2px solid #4DA8A1;
       position: relative;
     }
     .galatea-approval::before {
       content: '';
       position: absolute; top: -1px; left: 20px; right: 20px; height: 3px;
-      background: linear-gradient(90deg, #0091DF, #89BA17);
+      background: linear-gradient(90deg, #4DA8A1, #89BA17);
       border-radius: 0 0 4px 4px;
     }
     @keyframes typing { 0%{opacity:.3} 50%{opacity:1} 100%{opacity:.3} }
@@ -134,18 +135,7 @@
     <!-- Top bar -->
     <header class="relative z-20 px-6 sm:px-10 pt-6 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12 relative">
-          <svg class="w-12 h-12 spiral-slow" viewBox="0 0 100 100" fill="none">
-            <path d="M50 10 C70 10, 90 30, 90 50 C90 70, 70 90, 50 90 C30 90, 15 75, 15 55 C15 40, 25 25, 45 25 C60 25, 72 35, 72 50 C72 62, 62 72, 50 72 C40 72, 32 64, 32 55 C32 47, 38 40, 48 40 C55 40, 60 45, 60 52" stroke="url(#spiralGradLogin)" stroke-width="3" stroke-linecap="round"/>
-            <defs>
-              <linearGradient id="spiralGradLogin" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#0091DF"/>
-                <stop offset="50%" stop-color="#10857F"/>
-                <stop offset="100%" stop-color="#89BA17"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
+        <img src="/public/galatea-logo.png" alt="GalateaAI" class="w-12 h-12 rounded" />
         <span class="text-white/40 text-xs font-medium tracking-widest uppercase hidden sm:block">Galatea AI</span>
       </div>
       <div class="flex items-center gap-3">
@@ -235,20 +225,9 @@
 
     <!-- Top bar: Galatea spiral + Bayer logo -->
     <header class="relative z-20 px-6 sm:px-10 pt-6 flex items-center justify-between">
-      <!-- Galatea Spiral -->
+      <!-- Galatea Logo -->
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12 relative">
-          <svg class="w-12 h-12 spiral-slow" viewBox="0 0 100 100" fill="none">
-            <path d="M50 10 C70 10, 90 30, 90 50 C90 70, 70 90, 50 90 C30 90, 15 75, 15 55 C15 40, 25 25, 45 25 C60 25, 72 35, 72 50 C72 62, 62 72, 50 72 C40 72, 32 64, 32 55 C32 47, 38 40, 48 40 C55 40, 60 45, 60 52" stroke="url(#spiralGrad)" stroke-width="3" stroke-linecap="round"/>
-            <defs>
-              <linearGradient id="spiralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#0091DF"/>
-                <stop offset="50%" stop-color="#10857F"/>
-                <stop offset="100%" stop-color="#89BA17"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
+        <img src="/public/galatea-logo.png" alt="GalateaAI" class="w-12 h-12 rounded" />
         <span class="text-white/40 text-xs font-medium tracking-widest uppercase hidden sm:block">Galatea AI</span>
       </div>
 
@@ -326,16 +305,15 @@
                 class="w-full h-28 sm:h-32 bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-sm placeholder-white/25 resize-none focus:outline-none focus:border-galatea/50 focus:bg-white/8 transition-all"
                 placeholder="Cuentame tu pregunta de investigacion clinica..."></textarea>
               <div class="absolute bottom-3 right-3 flex items-center gap-2">
-                <span class="text-[10px] text-white/20">Dejar vacio para demo</span>
+                <span class="text-[10px] text-white/20">Escribe tu pregunta de investigacion</span>
               </div>
             </div>
-            <!-- Mode Toggle: Demo / Real AI -->
-            <div id="modeToggle" class="mt-4 flex items-center justify-center lg:justify-start gap-3">
-              <span id="modeLabel" class="text-xs font-semibold text-white/60">Demo</span>
-              <button onclick="toggleRealMode()" id="modeBtn" class="relative w-11 h-6 rounded-full bg-white/20 transition-colors duration-300 focus:outline-none">
-                <span id="modeDot" class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300" style="transform:translateX(0)"></span>
-              </button>
-              <span id="modeLabelReal" class="text-xs font-semibold text-white/30">Real AI</span>
+            <!-- Modo Piloto indicator -->
+            <div class="mt-4 flex items-center justify-center lg:justify-start gap-2">
+              <span class="inline-flex items-center gap-1.5 bg-galatea/20 border border-galatea/30 text-galatea text-xs font-semibold px-3 py-1.5 rounded-full">
+                <span class="w-2 h-2 bg-galatea rounded-full animate-pulse"></span>
+                Modo Piloto — IA Real (Claude API)
+              </span>
             </div>
 
             <button onclick="startAnalysis()"
@@ -448,7 +426,7 @@
         <span class="text-xs text-gray-400 font-medium" id="progressLabel">0%</span>
       </div>
       <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div id="progressBar" class="h-full rounded-full transition-all duration-1000 ease-out" style="width:0%; background: linear-gradient(90deg, #0091DF, #89BA17);"></div>
+        <div id="progressBar" class="h-full rounded-full transition-all duration-1000 ease-out" style="width:0%; background: linear-gradient(90deg, #4DA8A1, #89BA17);"></div>
       </div>
       <div class="flex justify-between mt-2">
         <span class="text-[10px] text-gray-300">Inicio</span>
@@ -660,7 +638,7 @@
   /* ── Stats ── */
   .stat-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); }
   /* ── Typewriter ── */
-  .typewriter-cursor::after { content: '|'; animation: blink-cursor .7s step-end infinite; color: #0091DF; font-weight: 300; }
+  .typewriter-cursor::after { content: '|'; animation: blink-cursor .7s step-end infinite; color: #4DA8A1; font-weight: 300; }
   @keyframes blink-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
   /* ── PRISMA animation ── */
   .prisma-box { opacity: 0; animation: prisma-appear .5s ease forwards; }
@@ -671,7 +649,7 @@
   input[type=range].finer-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #89BA17; cursor: pointer; border: none; }
   /* ── Confirm button glow ── */
   .confirm-btn { position: relative; overflow: hidden; }
-  .confirm-btn::after { content: ''; position: absolute; inset: -2px; border-radius: inherit; background: linear-gradient(90deg, #0091DF, #89BA17, #0091DF); background-size: 200% 100%; animation: btn-shimmer 2s linear infinite; opacity: 0.3; z-index: -1; }
+  .confirm-btn::after { content: ''; position: absolute; inset: -2px; border-radius: inherit; background: linear-gradient(90deg, #4DA8A1, #89BA17, #4DA8A1); background-size: 200% 100%; animation: btn-shimmer 2s linear infinite; opacity: 0.3; z-index: -1; }
   @keyframes btn-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
   /* ── Phase divider ── */
   .phase-divider { position: relative; text-align: center; margin: 2rem 0; }
@@ -715,7 +693,7 @@
   }
   /* Audio wave animation */
   .audio-wave { display: flex; align-items: flex-end; gap: 2px; height: 16px; }
-  .audio-wave .bar { width: 3px; border-radius: 2px; background: #0091DF; animation: wave-bar 1.2s ease-in-out infinite; }
+  .audio-wave .bar { width: 3px; border-radius: 2px; background: #4DA8A1; animation: wave-bar 1.2s ease-in-out infinite; }
   .audio-wave .bar:nth-child(1) { height: 40%; animation-delay: 0s; }
   .audio-wave .bar:nth-child(2) { height: 70%; animation-delay: .15s; }
   .audio-wave .bar:nth-child(3) { height: 100%; animation-delay: .3s; }
@@ -728,13 +706,13 @@
   .audio-wave.paused .bar { animation-play-state: paused; opacity: .3; transform: scaleY(0.3); }
   /* Galatea thinking dots in bubble */
   .galatea-thinking { display: inline-flex; gap: 4px; align-items: center; }
-  .galatea-thinking span { width: 6px; height: 6px; border-radius: 50%; background: #0091DF; animation: g-think 1.4s ease-in-out infinite; }
+  .galatea-thinking span { width: 6px; height: 6px; border-radius: 50%; background: #4DA8A1; animation: g-think 1.4s ease-in-out infinite; }
   .galatea-thinking span:nth-child(2) { animation-delay: .2s; }
   .galatea-thinking span:nth-child(3) { animation-delay: .4s; }
   @keyframes g-think { 0%,100%{opacity:.3;transform:translateY(0)} 50%{opacity:1;transform:translateY(-4px)} }
   /* Bubble text typewriter */
   #galateaBubbleText { min-height: 20px; }
-  .bubble-cursor::after { content: '|'; animation: blink-cursor .7s step-end infinite; color: #0091DF; }
+  .bubble-cursor::after { content: '|'; animation: blink-cursor .7s step-end infinite; color: #4DA8A1; }
 
   /* ═══════════════════════════════════════════════════
      ETAPA 2: RUTA FSFB
@@ -743,25 +721,25 @@
   .decision-tree { position: relative; }
   .decision-branch { position: relative; padding-left: 32px; border-left: 3px solid #e2e8f0; margin-left: 16px; }
   .decision-branch::before { content: ''; position: absolute; left: -8px; top: 20px; width: 13px; height: 13px; border-radius: 50%; background: #e2e8f0; border: 3px solid white; z-index: 1; }
-  .decision-branch.active { border-left-color: #0091DF; }
-  .decision-branch.active::before { background: #0091DF; box-shadow: 0 0 0 4px rgba(0,145,223,.2); }
+  .decision-branch.active { border-left-color: #4DA8A1; }
+  .decision-branch.active::before { background: #4DA8A1; box-shadow: 0 0 0 4px rgba(0,145,223,.2); }
   .decision-branch.inactive { opacity: .45; }
 
   /* Route card */
   .route-card { transition: all .4s ease; cursor: pointer; border: 2px solid #e2e8f0; }
-  .route-card:hover { border-color: #0091DF; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,145,223,.12); }
-  .route-card.selected { border-color: #0091DF; background: linear-gradient(135deg, #f0f9ff, #ecfdf5); box-shadow: 0 0 0 3px rgba(0,145,223,.15); }
+  .route-card:hover { border-color: #4DA8A1; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,145,223,.12); }
+  .route-card.selected { border-color: #4DA8A1; background: linear-gradient(135deg, #f0f9ff, #ecfdf5); box-shadow: 0 0 0 3px rgba(0,145,223,.15); }
   .route-card.blocked { opacity: .5; pointer-events: none; border-color: #fca5a5; background: #fef2f2; }
 
   /* Project type cards */
   .project-type-card { transition: all .3s ease; cursor: pointer; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; }
-  .project-type-card:hover { border-color: #0091DF; transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+  .project-type-card:hover { border-color: #4DA8A1; transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
   .project-type-card.selected { border-color: #89BA17; background: #f0fdf4; }
   .project-type-card.selected::after { content: '\2713'; position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: #89BA17; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
 
   /* Document checklist */
   .doc-check-item { transition: all .3s ease; cursor: pointer; border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; }
-  .doc-check-item:hover { border-color: #0091DF; }
+  .doc-check-item:hover { border-color: #4DA8A1; }
   .doc-check-item.checked { border-color: #89BA17; background: #f0fdf4; }
   .doc-check-item.required { border-color: #f59e0b; background: #fffbeb; }
   .doc-check-item.blocked { border-color: #ef4444; background: #fef2f2; opacity: .7; }
@@ -776,17 +754,17 @@
 
   /* Timeline */
   .fsfb-timeline { position: relative; padding-left: 40px; }
-  .fsfb-timeline::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #0091DF, #89BA17); }
+  .fsfb-timeline::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #4DA8A1, #89BA17); }
   .timeline-item { position: relative; margin-bottom: 24px; }
   .timeline-item::before { content: ''; position: absolute; left: -33px; top: 4px; width: 16px; height: 16px; border-radius: 50%; background: white; border: 3px solid #e2e8f0; z-index: 1; }
   .timeline-item.done::before { background: #89BA17; border-color: #89BA17; }
-  .timeline-item.active::before { background: #0091DF; border-color: #0091DF; box-shadow: 0 0 0 4px rgba(0,145,223,.2); }
+  .timeline-item.active::before { background: #4DA8A1; border-color: #4DA8A1; box-shadow: 0 0 0 4px rgba(0,145,223,.2); }
   .timeline-item.pending::before { background: #f1f5f9; border-color: #e2e8f0; }
   .timeline-item.blocked::before { background: #ef4444; border-color: #ef4444; }
 
   /* Submission progress */
   .submission-bar { height: 8px; border-radius: 4px; background: #e2e8f0; overflow: hidden; }
-  .submission-bar .fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #0091DF, #89BA17); transition: width 2s ease; }
+  .submission-bar .fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #4DA8A1, #89BA17); transition: width 2s ease; }
 
   /* Response badge */
   .response-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 9999px; font-size: 12px; font-weight: 800; }
@@ -832,13 +810,13 @@
   .forest-row:hover .forest-square { filter: brightness(1.2); }
   .forest-ci { stroke: #64748b; stroke-width: 1.5; }
   .forest-square { transition: all .3s; }
-  .forest-diamond { fill: #0091DF; stroke: #0091DF; stroke-width: 1; }
+  .forest-diamond { fill: #4DA8A1; stroke: #4DA8A1; stroke-width: 1; }
   .forest-null-line { stroke: #ef4444; stroke-width: 1; stroke-dasharray: 4,3; }
   .forest-tooltip { position: absolute; background: rgba(15,23,42,.92); color: white; padding: 8px 12px; border-radius: 10px; font-size: 11px; pointer-events: none; z-index: 300; white-space: nowrap; transform: translateY(-110%); opacity: 0; transition: opacity .2s; }
   .forest-tooltip.visible { opacity: 1; }
 
   /* Funnel Plot */
-  .funnel-point { r: 4; fill: #0091DF; opacity: 0; transition: opacity .3s; }
+  .funnel-point { r: 4; fill: #4DA8A1; opacity: 0; transition: opacity .3s; }
   .funnel-point.dropped { opacity: 1; }
   @keyframes funnel-drop { 0%{transform:translateY(-60px);opacity:0} 60%{opacity:1} 100%{transform:translateY(0);opacity:1} }
   .funnel-animate { animation: funnel-drop .6s ease-out forwards; }
@@ -869,8 +847,8 @@
   .i2-gauge-fill { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 1.5s ease, stroke 1s ease; }
 
   /* Meta conclusion */
-  .meta-conclusion { background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 50%, #fffbeb 100%); border: 2px solid #0091DF; border-radius: 20px; padding: 32px; position: relative; }
-  .meta-conclusion::before { content: ''; position: absolute; top: -1px; left: 20px; right: 20px; height: 3px; background: linear-gradient(90deg, #0091DF, #89BA17, #D97706); border-radius: 0 0 4px 4px; }
+  .meta-conclusion { background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 50%, #fffbeb 100%); border: 2px solid #4DA8A1; border-radius: 20px; padding: 32px; position: relative; }
+  .meta-conclusion::before { content: ''; position: absolute; top: -1px; left: 20px; right: 20px; height: 3px; background: linear-gradient(90deg, #4DA8A1, #89BA17, #D97706); border-radius: 0 0 4px 4px; }
 
   /* ═══ LIVE DOCUMENT PREVIEW PANEL ═══ */
   .live-doc-panel {
@@ -884,7 +862,7 @@
   .live-doc-toggle {
     position: absolute; left: -40px; top: 120px;
     width: 40px; height: 120px; border-radius: 8px 0 0 8px;
-    background: linear-gradient(135deg, #0091DF 0%, #059669 100%);
+    background: linear-gradient(135deg, #4DA8A1 0%, #059669 100%);
     color: white; border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     writing-mode: vertical-rl; text-orientation: mixed;
@@ -911,14 +889,14 @@
   }
   .doc-page::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, #0091DF, #89BA17);
+    background: linear-gradient(90deg, #4DA8A1, #89BA17);
   }
   .doc-page-header {
     text-align: center; border-bottom: 1px solid #d1d5db; padding-bottom: 12px; margin-bottom: 16px;
     font-family: 'Inter', sans-serif;
   }
   .doc-page-header .doc-institution {
-    font-size: 10px; font-weight: 700; color: #0091DF; letter-spacing: 0.08em; text-transform: uppercase;
+    font-size: 10px; font-weight: 700; color: #4DA8A1; letter-spacing: 0.08em; text-transform: uppercase;
   }
   .doc-page-header .doc-dept {
     font-size: 8px; color: #64748b; margin-top: 2px;
@@ -967,7 +945,7 @@
     border: 2px solid #e2e8f0; border-radius: 16px; padding: 24px;
     transition: all 0.3s; cursor: pointer; position: relative; overflow: hidden;
   }
-  .export-card:hover { border-color: #0091DF; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,145,223,0.12); }
+  .export-card:hover { border-color: #4DA8A1; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,145,223,0.12); }
   .export-card .export-icon {
     width: 48px; height: 48px; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
@@ -986,7 +964,7 @@
     cursor: pointer; transition: all 0.2s;
     font-family: 'Inter', sans-serif;
   }
-  .add-to-ms-btn:hover { border-color: #0091DF; color: #0091DF; background: #f0f9ff; }
+  .add-to-ms-btn:hover { border-color: #4DA8A1; color: #4DA8A1; background: #f0f9ff; }
   .add-to-ms-btn.added { border-color: #89BA17; color: #89BA17; background: #f0fdf4; }
   @keyframes fly-to-doc {
     0% { transform: scale(1); opacity: 1; }
@@ -1006,7 +984,7 @@
       <svg class="w-5 h-5 text-white" viewBox="0 0 120 120" fill="currentColor">
         <circle cx="60" cy="35" r="16" opacity=".9"/>
         <path d="M34 90 C34 70, 44 60, 60 60 C76 60, 86 70, 86 90 L86 110 L34 110Z" opacity=".9"/>
-        <rect x="52" y="68" width="16" height="18" rx="2" fill="#0091DF" opacity=".6"/>
+        <rect x="52" y="68" width="16" height="18" rx="2" fill="#4DA8A1" opacity=".6"/>
         <circle cx="60" cy="74" r="2.5" fill="white" opacity=".8"/>
       </svg>
     </div>
@@ -1039,7 +1017,7 @@
 // ═══════════════════════════════════════════════════════════════
 // CONFIG + STATE
 // ═══════════════════════════════════════════════════════════════
-var REAL_AI_ENABLED = false;
+var REAL_AI_ENABLED = true;
 var SUPABASE_URL = 'https://mlcrcklnhqmhnaqziujg.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sY3Jja2xuaHFtaG5hcXppdWpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMDM1OTQsImV4cCI6MjA4Nzg3OTU5NH0.ZQW1Sb27_o1iyVgm4D3URC216NG9pz16bSDW1hB9CE8';
 var DEFAULT_PROJECT_ID = 'e8233417-9ddf-4453-8372-c5b6797da8aa';
@@ -1077,7 +1055,7 @@ var FSFB_USERS = {
 };
 
 var AGENTS = [
-  { id:1, name:'Arquitecto', phases:[0,3], color:'#0091DF', desc:'Mentalidad, idea, tipo de estudio, PICOT/PICOS/ECLIPSE', activeMsg:'Analizando contexto clinico y seleccionando framework...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75a48.36 48.36 0 0 0-7.5.582V21"/></svg>', check: function(p) { var d=p.phase_data||{}; return d.picot || p.current_phase >= 3; } },
+  { id:1, name:'Arquitecto', phases:[0,3], color:'#4DA8A1', desc:'Mentalidad, idea, tipo de estudio, PICOT/PICOS/ECLIPSE', activeMsg:'Analizando contexto clinico y seleccionando framework...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75a48.36 48.36 0 0 0-7.5.582V21"/></svg>', check: function(p) { var d=p.phase_data||{}; return d.picot || p.current_phase >= 3; } },
   { id:2, name:'Metodologo', phases:[4,6], color:'#7C3AED', desc:'FINER radar, hipotesis, organizacion OneDrive', activeMsg:'Evaluando viabilidad y organizando estructura...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.3 24.3 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19 14.5m-4.75-11.396c.251.023.501.05.75.082M19 14.5l-1.34 4.024A2.25 2.25 0 0 1 15.5 20.25H8.5a2.25 2.25 0 0 1-2.16-1.726L5 14.5m14 0H5"/></svg>', check: function(p) { var d=p.phase_data||{}; return d.finer_results || p.current_phase>=7; } },
   { id:3, name:'Evidencia', phases:[7,7], color:'#D97706', desc:'Descriptores MeSH/DeCS, booleanas, registro por BD', activeMsg:'Mapeando descriptores y ejecutando busqueda sistematica...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>', check: function(p) { var d=p.phase_data||{}; return d.extraction_table || d.search_registry || p.current_phase>=8; } },
   { id:4, name:'Redactor', phases:[8,10], color:'#059669', desc:'Protocolo, EQUATOR check, estadistica, manuscrito', activeMsg:'Verificando guias EQUATOR y redactando manuscrito...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg>', check: function(p) { var d=p.phase_data||{}; return d.protocol_draft || d.manuscript || p.current_phase>=10; } },
@@ -1517,335 +1495,14 @@ function awaitStudyTypeSelection() {
   });
 }
 
-function generateSimulationData(question) {
-  var q = (question || '').trim();
-  var isDefault = !q || q.length < 10;
-  if (isDefault) q = 'Precision diagnostica de algoritmos de Deep Learning para deteccion de retinopatia diabetica en atencion primaria rural de Colombia';
+// generateSimulationData REMOVED — all data comes from real API agents
+function _generateSimulationData_REMOVED() { throw new Error('Simulation data removed. Use real API agents.'); }
+var generateSimulationData = _generateSimulationData_REMOVED;
 
-  var framework = detectQuestionFramework(q);
-  var fwData = {};
-  var parsed = isDefault ? null : extractPICOTFromQuestion(q);
-
-  if (framework === 'PICOS') {
-    fwData = isDefault ? { P:'Pacientes adultos con DM2 en atencion primaria rural de Colombia', I:'Algoritmos de Deep Learning (CNN) para deteccion automatizada de retinopatia diabetica', C:'Lectura convencional por oftalmologos certificados (gold standard)', O:'Precision diagnostica: sensibilidad, especificidad, AUC-ROC, VPP, VPN', S:'Estudios de precision diagnostica (DTA), cohortes retrospectivas y prospectivas' } : { P:parsed.P, I:parsed.I, C:parsed.C, O:parsed.O, S:'Estudios segun pregunta: ensayos clinicos, cohortes, revision sistematica' };
-  } else if (framework === 'ECLIPSE') {
-    fwData = isDefault ? { E:'Mejorar acceso a diagnostico', C:'Pacientes diabeticos rurales', L:'Atencion primaria Colombia/LATAM', I:'Reduccion en ceguera prevenible', P:'Medicos generales, oftalmologos', S:'Tamizaje con IA', E2:'Costo-efectividad y precision' } : { E:'Expectativa de mejora clinica', C:parsed.P, L:'Contexto clinico del estudio', I:parsed.O, P:'Profesionales de salud involucrados', S:parsed.I, E2:'Evaluacion de resultados' };
-  } else if (framework === 'SPIDER') {
-    fwData = isDefault ? { S:'Pacientes y profesionales de salud', PI:'Experiencia con diagnostico IA', D:'Estudio cualitativo fenomenologico', E:'Entrevistas semiestructuradas', R:'Investigacion cualitativa' } : { S:parsed.P, PI:parsed.I, D:'Estudio cualitativo', E:'Metodos cualitativos apropiados', R:'Investigacion cualitativa' };
-  } else {
-    fwData = isDefault ? { P:'Pacientes adultos con DM2 en atencion primaria rural', I:'Algoritmos de Deep Learning para deteccion de retinopatia', C:'Lectura por oftalmologos (gold standard)', O:'Sensibilidad, especificidad, AUC-ROC' } : { P:parsed.P, I:parsed.I, C:parsed.C, O:parsed.O };
-  }
-
-  var studyType = isDefault ? 'Revision sistematica con meta-analisis' : (framework === 'SPIDER' ? 'Estudio cualitativo' : framework === 'ECLIPSE' ? 'Evaluacion de servicios de salud' : 'Revision sistematica');
-  var designLocked = framework === 'PICO' ? 'Ensayo clinico' : framework === 'PICOS' ? 'Revision sistematica DTA' : framework === 'SPIDER' ? 'Cualitativo fenomenologico' : 'Mixto';
-
-  var finerScores = (function() {
-    if (isDefault) return {
-      feasible: { pass: true, score: 92, note: 'Datos accesibles via PubMed, Cochrane, LILACS. Sin necesidad de comite de etica. Costo estimado: bajo.' },
-      interesting: { pass: true, score: 88, note: 'Brecha en implementacion de IA para tamizaje en atencion primaria rural LATAM.' },
-      novel: { pass: true, score: 85, note: 'Solo 3 estudios evaluan DL en contextos rurales. Ningun meta-analisis previo LATAM.' },
-      ethical: { pass: true, score: 95, note: 'Revision de literatura publicada. Sin intervencion directa. Cumple beneficencia.' },
-      relevant: { pass: true, score: 90, note: 'Alineado con ODS 3, Plan Decenal de Salud Colombia, OMS 2020-2025.' }
-    };
-    var P = fwData.P || 'la poblacion de estudio', I = fwData.I || 'la intervencion', C = fwData.C || 'el comparador', O = fwData.O || 'los desenlaces';
-    return {
-      feasible: { pass: true, score: 85, note: 'La busqueda en bases de datos biomedicas (PubMed, Cochrane, LILACS) es factible con acceso institucional. El acceso a datos de ' + P.toLowerCase() + ' depende de la disponibilidad de estudios publicados. No requiere financiacion externa significativa para una revision sistematica. Los recursos computacionales y estadisticos necesarios estan disponibles.' },
-      interesting: { pass: true, score: 78, note: 'La comparacion entre ' + I.toLowerCase() + ' y ' + C.toLowerCase() + ' responde a una pregunta clinicamente relevante en la practica actual. Existe interes creciente en la comunidad cientifica por evaluar intervenciones en ' + P.toLowerCase() + '. Los resultados podrian influir directamente en las decisiones terapeuticas de los clinicos.' },
-      novel: { pass: true, score: 72, note: 'La busqueda preliminar en PubMed muestra evidencia limitada sobre la comparacion directa entre ' + I.toLowerCase() + ' y ' + C.toLowerCase() + ' en esta poblacion especifica. Existe una brecha en la literatura que justifica la realizacion de este estudio. No se identificaron revisiones sistematicas previas que aborden exactamente esta pregunta.' },
-      ethical: { pass: true, score: 90, note: 'Revision sistematica de literatura publicada que no involucra intervencion directa sobre pacientes. Cumple principios de beneficencia y no maleficencia. No requiere aprobacion de comite de etica por ser analisis de datos secundarios. Se declara ausencia de conflictos de interes.' },
-      relevant: { pass: true, score: 80, note: 'Los resultados sobre ' + O.toLowerCase() + ' contribuiran directamente a la toma de decisiones clinicas en ' + P.toLowerCase() + '. La evidencia generada podria influir en guias de practica clinica y protocolos institucionales. Se alinea con prioridades de investigacion en salud.' }
-    };
-  })();
-
-  var folderStructure = [
-    { name: '00_protocolo', icon: '&#x1F4C4;', files: ['Protocolo_v1.docx', 'PROSPERO_registro.pdf'], color: 'blue' },
-    { name: '01_revision_literatura', icon: '&#x1F4DA;', files: ['Gulshan_2016.pdf', 'Ting_2017.pdf', 'Raman_2019.pdf', 'Rodriguez_2021.pdf', 'Bora_2023.pdf'], color: 'amber' },
-    { name: '02_tablas_extraccion', icon: '&#x1F4CA;', files: ['Tabla_extraccion_v3.xlsx', 'Prompts_IA_extraccion.md', 'Citas_Vancouver.bib'], color: 'green' },
-    { name: '03_analisis_estadistico', icon: '&#x1F4C8;', files: ['Meta_analisis_R.R', 'Forest_plot.png', 'SROC_curve.png', 'Datos_raw.csv'], color: 'purple' },
-    { name: '04_manuscrito', icon: '&#x270D;&#xFE0F;', files: ['Manuscrito_v1.docx', 'Figuras/', 'Tablas/', 'Material_suplementario/'], color: 'indigo' },
-    { name: '05_correspondencia', icon: '&#x1F4E7;', files: ['Carta_editor.docx', 'Respuesta_revisores.docx'], color: 'rose' },
-    { name: '06_documentos_etica', icon: '&#x1F6E1;&#xFE0F;', files: ['Declaracion_conflictos.pdf', 'Aprobacion_institucional.pdf'], color: 'teal' },
-  ];
-
-  // ── Build dynamic search data from PICOT terms ──
-  var searchRegistry, descriptorMapping, prisma, stats;
-
-  if (isDefault) {
-    searchRegistry = [
-      { database: 'PubMed/MEDLINE', equation: '("Diabetic Retinopathy"[MeSH] OR "diabetic retinopathy"[tiab]) AND ("Deep Learning"[MeSH] OR "artificial intelligence"[tiab] OR "CNN"[tiab]) AND ("sensitivity"[tiab] OR "specificity"[tiab] OR "AUC"[tiab])', results: 312, included: 8, date: '2025-01-15', color: 'blue' },
-      { database: 'Cochrane Library', equation: '"diabetic retinopathy" AND "deep learning" AND "diagnostic accuracy"', results: 45, included: 2, date: '2025-01-15', color: 'indigo' },
-      { database: 'EMBASE', equation: "'diabetic retinopathy'/exp AND 'deep learning'/exp AND 'diagnostic accuracy'/exp", results: 245, included: 5, date: '2025-01-16', color: 'orange' },
-      { database: 'LILACS', equation: '(retinopatia diabetica) AND (aprendizaje profundo OR inteligencia artificial) AND (sensibilidad OR especificidad)', results: 28, included: 1, date: '2025-01-16', color: 'green' },
-      { database: 'Scopus', equation: 'TITLE-ABS-KEY("diabetic retinopathy" AND "deep learning" AND "diagnostic")', results: 289, included: 6, date: '2025-01-16', color: 'amber' },
-      { database: 'Web of Science', equation: 'TS=("diabetic retinopathy" AND "deep learning" AND "accuracy")', results: 198, included: 4, date: '2025-01-17', color: 'purple' },
-      { database: 'IEEE Xplore', equation: '"diabetic retinopathy" AND "convolutional neural network" AND "screening"', results: 87, included: 1, date: '2025-01-17', color: 'rose' },
-    ];
-    descriptorMapping = [
-      { term: 'Retinopatia diabetica', mesh: 'Diabetic Retinopathy', decs: 'Retinopatia Diabetica', emtree: 'diabetic retinopathy' },
-      { term: 'Deep Learning', mesh: 'Deep Learning', decs: 'Aprendizaje Profundo', emtree: 'deep learning' },
-      { term: 'Inteligencia Artificial', mesh: 'Artificial Intelligence', decs: 'Inteligencia Artificial', emtree: 'artificial intelligence' },
-      { term: 'Tamizaje', mesh: 'Mass Screening', decs: 'Tamizaje Masivo', emtree: 'mass screening' },
-      { term: 'Atencion primaria', mesh: 'Primary Health Care', decs: 'Atencion Primaria de Salud', emtree: 'primary health care' },
-      { term: 'Sensibilidad', mesh: 'Sensitivity and Specificity', decs: 'Sensibilidad y Especificidad', emtree: 'sensitivity and specificity' },
-    ];
-    prisma = { identified: 959, duplicates_removed: 312, screened_title: 647, excluded_title: 478, screened_fulltext: 169, excluded_fulltext: 80, quality_assessed: 89, excluded_quality: 77, included_qualitative: 12, included_quantitative: 9 };
-    stats = {
-      pooled_sensitivity: { value: 93.2, ci_low: 89.8, ci_high: 95.6 },
-      pooled_specificity: { value: 91.1, ci_low: 87.4, ci_high: 93.8 },
-      auc_sroc: { value: 0.967, ci_low: 0.948, ci_high: 0.986 },
-      i2_sensitivity: 72.3, i2_specificity: 68.1, cochran_q_p: 0.003,
-      median_n: 15800, mean_n: 131635, sd_n: 189422,
-      studies_rural: 4, rural_sensitivity: 91.8, rural_specificity: 84.3
-    };
-  } else {
-    // ── DYNAMIC: build from parsed PICOT terms ──
-    var pTerm = (parsed.P || '').replace(/^Pacientes con /i, '').trim();
-    var iTerm = (parsed.I || '').trim();
-    var cTerm = (parsed.C || '').trim();
-    var oTerm = (parsed.O || '').trim();
-
-    // Helper: capitalize first letter for MeSH-like terms
-    function meshCapitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(); }
-
-    // Build PubMed equation dynamically
-    var pubTerms = [];
-    if (pTerm) pubTerms.push('("' + pTerm + '"[tiab])');
-    if (iTerm) pubTerms.push('("' + iTerm + '"[tiab])');
-    if (oTerm) pubTerms.push('("' + oTerm + '"[tiab])');
-    var pubmedEq = pubTerms.join(' AND ') || '("' + q + '"[tiab])';
-
-    // Generate varied but seeded counts based on question hash
-    var qHash = 0;
-    for (var hi = 0; hi < q.length; hi++) qHash = ((qHash << 5) - qHash + q.charCodeAt(hi)) | 0;
-    qHash = Math.abs(qHash);
-    var basePubmed = 80 + (qHash % 400);
-    var baseCochrane = 10 + (qHash % 60);
-    var baseLilacs = 5 + (qHash % 35);
-    var baseScopus = 60 + (qHash % 350);
-    var baseWos = 40 + (qHash % 250);
-
-    // Cochrane equation (plain text)
-    var cochraneEq = [pTerm, iTerm, oTerm].filter(Boolean).map(function(t) { return '"' + t + '"'; }).join(' AND ');
-    // LILACS equation (Spanish DeCS style)
-    var lilacsEq = [pTerm, iTerm].filter(Boolean).map(function(t) { return '(' + t + ')'; }).join(' AND ');
-    if (oTerm) lilacsEq += ' AND (' + oTerm + ')';
-    // EMBASE equation (Emtree syntax with /exp)
-    var embaseEq = [pTerm, iTerm].filter(Boolean).map(function(t) { return "'" + t.toLowerCase() + "'/exp"; }).join(' AND ');
-    if (oTerm) embaseEq += " AND '" + oTerm.toLowerCase() + "'/exp";
-    var baseEmbase = Math.round(baseScopus * 0.85);
-    // Scopus equation
-    var scopusEq = 'TITLE-ABS-KEY(' + [pTerm, iTerm].filter(Boolean).map(function(t) { return '"' + t + '"'; }).join(' AND ') + ')';
-    // WoS equation
-    var wosEq = 'TS=(' + [pTerm, iTerm].filter(Boolean).map(function(t) { return '"' + t + '"'; }).join(' AND ') + ')';
-
-    searchRegistry = [
-      { database: 'PubMed/MEDLINE', equation: pubmedEq, results: basePubmed, included: Math.round(basePubmed * 0.03) + 2, date: '2025-01-15', color: 'blue' },
-      { database: 'Cochrane Library', equation: cochraneEq || '"' + q.substring(0, 60) + '"', results: baseCochrane, included: Math.round(baseCochrane * 0.06) + 1, date: '2025-01-15', color: 'indigo' },
-      { database: 'EMBASE', equation: embaseEq, results: baseEmbase, included: Math.round(baseEmbase * 0.03) + 1, date: '2025-01-16', color: 'orange' },
-      { database: 'LILACS', equation: lilacsEq || '(' + q.substring(0, 60) + ')', results: baseLilacs, included: Math.round(baseLilacs * 0.08) + 1, date: '2025-01-16', color: 'green' },
-      { database: 'Scopus', equation: scopusEq, results: baseScopus, included: Math.round(baseScopus * 0.04) + 1, date: '2025-01-16', color: 'amber' },
-      { database: 'Web of Science', equation: wosEq, results: baseWos, included: Math.round(baseWos * 0.04) + 1, date: '2025-01-17', color: 'purple' },
-    ];
-
-    // Build descriptor mapping from PICOT terms
-    var allTerms = [pTerm, iTerm, cTerm, oTerm].filter(function(t) { return t && t.length > 3 && !(/^(Tratamiento estandar|Placebo|Intervencion eval|Desenlaces clinicos|Poblacion del)/i.test(t)); });
-    descriptorMapping = allTerms.map(function(t) {
-      var cap = meshCapitalize(t);
-      return { term: cap, mesh: cap, decs: cap, emtree: t.toLowerCase() };
-    });
-
-    // PRISMA flow: derive from search registry totals
-    var totalIdentifiedSim = searchRegistry.reduce(function(s, r) { return s + r.results; }, 0);
-    var totalIncludedSim = searchRegistry.reduce(function(s, r) { return s + r.included; }, 0);
-    var dupRate = 0.25 + (qHash % 15) / 100;
-    var dupsRemoved = Math.round(totalIdentifiedSim * dupRate);
-    var screenedTitle = totalIdentifiedSim - dupsRemoved;
-    var excludedTitle = Math.round(screenedTitle * (0.65 + (qHash % 15) / 100));
-    var screenedFT = screenedTitle - excludedTitle;
-    var excludedFT = Math.round(screenedFT * (0.40 + (qHash % 20) / 100));
-    var qualAssessed = screenedFT - excludedFT;
-    var excludedQual = Math.max(0, qualAssessed - totalIncludedSim);
-    var inclQuali = totalIncludedSim;
-    var inclQuant = Math.max(2, Math.round(totalIncludedSim * 0.75));
-
-    prisma = {
-      identified: totalIdentifiedSim,
-      duplicates_removed: dupsRemoved,
-      screened_title: screenedTitle,
-      excluded_title: excludedTitle,
-      screened_fulltext: screenedFT,
-      excluded_fulltext: excludedFT,
-      quality_assessed: qualAssessed,
-      excluded_quality: excludedQual,
-      included_qualitative: inclQuali,
-      included_quantitative: inclQuant
-    };
-
-    // Stats: generate plausible values seeded by question
-    var baseOR = 1.2 + (qHash % 30) / 10;
-    var baseI2 = 30 + (qHash % 50);
-    stats = {
-      pooled_sensitivity: { value: 75 + (qHash % 20), ci_low: 68 + (qHash % 15), ci_high: 85 + (qHash % 12) },
-      pooled_specificity: { value: 72 + (qHash % 22), ci_low: 65 + (qHash % 18), ci_high: 82 + (qHash % 15) },
-      auc_sroc: { value: parseFloat((0.75 + (qHash % 20) / 100).toFixed(3)), ci_low: parseFloat((0.68 + (qHash % 15) / 100).toFixed(3)), ci_high: parseFloat((0.88 + (qHash % 10) / 100).toFixed(3)) },
-      i2_sensitivity: baseI2, i2_specificity: baseI2 - 4 + (qHash % 8), cochran_q_p: parseFloat((0.001 + (qHash % 50) / 1000).toFixed(3)),
-      median_n: 200 + (qHash % 5000), mean_n: 800 + (qHash % 10000), sd_n: 400 + (qHash % 8000)
-    };
-  }
-
-  var equatorChecklist = [
-    { guideline: 'PRISMA-DTA 2018', category: 'Reporte', items_total: 27, items_met: 25, status: 'pass', notes: 'Faltante: protocolo en PROSPERO (en proceso), analisis de publicacion sesgada' },
-    { guideline: 'QUADAS-2', category: 'Calidad', items_total: 4, items_met: 4, status: 'pass', notes: 'Todos los dominios evaluados: seleccion, indice, referencia, flujo' },
-    { guideline: 'GRADE-DTA', category: 'Certeza', items_total: 5, items_met: 4, status: 'pass', notes: 'Certeza moderada por inconsistencia en contextos rurales' },
-    { guideline: 'STARD 2015', category: 'Diagnostico', items_total: 30, items_met: 27, status: 'pass', notes: 'Aplicable a estudios primarios incluidos. 3 items N/A para revision' },
-  ];
-
-  var extraction;
-  if (isDefault) {
-    extraction = [
-      { autor:'Gulshan V. et al.', anio:2016, pais:'Estados Unidos', diseno:'DTA', n:'128,175', resultado:'AUC 0.991. Sens 97.5%, Esp 93.4%', sesgo:'bajo' },
-      { autor:'Ting DSW. et al.', anio:2017, pais:'Singapur', diseno:'Cohorte retrospectiva', n:'494,661', resultado:'Sens 90.5%, Esp 91.6%', sesgo:'bajo' },
-      { autor:'Raman R. et al.', anio:2019, pais:'India', diseno:'Transversal rural', n:'301', resultado:'Sens 95.8%, Esp 80.2%', sesgo:'moderado' },
-      { autor:'Rodriguez-Meza D.', anio:2021, pais:'Mexico', diseno:'Piloto prospectivo', n:'1,240', resultado:'Reduccion 40% tiempo. Sens 91.2%', sesgo:'moderado' },
-      { autor:'Bora A. et al.', anio:2023, pais:'Brasil', diseno:'Multicentrico', n:'15,800', resultado:'AUC 0.943, USD 4.2/paciente', sesgo:'bajo' },
-    ];
-  } else {
-    // ── DYNAMIC extraction table from PICOT + study type ──
-    var lastNames = ['Garcia','Rodriguez','Martinez','Lopez','Hernandez','Gonzalez','Perez','Sanchez','Torres','Ramirez','Flores','Rivera','Gomez','Diaz','Reyes','Morales','Chen','Kim','Wang','Patel','Singh','Li','Anderson','Taylor','Wilson','Johnson','Brown','Miller','Smith','Thompson','Kumar','Nakamura','Tanaka','Park','Muller','Schmidt','Fischer','Silva','Santos','Costa'];
-    var countries = ['Mexico','Colombia','Brasil','Argentina','Peru','Chile','Espana','Estados Unidos','India','China','Japon','Corea del Sur','Alemania','Reino Unido','Canada','Australia','Francia','Italia','Sudafrica','Tailandia'];
-    var designsForType = {
-      rs_ma: ['ECA','Cohorte','Transversal','Caso-control','Cuasi-experimental'],
-      eca: ['ECA','ECA piloto','ECA multicentrico','ECA cruzado'],
-      cohorte: ['Cohorte prospectiva','Cohorte retrospectiva','Cohorte multicentrica'],
-      caso_control: ['Caso-control','Caso-control anidado','Caso-control pareado'],
-      transversal: ['Transversal analitico','Transversal descriptivo','Encuesta poblacional'],
-      dta: ['DTA prospectivo','DTA retrospectivo','DTA multicentrico','Cohorte retrospectiva'],
-      cualitativo: ['Fenomenologico','Teoria fundamentada','Etnografico','Estudio de caso'],
-      caso_reporte: ['Reporte de caso','Serie de casos']
-    };
-    var detectedTypeForExtraction = isDefault ? 'dta' : detectStudyTypeId(framework, q);
-    var availableDesigns = designsForType[detectedTypeForExtraction] || designsForType['rs_ma'];
-    var biasOptions = ['bajo','bajo','bajo','moderado','moderado','alto'];
-    var numStudies = 4 + (qHash % 5); // 4 to 8 studies
-    var resultTemplates = [
-      function(h) { return 'OR ' + (1.1 + (h % 30) / 10).toFixed(2) + ' (IC95% ' + (0.8 + (h % 15) / 10).toFixed(2) + '-' + (2.0 + (h % 25) / 10).toFixed(2) + ')'; },
-      function(h) { return 'HR ' + (0.5 + (h % 40) / 100).toFixed(2) + ' (IC95% ' + (0.3 + (h % 20) / 100).toFixed(2) + '-' + (0.8 + (h % 30) / 100).toFixed(2) + ')'; },
-      function(h) { return 'RR ' + (0.6 + (h % 35) / 100).toFixed(2) + ' (IC95% ' + (0.4 + (h % 25) / 100).toFixed(2) + '-' + (0.9 + (h % 20) / 100).toFixed(2) + ')'; },
-      function(h) { return 'p=' + (0.001 + (h % 40) / 1000).toFixed(3) + ', NNT=' + (3 + h % 15); },
-      function(h) { return 'SMD ' + (0.2 + (h % 50) / 100).toFixed(2) + ' (IC95% ' + (0.05 + (h % 20) / 100).toFixed(2) + '-' + (0.5 + (h % 40) / 100).toFixed(2) + ')'; },
-    ];
-    extraction = [];
-    for (var ei = 0; ei < numStudies; ei++) {
-      var eHash = (qHash * (ei + 7) + ei * 31) & 0x7FFFFFFF;
-      var sampleBase = [120, 250, 480, 800, 1500, 3200, 150, 620];
-      var nVal = sampleBase[ei % sampleBase.length] + (eHash % 300);
-      extraction.push({
-        autor: lastNames[eHash % lastNames.length] + ' ' + String.fromCharCode(65 + (ei % 26)) + '. et al.',
-        anio: 2018 + (eHash % 7),
-        pais: countries[eHash % countries.length],
-        diseno: availableDesigns[eHash % availableDesigns.length],
-        n: nVal.toLocaleString('en'),
-        resultado: resultTemplates[eHash % resultTemplates.length](eHash),
-        sesgo: biasOptions[eHash % biasOptions.length]
-      });
-    }
-  }
-
-  // Planteamiento text for typewriter
-  var planteamiento = isDefault ?
-    'La retinopatia diabetica (RD) es la principal causa de ceguera prevenible en adultos en edad laboral. En Colombia, la prevalencia de diabetes tipo 2 alcanza el 10.6% en areas urbanas y aproximadamente el 8% en zonas rurales, donde el acceso a oftalmologos especializados es extremadamente limitado [1-3].\n\nLos algoritmos de Deep Learning, particularmente las redes neuronales convolucionales (CNN), han demostrado precision comparable a especialistas en la deteccion de RD en entornos controlados. Sin embargo, existe una brecha critica: la evidencia sobre su rendimiento en contextos de atencion primaria rural en paises de ingreso medio es escasa [4-7].\n\nEsta revision sistematica con meta-analisis evaluara la precision diagnostica de algoritmos de DL comparada con la lectura por oftalmologos certificados, con enfasis en contextos rurales de America Latina [8-10].'
-    : injectCitationsInPlanteamiento((function() {
-      var P = fwData.P || 'la poblacion de estudio', I = fwData.I || 'la intervencion', C = fwData.C || 'el comparador', O = fwData.O || 'los desenlaces', S = fwData.S || '';
-      var t = '';
-      t += 'En ' + P.toLowerCase() + ', el manejo clinico actual enfrenta desafios relacionados con la seleccion optima de estrategias terapeuticas. La carga de enfermedad asociada a esta condicion ha sido documentada en estudios epidemiologicos que reportan tasas de morbilidad y mortalidad significativas, con impacto directo en los sistemas de salud y en la calidad de vida de los pacientes.';
-      t += '\n\n';
-      t += 'La utilizacion de ' + I.toLowerCase() + ' se ha propuesto como una alternativa con potencial para mejorar los resultados clinicos en esta poblacion. Estudios preliminares han descrito su perfil de eficacia y seguridad, aunque la evidencia disponible proviene principalmente de series de casos y estudios observacionales con limitaciones metodologicas. Cuando se compara con ' + C.toLowerCase() + ', que constituye el estandar de atencion actual segun las guias de practica clinica vigentes, los resultados publicados muestran diferencias que requieren una evaluacion sistematica y cuantitativa para determinar su significancia clinica.';
-      t += '\n\n';
-      t += 'Los desenlaces de interes incluyen ' + O.toLowerCase() + '. Estos indicadores han sido seleccionados por su relevancia clinica directa y su capacidad para reflejar diferencias clinicamente significativas entre las estrategias comparadas. La medicion estandarizada de estos resultados es fundamental para permitir la comparabilidad entre estudios y la aplicabilidad de los hallazgos a la practica clinica.';
-      t += '\n\n';
-      t += 'Existe una brecha especifica en la literatura: no se dispone de una sintesis sistematica que compare directamente ' + I.toLowerCase() + ' versus ' + C.toLowerCase() + ' en ' + P.toLowerCase() + ', evaluando especificamente ' + O.toLowerCase() + '. Los estudios publicados hasta la fecha presentan heterogeneidad en diseno, poblaciones y definiciones de desenlaces, lo que impide extraer conclusiones definitivas sin una revision sistematica formal.';
-      t += '\n\n';
-      t += 'Esta investigacion se estructura bajo el marco ' + framework + ' y se ejecutara mediante una busqueda sistematica en PubMed/MEDLINE, Cochrane Library, LILACS, Scopus y Web of Science. La evaluacion del riesgo de sesgo se realizara con herramientas validadas y la calidad de la evidencia se clasificara mediante el sistema GRADE, siguiendo las guias PRISMA 2020.';
-      return t;
-    })(), extraction.length);
-
-  // ── Detect study type and apply config ──
-  var detectedTypeId = isDefault ? 'dta' : detectStudyTypeId(framework, q);
-  // If user already selected a type, use that instead
-  if (selectedStudyTypeId) detectedTypeId = selectedStudyTypeId;
-  var stCfg = getStudyTypeConfig(detectedTypeId);
-
-  // Build protocol draft adapted to study type
-  var protocolDraft;
-  if (isDefault) {
-    protocolDraft = 'PROTOCOLO DE INVESTIGACION\n\n1. TITULO\nPrecision diagnostica de Deep Learning para retinopatia diabetica en atencion primaria rural: revision sistematica y meta-analisis\n\n2. REGISTRO: PROSPERO CRD42025XXXXXX\n\n3. ANTECEDENTES\nLa RD es la principal causa de ceguera prevenible. Prevalencia DM2 en Colombia: 10.6% urbano, ~8% rural. DL muestra precision comparable a especialistas en entornos controlados.\n\n4. OBJETIVO\nEvaluar precision diagnostica de DL vs oftalmologos para RD, enfasis en contextos rurales.\n\n5. CRITERIOS\nInclusion: Estudios DL para RD, referencia estandar, Sens/Esp reportada, >=50 imagenes.\nExclusion: Cartas, opiniones, sin referencia.\n\n6. BUSQUEDA\n6 bases de datos. 2018-2025. Sin restriccion de idioma.\n\n7. CALIDAD: QUADAS-2. Dos revisores independientes.\n\n8. SINTESIS: Meta-analisis bivariado. SROC. I2. R (mada).\n\n9. GUIAS: PRISMA-DTA, QUADAS-2, GRADE-DTA, STARD 2015\n\n10. CRONOGRAMA: 8 semanas\n\n11. ETICA: No requiere aprobacion. Sin conflictos.';
-  } else {
-    protocolDraft = generateProtocolByType(stCfg, q, fwData, framework);
-  }
-
-  // Build manuscript adapted to study type
-  var manuscriptText;
-  if (isDefault) {
-    manuscriptText = 'Titulo: Precision diagnostica de Deep Learning para retinopatia diabetica en atencion primaria rural\n\nResumen:\nObjetivo: Evaluar precision DL para RD en AP rural.\nMetodos: RS y MA de DTA. 6 bases de datos (2018-2025). QUADAS-2. MA bivariado.\nResultados: 12 estudios (N=657,177). Sens agrupada 93.2% (89.8-95.6%). Esp 91.1% (87.4-93.8%). AUC-SROC 0.967. Rural (k=4): Sens 91.8%, Esp 84.3%.\nConclusiones: DL alta precision para RD. Especificidad menor en rural sugiere calibracion local.\nPalabras clave: Deep Learning, retinopatia diabetica, precision diagnostica, tamizaje';
-  } else {
-    manuscriptText = generateManuscriptByType(stCfg, q, fwData);
-  }
-
-  return {
-    framework: framework, picot: fwData,
-    study_type_id: detectedTypeId,
-    study_type: { type: stCfg.type, design_locked: stCfg.design_locked, justification: isDefault ? 'Pregunta de precision diagnostica con multiples estudios primarios disponibles. El meta-analisis bivariado permite sintetizar sensibilidad y especificidad.' : 'Diseno seleccionado automaticamente segun el tipo de pregunta detectada.', design_details: stCfg.equator.map(function(e){return e.guideline}).join(', ') + '.' },
-    finer_results: finerScores,
-    hypothesis: { null_hypothesis: isDefault ? 'No existe diferencia en precision diagnostica entre DL y oftalmologos para RD.' : 'No existe diferencia estadisticamente significativa en ' + (fwData.O || 'los desenlaces evaluados').toLowerCase() + ' entre ' + (fwData.P || 'los pacientes').toLowerCase() + ' tratados con ' + (fwData.I || 'la intervencion').toLowerCase() + ' versus ' + (fwData.C || 'el comparador').toLowerCase() + '.', alternative_hypothesis: isDefault ? 'DL presenta precision no inferior (margen 5%) a oftalmologos en atencion primaria rural.' : 'Existe diferencia estadisticamente significativa en ' + (fwData.O || 'los desenlaces evaluados').toLowerCase() + ' entre ' + (fwData.P || 'los pacientes').toLowerCase() + ' tratados con ' + (fwData.I || 'la intervencion').toLowerCase() + ' versus ' + (fwData.C || 'el comparador').toLowerCase() + '.', type: isDefault ? 'No inferioridad' : 'Bilateral' },
-    folder_structure: stCfg.folderStructure,
-    search_registry: stCfg.needsSystematicSearch ? searchRegistry : [],
-    descriptor_mapping: descriptorMapping,
-    search_strategy: stCfg.needsSystematicSearch ? { databases: stCfg.searchDatabases, boolean_equation: searchRegistry[0].equation, filters: 'Fecha: 2018-2025 | Idiomas: EN, ES, PT | Tipo: originales', prisma: prisma } : { databases: [], boolean_equation: '', filters: '', prisma: null },
-    feasibility: (function() {
-      if (isDefault) return {
-        dimensions: {
-          recursos: { score: 88, risk: 'bajo', note: 'Revision sistematica requiere acceso a bases de datos (disponible via institucional) y software estadistico R/mada (gratuito).' },
-          tiempo: { score: 82, risk: 'bajo', note: 'Cronograma de 8-12 semanas es realista para RS con meta-analisis de DTA.' },
-          acceso_datos: { score: 90, risk: 'bajo', note: 'Datos accesibles via PubMed, Cochrane, LILACS y Scopus. No requiere datos primarios.' },
-          equipo: { score: 78, risk: 'bajo', note: 'Requiere competencias en meta-analisis bivariado y uso de R. Capacitacion disponible.' },
-          apoyo_institucional: { score: 85, risk: 'bajo', note: 'RS de literatura publicada no requiere aprobacion de comite de etica. Registro PROSPERO recomendado.' },
-          complejidad: { score: 75, risk: 'bajo', note: 'Meta-analisis bivariado (Reitsma) requiere experiencia intermedia. Herramientas estandarizadas disponibles.' }
-        },
-        overall_score: 83, viable: true, verdict: 'viable',
-        critical_risks: [],
-        recommendations: ['Registrar protocolo en PROSPERO antes de iniciar extraccion', 'Considerar capacitacion en meta-analisis bivariado con R/mada'],
-        summary: 'El proyecto es operativamente viable. Los recursos necesarios para una revision sistematica con meta-analisis estan disponibles. Se recomienda registro PROSPERO y capacitacion en herramientas estadisticas especificas.'
-      };
-      var P = fwData.P || '', I = fwData.I || '', C = fwData.C || '', O = fwData.O || '';
-      return {
-        dimensions: {
-          recursos: { score: 70, risk: 'bajo', note: 'Se requiere acceso institucional a bases de datos biomedicas (PubMed, Cochrane, Scopus, LILACS). Software estadistico R y paquetes especializados (metafor, mada) son de acceso libre. No se requiere financiacion externa significativa para la realizacion de la revision sistematica.' },
-          tiempo: { score: 65, risk: 'moderado', note: 'Se estima un cronograma de 10-16 semanas para completar la revision sistematica sobre ' + I.toLowerCase() + '. La fase de busqueda y cribado requiere 3-4 semanas, la extraccion de datos 2-3 semanas, y el analisis estadistico y redaccion 4-6 semanas adicionales.' },
-          acceso_datos: { score: 75, risk: 'bajo', note: 'Los datos necesarios provienen de estudios publicados sobre ' + P.toLowerCase() + ' accesibles en bases de datos internacionales. No se requieren datos primarios ni acceso a historias clinicas. La disponibilidad de textos completos depende del acceso institucional a revistas especializadas.' },
-          equipo: { score: 60, risk: 'moderado', note: 'Se requiere un equipo con competencias en revision sistematica, extraccion de datos y meta-analisis. Se necesitan al menos dos revisores independientes para el cribado y evaluacion de calidad. Puede requerirse asesoria bioestadistica para el analisis de ' + O.toLowerCase() + '.' },
-          apoyo_institucional: { score: 72, risk: 'bajo', note: 'La revision sistematica de literatura publicada no requiere aprobacion de comite de etica por tratarse de datos secundarios. Se recomienda el registro del protocolo en PROSPERO para garantizar transparencia y evitar duplicacion de esfuerzos.' },
-          complejidad: { score: 55, risk: 'moderado', note: 'La complejidad del meta-analisis depende de la heterogeneidad de los estudios sobre ' + I.toLowerCase() + ' versus ' + C.toLowerCase() + '. Se requiere experiencia en evaluacion de riesgo de sesgo, analisis de heterogeneidad (I2, Q de Cochran) y evaluacion GRADE de la certeza de la evidencia.' }
-        },
-        overall_score: 66, viable: true, verdict: 'viable_con_reservas',
-        critical_risks: ['La heterogeneidad entre estudios sobre ' + I.toLowerCase() + ' podria limitar la viabilidad del meta-analisis cuantitativo.', 'El numero limitado de estudios comparativos directos entre ' + I.toLowerCase() + ' y ' + C.toLowerCase() + ' podria reducir el poder estadistico del analisis.'],
-        recommendations: ['Registrar el protocolo en PROSPERO antes de iniciar la extraccion de datos para garantizar transparencia metodologica.', 'Establecer criterios de inclusion y exclusion claros basados en la poblacion de ' + P.toLowerCase() + ' y los desenlaces de interes.', 'Planificar analisis de sensibilidad y subgrupos para abordar la heterogeneidad potencial entre estudios.', 'Considerar contacto con autores de estudios primarios para obtener datos adicionales no publicados.'],
-        summary: 'El proyecto es viable con reservas. La busqueda sistematica sobre ' + I.toLowerCase() + ' en ' + P.toLowerCase() + ' es factible con recursos institucionales disponibles. Las principales limitaciones son la posible escasez de estudios comparativos directos y la heterogeneidad metodologica. Se recomienda registro en PROSPERO, conformacion de equipo con experiencia en meta-analisis y planificacion de cronograma con margenes de contingencia.'
-      };
-    })(),
-    sample_size: {
-      formula: stCfg.sampleSizeFormula || 'single_proportion',
-      alpha: 0.05, power: 0.80, tails: 'bilateral',
-      p: 0.93, margin: 0.05, lossRate: 0.15,
-      n_raw: 101, n_total: 101, n_adjusted: 119,
-      formula_display: 'n = [Z\u00B2 \u00D7 p(1-p)] / d\u00B2'
-    },
-    extraction_table: extraction, stats: stats,
-    equator_checklist: stCfg.equator,
-    planteamiento: planteamiento,
-    protocol_draft: protocolDraft,
-    manuscript: manuscriptText
-  };
-}
+/* ── REMOVED: ~330 lines of fake template data ──
+   Original function generated hardcoded PICOT, FINER, PRISMA, extraction tables, etc.
+   Now all data comes from /api/agents/* endpoints calling Claude API.
+*/
 
 // ── Generate protocol text adapted to study type ──
 function generateProtocolByType(cfg, question, picot, framework) {
@@ -2238,13 +1895,10 @@ function confirmStep() {
 async function runFullSimulation(question) {
   try {
   // If simData was pre-populated by the real API, use it; otherwise generate simulation data
-  // CRITICAL: When REAL_AI_ENABLED, NEVER fall back to fake data
+  // CRITICAL: NEVER fall back to fake data — always require real API data
   if (!simData) {
-    if (REAL_AI_ENABLED) {
-      showToast('Error: No hay datos reales disponibles. La API no respondio.', 'error');
-      return;
-    }
-    simData = generateSimulationData(question);
+    showToast('Error: No hay datos reales disponibles. La API no respondio.', 'error');
+    return;
   }
 
   // ── Early PubMed fetch: get real articles for references BEFORE planteamiento ──
@@ -2671,7 +2325,7 @@ function setCurrentUser(authUser, userInfo) {
     department_name: dept ? dept.name : 'Jefe de Investigacion',
     role: userInfo.role,
     dept_icon: dept ? dept.icon : '\uD83C\uDF93',
-    dept_color: dept ? dept.color : '#0091DF'
+    dept_color: dept ? dept.color : '#4DA8A1'
   };
 }
 
@@ -3215,7 +2869,7 @@ function exportDossier() {
   doc += line;
   doc += 'FIN DEL DOSSIER\n';
   doc += 'Documento generado automaticamente por Galatea AI\n';
-  doc += 'Este documento es una simulacion con fines demostrativos.\n';
+  doc += 'Documento generado en modo piloto — verificar antes de uso oficial.\n';
   doc += line;
 
   var blob = new Blob([doc], { type: 'application/msword' });
@@ -5410,7 +5064,7 @@ function awaitStage2Confirmation(completedStep, nextPhaseKey) {
     var card = document.createElement('div');
     card.id = 'confirmCard';
     card.className = 'galatea-approval rounded-2xl p-6 mb-6 fade-up';
-    card.style.cssText = 'border: 3px solid #0091DF; box-shadow: 0 0 20px rgba(0,145,223,0.3);';
+    card.style.cssText = 'border: 3px solid #4DA8A1; box-shadow: 0 0 20px rgba(0,145,223,0.3);';
     card.innerHTML =
       '<div class="flex items-center gap-3 mb-4">' +
         '<div class="w-10 h-10 rounded-full bg-gradient-to-br from-galatea to-verde flex items-center justify-center shadow-md">' +
@@ -9073,7 +8727,7 @@ function renderForestPlot(sd) {
     // CI line
     h += '<line x1="' + xLo + '" y1="' + y + '" x2="' + xHi + '" y2="' + y + '" class="forest-ci"/>';
     // Square (weight = size)
-    h += '<rect x="' + (xOR - sqSize / 2) + '" y="' + (y - sqSize / 2) + '" width="' + sqSize + '" height="' + sqSize + '" fill="#0091DF" class="forest-square" rx="1"/>';
+    h += '<rect x="' + (xOR - sqSize / 2) + '" y="' + (y - sqSize / 2) + '" width="' + sqSize + '" height="' + sqSize + '" fill="#4DA8A1" class="forest-square" rx="1"/>';
     // OR label
     h += '<text x="' + (plotR + 8) + '" y="' + (y + 4) + '" font-size="9" fill="#64748b">' + s.or.toFixed(2) + ' [' + s.or_lo.toFixed(2) + '-' + s.or_hi.toFixed(2) + ']</text>';
     h += '</g>';
@@ -9085,8 +8739,8 @@ function renderForestPlot(sd) {
   var dxLo = xScale(pooled.or_lo);
   var dxHi = xScale(pooled.or_hi);
   h += '<polygon points="' + dxLo + ',' + dy + ' ' + dxOR + ',' + (dy - 8) + ' ' + dxHi + ',' + dy + ' ' + dxOR + ',' + (dy + 8) + '" class="forest-diamond"/>';
-  h += '<text x="10" y="' + (dy + 4) + '" font-size="11" font-weight="800" fill="#0091DF">Global (' + sd.model.split('(')[0].trim() + ')</text>';
-  h += '<text x="' + (plotR + 8) + '" y="' + (dy + 4) + '" font-size="10" font-weight="800" fill="#0091DF">' + pooled.or + ' [' + pooled.or_lo + '-' + pooled.or_hi + ']</text>';
+  h += '<text x="10" y="' + (dy + 4) + '" font-size="11" font-weight="800" fill="#4DA8A1">Global (' + sd.model.split('(')[0].trim() + ')</text>';
+  h += '<text x="' + (plotR + 8) + '" y="' + (dy + 4) + '" font-size="10" font-weight="800" fill="#4DA8A1">' + pooled.or + ' [' + pooled.or_lo + '-' + pooled.or_hi + ']</text>';
 
   // Labels
   h += '<text x="' + (plotL + 20) + '" y="' + (H - 2) + '" font-size="8" fill="#94a3b8">&#x2190; Favorece control</text>';
@@ -9678,13 +9332,13 @@ function addToManuscript(type, sourceElId) {
   var summary = '';
   if (type === 'forest' && stage3SimData) {
     summary = '<div style="border:1px solid #d1d5db;padding:12px;border-radius:4px;margin:8px 0;background:#fafafa">';
-    summary += '<div style="font-family:Inter,sans-serif;font-size:9px;font-weight:700;color:#0091DF;margin-bottom:6px">FOREST PLOT — METAANALISIS</div>';
+    summary += '<div style="font-family:Inter,sans-serif;font-size:9px;font-weight:700;color:#4DA8A1;margin-bottom:6px">FOREST PLOT — METAANALISIS</div>';
     summary += '<table style="width:100%;font-size:9px;border-collapse:collapse">';
     summary += '<tr style="border-bottom:1px solid #e2e8f0"><th style="text-align:left;padding:2px 4px">Estudio</th><th>OR [IC 95%]</th><th>Peso</th></tr>';
     stage3SimData.studies.forEach(function(s) {
       summary += '<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:2px 4px">' + s.author + ' ' + s.year + '</td><td style="text-align:center">' + s.or.toFixed(2) + ' [' + s.or_lo.toFixed(2) + '-' + s.or_hi.toFixed(2) + ']</td><td style="text-align:center">' + s.weight + '%</td></tr>';
     });
-    summary += '<tr style="border-top:2px solid #0091DF;font-weight:700;color:#0091DF"><td style="padding:2px 4px">Global</td><td style="text-align:center">' + stage3SimData.pooled.or + ' [' + stage3SimData.pooled.or_lo + '-' + stage3SimData.pooled.or_hi + ']</td><td style="text-align:center">100%</td></tr>';
+    summary += '<tr style="border-top:2px solid #4DA8A1;font-weight:700;color:#4DA8A1"><td style="padding:2px 4px">Global</td><td style="text-align:center">' + stage3SimData.pooled.or + ' [' + stage3SimData.pooled.or_lo + '-' + stage3SimData.pooled.or_hi + ']</td><td style="text-align:center">100%</td></tr>';
     summary += '</table></div>';
   } else if (type === 'grade' && stage3SimData) {
     summary = '<div style="border:1px solid #d1d5db;padding:12px;border-radius:4px;margin:8px 0;background:#fafafa">';
@@ -9804,12 +9458,12 @@ function exportProtocolPDF() {
   var fecha = new Date().toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' });
   var html = '<html><head><meta charset="UTF-8"><style>';
   html += 'body{font-family:Georgia,serif;font-size:12pt;margin:60px 72px;color:#1a1a1a;line-height:1.8}';
-  html += 'h1{font-family:Arial,sans-serif;font-size:16pt;color:#0091DF;text-align:center;margin:20px 0}';
-  html += 'h2{font-family:Arial,sans-serif;font-size:13pt;color:#0f172a;border-bottom:2px solid #0091DF;padding-bottom:4px;margin-top:24px}';
-  html += '.header{text-align:center;border-bottom:3px solid #0091DF;padding-bottom:12px;margin-bottom:24px}';
-  html += '.institution{font-family:Arial,sans-serif;font-size:14pt;font-weight:bold;color:#0091DF;letter-spacing:1px}';
+  html += 'h1{font-family:Arial,sans-serif;font-size:16pt;color:#4DA8A1;text-align:center;margin:20px 0}';
+  html += 'h2{font-family:Arial,sans-serif;font-size:13pt;color:#0f172a;border-bottom:2px solid #4DA8A1;padding-bottom:4px;margin-top:24px}';
+  html += '.header{text-align:center;border-bottom:3px solid #4DA8A1;padding-bottom:12px;margin-bottom:24px}';
+  html += '.institution{font-family:Arial,sans-serif;font-size:14pt;font-weight:bold;color:#4DA8A1;letter-spacing:1px}';
   html += '.dept{font-size:10pt;color:#666;margin-top:4px}';
-  html += '.badge{display:inline-block;background:#f0f9ff;border:1px solid #0091DF;border-radius:4px;padding:2px 8px;font-size:9pt;color:#0091DF;margin:8px 0}';
+  html += '.badge{display:inline-block;background:#f0f9ff;border:1px solid #4DA8A1;border-radius:4px;padding:2px 8px;font-size:9pt;color:#4DA8A1;margin:8px 0}';
   html += 'table{width:100%;border-collapse:collapse;margin:12px 0;font-size:10pt}';
   html += 'th{background:#f1f5f9;border:1px solid #d1d5db;padding:6px 8px;text-align:left;font-family:Arial,sans-serif}';
   html += 'td{border:1px solid #d1d5db;padding:6px 8px}';
@@ -10664,35 +10318,10 @@ function exportCoverLetter() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MODO DEMO / REAL AI TOGGLE
+// MODO PILOTO — Always real AI (toggle removed)
 // ═══════════════════════════════════════════════════════════════
-function setModeToggleUI(isReal) {
-  var btn = $('modeBtn');
-  var dot = $('modeDot');
-  var labelDemo = $('modeLabel');
-  var labelReal = $('modeLabelReal');
-  if (isReal) {
-    if (btn) { btn.classList.remove('bg-white/20'); btn.classList.add('bg-galatea'); }
-    if (dot) dot.style.transform = 'translateX(20px)';
-    if (labelDemo) { labelDemo.classList.remove('text-white/60'); labelDemo.classList.add('text-white/30'); }
-    if (labelReal) { labelReal.classList.remove('text-white/30'); labelReal.classList.add('text-galatea'); }
-  } else {
-    if (btn) { btn.classList.remove('bg-galatea'); btn.classList.add('bg-white/20'); }
-    if (dot) dot.style.transform = 'translateX(0)';
-    if (labelDemo) { labelDemo.classList.remove('text-white/30'); labelDemo.classList.add('text-white/60'); }
-    if (labelReal) { labelReal.classList.remove('text-galatea'); labelReal.classList.add('text-white/30'); }
-  }
-}
-
-function toggleRealMode() {
-  REAL_AI_ENABLED = !REAL_AI_ENABLED;
-  setModeToggleUI(REAL_AI_ENABLED);
-  if (REAL_AI_ENABLED) {
-    showToast('Modo Real AI activado — se usara Claude API', 'info');
-  } else {
-    showToast('Modo Demo activado — datos simulados', 'info');
-  }
-}
+function setModeToggleUI() { /* no-op: always real */ }
+function toggleRealMode() { /* no-op: always real */ }
 
 // ═══════════════════════════════════════════════════════════════
 // REAL AI — Helper: call single agent endpoint with timeout
@@ -10771,7 +10400,7 @@ function buildRealPrisma(pubmedCount, articlesReturned) {
 // REAL AI — Transform API results (ZERO simulation data mixed in)
 // ═══════════════════════════════════════════════════════════════
 function transformApiToReal(picotData, finerData, scoutData, pubmedResult, question, extraAgents) {
-  // Start from EMPTY object — no generateSimulationData() contamination
+  // Start from EMPTY object — data comes from real API agents only
   var real = {};
   var q = (question || '').trim();
   var extra = extraAgents || {};
@@ -11118,11 +10747,7 @@ function awaitPubMedExecution() {
 // REAL AI — Step-by-step agent flow with progress feedback
 // ═══════════════════════════════════════════════════════════════
 async function callAgentOrSimulate(question) {
-  if (!REAL_AI_ENABLED) {
-    return runFullSimulation(question);
-  }
-
-  // ── REAL MODE: call agents one by one with progress ──
+  // ── Always REAL MODE: call agents one by one with progress ──
   simulationRunning = true;
   simulationAborted = false;
   showBubble();
@@ -11497,25 +11122,28 @@ async function callAgentOrSimulate(question) {
       : isTimeout ? 'El servidor tardo demasiado en responder. Intenta de nuevo.'
       : errMsg;
 
-    showToast('Error Real AI: ' + userFriendly, 'error');
+    showToast('Error: ' + userFriendly, 'error');
 
-    // Show error detail in bubble instead of silent fallback
-    setBubbleStatus('done', 'Error Real AI');
-    await bubbleTypewriter(
-      '<div class="text-red-600"><strong>Error en modo Real AI:</strong><br>' + esc(userFriendly) + '</div>' +
-      '<div class="mt-2 text-gray-500 text-[10px]">Detalle tecnico: ' + esc(errMsg) + '</div>' +
-      '<div class="mt-2">Cambiando a <strong>modo Demo</strong> con datos dinamicos. Puedes reintentar con el toggle Real AI.</div>', 28);
-
-    // Fallback: switch to demo mode with dynamic data
-    REAL_AI_ENABLED = false;
-    setModeToggleUI(false);
+    // Show error detail in bubble — NO fallback to fake data
+    setBubbleStatus('done', 'Error en agente');
     simulationRunning = false;
-    simData = null;
-    currentSimPhase = '';
-    await delay(2000);
-    simData = generateSimulationData(question);
-    return runFullSimulation(question);
+    await bubbleTypewriter(
+      '<div class="text-red-600"><strong>Error en el proceso:</strong><br>' + esc(userFriendly) + '</div>' +
+      '<div class="mt-2 text-gray-500 text-[10px]">Detalle tecnico: ' + esc(errMsg) + '</div>' +
+      '<div class="mt-3"><button onclick="retryAnalysis()" class="inline-flex items-center gap-2 bg-galatea hover:bg-galatea/90 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all">' +
+        '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg>' +
+        'Reintentar Analisis</button></div>', 28);
   }
+}
+
+// Retry handler for failed analysis
+function retryAnalysis() {
+  var q = '';
+  if (project && project.research_question) q = project.research_question;
+  else { var ta = $('questionInput'); if (ta) q = ta.value.trim(); }
+  if (!q) { showToast('No hay pregunta de investigacion para reintentar', 'error'); return; }
+  simData = null;
+  callAgentOrSimulate(q);
 }
 
 // ═══════════════════════════════════════════════════════════════
