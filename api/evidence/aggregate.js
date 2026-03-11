@@ -55,7 +55,14 @@ async function fetchArticles(pmids) {
       while ((m = authorRegex.exec(block)) !== null && authors.length < 5) {
         authors.push(`${m[1]} ${m[2]}`);
       }
-      articles.push({ pmid, title, authors, journal, year, doi });
+      // Enriched metadata
+      const publicationTypes = extractAllTags(block, 'PublicationType');
+      const meshTerms = extractAllTags(block, 'DescriptorName');
+      const keywords = extractAllTags(block, 'Keyword');
+      const country = cleanXML(extractTag(block, 'Country'));
+      const grantAgencies = extractAllTags(block, 'Agency');
+      const coiStatement = cleanXML(extractTag(block, 'CoiStatement'));
+      articles.push({ pmid, title, authors, journal, year, doi, publicationTypes, meshTerms, keywords, country, funding: grantAgencies, coiStatement });
     } catch { /* skip malformed */ }
   }
   return articles;
@@ -68,6 +75,17 @@ function extractTag(xml, tag) {
 
 function cleanXML(text) {
   return (text || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function extractAllTags(xml, tag) {
+  const results = [];
+  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'g');
+  let m;
+  while ((m = regex.exec(xml)) !== null) {
+    const val = m[1].trim().replace(/<[^>]+>/g, '');
+    if (val && !results.includes(val)) results.push(val);
+  }
+  return results;
 }
 
 /**
@@ -306,8 +324,44 @@ async function searchLILACS(pubmedEquation) {
 }
 
 /**
+ * Search ClinicalTrials.gov API v2 (free, no key required)
+ */
+async function searchClinicalTrials(pubmedEquation) {
+  const query = adaptEquationForCochrane(pubmedEquation);
+  try {
+    const url = `https://clinicaltrials.gov/api/v2/studies?query.term=${encodeURIComponent(query)}&pageSize=5&format=json`;
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const totalCount = data.totalCount || 0;
+
+    const studies = (data.studies || []).map(function(study) {
+      const proto = study.protocolSection || {};
+      const id = proto.identificationModule || {};
+      const status = proto.statusModule || {};
+      return {
+        nctId: id.nctId || '',
+        title: id.officialTitle || id.briefTitle || '',
+        status: (status.overallStatus || ''),
+      };
+    });
+
+    return { count: totalCount, studies, query, source: 'clinicaltrials-gov-api' };
+  } catch (err) {
+    logAgent(AGENT_NAME, 'warn', `ClinicalTrials.gov search failed: ${err.message}`);
+    return null;
+  }
+}
+
+/**
  * Use Claude to estimate other databases + generate translated equations
  * Only estimates databases not already searched directly.
+ * NOTE: EMBASE is excluded — users import via RIS/BibTeX instead.
  */
 async function estimateOtherDatabases(pubmedEquation, pubmedCount, picot, cochraneRealCount, lilacsRealCount) {
   const cochraneContext = cochraneRealCount != null
@@ -324,7 +378,6 @@ async function estimateOtherDatabases(pubmedEquation, pubmedCount, picot, cochra
   const dbsToEstimate = [
     needCochrane ? 'Cochrane Library' : null,
     needLILACS ? 'LILACS' : null,
-    'EMBASE',
     'Scopus',
   ].filter(Boolean).join(', ');
 
@@ -332,7 +385,6 @@ async function estimateOtherDatabases(pubmedEquation, pubmedCount, picot, cochra
   const eqInstructions = [
     needCochrane ? '   - Cochrane: usa sintaxis Cochrane (MeSH descriptor, ti,ab,kw)' : null,
     needLILACS ? '   - LILACS: TRADUCE a espanol/portugues usando DeCS, sintaxis iAH' : null,
-    "   - EMBASE: usa sintaxis Emtree con /exp (ej: 'term'/exp AND 'term'/exp). Nota: EMBASE no tiene API publica, la ecuacion es para ejecucion manual en embase.com",
     '   - Scopus: usa TITLE-ABS-KEY()',
   ].filter(Boolean).join('\n');
 
@@ -352,11 +404,6 @@ async function estimateOtherDatabases(pubmedEquation, pubmedCount, picot, cochra
     "rationale": "<breve justificacion>"
   }`);
   }
-  jsonFields.push(`  "embase": {
-    "equation": "<ecuacion Emtree con /exp para EMBASE>",
-    "estimatedCount": <numero>,
-    "rationale": "<breve justificacion>"
-  }`);
   jsonFields.push(`  "scopus": {
     "equation": "<ecuacion TITLE-ABS-KEY para Scopus>",
     "estimatedCount": <numero>,
@@ -458,6 +505,23 @@ export default async function handler(req, res) {
       progress.push({ db: 'LILACS', status: 'fallback_to_estimation', error: lilacsErr.message });
     }
 
+    // ── Step 2.7: ClinicalTrials.gov real search ──
+    logAgent(AGENT_NAME, 'info', 'Step 2.7: ClinicalTrials.gov real search');
+    let ctResult = null;
+    try {
+      ctResult = await searchClinicalTrials(equation);
+      if (ctResult) {
+        logAgent(AGENT_NAME, 'info', `ClinicalTrials.gov real count: ${ctResult.count}`);
+        progress.push({ db: 'ClinicalTrials.gov', status: 'complete', real: true });
+      } else {
+        logAgent(AGENT_NAME, 'warn', 'ClinicalTrials.gov search returned null');
+        progress.push({ db: 'ClinicalTrials.gov', status: 'failed' });
+      }
+    } catch (ctErr) {
+      logAgent(AGENT_NAME, 'warn', `ClinicalTrials.gov search error: ${ctErr.message}`);
+      progress.push({ db: 'ClinicalTrials.gov', status: 'failed', error: ctErr.message });
+    }
+
     // ── Step 3: Claude estimates remaining databases ──
     const cochraneRealCount = cochraneResult ? cochraneResult.count : null;
     const lilacsRealCount = lilacsResult ? lilacsResult.count : null;
@@ -538,16 +602,15 @@ export default async function handler(req, res) {
       });
     }
 
-    // EMBASE: always estimated by Claude (no public API — manual execution)
-    if (estimates && estimates.embase) {
+    // ClinicalTrials.gov: real data
+    if (ctResult) {
       databases.push({
-        database: 'EMBASE',
-        real: false,
-        count: estimates.embase.estimatedCount,
-        included: Math.round(estimates.embase.estimatedCount * 0.10),
-        equation: estimates.embase.equation,
-        rationale: (estimates.embase.rationale || '') + ' — Ejecutar manualmente en embase.com',
-        color: 'orange',
+        database: 'ClinicalTrials.gov',
+        real: true,
+        count: ctResult.count,
+        included: (ctResult.studies || []).length,
+        equation: ctResult.query,
+        color: 'teal',
       });
     }
 
@@ -575,10 +638,10 @@ export default async function handler(req, res) {
         articles,
         totalIdentified,
         prisma: {
-          identified: pubmedSearch.count,
+          identified: totalIdentified,
           duplicates_removed: 0,
-          screened_title: pubmedSearch.count,
-          excluded_title: pubmedSearch.count - articles.length,
+          screened_title: totalIdentified,
+          excluded_title: totalIdentified - articles.length,
           screened_fulltext: articles.length,
           excluded_fulltext: 0,
           quality_assessed: articles.length,

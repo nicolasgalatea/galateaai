@@ -68,6 +68,14 @@ function parseArticlesXML(xml) {
       const doi = extractDOI(block);
       const authors = extractAuthors(block);
 
+      // Enriched metadata
+      const publicationTypes = extractAllTags(block, 'PublicationType');
+      const meshTerms = extractAllTags(block, 'DescriptorName');
+      const keywords = extractAllTags(block, 'Keyword');
+      const country = extractTag(block, 'Country');
+      const grantAgencies = extractAllTags(block, 'Agency');
+      const coiStatement = cleanXML(extractTag(block, 'CoiStatement'));
+
       articles.push({
         pmid,
         title: cleanXML(title),
@@ -76,6 +84,12 @@ function parseArticlesXML(xml) {
         journal: cleanXML(journal),
         year,
         doi,
+        publicationTypes,
+        meshTerms,
+        keywords,
+        country: cleanXML(country),
+        funding: grantAgencies,
+        coiStatement,
       });
     } catch {
       // Skip malformed articles
@@ -83,6 +97,17 @@ function parseArticlesXML(xml) {
   }
 
   return articles;
+}
+
+function extractAllTags(xml, tag) {
+  const results = [];
+  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'g');
+  let m;
+  while ((m = regex.exec(xml)) !== null) {
+    const val = m[1].trim().replace(/<[^>]+>/g, '');
+    if (val && !results.includes(val)) results.push(val);
+  }
+  return results;
 }
 
 function extractTag(xml, tag) {
