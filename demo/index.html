@@ -10495,7 +10495,7 @@ async function handleRISFile(file) {
   reader.onload = async function(e) {
     try {
       status.textContent = 'Parseando ' + file.name + '...';
-      var result = await callAgentEndpoint('/api/evidence/import-ris', { text: e.target.result });
+      var result = await callAgentEndpoint('/api/evidence/pipeline?action=import-ris', { text: e.target.result });
       if (!result.success) throw new Error(result.error);
       var articles = result.data.articles || [];
       status.innerHTML = '<span class="text-verde font-bold">' + articles.length + ' articulos importados</span> (formato: ' + result.data.format + ')';
@@ -10562,7 +10562,7 @@ async function runDeduplication() {
   showToast('Deduplicando ' + allArticles.length + ' articulos...', 'success');
 
   try {
-    var result = await callAgentEndpoint('/api/evidence/deduplicate', { articles: allArticles });
+    var result = await callAgentEndpoint('/api/evidence/pipeline?action=deduplicate', { articles: allArticles });
     if (!result.success) throw new Error(result.error);
 
     var dedupData = result.data;
@@ -10617,7 +10617,7 @@ async function extractArticleData(index) {
   showToast('Extrayendo datos de ' + (row.pmid || row.resultado.slice(0, 30)) + '...', 'success');
 
   try {
-    var result = await callAgentEndpoint('/api/evidence/extract-data', {
+    var result = await callAgentEndpoint('/api/evidence/pipeline?action=extract-data', {
       text: abstractText || row.resultado,
       articleMeta: articleMeta,
       picot: picot
@@ -10667,7 +10667,7 @@ async function extractAllArticles() {
 
     try {
       var pd = project && project.phase_data || {};
-      var result = await callAgentEndpoint('/api/evidence/extract-batch', { articles: batch, picot: pd.picot || {} }, 55000);
+      var result = await callAgentEndpoint('/api/evidence/pipeline?action=extract-batch', { articles: batch, picot: pd.picot || {} }, 55000);
       if (result.success && result.data && result.data.results) {
         if (!simData._structured_extractions) simData._structured_extractions = {};
         result.data.results.forEach(function(r) {
@@ -10700,7 +10700,7 @@ async function buildDataset() {
   showToast('Construyendo dataset estructurado...', 'success');
 
   try {
-    var result = await callAgentEndpoint('/api/evidence/build-dataset', {
+    var result = await callAgentEndpoint('/api/evidence/pipeline?action=build-dataset', {
       extractions: simData._structured_extractions,
       articlesMeta: simData._pubmed_articles || simData.extraction_table || []
     });
@@ -10728,7 +10728,7 @@ async function downloadDatasetCSV() {
   if (!simData || !simData._structured_extractions) { showToast('No hay datos para exportar', 'error'); return; }
 
   try {
-    var result = await callAgentEndpoint('/api/evidence/build-dataset', {
+    var result = await callAgentEndpoint('/api/evidence/pipeline?action=build-dataset', {
       extractions: simData._structured_extractions,
       articlesMeta: simData._pubmed_articles || simData.extraction_table || [],
       format: 'csv'
@@ -10782,7 +10782,7 @@ async function uploadPDF(file, pmid, index) {
   reader.onload = async function(e) {
     var base64 = e.target.result.split(',')[1];
     try {
-      var result = await callAgentEndpoint('/api/evidence/pdf-upload', {
+      var result = await callAgentEndpoint('/api/evidence/pipeline?action=pdf-upload', {
         pdfBase64: base64,
         fileName: file.name,
         pmid: pmid,
