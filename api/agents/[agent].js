@@ -1,6 +1,6 @@
-import { callClaude } from '../utils/anthropic-client.js';
-import { updatePhaseData as _updatePhaseData } from '../utils/supabase-server.js';
-import { logAgent, logError, logMetrics } from '../utils/logger.js';
+import { callClaude } from '../_utils/anthropic-client.js';
+import { updatePhaseData as _updatePhaseData } from '../_utils/supabase-server.js';
+import { logAgent, logError, logMetrics } from '../_utils/logger.js';
 import { PROMPTS } from '../../prompts/system-prompts.js';
 
 // Wrap updatePhaseData to be non-fatal — Supabase write failures should not break agent responses

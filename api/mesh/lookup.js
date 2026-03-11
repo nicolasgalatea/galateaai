@@ -1,4 +1,4 @@
-import { logAgent, logError } from '../utils/logger.js';
+import { logAgent, logError } from '../_utils/logger.js';
 
 const AGENT_NAME = 'mesh-decs-lookup';
 

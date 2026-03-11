@@ -1,5 +1,5 @@
-import { callClaude } from '../utils/anthropic-client.js';
-import { logAgent, logError } from '../utils/logger.js';
+import { callClaude } from '../_utils/anthropic-client.js';
+import { logAgent, logError } from '../_utils/logger.js';
 
 const AGENT_NAME = 'evidence-aggregator';
 const EUTILS_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
