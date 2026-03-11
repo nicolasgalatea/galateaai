@@ -132,7 +132,7 @@ const agents = {
     if (!researchQuestion) throw { status: 400, message: 'Missing researchQuestion' };
     const contextData = { pregunta: researchQuestion, framework: framework || '', tipo_estudio: studyType || '', picot: picot || {}, planteamiento: (planteamiento || '').slice(0, 1000), hipotesis: hypothesis || {}, estrategia_busqueda: searchStrategy || {}, criterios: criteria || {}, tabla_extraccion: (extractionTable || []).slice(0, 15), estadisticas: stats || {}, equator: equatorChecklist || [] };
     const userPrompt = `Datos completos del proyecto de investigacion:\n${JSON.stringify(contextData, null, 2)}\n\nRedacta el manuscrito cientifico completo en formato IMRaD.`;
-    const result = await callClaude(PROMPTS.MANUSCRIPT_WRITER, userPrompt, { max_tokens: 8192 });
+    const result = await callClaude(PROMPTS.MANUSCRIPT_WRITER, userPrompt, { max_tokens: 4096 });
     const data = parseClaudeJSON(result.text);
     if (projectId) await updatePhaseData(projectId, 'manuscript', data.manuscript);
     return { data, result };
@@ -167,7 +167,7 @@ const agents = {
     if (!researchQuestion) throw { status: 400, message: 'Missing researchQuestion' };
     const contextData = { pregunta: researchQuestion, framework: framework || '', tipo_estudio: studyType || '', picot: picot || {}, planteamiento: (planteamiento || '').slice(0, 1000), hipotesis: hypothesis || {}, estrategia_busqueda: searchStrategy || {}, criterios: criteria || {}, equator: equatorChecklist || [] };
     const userPrompt = `Datos del proyecto de investigacion:\n${JSON.stringify(contextData, null, 2)}\n\nRedacta el protocolo de investigacion completo.`;
-    const result = await callClaude(PROMPTS.PROTOCOL_WRITER, userPrompt, { max_tokens: 8192 });
+    const result = await callClaude(PROMPTS.PROTOCOL_WRITER, userPrompt, { max_tokens: 4096 });
     const data = parseClaudeJSON(result.text);
     if (projectId) await updatePhaseData(projectId, 'protocol_draft', data.protocol_draft);
     return { data, result };
