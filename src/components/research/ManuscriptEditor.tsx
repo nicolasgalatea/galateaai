@@ -1,16 +1,20 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Loader2, PenTool, Save, AlertCircle, PartyPopper, AlertTriangle, Sparkles, X } from 'lucide-react';
+import { Check, Loader2, PenTool, Save, AlertCircle, PartyPopper, AlertTriangle, Sparkles, X, Download } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ManuscriptTiptapEditor, type ManuscriptTiptapEditorHandle } from './ManuscriptTiptapEditor';
 import { ReferencesPanel } from './ReferencesPanel';
 import { useManuscriptEditor, type SectionKey } from '@/hooks/useManuscriptEditor';
+import { useReferencesContext } from '@/contexts/ReferencesContext';
+import { exportManuscriptToDocx } from '@/utils/exportDocx';
 
 interface ManuscriptEditorProps {
   projectId: string;
   manuscriptDraft: Record<string, unknown> | null;
   currentPhase: number;
+  projectTitle?: string;
+  projectCode?: string;
 }
 
 const SECTION_TABS: { key: SectionKey; label: string; placeholder: string }[] = [
@@ -40,7 +44,7 @@ function ConfettiParticle({ delay, x, color }: { delay: number; x: number; color
 
 const CONFETTI_COLORS = ['#00D395', '#00BCFF', '#F7B500', '#A78BFA', '#FF6B9D'];
 
-export function ManuscriptEditor({ projectId, manuscriptDraft, currentPhase }: ManuscriptEditorProps) {
+export function ManuscriptEditor({ projectId, manuscriptDraft, currentPhase, projectTitle = 'Manuscrito', projectCode = '' }: ManuscriptEditorProps) {
   const {
     sections,
     setSectionContent,
@@ -58,6 +62,14 @@ export function ManuscriptEditor({ projectId, manuscriptDraft, currentPhase }: M
     approveAndAdvance,
     isApproving,
   } = useManuscriptEditor(projectId, manuscriptDraft);
+
+  // Sync references to global context so tooltips work everywhere
+  const refsCtx = useReferencesContext();
+  useEffect(() => {
+    if (references.length > 0) {
+      refsCtx.setReferences(references);
+    }
+  }, [references]);
 
   const [activeTab, setActiveTab] = useState<SectionKey>('introduccion');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -182,6 +194,23 @@ export function ManuscriptEditor({ projectId, manuscriptDraft, currentPhase }: M
               </>
             ) : null}
           </div>
+
+          <Button
+            onClick={() =>
+              exportManuscriptToDocx(projectTitle, projectCode, {
+                introduccion: sections.introduccion,
+                metodos: sections.metodos,
+                discusion: sections.discusion,
+              })
+            }
+            disabled={!hasSomeContent}
+            size="sm"
+            variant="outline"
+            className="border-[#21262D] text-[#8B949E] hover:text-[#E6EDF3] text-xs disabled:opacity-40"
+          >
+            <Download className="w-3 h-3 mr-1.5" />
+            Word
+          </Button>
 
           <Button
             onClick={handleApprove}

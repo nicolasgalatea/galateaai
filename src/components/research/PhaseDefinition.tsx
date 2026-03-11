@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment, type MouseEvent as ReactMouseEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Edit3, Save, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,59 @@ import { Input } from '@/components/ui/input';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { useReferencesContext } from '@/contexts/ReferencesContext';
+
+/**
+ * Clickable citation badge [N] — opens reference tooltip on click.
+ */
+function CitationBadge({ citationKey }: { citationKey: number }) {
+  const refsCtx = useReferencesContext();
+  const hasRef = !!refsCtx.getReference(citationKey);
+
+  const handleClick = (e: ReactMouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    refsCtx.showReferenceTooltip(citationKey, rect);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`inline-flex items-center px-1 py-0 rounded text-[11px] font-mono font-bold transition-colors cursor-pointer ${
+        hasRef
+          ? 'bg-[#00BCFF]/15 text-[#00BCFF] hover:bg-[#00BCFF]/25'
+          : 'bg-gray-200 text-gray-500 cursor-default'
+      }`}
+      title={hasRef ? `Ver referencia [${citationKey}]` : `Referencia [${citationKey}] no encontrada`}
+    >
+      [{citationKey}]
+    </button>
+  );
+}
+
+/** Replaces [N] in text children with clickable CitationBadge components. */
+function processChildrenWithCitations(children: React.ReactNode): React.ReactNode {
+  if (typeof children === 'string') {
+    const parts = children.split(/(\[\d+\])/g);
+    if (parts.length === 1) return children;
+    return (
+      <>
+        {parts.map((part, i) => {
+          const match = part.match(/^\[(\d+)\]$/);
+          if (match) return <CitationBadge key={i} citationKey={parseInt(match[1], 10)} />;
+          return <Fragment key={i}>{part}</Fragment>;
+        })}
+      </>
+    );
+  }
+  if (Array.isArray(children)) {
+    return children.map((child, i) => (
+      <Fragment key={i}>{processChildrenWithCitations(child)}</Fragment>
+    ));
+  }
+  return children;
+}
 
 interface EditableRichFieldProps {
   label: string;
@@ -64,7 +117,12 @@ function EditableRichField({ label, value, fieldKey, phaseKey, onSave, onLocalCh
       </div>
       {value ? (
         <div className="prose prose-sm max-w-none text-foreground">
-          <ReactMarkdown>{value}</ReactMarkdown>
+          <ReactMarkdown
+            components={{
+              p: ({ children }) => <p className="mb-2 leading-relaxed">{processChildrenWithCitations(children)}</p>,
+              li: ({ children }) => <li>{processChildrenWithCitations(children)}</li>,
+            }}
+          >{value}</ReactMarkdown>
         </div>
       ) : (
         <p className="text-sm text-muted-foreground italic">Sin datos — esperando respuesta de la IA.</p>

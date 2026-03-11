@@ -166,6 +166,8 @@ export interface ProjectReference {
   url: string | null;
   abstract: string | null;
   citation_key: number;
+  /** Seccion de origen de la referencia (planteamiento, finer, evidencia, etc.) */
+  source_section: string | null;
   created_at: string;
 }
 
@@ -178,6 +180,8 @@ export interface ResearchProject {
   user_id: string;
   title: string;
   current_phase: number;
+  /** Auto-generated project code: GAL-YYYY-XXXX */
+  project_code: string | null;
 
   // Agent 1 — Arquitecto (Fases 0-3)
   study_design: string | null;
@@ -195,6 +199,11 @@ export interface ResearchProject {
   protocol_draft: Record<string, unknown> | null;
   manuscript_draft: Record<string, unknown> | null;
   statistical_plan: Record<string, unknown> | null;
+
+  // Institutional route (Etapa 3)
+  submission_date: string | null;
+  subdireccion_status: string | null;
+  comite_etica_status: string | null;
 
   // Shared
   user_edits_json: Record<string, unknown>;

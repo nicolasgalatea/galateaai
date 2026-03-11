@@ -1,8 +1,9 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { forwardRef, useImperativeHandle, useEffect } from 'react';
+import { forwardRef, useImperativeHandle, useEffect, useCallback } from 'react';
 import { Bold, Italic, Heading2, List, Quote } from 'lucide-react';
+import { useReferencesContext } from '@/contexts/ReferencesContext';
 
 export interface ManuscriptTiptapEditorHandle {
   insertCitation: (citationKey: number) => void;
@@ -17,6 +18,25 @@ interface ManuscriptTiptapEditorProps {
 
 export const ManuscriptTiptapEditor = forwardRef<ManuscriptTiptapEditorHandle, ManuscriptTiptapEditorProps>(
   function ManuscriptTiptapEditor({ content, onChange, placeholder = 'Escribe aqui...', disabled = false }, ref) {
+    const refsCtx = useReferencesContext();
+
+    // Handle clicks on citation markers [N] inside the editor
+    const handleEditorClick = useCallback(
+      (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('citation-mark')) {
+          const key = target.dataset.citationKey;
+          if (key) {
+            e.preventDefault();
+            e.stopPropagation();
+            const rect = target.getBoundingClientRect();
+            refsCtx.showReferenceTooltip(parseInt(key, 10), rect);
+          }
+        }
+      },
+      [refsCtx],
+    );
+
     const editor = useEditor({
       extensions: [
         StarterKit.configure({
@@ -46,6 +66,73 @@ export const ManuscriptTiptapEditor = forwardRef<ManuscriptTiptapEditorHandle, M
         editor.setEditable(!disabled);
       }
     }, [disabled, editor]);
+
+    // Attach click listener on the editor DOM to catch citation clicks
+    useEffect(() => {
+      if (!editor) return;
+      const el = editor.view.dom;
+      el.addEventListener('click', handleEditorClick);
+      return () => el.removeEventListener('click', handleEditorClick);
+    }, [editor, handleEditorClick]);
+
+    // After each editor update, wrap [N] text nodes in styled spans for visual feedback
+    useEffect(() => {
+      if (!editor) return;
+
+      const decorateCitations = () => {
+        const el = editor.view.dom;
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        const nodesToProcess: { node: Text; matches: RegExpExecArray[] }[] = [];
+        const regex = /\[(\d+)\]/g;
+
+        let textNode: Text | null;
+        while ((textNode = walker.nextNode() as Text | null)) {
+          // Skip nodes already inside a citation-mark span
+          if (textNode.parentElement?.classList.contains('citation-mark')) continue;
+          const matches: RegExpExecArray[] = [];
+          let m: RegExpExecArray | null;
+          regex.lastIndex = 0;
+          while ((m = regex.exec(textNode.textContent || '')) !== null) {
+            matches.push({ ...m, index: m.index } as RegExpExecArray);
+          }
+          if (matches.length > 0) {
+            nodesToProcess.push({ node: textNode, matches });
+          }
+        }
+
+        for (const { node, matches } of nodesToProcess) {
+          const parent = node.parentNode;
+          if (!parent) continue;
+          const text = node.textContent || '';
+          const frag = document.createDocumentFragment();
+          let lastIdx = 0;
+
+          for (const match of matches) {
+            // Text before the citation
+            if (match.index > lastIdx) {
+              frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
+            }
+            // Citation span
+            const span = document.createElement('span');
+            span.className = 'citation-mark';
+            span.dataset.citationKey = match[1];
+            span.textContent = match[0];
+            span.style.cssText =
+              'color:#00BCFF;font-family:monospace;font-weight:700;font-size:11px;background:rgba(0,188,255,0.12);padding:0 3px;border-radius:3px;cursor:pointer;';
+            frag.appendChild(span);
+            lastIdx = match.index + match[0].length;
+          }
+          if (lastIdx < text.length) {
+            frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+          }
+          parent.replaceChild(frag, node);
+        }
+      };
+
+      // Run decoration after content changes with a small delay
+      const timeout = setTimeout(decorateCitations, 100);
+      return () => clearTimeout(timeout);
+    }, [editor, content]);
 
     useImperativeHandle(ref, () => ({
       insertCitation(citationKey: number) {

@@ -1,3 +1,4 @@
+import { Fragment, type MouseEvent as ReactMouseEvent } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,41 @@ import { FinerRadarChart } from './FinerRadarChart';
 import { DataArchitectureBox } from './DataArchitectureBox';
 import type { FinerOutput } from '@/types/domain';
 import type { PicoData } from '@/navigator';
+import { useReferencesContext } from '@/contexts/ReferencesContext';
+
+function CitationBadge({ citationKey }: { citationKey: number }) {
+  const refsCtx = useReferencesContext();
+  const hasRef = !!refsCtx.getReference(citationKey);
+  const handleClick = (e: ReactMouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    refsCtx.showReferenceTooltip(citationKey, e.currentTarget.getBoundingClientRect());
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`inline-flex items-center px-1 py-0 rounded text-[11px] font-mono font-bold transition-colors cursor-pointer ${
+        hasRef ? 'bg-[#00BCFF]/15 text-[#00BCFF] hover:bg-[#00BCFF]/25' : 'bg-gray-200 text-gray-500 cursor-default'
+      }`}
+    >
+      [{citationKey}]
+    </button>
+  );
+}
+
+function processTextWithCitations(text: string): React.ReactNode {
+  const parts = text.split(/(\[\d+\])/g);
+  if (parts.length === 1) return text;
+  return (
+    <>
+      {parts.map((part, i) => {
+        const m = part.match(/^\[(\d+)\]$/);
+        if (m) return <CitationBadge key={i} citationKey={parseInt(m[1], 10)} />;
+        return <Fragment key={i}>{part}</Fragment>;
+      })}
+    </>
+  );
+}
 
 export interface FinerAuditViewProps {
   finerOutput: FinerOutput | null;
@@ -52,7 +88,7 @@ export function FinerAuditView({
                 Recomendaciones
               </span>
               <p className="text-xs text-[#E6EDF3] leading-relaxed whitespace-pre-wrap">
-                {finerOutput.recomendaciones}
+                {processTextWithCitations(finerOutput.recomendaciones)}
               </p>
             </div>
           )}

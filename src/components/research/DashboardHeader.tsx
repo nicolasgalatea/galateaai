@@ -58,11 +58,17 @@ export function DashboardHeader({
   // Titulo principal: researchProject.title (Realtime) > legacyTitle > fallback
   const title = researchProject?.title ?? legacyTitle ?? 'Nueva Investigacion';
   const phaseLabel = PHASE_LABELS[activeViewPhase] ?? `Fase ${activeViewPhase}`;
+  const projectCode = researchProject?.project_code;
 
   return (
     <div className="flex items-center justify-between mb-6">
       <div>
         <div className="flex items-center gap-3 mb-1">
+          {projectCode && (
+            <span className="text-xs font-mono font-bold text-[#A78BFA] bg-[#A78BFA]/10 px-2 py-0.5 rounded">
+              {projectCode}
+            </span>
+          )}
           <h2 className="text-xl font-bold text-gray-900">{title}</h2>
           <motion.span
             key={activeViewPhase}

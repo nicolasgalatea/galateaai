@@ -10,7 +10,7 @@ interface ReferencesPanelProps {
   uncitedKeys?: Set<number>;
 }
 
-type FilterMode = 'all' | 'year' | 'journal';
+type FilterMode = 'all' | 'year' | 'journal' | 'section';
 
 export function ReferencesPanel({ references, onInsertCitation, uncitedKeys }: ReferencesPanelProps) {
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
@@ -23,6 +23,12 @@ export function ReferencesPanel({ references, onInsertCitation, uncitedKeys }: R
 
     if (filterMode === 'year') {
       return references.filter((r) => r.year != null && String(r.year).includes(q));
+    }
+
+    if (filterMode === 'section') {
+      return references.filter(
+        (r) => r.source_section != null && r.source_section.toLowerCase().includes(q),
+      );
     }
 
     // journal
@@ -39,6 +45,11 @@ export function ReferencesPanel({ references, onInsertCitation, uncitedKeys }: R
 
   const uniqueJournals = useMemo(
     () => [...new Set(references.map((r) => r.journal).filter((j): j is string => j != null))].sort(),
+    [references],
+  );
+
+  const uniqueSections = useMemo(
+    () => [...new Set(references.map((r) => r.source_section).filter((s): s is string => s != null))].sort(),
     [references],
   );
 
@@ -88,7 +99,7 @@ export function ReferencesPanel({ references, onInsertCitation, uncitedKeys }: R
       <div className="px-3 py-2 border-b border-[#21262D] space-y-2">
         {/* Mode toggle */}
         <div className="flex items-center gap-1">
-          {(['all', 'year', 'journal'] as const).map((mode) => (
+          {(['all', 'year', 'journal', 'section'] as const).map((mode) => (
             <button
               key={mode}
               type="button"
@@ -102,7 +113,7 @@ export function ReferencesPanel({ references, onInsertCitation, uncitedKeys }: R
                   : 'text-[#484F58] hover:text-[#8B949E] hover:bg-[#161B22]'
               }`}
             >
-              {mode === 'all' ? 'Todos' : mode === 'year' ? 'Ano' : 'Revista'}
+              {mode === 'all' ? 'Todos' : mode === 'year' ? 'Ano' : mode === 'journal' ? 'Revista' : 'Seccion'}
             </button>
           ))}
         </div>
@@ -141,6 +152,21 @@ export function ReferencesPanel({ references, onInsertCitation, uncitedKeys }: R
                 className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#161B22] text-[#8B949E] hover:text-[#E6EDF3] hover:bg-[#21262D] transition-colors"
               >
                 {year}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {filterMode === 'section' && !filterQuery && uniqueSections.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {uniqueSections.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setFilterQuery(s)}
+                className="px-2 py-0.5 rounded text-[10px] bg-[#161B22] text-[#8B949E] hover:text-[#E6EDF3] hover:bg-[#21262D] transition-colors capitalize"
+              >
+                {s}
               </button>
             ))}
           </div>
@@ -221,6 +247,11 @@ export function ReferencesPanel({ references, onInsertCitation, uncitedKeys }: R
                         {ref.pmid && (
                           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-mono bg-[#00D395]/10 text-[#00D395]">
                             PMID
+                          </span>
+                        )}
+                        {ref.source_section && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-[#A78BFA]/10 text-[#A78BFA] capitalize">
+                            {ref.source_section}
                           </span>
                         )}
                       </div>

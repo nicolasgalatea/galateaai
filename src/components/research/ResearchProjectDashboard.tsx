@@ -20,6 +20,7 @@ import { FinerAuditView } from './FinerAuditView';
 import { ManuscriptEditor } from './ManuscriptEditor';
 import { PicotInteractiveTable } from './PicotInteractiveTable';
 import { BooleanEquationBlock } from './BooleanEquationBlock';
+import { InstitutionalRouteWizard } from './InstitutionalRouteWizard';
 import type { Project, FinerOutput, FinerScores, ResearchProject } from '@/types/domain';
 import type { PicoData } from '@/navigator';
 import type { ApiErrorDetail } from '@/services/apiService';
@@ -367,6 +368,8 @@ export function ResearchProjectDashboard({
                 projectId={project.id}
                 manuscriptDraft={researchProject?.manuscript_draft ?? null}
                 currentPhase={activeViewPhase}
+                projectTitle={researchProject?.title ?? project.title}
+                projectCode={researchProject?.project_code ?? ''}
               />
             ) : /* PICOT Interactive Table for phase 3 */
             activeViewPhase === 3 ? (
@@ -418,9 +421,33 @@ export function ResearchProjectDashboard({
       {/* Columna derecha: Info y acciones */}
       <div className="col-span-12 lg:col-span-3">
         <div className="space-y-4">
+          {/* Institutional Route Wizard — visible from phase 8 onward */}
+          {activeViewPhase >= 8 && researchProject && (
+            <InstitutionalRouteWizard
+              projectCode={researchProject.project_code ?? ''}
+              projectTitle={researchProject.title}
+              submissionDate={researchProject.submission_date ?? null}
+              subdireccionStatus={researchProject.subdireccion_status ?? 'pending'}
+              comiteEticaStatus={researchProject.comite_etica_status ?? 'pending'}
+              onUpdateSubmissionDate={async (date) => {
+                await updateProject({ submission_date: date } as any);
+              }}
+              onUpdateStatus={async (step, status) => {
+                if (step === 'subdireccion') {
+                  await updateProject({ subdireccion_status: status } as any);
+                } else {
+                  await updateProject({ comite_etica_status: status } as any);
+                }
+              }}
+            />
+          )}
           <div className="bg-white rounded-xl shadow-lg p-4">
             <h3 className="font-bold text-gray-900 mb-2">Panel de Agentes</h3>
-            <p className="text-sm text-gray-600">Agent output coming soon</p>
+            <p className="text-sm text-gray-600">
+              {researchProject?.project_code
+                ? `Codigo: ${researchProject.project_code}`
+                : 'Generando codigo de proyecto...'}
+            </p>
           </div>
         </div>
       </div>
