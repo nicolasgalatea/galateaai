@@ -4,9 +4,6 @@
   "outputDirectory": ".",
   "functions": {
     "api/**/*.js": {
-      "maxDuration": 60
-    },
-    "api/evidence/pdf-upload.js": {
       "maxDuration": 60,
       "memory": 1024
     }
