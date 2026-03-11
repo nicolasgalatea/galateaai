@@ -53,10 +53,10 @@ export async function callClaude(systemPrompt, userPrompt, options = {}) {
   const start = Date.now();
   let response;
 
-  const maxAttempts = 3;
+  const timeoutMs = options.timeout || 50000; // Must fit within Vercel's 60s maxDuration
+  const maxAttempts = 2; // Only 1 retry to stay within Vercel time limit
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const timeoutMs = options.timeout || 55000; // Vercel serverless limit ~60s
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -72,15 +72,15 @@ export async function callClaude(systemPrompt, userPrompt, options = {}) {
       }
       break;
     } catch (err) {
-      const isRetryable = err.status === 529 || err.status === 429 || err.name === 'AbortError' || err.message?.includes('timeout');
+      const isRetryable = err.status === 529 || err.status === 429;
       if (isRetryable && attempt < maxAttempts - 1) {
-        const backoff = 1500 * (attempt + 1);
-        console.warn(`[anthropic-client] Retry ${attempt + 1}/${maxAttempts - 1}: ${err.message}. Waiting ${backoff}ms`);
+        const backoff = 2000;
+        console.warn(`[anthropic-client] Retry ${attempt + 1}: ${err.message}. Waiting ${backoff}ms`);
         await new Promise((r) => setTimeout(r, backoff));
         continue;
       }
       if (err.name === 'AbortError') {
-        throw new Error('Claude API timeout after ' + (options.timeout || 55000) + 'ms');
+        throw new Error('Claude API timeout after ' + timeoutMs + 'ms');
       }
       throw err;
     }

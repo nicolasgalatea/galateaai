@@ -11763,7 +11763,7 @@ async function callAgentOrSimulate(question) {
 
     // ── Steps 11+12: Protocol Writer + Manuscript Writer (parallel) ──
     setBubbleStatus('thinking', 'Agentes 11-12/' + totalAgents + ' — Protocolo + Manuscrito');
-    await bubbleTypewriter('Redactando protocolo y manuscrito en paralelo...', 28);
+    await bubbleTypewriter('Redactando protocolo y manuscrito...', 28);
 
     var writerContext = {
       researchQuestion: question,
@@ -11779,26 +11779,34 @@ async function callAgentOrSimulate(question) {
       equatorChecklist: (equatorData && equatorData.checklist) ? equatorData.checklist : []
     };
 
-    var writerResults = await Promise.allSettled([
-      callAgentEndpoint('/api/agents/protocol-writer', Object.assign({ projectId: activeProjectId }, writerContext), 60000),
-      callAgentEndpoint('/api/agents/manuscript-writer', Object.assign({ projectId: activeProjectId }, writerContext), 60000)
-    ]);
-
-    if (writerResults[0].status === 'fulfilled' && writerResults[0].value.success) {
-      protocolData = writerResults[0].value.data;
-      simData.protocol_draft = protocolData.protocol_draft;
-      var protMs = writerResults[0].value.metrics ? writerResults[0].value.metrics.duration : 0;
-      showToast('Protocolo redactado (' + Math.round(protMs/1000) + 's)', 'success');
-    } else {
+    // Sequential calls to avoid Anthropic rate limiting (429/529)
+    try {
+      var protocolResult = await callAgentEndpoint('/api/agents/protocol-writer', Object.assign({ projectId: activeProjectId }, writerContext), 120000);
+      if (protocolResult && protocolResult.success) {
+        protocolData = protocolResult.data;
+        simData.protocol_draft = protocolData.protocol_draft;
+        var protMs = protocolResult.metrics ? protocolResult.metrics.duration : 0;
+        showToast('Protocolo redactado (' + Math.round(protMs/1000) + 's)', 'success');
+      } else {
+        showToast('Protocolo: usando plantilla por defecto', 'error');
+      }
+    } catch (protErr) {
+      console.error('Protocol writer failed:', protErr);
       showToast('Protocolo: usando plantilla por defecto', 'error');
     }
 
-    if (writerResults[1].status === 'fulfilled' && writerResults[1].value.success) {
-      manuscriptData = writerResults[1].value.data;
-      simData.manuscript = manuscriptData.manuscript;
-      var msMs = writerResults[1].value.metrics ? writerResults[1].value.metrics.duration : 0;
-      showToast('Manuscrito redactado (' + Math.round(msMs/1000) + 's)', 'success');
-    } else {
+    try {
+      var manuscriptResult = await callAgentEndpoint('/api/agents/manuscript-writer', Object.assign({ projectId: activeProjectId }, writerContext), 120000);
+      if (manuscriptResult && manuscriptResult.success) {
+        manuscriptData = manuscriptResult.data;
+        simData.manuscript = manuscriptData.manuscript;
+        var msMs = manuscriptResult.metrics ? manuscriptResult.metrics.duration : 0;
+        showToast('Manuscrito redactado (' + Math.round(msMs/1000) + 's)', 'success');
+      } else {
+        showToast('Manuscrito: usando plantilla por defecto', 'error');
+      }
+    } catch (msErr) {
+      console.error('Manuscript writer failed:', msErr);
       showToast('Manuscrito: usando plantilla por defecto', 'error');
     }
 
