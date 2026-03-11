@@ -400,7 +400,8 @@
             </span>
             <span id="phaseBadge" class="text-xs text-gray-400 font-medium">Fase 1 / 10</span>
           </div>
-          <div class="flex items-center gap-2 mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span id="projectCodeBadge" class="hidden px-2.5 py-0.5 rounded-md text-[11px] font-black tracking-wider bg-indigo-100 text-indigo-700 border border-indigo-200 shrink-0 select-all cursor-pointer" title="Codigo del proyecto (click para copiar)" onclick="navigator.clipboard.writeText(this.textContent);showToast('Codigo copiado','success')"></span>
             <h2 class="text-lg sm:text-xl font-extrabold text-gray-900 leading-snug break-words" id="projectTitle" contenteditable="true" onblur="handleTitleEdit(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">Cargando...</h2>
             <span id="titleSaveIndicator" class="hidden items-center gap-1 text-[11px] font-semibold shrink-0 transition-all"></span>
           </div>
@@ -814,6 +815,22 @@
   .forest-null-line { stroke: #ef4444; stroke-width: 1; stroke-dasharray: 4,3; }
   .forest-tooltip { position: absolute; background: rgba(15,23,42,.92); color: white; padding: 8px 12px; border-radius: 10px; font-size: 11px; pointer-events: none; z-index: 300; white-space: nowrap; transform: translateY(-110%); opacity: 0; transition: opacity .2s; }
   .forest-tooltip.visible { opacity: 1; }
+
+  /* Reference tooltip popup */
+  .ref-tooltip { position: fixed; z-index: 9999; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,.15), 0 4px 12px rgba(0,0,0,.08); padding: 16px; max-width: 420px; min-width: 280px; opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .2s; pointer-events: none; }
+  .ref-tooltip.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .ref-tooltip .ref-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: #2563EB; color: white; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+  .ref-tooltip .ref-title { font-size: 13px; font-weight: 700; color: #1e293b; line-height: 1.4; margin-bottom: 4px; }
+  .ref-tooltip .ref-authors { font-size: 11px; color: #64748b; line-height: 1.3; }
+  .ref-tooltip .ref-journal { font-size: 11px; color: #475569; font-style: italic; }
+  .ref-tooltip .ref-links { display: flex; gap: 8px; margin-top: 8px; }
+  .ref-tooltip .ref-links a { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; text-decoration: none; transition: background .15s; }
+  .ref-tooltip .ref-link-doi { background: #eff6ff; color: #2563eb; }
+  .ref-tooltip .ref-link-doi:hover { background: #dbeafe; }
+  .ref-tooltip .ref-link-pubmed { background: #f0fdf4; color: #16a34a; }
+  .ref-tooltip .ref-link-pubmed:hover { background: #dcfce7; }
+  .ref-tooltip .ref-close { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 6px; border: none; background: #f1f5f9; color: #94a3b8; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .ref-tooltip .ref-close:hover { background: #e2e8f0; color: #475569; }
 
   /* Funnel Plot */
   .funnel-point { r: 4; fill: #4DA8A1; opacity: 0; transition: opacity .3s; }
@@ -1911,26 +1928,47 @@ async function runFullSimulation(question) {
   }
 
   // ── Early PubMed fetch: get real articles for references BEFORE planteamiento ──
+  // Fetch TWO separate batches so planteamiento and FINER never share references
   if (!simData._pubmed_articles || simData._pubmed_articles.length === 0) {
     try {
       var earlyPicot = simData.picot || {};
       var earlyQuery = buildPubMedQuery(earlyPicot);
       if (earlyQuery) {
-        var earlyPubmed = await searchPubMedDirect(earlyQuery, 10);
+        var earlyPubmed = await searchPubMedDirect(earlyQuery, 20);
         if (earlyPubmed.articles.length > 0) {
-          simData._pubmed_articles = earlyPubmed.articles;
+          var allArts = earlyPubmed.articles;
+          // Split articles: first half for planteamiento, second half for FINER
+          var splitIdx = Math.max(Math.ceil(allArts.length / 2), 5);
+          simData._pubmed_articles_planteamiento = allArts.slice(0, splitIdx);
+          simData._pubmed_articles_finer = allArts.slice(splitIdx);
+          // If not enough for FINER, try a secondary query with different terms
+          if (simData._pubmed_articles_finer.length < 3) {
+            try {
+              var finerQuery = earlyQuery + ' AND (feasibility OR methodology OR systematic review)';
+              var finerPubmed = await searchPubMedDirect(finerQuery, 10);
+              if (finerPubmed.articles.length >= 3) {
+                // Filter out duplicates by PMID
+                var usedPmids = {};
+                simData._pubmed_articles_planteamiento.forEach(function(a) { if (a.pmid) usedPmids[a.pmid] = true; });
+                var uniqueFiner = finerPubmed.articles.filter(function(a) { return !usedPmids[a.pmid]; });
+                if (uniqueFiner.length >= 3) simData._pubmed_articles_finer = uniqueFiner;
+              }
+            } catch(e2) { console.warn('Secondary FINER fetch failed:', e2); }
+          }
+          // Keep combined array for general use (extraction table, etc.)
+          simData._pubmed_articles = allArts;
           // Update extraction table with real articles
-          simData.extraction_table = earlyPubmed.articles.map(function(a) {
+          simData.extraction_table = allArts.map(function(a) {
             var authorStr = (a.authors && a.authors.length > 0) ? a.authors[0] + (a.authors.length > 1 ? ' et al.' : '') : 'N/A';
             return { autor: authorStr, anio: parseInt(a.year) || 0, pais: '', diseno: '', n: '', resultado: a.title, sesgo: 'pendiente', pmid: a.pmid, doi: a.doi };
           });
-          // Re-inject citations in planteamiento with real article count
+          // Re-inject citations in planteamiento with planteamiento-specific articles
           simData.planteamiento = injectCitationsInPlanteamiento(
             simData.planteamiento.replace(/\s*\[\d+(?:-\d+)?\]/g, ''),
-            earlyPubmed.articles.length
+            simData._pubmed_articles_planteamiento.length
           );
           simData._pubmed_real = true;
-          // Enrich all sections with citations
+          // Enrich all sections with citations (FINER uses separate pool)
           if (!simData._citations_enriched) enrichSimDataWithCitations(simData);
         }
       }
@@ -2276,9 +2314,13 @@ async function createNewProject(question) {
   btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg> Creando...';
   btn.disabled = true;
   var id = crypto.randomUUID();
+  // Generate project code: GAL-YYYY-XXXX
+  var yr = new Date().getFullYear();
+  var seq = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
+  var projectCode = 'GAL-' + yr + '-' + seq;
   var phaseData = {};
   if (selectedStudyTypeId) { phaseData.study_type_id = selectedStudyTypeId; }
-  var insertData = { project_id: id, title: question, research_question: question, current_phase: 0, status: 'executing', phase_data: phaseData, user_edits: {} };
+  var insertData = { project_id: id, title: question, research_question: question, current_phase: 0, status: 'executing', phase_data: phaseData, user_edits: {}, project_code: projectCode };
   if (currentUser) { insertData.department_id = currentUser.department_id; insertData.created_by = currentUser.email; }
   try {
     var { data, error } = await sb.from(TABLE).insert(insertData).select().single();
@@ -3002,7 +3044,14 @@ function renderHeader() {
   var phase = project.current_phase || 0;
   var status = project.status || 'executing';
   $('projectTitle').textContent = project.research_question || project.title || 'Proyecto';
-  $('projectMeta').textContent = 'ID: ' + (project.project_id || '').slice(0,8) + ' | Fase ' + phase + '/10';
+  // Show project code badge
+  var codeBadge = $('projectCodeBadge');
+  if (codeBadge) {
+    var code = project.project_code || '';
+    if (code) { codeBadge.textContent = code; codeBadge.classList.remove('hidden'); }
+    else { codeBadge.classList.add('hidden'); }
+  }
+  $('projectMeta').textContent = (project.project_code ? project.project_code + ' | ' : '') + 'Fase ' + phase + '/10';
   var pct = Math.min(100, Math.round((phase / 10) * 100));
   var bar = $('progressBar'); if (bar) bar.style.width = pct + '%';
   var pl = $('progressLabel'); if (pl) pl.textContent = pct + '%';
@@ -3068,11 +3117,11 @@ function renderGatekeeper() {
 
 function renderPlanteamiento(pd) {
   var rawText = pd.planteamiento || '';
-  var arts = (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
-  var numRefs = arts.length || (pd.extraction_table || []).length || 10;
+  var planArts = (simData && simData._pubmed_articles_planteamiento) || (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
+  var numRefs = planArts.length || (pd.extraction_table || []).length || 10;
   var withCites = buildCitedHTML(rawText, numRefs);
-  var refsHtml = renderReferencesFooter(pd);
-  return '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div><h3 class="font-bold text-gray-900">Fase 1 — Planteamiento</h3></div><div class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">' + withCites + '</div>' + refsHtml + '</div>';
+  var refsHtml = renderReferencesFooter(pd, 'planteamiento');
+  return '<div class="planteamiento-section bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div><h3 class="font-bold text-gray-900">Fase 1 — Planteamiento</h3></div><div class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">' + withCites + '</div>' + refsHtml + '</div>';
 }
 
 function renderFrameworkSection(pd) {
@@ -3982,7 +4031,31 @@ function renderPrisma(pd) {
   var h='<div id="prismaContainer" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center justify-between mb-4"><h3 class="font-bold text-gray-900">PRISMA 2020'+prismaLive+'</h3><button class="add-to-ms-btn" onclick="addToManuscript(\'prisma\',\'prismaContainer\')"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15"/></svg>Anadir al manuscrito</button></div><div class="flex flex-col items-center gap-0">';
   var bgm={blue:'bg-blue-50 border-blue-300',gray:'bg-gray-100 border-gray-300',indigo:'bg-indigo-50 border-indigo-300',purple:'bg-purple-50 border-purple-300',amber:'bg-amber-50 border-amber-300',verde:'bg-verde/10 border-verde/40'};
   steps.forEach(function(s,i){var d=(i*0.3).toFixed(1);if(i>0)h+='<svg width="24" height="24" class="prisma-box" style="animation-delay:'+d+'s"><path d="M12 0 L12 18 M6 12 L12 18 L18 12" stroke="#cbd5e1" stroke-width="2" fill="none"/></svg>';h+='<div class="prisma-box w-full max-w-md text-center p-4 rounded-xl border-2 '+(bgm[s.c]||bgm.gray)+'" style="animation-delay:'+d+'s"><div class="text-2xl font-black text-gray-900">'+s.v+'</div><div class="text-xs font-bold text-gray-600">'+s.l+'</div>'+(s.s?'<div class="text-[10px] text-gray-400">'+s.s+'</div>':'')+'</div>';});
-  h+='</div>'+(ss.filters?'<div class="mt-4 p-3 rounded-xl bg-gray-50 text-xs text-gray-500"><strong>Filtros:</strong> '+esc(ss.filters)+'</div>':'')+'</div>';return h;
+  h+='</div>'+(ss.filters?'<div class="mt-4 p-3 rounded-xl bg-gray-50 text-xs text-gray-500"><strong>Filtros:</strong> '+esc(ss.filters)+'</div>':'');
+
+  // ── Corrección 9: Conexión con criterios del protocolo (Etapa 2 → Etapa 4) ──
+  var protocolCriteria = getProtocolCriteria(pd);
+  if (protocolCriteria.inclusion.length > 0 || protocolCriteria.exclusion.length > 0) {
+    h += '<div class="mt-4 p-4 rounded-xl border-2 border-indigo-200 bg-indigo-50/50">';
+    h += '<div class="flex items-center gap-2 mb-3"><svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/></svg>';
+    h += '<span class="text-xs font-bold text-indigo-700">Criterios del Protocolo (Etapa 2) aplicados al PRISMA</span></div>';
+    h += '<div class="grid grid-cols-2 gap-3">';
+    if (protocolCriteria.inclusion.length > 0) {
+      h += '<div class="p-3 rounded-lg bg-verde/5 border border-verde/20"><div class="text-[10px] font-bold text-verde mb-1.5">Criterios de Inclusion</div><ul class="space-y-1">';
+      protocolCriteria.inclusion.forEach(function(c) { h += '<li class="text-[10px] text-gray-600 flex items-start gap-1"><span class="text-verde mt-0.5">&#x2713;</span>' + esc(c) + '</li>'; });
+      h += '</ul></div>';
+    }
+    if (protocolCriteria.exclusion.length > 0) {
+      h += '<div class="p-3 rounded-lg bg-red-50 border border-red-200"><div class="text-[10px] font-bold text-red-600 mb-1.5">Criterios de Exclusion</div><ul class="space-y-1">';
+      protocolCriteria.exclusion.forEach(function(c) { h += '<li class="text-[10px] text-gray-600 flex items-start gap-1"><span class="text-red-400 mt-0.5">&#x2717;</span>' + esc(c) + '</li>'; });
+      h += '</ul></div>';
+    }
+    h += '</div>';
+    h += '<p class="text-[9px] text-indigo-400 mt-2 italic">Estos criterios fueron definidos en el protocolo (Etapa 2) y se aplican al proceso de seleccion PRISMA.</p>';
+    h += '</div>';
+  }
+
+  h+='</div>';return h;
 }
 
 function renderExtraction(pd) {
@@ -4335,12 +4408,18 @@ function renderManuscriptGenerator(pd, ue) {
     h += '</div>';
   }
 
-  // Export buttons
-  h += '<div class="flex gap-2 mb-5">';
-  h += '<button onclick="exportManuscriptDOCX()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] rounded-lg px-3 py-1.5 font-medium transition-colors">\u{1F4E5} DOCX</button>';
-  h += '<button onclick="exportManuscriptPDF()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] rounded-lg px-3 py-1.5 font-medium transition-colors">\u{1F4E5} PDF</button>';
+  // Export & Import buttons — Word/Excel plug-in
+  h += '<div class="bg-blue-50/50 border border-blue-100 rounded-xl p-3 mb-5">';
+  h += '<div class="flex items-center gap-2 mb-2"><svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>';
+  h += '<span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Plug-in Documentos</span></div>';
+  h += '<div class="flex flex-wrap gap-2">';
+  h += '<button onclick="exportManuscriptDOCX()" class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] rounded-lg px-3 py-2 font-bold transition-colors shadow-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar Word (.docx)</button>';
+  h += '<button onclick="exportManuscriptPDF()" class="inline-flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-[10px] rounded-lg px-3 py-2 font-bold transition-colors shadow-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar PDF</button>';
+  h += '<label class="inline-flex items-center gap-1.5 bg-white hover:bg-gray-50 text-gray-700 text-[10px] rounded-lg px-3 py-2 font-bold border border-gray-200 transition-colors cursor-pointer"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>Importar DOCX<input type="file" accept=".docx" onchange="importDocxFile(this.files[0])" class="hidden"></label>';
   h += renderREDCapExportBtn('exportManuscriptToREDCap()', 'REDCap');
   h += renderMendeleyBtn('Mendeley');
+  h += '</div>';
+  h += '<p class="text-[9px] text-gray-400 mt-2">Edita directamente en las secciones de abajo. Los cambios se sincronizan automaticamente.</p>';
   h += '</div>';
 
   // Sections
@@ -5429,12 +5508,70 @@ function renderStage3InstDetailedViews() {
   if (stage3InstStep >= 5 && stage2SimData) html += renderEthicsDocuments();
   if (stage3InstStep >= 6) html += renderFinalSteps();
 
+  if (stage3InstStep === 0) html = renderRouteWizard();
   if (!html.trim()) html = '<div class="text-center py-16 text-gray-400"><div class="text-4xl mb-4">&#x1F3E5;</div><p class="text-lg font-semibold">Iniciando Ruta Institucional...</p></div>';
   v.innerHTML = html;
 }
 
+function renderRouteWizard() {
+  var h = '<div class="bg-gradient-to-br from-white to-indigo-50/30 border-2 border-indigo-200 rounded-2xl p-8 mb-6 fade-up">';
+  h += '<div class="text-center mb-6"><div class="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/></svg></div>';
+  h += '<h2 class="text-xl font-black text-gray-900">Paso 0 — Seleccion de Ruta</h2>';
+  h += '<p class="text-sm text-gray-500 mt-1">Antes de iniciar, necesitamos saber que ruta institucional seguir.</p></div>';
+  h += '<div class="max-w-md mx-auto space-y-4">';
+  h += '<div class="p-4 border-2 border-gray-200 rounded-xl bg-amber-50/30">';
+  h += '<p class="text-sm font-bold text-gray-800 mb-3">&iquest;Usted quiere una revision exhaustiva con la seccion de investigacion?</p>';
+  h += '<div class="space-y-3">';
+  // YES option
+  h += '<button onclick="selectStage3Route(\'subdireccion\')" class="w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all ' + (stage2Route === 'subdireccion' ? 'border-indigo-500 bg-indigo-50 shadow-md' : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50') + '">';
+  h += '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ' + (stage2Route === 'subdireccion' ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-500') + '"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg></div>';
+  h += '<div class="text-left flex-1"><div class="font-bold text-sm ' + (stage2Route === 'subdireccion' ? 'text-indigo-700' : 'text-gray-800') + '">SI — Revision exhaustiva</div>';
+  h += '<div class="text-[11px] text-gray-500 mt-0.5">Envia el proyecto a <strong>investigacion.cirugia@fsfb.org.co</strong> para revision por la seccion de investigacion antes de la Subdireccion.</div></div></button>';
+  // NO option
+  h += '<button onclick="selectStage3Route(\'directo_etica\')" class="w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all ' + (stage2Route === 'directo_etica' ? 'border-verde/60 bg-verde/5 shadow-md' : 'border-gray-200 hover:border-verde/40 hover:bg-verde/5') + '">';
+  h += '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ' + (stage2Route === 'directo_etica' ? 'bg-verde text-white' : 'bg-gray-100 text-gray-500') + '"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.062a1.125 1.125 0 0 1 0 1.953l-7.108 4.062A1.125 1.125 0 0 1 3 16.811V8.689ZM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.062a1.125 1.125 0 0 1 0 1.953l-7.108 4.062a1.125 1.125 0 0 1-1.683-.977V8.689Z"/></svg></div>';
+  h += '<div class="text-left flex-1"><div class="font-bold text-sm ' + (stage2Route === 'directo_etica' ? 'text-verde' : 'text-gray-800') + '">NO — Enviar documentos directamente</div>';
+  h += '<div class="text-[11px] text-gray-500 mt-0.5">Continua enviando los documentos directamente a la <strong>Subdireccion de Estudios Clinicos</strong> sin revision previa.</div></div></button>';
+  h += '</div></div>';
+  // Continue button (only if route selected)
+  if (stage2Route) {
+    h += '<button onclick="confirmStage3Route()" class="w-full mt-4 confirm-btn bg-gradient-to-r from-galatea to-verde hover:shadow-lg text-white px-6 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center justify-center gap-2">';
+    h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>Continuar con la ruta seleccionada</button>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
+var _stage3RouteConfirmed = false;
+
+function selectStage3Route(route) {
+  stage2Route = route;
+  renderStage3InstDetailedViews();
+  if (route === 'subdireccion') {
+    // Open mailto for investigation section
+    window.open('mailto:investigacion.cirugia@fsfb.org.co?subject=Solicitud%20de%20revision%20exhaustiva%20-%20' + encodeURIComponent(project.project_code || project.research_question || 'Proyecto') + '&body=Estimado%20equipo%20de%20investigacion%2C%0A%0ASolicito%20revision%20exhaustiva%20del%20proyecto.%0A%0ACordialmente.', '_blank');
+  }
+}
+
+function confirmStage3Route() {
+  _stage3RouteConfirmed = true;
+}
+
 async function runStage3InstSimulation() {
   try {
+  // ── PASO 0: Seleccion de Ruta Institucional ──
+  stage3InstStep = 0;
+  currentSimPhase = 's3_ruta';
+  setBubbleStatus('thinking', 'Paso 0 — Seleccion de Ruta');
+  await bubbleTypewriter('Antes de iniciar la ruta institucional, necesito saber: &iquest;deseas una <strong>revision exhaustiva</strong> con la seccion de investigacion, o prefieres enviar directamente a la Subdireccion?', 32);
+  renderStage3InstDetailedViews();
+  // Wait for route confirmation
+  _stage3RouteConfirmed = false;
+  while (!_stage3RouteConfirmed && !simulationAborted) { await delay(500); }
+  if (simulationAborted) return;
+  setBubbleStatus('done', 'Ruta seleccionada: ' + (stage2Route === 'subdireccion' ? 'Via Subdireccion' : 'Directo'));
+  await delay(1000);
+
   // ── PASO 1: Revision Preliminar ──
   stage3InstStep = 1;
   currentSimPhase = 's3_revision';
@@ -6934,7 +7071,10 @@ function renderDocumentChecklist() {
           sec.fields.forEach(function(f) {
             var val = content[f.key] || '';
             h += '<div class="mb-3"><label class="block text-[11px] font-semibold text-gray-600 mb-1">' + esc(f.label) + '</label>';
-            if (f.large) {
+            // Interactive Gantt for cronograma/actividades fields
+            if (f.key === 'cronograma' || f.key === 'actividades') {
+              h += renderInlineGantt(idx, f.key, val);
+            } else if (f.large) {
               h += '<textarea onblur="saveDocField(' + idx + ',\'' + f.key + '\',this.value)" rows="5" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 focus:border-galatea focus:ring-1 focus:ring-galatea/30 outline-none resize-y bg-white placeholder:text-gray-300" placeholder="' + esc(f.placeholder || '') + '">' + esc(val) + '</textarea>';
             } else {
               h += '<input type="text" onblur="saveDocField(' + idx + ',\'' + f.key + '\',this.value)" value="' + esc(val) + '" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 focus:border-galatea focus:ring-1 focus:ring-galatea/30 outline-none bg-white placeholder:text-gray-300" placeholder="' + esc(f.placeholder || '') + '">';
@@ -6976,6 +7116,15 @@ function renderPreliminaryReview() {
   if (stage2HasExternalInvestigators) h += '<li>&#x2022; Acuerdo de confidencialidad y tratamiento de datos (firmado)</li>';
   h += '</ul>';
   h += '<p class="text-sm text-gray-500 italic">Los asistentes de investigacion crearan una carpeta en OneDrive con todos los documentos.</p>';
+  h += '</div>';
+  // Send email button
+  var emailSubject = encodeURIComponent('Sometimiento proyecto — ' + (stage2ProjectType || 'Protocolo') + (project && project.project_code ? ' [' + project.project_code + ']' : ''));
+  var emailBody = encodeURIComponent('Estimado equipo de investigacion del Departamento de Cirugia,\n\nAdjunto el protocolo de investigacion para revision preliminar.\n\nDocumentos adjuntos:\n- Formato de presentacion de proyecto\n- Matriz de Variables\n- Instrumento de recoleccion\n\nCordialmente.');
+  h += '<div class="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">';
+  h += '<a href="mailto:investigacion.cirugia@fsfb.org.co?subject=' + emailSubject + '&body=' + emailBody + '" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">';
+  h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>';
+  h += 'Enviar correo a Investigacion</a>';
+  h += '<span class="text-[10px] text-gray-400">Se abrira tu cliente de correo con el borrador pre-llenado</span>';
   h += '</div></div>';
 
   // Feedback card
@@ -6994,16 +7143,62 @@ function renderPreliminaryReview() {
 
 // ── Paso 6: Submission Progress ──
 function renderSubmissionProgress() {
+  // Calculate days since submission
+  var submissionDate = project && project.submission_date ? new Date(project.submission_date) : _submissionStartDate || new Date();
+  if (!_submissionStartDate) _submissionStartDate = submissionDate;
+  var now = new Date();
+  var daysDiff = Math.max(0, Math.floor((now - submissionDate) / (1000 * 60 * 60 * 24)));
+  var maxDays = 45; // Max expected response time
+  var dayPct = Math.min(100, Math.round((daysDiff / maxDays) * 100));
+  var barColor = daysDiff <= 14 ? 'bg-blue-500' : daysDiff <= 30 ? 'bg-amber-500' : 'bg-red-500';
+  var statusColor = daysDiff <= 14 ? 'text-blue-600' : daysDiff <= 30 ? 'text-amber-600' : 'text-red-600';
+  var statusIcon = daysDiff <= 14 ? '&#x23F3;' : daysDiff <= 30 ? '&#x26A0;' : '&#x1F534;';
+
   var h = '<div class="phase-divider"><span>Paso 6: Sometimiento a Subdireccion</span></div>';
   h += '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 s2-appear">';
-  h += '<div class="flex items-center gap-3 mb-4"><h3 class="font-bold text-gray-900">Sometimiento a Subdireccion de Estudios Clinicos</h3></div>';
+  h += '<div class="flex items-center justify-between mb-4"><h3 class="font-bold text-gray-900">Sometimiento a Subdireccion de Estudios Clinicos</h3>';
+  h += '<span class="px-3 py-1.5 rounded-lg text-xs font-black ' + statusColor + ' bg-opacity-10" style="background:currentColor;background:' + (daysDiff <= 14 ? '#eff6ff' : daysDiff <= 30 ? '#fffbeb' : '#fef2f2') + '">' + statusIcon + ' Dia ' + daysDiff + ' / ' + maxDays + '</span></div>';
   h += '<div class="text-sm text-gray-600 mb-4">El grupo de investigacion del departamento ha enviado tu proyecto para evaluacion metodologica, administrativa y etica.</div>';
-  h += '<div class="mb-3"><div class="flex justify-between text-[10px] text-gray-500 mb-1"><span>Recibido</span><span>En revision</span><span>Evaluado</span></div>';
-  h += '<div class="submission-bar"><div id="submissionFill" class="fill" style="width: ' + (stage2Step >= 7 ? '100' : '0') + '%"></div></div></div>';
+
+  // Day tracker progress bar
+  h += '<div class="mb-4"><div class="flex justify-between text-[10px] text-gray-500 mb-1"><span>Dia 0 — Enviado</span><span>Dia 14</span><span>Dia 30</span><span>Dia 45</span></div>';
+  h += '<div class="relative h-3 bg-gray-100 rounded-full overflow-hidden">';
+  h += '<div class="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ' + barColor + '" style="width:' + dayPct + '%"></div>';
+  // Milestone markers
+  h += '<div class="absolute inset-y-0 left-[31%] w-px bg-gray-300" title="14 dias"></div>';
+  h += '<div class="absolute inset-y-0 left-[67%] w-px bg-gray-300" title="30 dias"></div>';
+  h += '</div></div>';
+
+  // Status indicators
+  h += '<div class="grid grid-cols-3 gap-2 mb-4">';
+  h += '<div class="p-2 rounded-lg ' + (daysDiff >= 0 ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 border border-gray-200') + ' text-center"><div class="text-[10px] font-bold ' + (daysDiff >= 0 ? 'text-blue-600' : 'text-gray-400') + '">Recibido</div><div class="text-[9px] text-gray-400 mt-0.5">' + submissionDate.toLocaleDateString('es-CO') + '</div></div>';
+  h += '<div class="p-2 rounded-lg ' + (daysDiff >= 7 ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50 border border-gray-200') + ' text-center"><div class="text-[10px] font-bold ' + (daysDiff >= 7 ? 'text-amber-600' : 'text-gray-400') + '">En revision</div></div>';
+  h += '<div class="p-2 rounded-lg ' + (stage3InstStep >= 4 ? 'bg-verde/10 border border-verde/30' : 'bg-gray-50 border border-gray-200') + ' text-center"><div class="text-[10px] font-bold ' + (stage3InstStep >= 4 ? 'text-verde' : 'text-gray-400') + '">Evaluado</div></div>';
+  h += '</div>';
+
   h += '<div class="flex items-center gap-2 text-xs text-gray-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>';
-  h += '<span>Tiempo estimado de respuesta: 2 a 4 semanas</span></div>';
+  h += '<span>Tiempo estimado de respuesta: 2 a 4 semanas (' + (maxDays - daysDiff) + ' dias restantes del limite)</span></div>';
   h += '</div>';
   return h;
+}
+var _submissionStartDate = null;
+var _emailStatus = { subdireccion: '', etica: '' };
+
+function updateProjectEmailStatus(entity, status) {
+  _emailStatus[entity] = _emailStatus[entity] === status ? '' : status;
+  // Save to project
+  if (project) {
+    if (entity === 'subdireccion') project.subdireccion_status = status;
+    if (entity === 'etica') project.comite_etica_status = status;
+    // Persist to Supabase
+    if (rowId) {
+      var update = {};
+      update[entity === 'subdireccion' ? 'subdireccion_status' : 'comite_etica_status'] = status;
+      sb.from(TABLE).update(update).eq('id', rowId).then(function() {}).catch(function() {});
+    }
+  }
+  showToast('Estado actualizado: ' + entity + ' → ' + status, 'success');
+  if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
 }
 
 // ── Paso 7: Subdireccion Response ──
@@ -7020,6 +7215,14 @@ function renderSubdireccionResponse() {
   h += '<li>&#x2022; <strong>Cronograma:</strong> Detallar el periodo de reclutamiento estimado.</li>';
   h += '</ul></div>';
   h += '<div class="p-3 rounded-xl bg-blue-50 border border-blue-100 text-xs text-blue-700">Una vez realizados los ajustes, enviar documento corregido a <strong>investigacion.cirugia@fsfb.org.co</strong></div>';
+  // Email status connection
+  h += '<div class="mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-200">';
+  h += '<div class="flex items-center gap-2 mb-2"><svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>';
+  h += '<span class="text-xs font-bold text-indigo-700">Estado por correo</span></div>';
+  h += '<div class="flex items-center gap-2">';
+  h += '<button onclick="updateProjectEmailStatus(\'subdireccion\',\'corrections\')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ' + (_emailStatus.subdireccion === 'corrections' ? 'bg-amber-100 border-amber-400 text-amber-700' : 'border-gray-200 text-gray-500 hover:border-amber-300') + '">Correcciones solicitadas</button>';
+  h += '<button onclick="updateProjectEmailStatus(\'subdireccion\',\'approved\')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ' + (_emailStatus.subdireccion === 'approved' ? 'bg-verde/20 border-verde/50 text-verde' : 'border-gray-200 text-gray-500 hover:border-verde/40') + '">Aprobado</button>';
+  h += '</div></div>';
   h += '</div></div>';
   return h;
 }
@@ -7057,7 +7260,16 @@ function renderEthicsTimeline() {
     h += '</div>';
   });
 
+  h += '</div>';
+  // Email status for Comité de Ética
+  h += '<div class="mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-200">';
+  h += '<div class="flex items-center gap-2 mb-2"><svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>';
+  h += '<span class="text-xs font-bold text-indigo-700">Respuesta Comite de Etica</span></div>';
+  h += '<div class="flex items-center gap-2">';
+  h += '<button onclick="updateProjectEmailStatus(\'etica\',\'corrections\')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ' + (_emailStatus.etica === 'corrections' ? 'bg-amber-100 border-amber-400 text-amber-700' : 'border-gray-200 text-gray-500 hover:border-amber-300') + '">Correcciones</button>';
+  h += '<button onclick="updateProjectEmailStatus(\'etica\',\'approved\')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ' + (_emailStatus.etica === 'approved' ? 'bg-verde/20 border-verde/50 text-verde' : 'border-gray-200 text-gray-500 hover:border-verde/40') + '">Aprobado</button>';
   h += '</div></div>';
+  h += '</div>';
   return h;
 }
 
@@ -7122,15 +7334,15 @@ function renderFinalSteps() {
 
   h += '<div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm s2-appear">';
   h += '<div class="flex items-center gap-2 mb-3"><div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center"><svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg></div>';
-  h += '<h4 class="font-bold text-sm text-gray-900">GrupLAC</h4></div>';
-  h += '<p class="text-xs text-gray-600 mb-2">Cuando el Comite de Etica apruebe y el proyecto sea publicado, registrelo en el GrupLAC del Departamento.</p>';
+  h += '<h4 class="font-bold text-sm text-gray-900">GrupLAC</h4><span class="ml-2 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-600 border border-amber-200">Recomendacion</span></div>';
+  h += '<p class="text-xs text-gray-600 mb-2">Cuando el Comite de Etica apruebe y el proyecto sea publicado, se recomienda registrarlo en el GrupLAC del Departamento. <strong class="text-amber-600">Este paso no es obligatorio.</strong></p>';
   h += '<div class="px-3 py-2 rounded-lg bg-indigo-50 text-xs text-indigo-700 font-semibold">&#x1F4CB; Formulario de inclusion pendiente</div>';
   h += '</div>';
 
   h += '<div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm s2-appear">';
   h += '<div class="flex items-center gap-2 mb-3"><div class="w-8 h-8 rounded-lg bg-verde/10 flex items-center justify-center"><svg class="w-4 h-4 text-verde" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"/></svg></div>';
-  h += '<h4 class="font-bold text-sm text-gray-900">Produccion Cientifica</h4></div>';
-  h += '<p class="text-xs text-gray-600 mb-2">Al publicar, diligenciar el formulario de Registro Semanal de Produccion Cientifica del Departamento de Cirugia.</p>';
+  h += '<h4 class="font-bold text-sm text-gray-900">Produccion Cientifica</h4><span class="ml-2 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-600 border border-amber-200">Recomendacion</span></div>';
+  h += '<p class="text-xs text-gray-600 mb-2">Al publicar, se sugiere diligenciar el formulario de Registro Semanal de Produccion Cientifica del Departamento de Cirugia. <strong class="text-amber-600">Este paso no es obligatorio.</strong></p>';
   h += '<div class="px-3 py-2 rounded-lg bg-verde/10 text-xs text-verde font-semibold">&#x1F4DD; Registro semanal de Produccion Cientifica</div>';
   h += '</div>';
 
@@ -9162,10 +9374,12 @@ function getProjectVancouverRefs(pd) {
 }
 
 // ── Enrich all simData sections with real PubMed citations ──
+// Uses separate article pools: FINER/feasibility use _pubmed_articles_finer
 function enrichSimDataWithCitations(sd) {
+  var finerArts = sd._pubmed_articles_finer || sd._pubmed_articles || [];
   var arts = sd._pubmed_articles || [];
-  if (arts.length < 1) return;
-  var n = arts.length;
+  if (arts.length < 1 && finerArts.length < 1) return;
+  var n = finerArts.length || arts.length;
   var globalRef = 1;
   // Helper: inject [N] after every sentence in a text
   function citeAllSentences(text) {
@@ -9251,24 +9465,31 @@ function buildCitedHTML(text, numRefs) {
         if (!isDecimal) {
           var rn = ((cn - 1) % numRefs) + 1;
           cn++;
-          h += '<sup style="color:#2563EB;font-weight:700;vertical-align:super;font-size:0.75em;cursor:pointer" title="Ref ' + rn + '"> [' + rn + ']</sup>';
+          h += '<sup data-ref="' + rn + '" onclick="showRefTooltip(' + rn + ',event)" style="color:#2563EB;font-weight:700;vertical-align:super;font-size:0.75em;cursor:pointer;background:#eff6ff;padding:1px 3px;border-radius:3px;transition:background .15s" onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'" title="Click para ver referencia"> [' + rn + ']</sup>';
         }
       }
     }
   }
   return h;
 }
-// Wrapper used by FINER, Feasibility, Hypotheses renderers
+// Wrapper used by FINER, Feasibility, Hypotheses renderers (uses FINER-specific pool)
 function highlightCitations(text) {
   if (!text) return '';
-  var arts = (simData && simData._pubmed_articles) || [];
+  var arts = (simData && simData._pubmed_articles_finer) || (simData && simData._pubmed_articles) || [];
   var numRefs = arts.length || ((simData && simData.extraction_table) || []).length || 10;
   return buildCitedHTML(text, numRefs);
 }
 
 // ── Render references footer (Vancouver format) for any section ──
-function renderReferencesFooter(pd) {
-  var arts = (simData && simData._pubmed_articles) || (pd && pd._pubmed_articles) || [];
+function renderReferencesFooter(pd, section) {
+  var arts;
+  if (section === 'planteamiento' && simData && simData._pubmed_articles_planteamiento) {
+    arts = simData._pubmed_articles_planteamiento;
+  } else if (section === 'finer' && simData && simData._pubmed_articles_finer) {
+    arts = simData._pubmed_articles_finer;
+  } else {
+    arts = (simData && simData._pubmed_articles) || (pd && pd._pubmed_articles) || [];
+  }
   if (arts.length < 1) return '';
   var h = '<div class="mt-4 pt-3 border-t border-gray-100">';
   h += '<div class="flex items-center justify-between mb-2"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Referencias Vancouver (' + arts.length + ')</span>';
@@ -9276,9 +9497,10 @@ function renderReferencesFooter(pd) {
   h += '<div class="space-y-1 max-h-48 overflow-y-auto">';
   arts.forEach(function(a, i) {
     var vanc = formatVancouver(a, i + 1);
-    h += '<div class="text-[9px] text-gray-500 leading-relaxed">';
+    h += '<div class="text-[9px] text-gray-500 leading-relaxed cursor-pointer hover:text-gray-700 hover:bg-blue-50/50 rounded px-1 -mx-1 transition-colors" data-ref="' + (i+1) + '" onclick="showRefTooltip(' + (i+1) + ',event)">';
     h += esc(vanc);
-    if (a.pmid) h += ' <a href="https://pubmed.ncbi.nlm.nih.gov/' + esc(a.pmid) + '/" target="_blank" class="text-blue-400 hover:underline">[PubMed]</a>';
+    if (a.doi) h += ' <a href="https://doi.org/' + esc(a.doi) + '" target="_blank" class="text-blue-400 hover:underline" onclick="event.stopPropagation()">[DOI]</a>';
+    if (a.pmid) h += ' <a href="https://pubmed.ncbi.nlm.nih.gov/' + esc(a.pmid) + '/" target="_blank" class="text-blue-400 hover:underline" onclick="event.stopPropagation()">[PubMed]</a>';
     h += '</div>';
   });
   h += '</div></div>';
@@ -9714,6 +9936,60 @@ function downloadTable3DOCX() {
     var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'Table_3_Resultados_Clinicos.docx'; a.click(); URL.revokeObjectURL(url);
     showToast('Table 3 descargada (DOCX)', 'success');
   });
+}
+
+// Import DOCX file and extract text into manuscript sections
+async function importDocxFile(file) {
+  if (!file) return;
+  try {
+    showToast('Importando documento...', 'info');
+    var arrayBuffer = await file.arrayBuffer();
+    // Use mammoth.js if available, otherwise basic XML extraction
+    if (typeof mammoth !== 'undefined') {
+      var result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+      var text = result.value.replace(/<[^>]+>/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    } else {
+      // Basic extraction from DOCX XML
+      var zip = new Uint8Array(arrayBuffer);
+      var text = '';
+      try {
+        // DOCX is a ZIP with word/document.xml
+        var blob = new Blob([zip], { type: 'application/zip' });
+        var resp = await blob.text();
+        text = resp.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      } catch(e) { text = 'Documento importado — edita las secciones manualmente.'; }
+    }
+    // Try to split into sections
+    var ue = (project && project.user_edits) || {};
+    if (!ue.manuscript_sections) ue.manuscript_sections = {};
+    // Detect common section headers
+    var sectionMap = {
+      'introduccion': /(?:^|\n)(introduccion|introduction|antecedentes)([\s\S]*?)(?=(?:\n(?:metodos|methods|resultados|results|discusion|discussion))|$)/i,
+      'metodos': /(?:^|\n)(metodos|methods|metodologia)([\s\S]*?)(?=(?:\n(?:resultados|results|discusion|discussion))|$)/i,
+      'resultados': /(?:^|\n)(resultados|results)([\s\S]*?)(?=(?:\n(?:discusion|discussion|conclusion))|$)/i,
+      'discusion': /(?:^|\n)(discusion|discussion|conclusion|conclusions?)([\s\S]*)$/i
+    };
+    var foundSections = false;
+    Object.keys(sectionMap).forEach(function(key) {
+      var match = text.match(sectionMap[key]);
+      if (match && match[2] && match[2].trim().length > 20) {
+        ue.manuscript_sections[key] = match[2].trim();
+        foundSections = true;
+      }
+    });
+    if (!foundSections) {
+      ue.manuscript_sections['introduccion'] = text;
+    }
+    project.user_edits = ue;
+    if (rowId) {
+      sb.from(TABLE).update({ user_edits: ue }).eq('id', rowId).then(function(){}).catch(function(){});
+    }
+    renderAll();
+    showToast('Documento importado exitosamente', 'success');
+  } catch (err) {
+    console.error('Import DOCX error:', err);
+    showToast('Error importando documento: ' + err.message, 'error');
+  }
 }
 
 function exportManuscriptDOCX() {
@@ -12015,6 +12291,342 @@ function renderStage5Conclusion() {
   return h;
 }
 
+// ── Extract protocol criteria from Etapa 2 for PRISMA connection ──
+function getProtocolCriteria(pd) {
+  var result = { inclusion: [], exclusion: [] };
+  // Try to get from protocol draft
+  var proto = pd.protocol_draft || '';
+  if (typeof proto === 'string' && proto.length > 0) {
+    // Extract inclusion criteria
+    var incMatch = proto.match(/(?:criterios?\s+de\s+inclusion|inclusion\s+criteria)[:\s]*\n?((?:[-•\d].*\n?)+)/i);
+    if (incMatch) {
+      incMatch[1].split('\n').forEach(function(line) {
+        var clean = line.replace(/^[-•\d.\s]+/, '').trim();
+        if (clean.length > 5) result.inclusion.push(clean);
+      });
+    }
+    // Extract exclusion criteria
+    var excMatch = proto.match(/(?:criterios?\s+de\s+exclusion|exclusion\s+criteria)[:\s]*\n?((?:[-•\d].*\n?)+)/i);
+    if (excMatch) {
+      excMatch[1].split('\n').forEach(function(line) {
+        var clean = line.replace(/^[-•\d.\s]+/, '').trim();
+        if (clean.length > 5) result.exclusion.push(clean);
+      });
+    }
+  }
+  // Try from document fields (stage 2 docs)
+  if (result.inclusion.length === 0 && stage2SimData && stage2SimData.docsSubdireccion) {
+    stage2SimData.docsSubdireccion.forEach(function(doc) {
+      if (doc.content && doc.content.criterios) {
+        var criterioText = doc.content.criterios;
+        var lines = criterioText.split('\n');
+        var mode = '';
+        lines.forEach(function(line) {
+          if (/inclusion/i.test(line)) { mode = 'inclusion'; return; }
+          if (/exclusion/i.test(line)) { mode = 'exclusion'; return; }
+          var clean = line.replace(/^[-•\d.\s]+/, '').trim();
+          if (clean.length > 5 && mode) result[mode].push(clean);
+        });
+      }
+    });
+  }
+  // Fallback: generate from PICOT
+  if (result.inclusion.length === 0 && pd.picot) {
+    var p = pd.picot;
+    if (p.P) result.inclusion.push('Poblacion: ' + p.P);
+    if (p.I) result.inclusion.push('Intervencion/exposicion: ' + p.I);
+    if (p.O) result.inclusion.push('Desenlace medido: ' + p.O);
+    if (p.S) result.inclusion.push('Diseno: ' + p.S);
+    result.exclusion.push('Estudios no publicados en ingles o espanol');
+    result.exclusion.push('Articulos sin texto completo disponible');
+    result.exclusion.push('Estudios con alto riesgo de sesgo');
+  }
+  return result;
+}
+
+// ── Interactive Gantt Chart for Cronograma ──
+var _ganttData = {};
+
+function getGanttActivities(docIdx, key) {
+  var k = docIdx + '_' + key;
+  if (!_ganttData[k]) {
+    _ganttData[k] = [
+      { name: 'Revision bibliografica', start: 1, duration: 2, color: '#2563EB' },
+      { name: 'Sometimiento CEI', start: 2, duration: 2, color: '#7C3AED' },
+      { name: 'Reclutamiento', start: 3, duration: 4, color: '#059669' },
+      { name: 'Recoleccion de datos', start: 4, duration: 5, color: '#D97706' },
+      { name: 'Analisis estadistico', start: 8, duration: 3, color: '#DC2626' },
+      { name: 'Redaccion manuscrito', start: 10, duration: 2, color: '#4DA8A1' },
+      { name: 'Publicacion', start: 11, duration: 2, color: '#89BA17' }
+    ];
+  }
+  return _ganttData[k];
+}
+
+function renderInlineGantt(docIdx, key, textVal) {
+  var acts = getGanttActivities(docIdx, key);
+  var totalWeeks = 52;
+  var months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var gid = 'gantt_' + docIdx + '_' + key;
+
+  var h = '<div class="bg-white border border-gray-200 rounded-xl overflow-hidden">';
+  // Header with buttons
+  h += '<div class="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">';
+  h += '<span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Diagrama de Gantt Interactivo</span>';
+  h += '<div class="flex items-center gap-2">';
+  h += '<button onclick="addGanttRow(' + docIdx + ',\'' + key + '\')" class="px-2 py-1 rounded-md text-[10px] font-bold bg-galatea/10 text-galatea hover:bg-galatea/20 transition-colors">+ Actividad</button>';
+  h += '<button onclick="exportGanttCSV(' + docIdx + ',\'' + key + '\')" class="px-2 py-1 rounded-md text-[10px] font-bold bg-verde/10 text-verde hover:bg-verde/20 transition-colors">Exportar CSV</button>';
+  h += '<button onclick="exportGanttXLSX(' + docIdx + ',\'' + key + '\')" class="px-2 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">Exportar Excel</button>';
+  h += '</div></div>';
+
+  // Table
+  h += '<div class="overflow-x-auto"><table class="w-full text-[11px]" id="' + gid + '">';
+  // Month headers
+  h += '<thead><tr><th class="px-2 py-1.5 text-left bg-gray-50 border-b font-bold text-gray-600 min-w-[180px] sticky left-0 z-10">Actividad</th>';
+  months.forEach(function(m) { h += '<th colspan="4" class="px-0 py-1.5 text-center bg-gray-50 border-b border-l border-gray-100 font-bold text-gray-500 text-[9px]">' + m + '</th>'; });
+  h += '<th class="px-2 py-1.5 bg-gray-50 border-b text-center font-bold text-gray-500 text-[9px] min-w-[40px]"></th></tr>';
+  // Week subheaders
+  h += '<tr><th class="bg-gray-50 border-b sticky left-0 z-10"></th>';
+  for (var w = 1; w <= 48; w++) { h += '<th class="px-0 py-0.5 text-center bg-gray-50/50 border-b border-l border-gray-50 text-[8px] text-gray-300 w-[18px]">' + w + '</th>'; }
+  h += '<th class="bg-gray-50 border-b"></th></tr></thead>';
+
+  // Rows
+  h += '<tbody>';
+  acts.forEach(function(act, ai) {
+    h += '<tr class="hover:bg-blue-50/30 transition-colors">';
+    h += '<td class="px-2 py-1.5 border-b border-gray-100 sticky left-0 bg-white z-10"><input type="text" value="' + esc(act.name) + '" onblur="updateGanttName(' + docIdx + ',\'' + key + '\',' + ai + ',this.value)" class="w-full border-0 bg-transparent text-[11px] text-gray-800 font-medium outline-none focus:ring-0 px-0"></td>';
+    for (var w = 1; w <= 48; w++) {
+      var inRange = w >= act.start && w < act.start + act.duration;
+      var isStart = w === act.start;
+      var isEnd = w === act.start + act.duration - 1;
+      var cellBg = inRange ? 'background:' + act.color + ';opacity:0.85;' : '';
+      var radius = isStart && isEnd ? 'border-radius:4px;' : isStart ? 'border-radius:4px 0 0 4px;' : isEnd ? 'border-radius:0 4px 4px 0;' : '';
+      h += '<td class="px-0 py-1 border-b border-l border-gray-50 cursor-pointer" onclick="setGanttCell(' + docIdx + ',\'' + key + '\',' + ai + ',' + w + ')" title="Semana ' + w + '">';
+      if (inRange) h += '<div style="height:16px;' + cellBg + radius + '"></div>';
+      h += '</td>';
+    }
+    h += '<td class="px-1 py-1 border-b text-center"><button onclick="removeGanttRow(' + docIdx + ',\'' + key + '\',' + ai + ')" class="text-red-300 hover:text-red-500 text-sm">&times;</button></td>';
+    h += '</tr>';
+  });
+  h += '</tbody></table></div></div>';
+  return h;
+}
+
+function addGanttRow(docIdx, key) {
+  var acts = getGanttActivities(docIdx, key);
+  var colors = ['#2563EB','#7C3AED','#059669','#D97706','#DC2626','#4DA8A1','#89BA17','#EC4899'];
+  acts.push({ name: 'Nueva actividad', start: 1, duration: 2, color: colors[acts.length % colors.length] });
+  if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
+}
+
+function removeGanttRow(docIdx, key, rowIdx) {
+  var acts = getGanttActivities(docIdx, key);
+  acts.splice(rowIdx, 1);
+  if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
+}
+
+function updateGanttName(docIdx, key, rowIdx, name) {
+  var acts = getGanttActivities(docIdx, key);
+  if (acts[rowIdx]) acts[rowIdx].name = name;
+  syncGanttToDocField(docIdx, key);
+}
+
+function setGanttCell(docIdx, key, rowIdx, week) {
+  var acts = getGanttActivities(docIdx, key);
+  if (!acts[rowIdx]) return;
+  var act = acts[rowIdx];
+  if (week >= act.start && week < act.start + act.duration) {
+    // Click inside bar — shrink or remove
+    act.duration = Math.max(1, week - act.start);
+  } else {
+    // Click outside — set new start or extend
+    if (week < act.start) { act.duration += (act.start - week); act.start = week; }
+    else { act.duration = week - act.start + 1; }
+  }
+  syncGanttToDocField(docIdx, key);
+  if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
+}
+
+function syncGanttToDocField(docIdx, key) {
+  var acts = getGanttActivities(docIdx, key);
+  var text = acts.map(function(a) { return a.name + '  |  Semana ' + a.start + '-' + (a.start + a.duration - 1); }).join('\n');
+  saveDocField(docIdx, key, text);
+}
+
+function exportGanttCSV(docIdx, key) {
+  var acts = getGanttActivities(docIdx, key);
+  var csv = 'Actividad,Semana Inicio,Semana Fin,Duracion (semanas)\n';
+  acts.forEach(function(a) { csv += '"' + a.name + '",' + a.start + ',' + (a.start + a.duration - 1) + ',' + a.duration + '\n'; });
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'cronograma_gantt.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportGanttXLSX(docIdx, key) {
+  var acts = getGanttActivities(docIdx, key);
+  var data = acts.map(function(a) { return { Actividad: a.name, 'Semana Inicio': a.start, 'Semana Fin': a.start + a.duration - 1, 'Duracion (semanas)': a.duration }; });
+  var ws = XLSX.utils.json_to_sheet(data);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Cronograma');
+  XLSX.writeFile(wb, 'cronograma_gantt.xlsx');
+}
+
+// ── Interactive Spreadsheet for Matriz de Variables ──
+var _spreadsheetData = {};
+
+function renderInlineSpreadsheet(docIdx, key, headers, defaultRows) {
+  var sid = docIdx + '_' + key;
+  if (!_spreadsheetData[sid]) {
+    _spreadsheetData[sid] = defaultRows || [
+      ['', '', '', '', '', ''],
+      ['', '', '', '', '', ''],
+      ['', '', '', '', '', '']
+    ];
+  }
+  var rows = _spreadsheetData[sid];
+  var h = '<div class="bg-white border border-gray-200 rounded-xl overflow-hidden">';
+  h += '<div class="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">';
+  h += '<span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tabla Editable</span>';
+  h += '<div class="flex items-center gap-2">';
+  h += '<button onclick="addSpreadsheetRow(\'' + sid + '\',' + headers.length + ')" class="px-2 py-1 rounded-md text-[10px] font-bold bg-galatea/10 text-galatea hover:bg-galatea/20">+ Fila</button>';
+  h += '<button onclick="exportSpreadsheetXLSX(\'' + sid + '\',' + JSON.stringify(headers).replace(/"/g, '&quot;') + ')" class="px-2 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600 hover:bg-blue-100">Exportar Excel</button>';
+  h += '</div></div>';
+  h += '<div class="overflow-x-auto"><table class="w-full text-[11px]"><thead><tr>';
+  h += '<th class="px-1 py-1.5 bg-gray-50 border-b text-center text-gray-400 text-[9px] w-[30px]">#</th>';
+  headers.forEach(function(hdr) { h += '<th class="px-2 py-1.5 bg-gray-50 border-b border-l text-left font-bold text-gray-600 text-[10px]">' + hdr + '</th>'; });
+  h += '<th class="px-1 py-1.5 bg-gray-50 border-b w-[30px]"></th></tr></thead><tbody>';
+  rows.forEach(function(row, ri) {
+    h += '<tr class="hover:bg-blue-50/30">';
+    h += '<td class="px-1 py-1 border-b text-center text-[9px] text-gray-300">' + (ri+1) + '</td>';
+    for (var ci = 0; ci < headers.length; ci++) {
+      h += '<td class="px-1 py-0.5 border-b border-l border-gray-50"><input type="text" value="' + esc(row[ci] || '') + '" onblur="updateSpreadsheetCell(\'' + sid + '\',' + ri + ',' + ci + ',this.value)" class="w-full border-0 bg-transparent text-[11px] outline-none px-1 py-0.5"></td>';
+    }
+    h += '<td class="px-1 py-1 border-b text-center"><button onclick="removeSpreadsheetRow(\'' + sid + '\',' + ri + ')" class="text-red-300 hover:text-red-500">&times;</button></td>';
+    h += '</tr>';
+  });
+  h += '</tbody></table></div></div>';
+  return h;
+}
+
+function addSpreadsheetRow(sid, cols) {
+  if (!_spreadsheetData[sid]) _spreadsheetData[sid] = [];
+  _spreadsheetData[sid].push(new Array(cols).fill(''));
+  if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
+}
+
+function removeSpreadsheetRow(sid, ri) {
+  if (_spreadsheetData[sid]) _spreadsheetData[sid].splice(ri, 1);
+  if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
+}
+
+function updateSpreadsheetCell(sid, ri, ci, val) {
+  if (_spreadsheetData[sid] && _spreadsheetData[sid][ri]) _spreadsheetData[sid][ri][ci] = val;
+}
+
+function exportSpreadsheetXLSX(sid, headers) {
+  var rows = _spreadsheetData[sid] || [];
+  var data = rows.map(function(row) {
+    var obj = {};
+    headers.forEach(function(h, i) { obj[h] = row[i] || ''; });
+    return obj;
+  });
+  var ws = XLSX.utils.json_to_sheet(data);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+  XLSX.writeFile(wb, 'matriz_datos.xlsx');
+}
+
+// ── Reference Tooltip System ──
+function showRefTooltip(refNum, evt) {
+  evt.stopPropagation();
+  var popup = document.getElementById('refTooltipPopup');
+  if (!popup) return;
+  // Determine which article pool to use based on which section the citation is in
+  var clickEl = evt.target.closest('.planteamiento-section') ? 'planteamiento' : 'finer';
+  var arts;
+  if (clickEl === 'planteamiento' && simData && simData._pubmed_articles_planteamiento) {
+    arts = simData._pubmed_articles_planteamiento;
+  } else if (simData && simData._pubmed_articles_finer && simData._pubmed_articles_finer.length > 0) {
+    arts = simData._pubmed_articles_finer;
+  } else {
+    arts = (simData && simData._pubmed_articles) || [];
+  }
+  var extTable = (simData && simData.extraction_table) || [];
+  var idx = ((refNum - 1) % Math.max(arts.length, extTable.length, 1));
+  var a = arts[idx] || null;
+  // Fallback to extraction table
+  if (!a && extTable[idx]) {
+    var e = extTable[idx];
+    a = { title: e.resultado || 'Sin titulo', authors: e.autor ? [e.autor] : [], journal: '', year: e.anio || '', doi: e.doi || '', pmid: e.pmid || '' };
+  }
+  if (!a) {
+    // Fallback to hardcoded Vancouver refs
+    var vanc = VANCOUVER_REFS[idx] || VANCOUVER_REFS[0] || '';
+    popup.innerHTML = '<button class="ref-close" onclick="hideRefTooltip()">&times;</button>' +
+      '<div style="display:flex;gap:10px;align-items:flex-start">' +
+      '<span class="ref-num">' + refNum + '</span>' +
+      '<div class="ref-authors" style="line-height:1.5">' + esc(vanc) + '</div></div>';
+  } else {
+    var authStr = '';
+    if (a.authors && a.authors.length > 0) {
+      authStr = a.authors.length <= 3 ? a.authors.join(', ') : a.authors.slice(0, 3).join(', ') + ', et al.';
+    }
+    var titleText = (a.title || 'Sin titulo').replace(/\.\s*$/, '');
+    var journalLine = '';
+    if (a.journal) journalLine += a.journal;
+    if (a.year) journalLine += (journalLine ? '. ' : '') + a.year;
+    if (a.volume) journalLine += ';' + a.volume;
+    if (a.issue) journalLine += '(' + a.issue + ')';
+    if (a.pages) journalLine += ':' + a.pages;
+
+    var linksHtml = '';
+    if (a.doi) linksHtml += '<a href="https://doi.org/' + esc(a.doi) + '" target="_blank" class="ref-link-doi">DOI &#x2197;</a>';
+    if (a.pmid) linksHtml += '<a href="https://pubmed.ncbi.nlm.nih.gov/' + esc(a.pmid) + '/" target="_blank" class="ref-link-pubmed">PubMed &#x2197;</a>';
+
+    popup.innerHTML = '<button class="ref-close" onclick="hideRefTooltip()">&times;</button>' +
+      '<div style="display:flex;gap:10px;align-items:flex-start">' +
+      '<span class="ref-num">' + refNum + '</span>' +
+      '<div style="flex:1;min-width:0">' +
+      '<div class="ref-title">' + esc(titleText) + '</div>' +
+      (authStr ? '<div class="ref-authors">' + esc(authStr) + '</div>' : '') +
+      (journalLine ? '<div class="ref-journal">' + esc(journalLine) + '</div>' : '') +
+      (linksHtml ? '<div class="ref-links">' + linksHtml + '</div>' : '') +
+      '</div></div>';
+  }
+
+  // Position near the clicked element
+  var rect = evt.target.getBoundingClientRect();
+  var popW = 400, popH = 180;
+  var left = rect.left + rect.width / 2 - popW / 2;
+  var top = rect.bottom + 8;
+  // Keep within viewport
+  if (left < 12) left = 12;
+  if (left + popW > window.innerWidth - 12) left = window.innerWidth - popW - 12;
+  if (top + popH > window.innerHeight - 12) { top = rect.top - popH - 8; }
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
+  popup.classList.add('visible');
+}
+
+function hideRefTooltip() {
+  var popup = document.getElementById('refTooltipPopup');
+  if (popup) popup.classList.remove('visible');
+}
+
+// Close on click outside or Escape
+document.addEventListener('click', function(e) {
+  var popup = document.getElementById('refTooltipPopup');
+  if (popup && popup.classList.contains('visible') && !popup.contains(e.target) && !e.target.closest('[data-ref]')) {
+    hideRefTooltip();
+  }
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') hideRefTooltip();
+});
+
 </script>
+<div id="refTooltipPopup" class="ref-tooltip"></div>
 </body>
 </html>
