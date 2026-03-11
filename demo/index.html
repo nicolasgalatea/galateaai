@@ -3043,7 +3043,9 @@ function renderDetailedViews() {
   if (pd.finer_results) { html += renderFinerRadar(pd); if (pd.feasibility) html += renderFeasibility(pd); html += renderSampleSizeCalculator(pd); html += renderConsistencyChecker(pd); if (pd.hypothesis) html += renderHypothesis(pd); }
   if (pd.descriptor_mapping) html += renderDescriptorTags(pd);
   if (pd.search_registry) html += renderSearchRegistry(pd);
-  // PRISMA y Tabla de Extraccion se muestran solo en entregables finales
+  if (pd.search_strategy && pd.search_strategy.prisma) html += renderPrisma(pd);
+  if (pd.extraction_table && pd.extraction_table.length) html += renderExtraction(pd);
+  if (pd._dataset) html += renderDataset(pd);
   // Stats y EQUATOR removidos de la vista principal
   // if (pd.stats) html += renderStats(pd);
   // if (pd.equator_checklist) html += renderEquator(pd);
@@ -3961,8 +3963,14 @@ function renderSearchRegistry(pd) {
   var hasReal=reg.some(function(r){return r.real===true;});
   var liveBadge=hasReal?'<span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-red-600 text-white animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-white inline-block"></span>DATOS EN VIVO</span>':'';
   var h='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center justify-between mb-4"><div><h3 class="font-bold text-gray-900">Log de Auditoria'+liveBadge+'</h3><p class="text-[10px] text-gray-400 mt-0.5">'+reg.length+' bases | '+tr+' resultados | '+ti+' incluidos</p></div>';
-  h+='<div class="flex items-center gap-2"><button onclick="exportSearchCSV()" class="flex items-center gap-1.5 px-4 py-2 bg-verde/10 text-verde rounded-lg text-xs font-bold hover:bg-verde/20 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar CSV</button>'+renderREDCapExportBtn('exportSearchDataToREDCap()','REDCap')+renderMendeleyBtn('Mendeley')+'</div></div><div class="space-y-3">';
-  reg.forEach(function(r){var c=r.color||'gray';var isReal=r.real===true;var isEst=r.real===false;var isEmbase=r.database==='EMBASE';h+='<div class="border border-'+c+'-100 rounded-xl p-4 bg-'+c+'-50/30"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><div class="db-badge bg-'+c+'-100 text-'+c+'-700">'+esc(r.database)+'</div>'+(isReal?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-verde/10 text-verde border border-verde/30">EN VIVO</span>':'')+(isEst&&!isEmbase?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200">ESTIMADO</span>':'')+(isEmbase?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-orange-100 text-orange-700 border border-orange-200">MANUAL — ejecutar en embase.com</span>':'')+'</div><div class="flex items-center gap-3 text-xs"><span class="text-gray-500">Resultados: <strong>'+r.results+'</strong></span><span class="text-verde font-bold">Incluidos: '+r.included+'</span><span class="text-gray-400">'+esc(r.date||'')+'</span></div></div><div class="flex items-center gap-2"><div class="text-[11px] font-mono text-gray-600 bg-white/60 rounded-lg p-2 break-all flex-1">'+esc(r.equation||'')+'</div>'+(isEmbase?'<button onclick="navigator.clipboard.writeText(\''+esc((r.equation||'').replace(/'/g,"\\'"))+'\');showToast(\'Ecuacion EMBASE copiada al portapapeles\',\'success\')" class="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-[10px] font-bold hover:bg-orange-200 transition-all" title="Copiar ecuacion"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>Copiar</button>':'')+'</div>'+(isEst&&r.rationale?'<div class="text-[10px] text-amber-600 mt-1 italic">'+esc(r.rationale)+'</div>':'')+'</div>';});
+  h+='<div class="flex items-center gap-2"><button onclick="showImportRISModal()" class="flex items-center gap-1.5 px-3 py-2 bg-orange-100 text-orange-700 rounded-lg text-xs font-bold hover:bg-orange-200 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>Importar EMBASE</button><button onclick="runDeduplication()" class="flex items-center gap-1.5 px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-200 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>Deduplicar</button><button onclick="exportSearchCSV()" class="flex items-center gap-1.5 px-3 py-2 bg-verde/10 text-verde rounded-lg text-xs font-bold hover:bg-verde/20 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>CSV</button>'+renderREDCapExportBtn('exportSearchDataToREDCap()','REDCap')+renderMendeleyBtn('Mendeley')+'</div></div>';
+  // Dedup stats bar
+  var ds = pd._dedup_stats;
+  if (ds) {
+    h+='<div class="mb-3 p-3 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-between"><div class="flex items-center gap-2"><svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg><span class="text-xs font-bold text-indigo-700">Deduplicacion</span></div><div class="flex items-center gap-4 text-xs"><span class="text-gray-500">Total: <strong>'+ds.total+'</strong></span><span class="text-red-600 font-bold">Duplicados: '+ds.duplicated+'</span><span class="text-verde font-bold">Unicos: '+ds.unique+'</span></div></div>';
+  }
+  h+='<div class="space-y-3">';
+  reg.forEach(function(r){var c=r.color||'gray';var isReal=r.real===true;var isEst=r.real===false;var isEmbase=r.database==='EMBASE'&&!r.real;h+='<div class="border border-'+c+'-100 rounded-xl p-4 bg-'+c+'-50/30"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><div class="db-badge bg-'+c+'-100 text-'+c+'-700">'+esc(r.database)+'</div>'+(isReal?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-verde/10 text-verde border border-verde/30">EN VIVO</span>':'')+(isEst&&!isEmbase?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-700 border border-amber-200">ESTIMADO</span>':'')+(isEmbase?'<span class="px-1.5 py-0.5 rounded text-[8px] font-bold bg-orange-100 text-orange-700 border border-orange-200">MANUAL — ejecutar en embase.com</span>':'')+'</div><div class="flex items-center gap-3 text-xs"><span class="text-gray-500">Resultados: <strong>'+r.results+'</strong></span><span class="text-verde font-bold">Incluidos: '+r.included+'</span><span class="text-gray-400">'+esc(r.date||'')+'</span></div></div><div class="flex items-center gap-2"><div class="text-[11px] font-mono text-gray-600 bg-white/60 rounded-lg p-2 break-all flex-1">'+esc(r.equation||'')+'</div>'+(isEmbase?'<button onclick="navigator.clipboard.writeText(\''+esc((r.equation||'').replace(/'/g,"\\'"))+'\');showToast(\'Ecuacion EMBASE copiada al portapapeles\',\'success\')" class="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-[10px] font-bold hover:bg-orange-200 transition-all" title="Copiar ecuacion"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>Copiar</button>':'')+'</div>'+(isEst&&r.rationale?'<div class="text-[10px] text-amber-600 mt-1 italic">'+esc(r.rationale)+'</div>':'')+'</div>';});
   h+='</div></div>';return h;
 }
 
@@ -3980,12 +3988,45 @@ function renderPrisma(pd) {
 function renderExtraction(pd) {
   var t=pd.extraction_table||[];
   var realBadge=pd._pubmed_real?'<span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-600 text-white"><span class="w-1.5 h-1.5 rounded-full bg-white inline-block"></span>Datos PubMed reales</span>':'';
-  var h='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><h3 class="font-bold text-gray-900 mb-4">Tabla de Extraccion ('+t.length+')'+realBadge+'</h3><div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="border-b-2 border-gray-200">';
-  var cols=pd._pubmed_real?['Autor','Ano','PMID','Resultado','Sesgo']:['Autor','Ano','Pais','Diseno','N','Resultado','Sesgo'];
+  var extractedCount = pd.structured_extractions ? Object.keys(pd.structured_extractions).length : 0;
+  var extractBadge = extractedCount > 0 ? '<span class="ml-2 px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-100 text-purple-700">' + extractedCount + '/' + t.length + ' extraidos</span>' : '';
+  var h='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center justify-between mb-4"><h3 class="font-bold text-gray-900">Tabla de Extraccion ('+t.length+')'+realBadge+extractBadge+'</h3><div class="flex items-center gap-2"><button onclick="extractAllArticles()" class="flex items-center gap-1.5 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold hover:bg-purple-200 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>Extraer Todos (IA)</button><button onclick="buildDataset()" class="flex items-center gap-1.5 px-3 py-2 bg-teal-100 text-teal-700 rounded-lg text-xs font-bold hover:bg-teal-200 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125"/></svg>Dataset</button></div></div><div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="border-b-2 border-gray-200">';
+  var cols=pd._pubmed_real?['Autor','Ano','PMID','Resultado','Sesgo','Acciones']:['Autor','Ano','Pais','Diseno','N','Resultado','Sesgo','Acciones'];
   cols.forEach(function(hd){h+='<th class="text-left py-2 px-2 text-gray-500 font-bold uppercase text-[10px]">'+hd+'</th>';});
   h+='</tr></thead><tbody>';
-  t.forEach(function(r,i){var bc=r.sesgo==='bajo'?'bg-verde/10 text-verde':r.sesgo==='alto'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700';if(pd._pubmed_real){h+='<tr class="border-b border-gray-50 hover:bg-gray-50/50"><td class="py-2 px-2 font-medium text-gray-800">'+esc(r.autor)+'</td><td class="py-2 px-2">'+r.anio+'</td><td class="py-2 px-2 font-mono text-blue-600">'+(r.pmid?'<a href="https://pubmed.ncbi.nlm.nih.gov/'+esc(r.pmid)+'/" target="_blank" class="hover:underline">'+esc(r.pmid)+'</a>':'-')+'</td><td class="py-2 px-2 max-w-[300px]" title="'+esc(r.resultado)+'">'+esc(r.resultado)+'</td><td class="py-2 px-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer '+bc+'" onclick="cycleBias('+i+')">'+esc(r.sesgo)+'</span></td></tr>';}else{h+='<tr class="border-b border-gray-50 hover:bg-gray-50/50"><td class="py-2 px-2 font-medium text-gray-800">'+esc(r.autor)+'</td><td class="py-2 px-2">'+r.anio+'</td><td class="py-2 px-2">'+esc(r.pais)+'</td><td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-700">'+esc(r.diseno)+'</span></td><td class="py-2 px-2 font-mono">'+esc(r.n)+'</td><td class="py-2 px-2 max-w-[200px] truncate">'+esc(r.resultado)+'</td><td class="py-2 px-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer '+bc+'" onclick="cycleBias('+i+')">'+esc(r.sesgo)+'</span></td></tr>';}});
+  var exts = pd.structured_extractions || {};
+  var pdfm = pd._pdf_meta || {};
+  t.forEach(function(r,i){var bc=r.sesgo==='bajo'?'bg-verde/10 text-verde':r.sesgo==='alto'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700';var key=r.pmid||'idx_'+i;var hasExt=!!exts[key];var hasPdf=!!pdfm[key];var actBtns='<td class="py-2 px-2 whitespace-nowrap"><div class="flex items-center gap-1">'+(hasExt?'<span class="text-verde text-sm" title="Datos extraidos">&#x2705;</span>':'<button onclick="extractArticleData('+i+')" class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-700 hover:bg-purple-200" title="Extraer datos (IA)">&#x2728; IA</button>')+'<button onclick="showPDFUpload(\''+esc(key)+'\','+i+')" class="px-1.5 py-0.5 rounded text-[9px] font-bold '+(hasPdf?'bg-verde/10 text-verde':'bg-gray-100 text-gray-500 hover:bg-gray-200')+'" title="'+(hasPdf?pdfm[key].fileName:'Subir PDF')+'">&#x1F4C4;'+(hasPdf?' &#x2713;':'')+'</button></div></td>';if(pd._pubmed_real){h+='<tr class="border-b border-gray-50 hover:bg-gray-50/50"><td class="py-2 px-2 font-medium text-gray-800">'+esc(r.autor)+'</td><td class="py-2 px-2">'+r.anio+'</td><td class="py-2 px-2 font-mono text-blue-600">'+(r.pmid?'<a href="https://pubmed.ncbi.nlm.nih.gov/'+esc(r.pmid)+'/" target="_blank" class="hover:underline">'+esc(r.pmid)+'</a>':'-')+'</td><td class="py-2 px-2 max-w-[300px]" title="'+esc(r.resultado)+'">'+esc(r.resultado)+'</td><td class="py-2 px-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer '+bc+'" onclick="cycleBias('+i+')">'+esc(r.sesgo)+'</span></td>'+actBtns+'</tr>';}else{h+='<tr class="border-b border-gray-50 hover:bg-gray-50/50"><td class="py-2 px-2 font-medium text-gray-800">'+esc(r.autor)+'</td><td class="py-2 px-2">'+r.anio+'</td><td class="py-2 px-2">'+esc(r.pais)+'</td><td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-700">'+esc(r.diseno)+'</span></td><td class="py-2 px-2 font-mono">'+esc(r.n)+'</td><td class="py-2 px-2 max-w-[200px] truncate">'+esc(r.resultado)+'</td><td class="py-2 px-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer '+bc+'" onclick="cycleBias('+i+')">'+esc(r.sesgo)+'</span></td>'+actBtns+'</tr>';}});
   h+='</tbody></table></div></div>';return h;
+}
+
+function renderDataset(pd) {
+  var ds = pd._dataset;
+  if (!ds) return '';
+  var st = ds.stats || {};
+  var h='<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center justify-between mb-4"><div><h3 class="font-bold text-gray-900">Dataset Estructurado</h3><p class="text-[10px] text-gray-400 mt-0.5">'+st.studies+' estudios | '+st.outcomes+' outcomes | '+st.countries+' paises</p></div>';
+  h+='<div class="flex items-center gap-2"><button onclick="downloadDatasetCSV()" class="flex items-center gap-1.5 px-3 py-2 bg-verde/10 text-verde rounded-lg text-xs font-bold hover:bg-verde/20 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>CSV</button><button onclick="downloadDatasetExcel()" class="flex items-center gap-1.5 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-200 transition-all"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Excel</button></div></div>';
+
+  // Studies sub-table
+  if (ds.studiesTable && ds.studiesTable.length) {
+    h+='<div class="mb-4"><div class="text-[10px] font-bold text-teal-700 uppercase tracking-wider mb-2">Estudios ('+ds.studiesTable.length+')</div><div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="border-b-2 border-gray-200">';
+    ['ID','Autor','Ano','Diseno','Pais','N','RoB'].forEach(function(c){h+='<th class="text-left py-1.5 px-2 text-gray-500 font-bold uppercase text-[9px]">'+c+'</th>';});
+    h+='</tr></thead><tbody>';
+    ds.studiesTable.forEach(function(s){h+='<tr class="border-b border-gray-50"><td class="py-1 px-2 font-mono text-[10px]">'+esc(s.study_id)+'</td><td class="py-1 px-2">'+esc(s.author)+'</td><td class="py-1 px-2">'+esc(s.year)+'</td><td class="py-1 px-2">'+esc(s.design)+'</td><td class="py-1 px-2">'+esc(s.country)+'</td><td class="py-1 px-2">'+(s.sample_size||'-')+'</td><td class="py-1 px-2"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold '+(s.rob_overall==='low'?'bg-verde/10 text-verde':s.rob_overall==='high'?'bg-red-100 text-red-600':'bg-amber-100 text-amber-700')+'">'+esc(s.rob_overall||'?')+'</span></td></tr>';});
+    h+='</tbody></table></div></div>';
+  }
+
+  // Outcomes sub-table
+  if (ds.outcomesTable && ds.outcomesTable.length) {
+    h+='<div class="mb-4"><div class="text-[10px] font-bold text-purple-700 uppercase tracking-wider mb-2">Outcomes ('+ds.outcomesTable.length+')</div><div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="border-b-2 border-gray-200">';
+    ['ID','Outcome','Tipo','Medida','Efecto','IC 95%','p'].forEach(function(c){h+='<th class="text-left py-1.5 px-2 text-gray-500 font-bold uppercase text-[9px]">'+c+'</th>';});
+    h+='</tr></thead><tbody>';
+    ds.outcomesTable.forEach(function(o){h+='<tr class="border-b border-gray-50"><td class="py-1 px-2 font-mono text-[10px]">'+esc(o.study_id)+'</td><td class="py-1 px-2">'+esc(o.outcome_name)+'</td><td class="py-1 px-2"><span class="px-1 py-0.5 rounded text-[9px] '+(o.type==='primary'?'bg-blue-100 text-blue-700':'bg-gray-100 text-gray-600')+'">'+esc(o.type)+'</span></td><td class="py-1 px-2">'+esc(o.measure)+'</td><td class="py-1 px-2 font-bold">'+esc(o.effect_size)+'</td><td class="py-1 px-2">'+(o.ci_lower&&o.ci_upper?esc(o.ci_lower)+' — '+esc(o.ci_upper):'-')+'</td><td class="py-1 px-2">'+esc(o.p_value||'-')+'</td></tr>';});
+    h+='</tbody></table></div></div>';
+  }
+
+  h+='</div>';
+  return h;
 }
 
 function renderStats(pd) {
@@ -10406,6 +10447,375 @@ function buildRealPrisma(pubmedCount, articlesReturned) {
     included_qualitative: articlesReturned,
     included_quantitative: articlesReturned
   };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVIDENCE PIPELINE — Import, Deduplication, Extraction, Dataset
+// ═══════════════════════════════════════════════════════════════
+
+// ── EMBASE RIS/BibTeX Import ──
+function showImportRISModal() {
+  var existing = document.getElementById('risImportModal');
+  if (existing) existing.remove();
+  var modal = document.createElement('div');
+  modal.id = 'risImportModal';
+  modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm';
+  modal.innerHTML =
+    '<div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl">' +
+      '<div class="flex items-center justify-between mb-4">' +
+        '<h3 class="font-black text-gray-900 text-lg">Importar EMBASE (RIS/BibTeX)</h3>' +
+        '<button onclick="document.getElementById(\'risImportModal\').remove()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>' +
+      '</div>' +
+      '<p class="text-sm text-gray-500 mb-4">Exporta tus resultados de <a href="https://www.embase.com" target="_blank" class="text-purple-600 underline">embase.com</a> en formato RIS o BibTeX, luego sube el archivo aqui.</p>' +
+      '<div id="risDropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/30 transition-all" onclick="document.getElementById(\'risFileInput\').click()" ondrop="handleRISDrop(event)" ondragover="event.preventDefault();this.classList.add(\'border-purple-500\',\'bg-purple-50\')" ondragLeave="this.classList.remove(\'border-purple-500\',\'bg-purple-50\')">' +
+        '<svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>' +
+        '<p class="text-sm text-gray-500">Arrastra archivo RIS/BibTeX o <span class="text-purple-600 font-bold">haz clic para seleccionar</span></p>' +
+        '<input type="file" id="risFileInput" accept=".ris,.bib,.bibtex,.txt,.nbib" class="hidden" onchange="handleRISFile(this.files[0])">' +
+      '</div>' +
+      '<div id="risImportStatus" class="mt-3 text-xs text-gray-400 hidden"></div>' +
+      '<div id="risImportResults" class="mt-3 hidden"></div>' +
+    '</div>';
+  document.body.appendChild(modal);
+}
+
+function handleRISDrop(e) {
+  e.preventDefault();
+  var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (file) handleRISFile(file);
+}
+
+async function handleRISFile(file) {
+  if (!file) return;
+  var status = document.getElementById('risImportStatus');
+  var results = document.getElementById('risImportResults');
+  status.classList.remove('hidden');
+  status.textContent = 'Leyendo archivo ' + file.name + '...';
+
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      status.textContent = 'Parseando ' + file.name + '...';
+      var result = await callAgentEndpoint('/api/evidence/import-ris', { text: e.target.result });
+      if (!result.success) throw new Error(result.error);
+      var articles = result.data.articles || [];
+      status.innerHTML = '<span class="text-verde font-bold">' + articles.length + ' articulos importados</span> (formato: ' + result.data.format + ')';
+
+      // Add to simData
+      if (!simData._imported_articles) simData._imported_articles = [];
+      simData._imported_articles = simData._imported_articles.concat(articles);
+
+      // Add EMBASE to search_registry
+      if (simData.search_registry) {
+        var existingEmbase = simData.search_registry.find(function(r) { return r.database === 'EMBASE'; });
+        if (existingEmbase) {
+          existingEmbase.results = articles.length;
+          existingEmbase.included = articles.length;
+          existingEmbase.real = true;
+          existingEmbase.rationale = 'Importado de ' + file.name;
+        } else {
+          simData.search_registry.push({
+            database: 'EMBASE', equation: 'Importado de ' + file.name, results: articles.length,
+            included: articles.length, real: true, date: new Date().toISOString().slice(0,10), color: 'orange'
+          });
+        }
+      }
+
+      // Save to Supabase
+      if (rowId && project) {
+        var pd = project.phase_data || {};
+        pd._imported_articles = simData._imported_articles;
+        pd.search_registry = simData.search_registry;
+        sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+        project.phase_data = pd;
+      }
+
+      results.classList.remove('hidden');
+      results.innerHTML = '<div class="max-h-40 overflow-y-auto space-y-1">' + articles.slice(0, 5).map(function(a) {
+        return '<div class="text-xs text-gray-600 truncate"><span class="font-bold">' + esc(a.authors && a.authors[0] || 'N/A') + '</span> (' + (a.year || '?') + ') ' + esc(a.title) + '</div>';
+      }).join('') + (articles.length > 5 ? '<div class="text-[10px] text-gray-400">... y ' + (articles.length - 5) + ' mas</div>' : '') + '</div>' +
+      '<button onclick="document.getElementById(\'risImportModal\').remove();renderAll()" class="mt-3 w-full py-2 bg-verde text-white font-bold rounded-lg text-sm hover:bg-verde/90">Cerrar e integrar</button>';
+      showToast('EMBASE: ' + articles.length + ' articulos importados de ' + file.name, 'success');
+    } catch (err) {
+      status.innerHTML = '<span class="text-red-600">Error: ' + esc(err.message) + '</span>';
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Deduplication ──
+async function runDeduplication() {
+  if (!simData) return;
+
+  // Collect all articles from all sources
+  var allArticles = [];
+  // PubMed articles
+  if (simData._pubmed_articles) {
+    simData._pubmed_articles.forEach(function(a) { allArticles.push(Object.assign({}, a, { source: 'PubMed/MEDLINE' })); });
+  }
+  // Imported articles (EMBASE, etc.)
+  if (simData._imported_articles) {
+    simData._imported_articles.forEach(function(a) { allArticles.push(Object.assign({}, a)); });
+  }
+
+  if (allArticles.length === 0) { showToast('No hay articulos para deduplicar', 'error'); return; }
+
+  showToast('Deduplicando ' + allArticles.length + ' articulos...', 'success');
+
+  try {
+    var result = await callAgentEndpoint('/api/evidence/deduplicate', { articles: allArticles });
+    if (!result.success) throw new Error(result.error);
+
+    var dedupData = result.data;
+    simData._deduplicated_records = dedupData.unique;
+    simData._dedup_stats = dedupData.stats;
+    simData._dedup_duplicates = dedupData.duplicates;
+
+    // Update PRISMA
+    if (simData.search_strategy && simData.search_strategy.prisma) {
+      simData.search_strategy.prisma.duplicates_removed = dedupData.stats.duplicated;
+      simData.search_strategy.prisma.screened_title = dedupData.stats.unique;
+    }
+
+    // Save to Supabase
+    if (rowId && project) {
+      var pd = project.phase_data || {};
+      pd._deduplicated_records = dedupData.unique;
+      pd._dedup_stats = dedupData.stats;
+      pd.search_strategy = simData.search_strategy;
+      sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+      project.phase_data = pd;
+    }
+
+    renderAll();
+    showToast('Deduplicacion: ' + dedupData.stats.total + ' total → ' + dedupData.stats.duplicated + ' duplicados → ' + dedupData.stats.unique + ' unicos', 'success');
+  } catch (err) {
+    showToast('Error deduplicacion: ' + err.message, 'error');
+  }
+}
+
+// ── AI Data Extraction ──
+async function extractArticleData(index) {
+  if (!simData || !simData.extraction_table) return;
+  var row = simData.extraction_table[index];
+  if (!row) return;
+
+  var articleMeta = { title: row.resultado || '', pmid: row.pmid || '', year: row.anio || '', authors: [row.autor || ''], journal: '' };
+  // Get abstract from _pubmed_articles if available
+  var abstractText = '';
+  if (simData._pubmed_articles) {
+    var found = simData._pubmed_articles.find(function(a) { return a.pmid === row.pmid; });
+    if (found) { abstractText = found.abstract || ''; articleMeta.journal = found.journal || ''; articleMeta.authors = found.authors || []; }
+  }
+  // Or from uploaded PDF text
+  if (!abstractText && simData._pdf_texts && simData._pdf_texts[row.pmid]) {
+    abstractText = simData._pdf_texts[row.pmid];
+  }
+
+  var pd = project && project.phase_data || {};
+  var picot = pd.picot || {};
+
+  showToast('Extrayendo datos de ' + (row.pmid || row.resultado.slice(0, 30)) + '...', 'success');
+
+  try {
+    var result = await callAgentEndpoint('/api/evidence/extract-data', {
+      text: abstractText || row.resultado,
+      articleMeta: articleMeta,
+      picot: picot
+    }, 45000);
+
+    if (!result.success) throw new Error(result.error);
+
+    if (!simData._structured_extractions) simData._structured_extractions = {};
+    var key = row.pmid || 'idx_' + index;
+    simData._structured_extractions[key] = result.data.extraction;
+
+    // Save
+    if (rowId && project) {
+      var phd = project.phase_data || {};
+      phd.structured_extractions = simData._structured_extractions;
+      sb.from(TABLE).update({ phase_data: phd, updated_at: new Date().toISOString() }).eq('id', rowId);
+      project.phase_data = phd;
+    }
+
+    renderAll();
+    showToast('Extraccion ' + (result.data.valid ? 'validada ✓' : 'con advertencias ⚠') + ': ' + key, result.data.valid ? 'success' : 'error');
+  } catch (err) {
+    showToast('Error extraccion: ' + err.message, 'error');
+  }
+}
+
+async function extractAllArticles() {
+  if (!simData || !simData.extraction_table) return;
+  var table = simData.extraction_table;
+  var total = table.length;
+  var processed = 0;
+
+  showToast('Extrayendo datos de ' + total + ' articulos...', 'success');
+
+  // Process in batches of 4
+  for (var i = 0; i < total; i += 4) {
+    var batch = table.slice(i, i + 4).map(function(row) {
+      var meta = { title: row.resultado || '', pmid: row.pmid || '', year: row.anio || '', authors: [row.autor || ''] };
+      var text = '';
+      if (simData._pubmed_articles) {
+        var found = simData._pubmed_articles.find(function(a) { return a.pmid === row.pmid; });
+        if (found) { text = found.abstract || ''; meta.authors = found.authors || []; meta.journal = found.journal || ''; }
+      }
+      if (!text && simData._pdf_texts && simData._pdf_texts[row.pmid]) text = simData._pdf_texts[row.pmid];
+      return Object.assign({}, meta, { abstract: text || row.resultado });
+    });
+
+    try {
+      var pd = project && project.phase_data || {};
+      var result = await callAgentEndpoint('/api/evidence/extract-batch', { articles: batch, picot: pd.picot || {} }, 55000);
+      if (result.success && result.data && result.data.results) {
+        if (!simData._structured_extractions) simData._structured_extractions = {};
+        result.data.results.forEach(function(r) {
+          if (r.extraction) simData._structured_extractions[r.pmid || r.title.slice(0, 20)] = r.extraction;
+        });
+      }
+    } catch (err) {
+      console.warn('Batch extraction error:', err.message);
+    }
+    processed += batch.length;
+    showToast('Extrayendo ' + Math.min(processed, total) + '/' + total + ' articulos...', 'success');
+  }
+
+  // Save
+  if (rowId && project) {
+    var phd = project.phase_data || {};
+    phd.structured_extractions = simData._structured_extractions;
+    sb.from(TABLE).update({ phase_data: phd, updated_at: new Date().toISOString() }).eq('id', rowId);
+    project.phase_data = phd;
+  }
+
+  renderAll();
+  showToast('Extraccion completa: ' + Object.keys(simData._structured_extractions || {}).length + ' articulos procesados', 'success');
+}
+
+// ── Dataset Builder ──
+async function buildDataset() {
+  if (!simData || !simData._structured_extractions) { showToast('Primero extrae datos de los articulos', 'error'); return; }
+
+  showToast('Construyendo dataset estructurado...', 'success');
+
+  try {
+    var result = await callAgentEndpoint('/api/evidence/build-dataset', {
+      extractions: simData._structured_extractions,
+      articlesMeta: simData._pubmed_articles || simData.extraction_table || []
+    });
+
+    if (!result.success) throw new Error(result.error);
+
+    simData._dataset = result.data;
+
+    // Save
+    if (rowId && project) {
+      var pd = project.phase_data || {};
+      pd._dataset = result.data;
+      sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+      project.phase_data = pd;
+    }
+
+    renderAll();
+    showToast('Dataset: ' + result.data.stats.studies + ' estudios, ' + result.data.stats.outcomes + ' outcomes', 'success');
+  } catch (err) {
+    showToast('Error dataset: ' + err.message, 'error');
+  }
+}
+
+async function downloadDatasetCSV() {
+  if (!simData || !simData._structured_extractions) { showToast('No hay datos para exportar', 'error'); return; }
+
+  try {
+    var result = await callAgentEndpoint('/api/evidence/build-dataset', {
+      extractions: simData._structured_extractions,
+      articlesMeta: simData._pubmed_articles || simData.extraction_table || [],
+      format: 'csv'
+    });
+
+    if (!result.success) throw new Error(result.error);
+
+    // Download each CSV
+    var csvFiles = { 'studies.csv': result.data.studies_csv, 'outcomes.csv': result.data.outcomes_csv, 'interventions.csv': result.data.interventions_csv, 'metadata.csv': result.data.metadata_csv };
+    Object.entries(csvFiles).forEach(function(entry) {
+      var blob = new Blob([entry[1]], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = entry[0]; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    showToast('4 archivos CSV descargados', 'success');
+  } catch (err) {
+    showToast('Error export CSV: ' + err.message, 'error');
+  }
+}
+
+function downloadDatasetExcel() {
+  if (!simData || !simData._dataset) { showToast('Primero construye el dataset', 'error'); return; }
+  if (typeof XLSX === 'undefined') { showToast('SheetJS no cargado', 'error'); return; }
+
+  var wb = XLSX.utils.book_new();
+  var ds = simData._dataset;
+  if (ds.studiesTable && ds.studiesTable.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ds.studiesTable), 'Studies');
+  if (ds.outcomesTable && ds.outcomesTable.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ds.outcomesTable), 'Outcomes');
+  if (ds.interventionsTable && ds.interventionsTable.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ds.interventionsTable), 'Interventions');
+  if (ds.metadataTable && ds.metadataTable.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ds.metadataTable), 'Metadata');
+  XLSX.writeFile(wb, 'evidence_dataset.xlsx');
+  showToast('Excel descargado', 'success');
+}
+
+// ── PDF Upload ──
+function showPDFUpload(pmid, index) {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.pdf';
+  input.onchange = function() { if (input.files[0]) uploadPDF(input.files[0], pmid, index); };
+  input.click();
+}
+
+async function uploadPDF(file, pmid, index) {
+  showToast('Subiendo PDF ' + file.name + '...', 'success');
+
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    var base64 = e.target.result.split(',')[1];
+    try {
+      var result = await callAgentEndpoint('/api/evidence/pdf-upload', {
+        pdfBase64: base64,
+        fileName: file.name,
+        pmid: pmid,
+        projectId: activeProjectId
+      }, 55000);
+
+      if (!result.success) throw new Error(result.error);
+
+      // Store PDF text for extraction
+      if (!simData._pdf_texts) simData._pdf_texts = {};
+      simData._pdf_texts[pmid] = result.data.text;
+
+      if (!simData._pdf_meta) simData._pdf_meta = {};
+      simData._pdf_meta[pmid] = { fileName: file.name, pages: result.data.numPages, url: result.data.storageUrl, preview: result.data.preview };
+
+      // Save
+      if (rowId && project) {
+        var pd = project.phase_data || {};
+        if (!pd._pdf_meta) pd._pdf_meta = {};
+        pd._pdf_meta[pmid] = simData._pdf_meta[pmid];
+        sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+        project.phase_data = pd;
+      }
+
+      renderAll();
+      var msg = 'PDF: ' + result.data.numPages + ' pag, ' + result.data.textLength + ' chars';
+      if (result.data.warning) msg += ' ⚠ ' + result.data.warning;
+      showToast(msg, 'success');
+    } catch (err) {
+      showToast('Error PDF: ' + err.message, 'error');
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 // ═══════════════════════════════════════════════════════════════
