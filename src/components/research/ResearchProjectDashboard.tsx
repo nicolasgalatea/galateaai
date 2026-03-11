@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Play, FileText } from 'lucide-react';
+import { Loader2, Play, FileText, ArrowDown } from 'lucide-react';
 import { ResearchProgressBar } from './ResearchProgressBar';
 import { DashboardHeader } from './DashboardHeader';
 import { ApprovalModal } from './ApprovalModal';
@@ -361,7 +361,7 @@ export function ResearchProjectDashboard({
           </div>
 
           {/* Output — driven by activeViewPhase (auto-synced with currentResearchLabPhase) */}
-          <div className="border-2 border-gray-200 rounded-lg p-4 min-h-[400px] bg-gray-50">
+          <div className="border-2 border-gray-200 rounded-lg p-4 min-h-[400px] max-h-[75vh] overflow-y-auto bg-gray-50">
             {/* Manuscript Editor for phases 8-10 */}
             {activeViewPhase >= 8 && activeViewPhase <= 10 ? (
               <ManuscriptEditor
@@ -402,7 +402,29 @@ export function ResearchProjectDashboard({
                 </p>
               </div>
             ) : currentOutput ? (
-              <ResultsRenderer content={typeof currentOutput === 'string' ? currentOutput : JSON.stringify(currentOutput, null, 2)} />
+              <>
+                <ResultsRenderer content={typeof currentOutput === 'string' ? currentOutput : JSON.stringify(currentOutput, null, 2)} />
+                {/* Sticky continue button for long content */}
+                <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-gray-50 via-gray-50 to-transparent">
+                  <Button
+                    onClick={() => handleExecuteCurrentAgent()}
+                    disabled={isExecuting}
+                    className="w-full bg-[#0091DF] hover:bg-[#007FC4] text-white h-12 text-base shadow-lg"
+                  >
+                    {isExecuting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Procesando siguiente fase...
+                      </>
+                    ) : (
+                      <>
+                        <ArrowDown className="w-5 h-5 mr-2" />
+                        Continuar a la siguiente fase
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
             ) : researchProject?.research_question ? (
               <ResultsRenderer content={JSON.stringify(researchProject.research_question, null, 2)} />
             ) : (
