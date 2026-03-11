@@ -1,9 +1,69 @@
+import { type MouseEvent as ReactMouseEvent, Fragment } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
+import { useReferencesContext } from '@/contexts/ReferencesContext';
 
 interface ResultsRendererProps {
   content: string;
   className?: string;
+}
+
+/**
+ * Renders a clickable citation badge [N] that opens a reference tooltip on click.
+ */
+function CitationBadge({ citationKey }: { citationKey: number }) {
+  const refsCtx = useReferencesContext();
+
+  const handleClick = (e: ReactMouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    refsCtx.showReferenceTooltip(citationKey, rect);
+  };
+
+  const hasRef = !!refsCtx.getReference(citationKey);
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={cn(
+        'inline-flex items-center px-1 py-0 rounded text-[11px] font-mono font-bold transition-colors cursor-pointer',
+        hasRef
+          ? 'bg-[#00BCFF]/15 text-[#00BCFF] hover:bg-[#00BCFF]/25'
+          : 'bg-gray-200 text-gray-500 cursor-default',
+      )}
+      title={hasRef ? `Ver referencia [${citationKey}]` : `Referencia [${citationKey}] no encontrada`}
+    >
+      [{citationKey}]
+    </button>
+  );
+}
+
+/**
+ * Takes a React children node (text) and replaces [N] patterns with clickable CitationBadge components.
+ */
+function processChildrenWithCitations(children: React.ReactNode): React.ReactNode {
+  if (typeof children === 'string') {
+    const parts = children.split(/(\[\d+\])/g);
+    if (parts.length === 1) return children;
+    return (
+      <>
+        {parts.map((part, i) => {
+          const match = part.match(/^\[(\d+)\]$/);
+          if (match) {
+            return <CitationBadge key={i} citationKey={parseInt(match[1], 10)} />;
+          }
+          return <Fragment key={i}>{part}</Fragment>;
+        })}
+      </>
+    );
+  }
+  if (Array.isArray(children)) {
+    return children.map((child, i) => (
+      <Fragment key={i}>{processChildrenWithCitations(child)}</Fragment>
+    ));
+  }
+  return children;
 }
 
 // Componentes personalizados para ReactMarkdown con soporte para estadisticas cientificas
@@ -30,17 +90,17 @@ const markdownComponents = {
   ),
   p: ({ children }: { children: React.ReactNode }) => (
     <p className="mb-3 leading-relaxed text-gray-700">
-      {children}
+      {processChildrenWithCitations(children)}
     </p>
   ),
   strong: ({ children }: { children: React.ReactNode }) => (
     <strong className="font-bold text-gray-900">
-      {children}
+      {processChildrenWithCitations(children)}
     </strong>
   ),
   em: ({ children }: { children: React.ReactNode }) => (
     <em className="italic text-gray-600">
-      {children}
+      {processChildrenWithCitations(children)}
     </em>
   ),
   ul: ({ children }: { children: React.ReactNode }) => (
@@ -55,7 +115,7 @@ const markdownComponents = {
   ),
   li: ({ children }: { children: React.ReactNode }) => (
     <li className="text-gray-700 leading-relaxed">
-      {children}
+      {processChildrenWithCitations(children)}
     </li>
   ),
   blockquote: ({ children }: { children: React.ReactNode }) => (
@@ -111,7 +171,7 @@ const markdownComponents = {
   ),
   td: ({ children }: { children: React.ReactNode }) => (
     <td className="px-4 py-2 text-gray-700 border border-gray-300">
-      {children}
+      {processChildrenWithCitations(children)}
     </td>
   ),
   hr: () => (

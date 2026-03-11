@@ -51,18 +51,38 @@ INSTRUCCIONES:
    - Relevant (Relevante): ¿Contribuye a decisiones clinicas o politicas de salud?
 3. Determina si el proyecto esta aprobado (todos los scores >= 50).
 4. Genera recomendaciones especificas para mejorar criterios debiles.
+5. Respalda las notas de evaluacion con referencias reales que sustenten la factibilidad.
+
+REGLAS CRITICAS DE REFERENCIAS:
+- Las referencias de FINER deben ser DIFERENTES a las del planteamiento del problema. No repitas las mismas citas.
+- Para FINER: usa referencias sobre factibilidad metodologica, estudios similares previos, marcos eticos, y relevancia clinica.
+- Cada referencia DEBE ser un articulo REAL de PubMed con PMID y DOI verificables.
+- Formato Vancouver obligatorio.
+- Incluye citas numeradas [1], [2], etc. en las notas de evaluacion.
 
 RESPONDE EXCLUSIVAMENTE en JSON valido (sin markdown, sin backticks):
 {
   "finerScores": {
-    "feasible": { "pass": true/false, "score": 0-100, "note": "<evaluacion especifica>" },
-    "interesting": { "pass": true/false, "score": 0-100, "note": "<evaluacion especifica>" },
-    "novel": { "pass": true/false, "score": 0-100, "note": "<evaluacion especifica>" },
-    "ethical": { "pass": true/false, "score": 0-100, "note": "<evaluacion especifica>" },
-    "relevant": { "pass": true/false, "score": 0-100, "note": "<evaluacion especifica>" }
+    "feasible": { "pass": true/false, "score": 0-100, "note": "<evaluacion con citas [N]>" },
+    "interesting": { "pass": true/false, "score": 0-100, "note": "<evaluacion con citas [N]>" },
+    "novel": { "pass": true/false, "score": 0-100, "note": "<evaluacion con citas [N]>" },
+    "ethical": { "pass": true/false, "score": 0-100, "note": "<evaluacion con citas [N]>" },
+    "relevant": { "pass": true/false, "score": 0-100, "note": "<evaluacion con citas [N]>" }
   },
   "approved": true/false,
-  "recommendations": ["<recomendacion 1>", "<recomendacion 2>"]
+  "recommendations": ["<recomendacion 1>", "<recomendacion 2>"],
+  "references": [
+    {
+      "citation_key": 1,
+      "authors": "<autores formato Vancouver>",
+      "title": "<titulo completo>",
+      "journal": "<revista abreviada>",
+      "year": 2024,
+      "doi": "<DOI>",
+      "pmid": "<PMID>",
+      "source_section": "finer"
+    }
+  ]
 }
 
 Responde SOLO con el JSON.`,
@@ -120,11 +140,30 @@ INSTRUCCIONES:
    - Parrafo 2: Brecha en el conocimiento actual y por que es necesaria esta investigacion.
    - Parrafo 3: Justificacion de la investigacion y contribucion esperada.
 3. Usa un tono academico formal, en tercera persona.
-4. Incluye cifras plausibles y referencias al estado del arte (sin inventar citas especificas).
+4. Incluye cifras y datos reales respaldados con referencias verificables.
+
+REGLAS CRITICAS DE REFERENCIAS:
+- Cada referencia DEBE ser un articulo REAL publicado en PubMed, con PMID y DOI verificables.
+- Formato Vancouver obligatorio: "Apellido AB, Apellido CD. Titulo del articulo. Nombre de la revista abreviado. Ano;Vol(Num):Pag-Pag. doi:XX.XXXX/XXXXX"
+- Las referencias del planteamiento deben ser DIFERENTES a las de otras secciones (FINER, evidencia, etc.). Cada seccion tiene su propio contexto y requiere referencias especificas.
+- Para el planteamiento: usa referencias de epidemiologia, prevalencia, carga de enfermedad y brechas de conocimiento.
+- Incluye las referencias como citas numeradas [1], [2], [3] en el texto.
 
 RESPONDE EXCLUSIVAMENTE en JSON valido (sin markdown, sin backticks):
 {
-  "planteamiento": "<texto completo del planteamiento, 2-3 parrafos>"
+  "planteamiento": "<texto completo del planteamiento con citas [1], [2], etc.>",
+  "references": [
+    {
+      "citation_key": 1,
+      "authors": "<autores en formato Vancouver>",
+      "title": "<titulo completo del articulo>",
+      "journal": "<nombre abreviado de la revista>",
+      "year": 2024,
+      "doi": "<DOI sin prefijo https>",
+      "pmid": "<PMID numerico>",
+      "source_section": "planteamiento"
+    }
+  ]
 }
 
 Responde SOLO con el JSON.`,

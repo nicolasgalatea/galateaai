@@ -54,9 +54,11 @@ function ExclusionBranch({ label, count, delay }: { label: string; count: number
 export default function PhasePRISMA({
   data,
   userEdits,
+  protocolDraft,
 }: {
   data: Record<string, unknown>;
   userEdits: Record<string, unknown>;
+  protocolDraft?: Record<string, unknown> | null;
 }) {
   const merged = { ...data, ...userEdits };
 
@@ -140,8 +142,50 @@ export default function PhasePRISMA({
 
       {/* Summary */}
       <div className="text-center text-xs text-muted-foreground border-t pt-3">
-        Tasa de inclusión: {prisma.identified > 0 ? ((prisma.included / prisma.identified) * 100).toFixed(1) : 0}%
+        Tasa de inclusion: {prisma.identified > 0 ? ((prisma.included / prisma.identified) * 100).toFixed(1) : 0}%
       </div>
+
+      {/* Protocol criteria connection — Etapa 2 → Etapa 4 */}
+      {protocolDraft && (
+        <div className="mt-4 p-3 rounded-lg border border-primary/20 bg-primary/5">
+          <h5 className="text-xs font-semibold text-primary mb-2">
+            Criterios del Protocolo (Etapa 2)
+          </h5>
+          {protocolDraft.criteriaDesigner && (
+            <div className="space-y-2 text-xs">
+              {(protocolDraft.criteriaDesigner as { inclusion?: string[]; exclusion?: string[] }).inclusion && (
+                <div>
+                  <span className="font-medium text-emerald-600">Inclusion:</span>
+                  <ul className="list-disc list-inside ml-2 text-muted-foreground">
+                    {((protocolDraft.criteriaDesigner as { inclusion?: string[] }).inclusion ?? []).map(
+                      (c: string, i: number) => (
+                        <li key={i}>{c}</li>
+                      ),
+                    )}
+                  </ul>
+                </div>
+              )}
+              {(protocolDraft.criteriaDesigner as { exclusion?: string[] }).exclusion && (
+                <div>
+                  <span className="font-medium text-destructive">Exclusion:</span>
+                  <ul className="list-disc list-inside ml-2 text-muted-foreground">
+                    {((protocolDraft.criteriaDesigner as { exclusion?: string[] }).exclusion ?? []).map(
+                      (c: string, i: number) => (
+                        <li key={i}>{c}</li>
+                      ),
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          {!protocolDraft.criteriaDesigner && (
+            <p className="text-xs text-muted-foreground italic">
+              Los criterios de elegibilidad del protocolo apareceran aqui cuando el agente los genere.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

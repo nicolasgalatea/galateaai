@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { ReferencesProvider } from "./contexts/ReferencesContext";
 import NewHome from "./pages/NewHome";
 import Agents from "./pages/Agents";
 import AgentAorta from "./pages/AgentAorta";
@@ -42,6 +43,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <TooltipProvider>
+        <ReferencesProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -81,6 +83,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </ReferencesProvider>
       </TooltipProvider>
     </LanguageProvider>
   </QueryClientProvider>
