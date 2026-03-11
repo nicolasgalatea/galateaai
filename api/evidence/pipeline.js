@@ -3,7 +3,7 @@
  * Actions: clinicaltrials-search, import-ris, deduplicate, extract-data, extract-batch, build-dataset, pdf-upload
  * This consolidation avoids Vercel Hobby plan's 12-function limit.
  */
-import { logAgent, logError } from '../utils/logger.js';
+import { logAgent, logError } from '../_utils/logger.js';
 
 const AGENT_NAME = 'evidence-pipeline';
 
@@ -158,8 +158,8 @@ function handleDeduplicate(body) {
 // ACTION: extract-data / extract-batch
 // ═══════════════════════════════════════════════════════════════
 async function handleExtractData(body) {
-  const { callClaude } = await import('../utils/anthropic-client.js');
-  const { ExtractionSchema } = await import('../utils/extraction-schema.js');
+  const { callClaude } = await import('../_utils/anthropic-client.js');
+  const { ExtractionSchema } = await import('../_utils/extraction-schema.js');
   const { PROMPTS } = await import('../../prompts/system-prompts.js');
   const { text, articleMeta, picot } = body;
   const meta = articleMeta || {};
