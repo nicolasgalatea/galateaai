@@ -1,10 +1,12 @@
+import crypto from 'crypto';
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://galatea-v2-prod.vercel.app',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return res.status(204).setHeader('Access-Control-Allow-Origin', CORS_HEADERS['Access-Control-Allow-Origin']).end();
   }
@@ -33,7 +35,6 @@ module.exports = async function handler(req, res) {
   }
 
   // Constant-time comparison to prevent timing attacks
-  const crypto = require('crypto');
   const inputHash = crypto.createHash('sha256').update(password).digest('hex');
   const expectedHash = crypto.createHash('sha256').update(pilotPassword).digest('hex');
 
@@ -42,4 +43,4 @@ module.exports = async function handler(req, res) {
   }
 
   return res.status(200).json({ success: true });
-};
+}
