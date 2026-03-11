@@ -3,10 +3,14 @@
   "buildCommand": "",
   "outputDirectory": ".",
   "functions": {
-    "api/**/*.js": {
-      "maxDuration": 60,
-      "memory": 1024
-    }
+    "api/agents/*.js": { "maxDuration": 60 },
+    "api/ai-assist.js": { "maxDuration": 60 },
+    "api/auth/*.js": { "maxDuration": 60 },
+    "api/evidence/*.js": { "maxDuration": 60 },
+    "api/mesh/*.js": { "maxDuration": 60 },
+    "api/orchestrator.js": { "maxDuration": 60 },
+    "api/pubmed/*.js": { "maxDuration": 60 },
+    "api/redcap/*.js": { "maxDuration": 60 }
   },
   "headers": [
     {
