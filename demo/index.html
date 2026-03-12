@@ -754,6 +754,20 @@
   .email-card .email-label { font-size: 11px; font-weight: 700; color: #94a3b8; min-width: 40px; }
   .email-card .email-value { font-size: 12px; color: #334155; }
 
+  /* Email analysis */
+  .email-analysis-box { background: linear-gradient(135deg, #eef2ff, #f0f9ff); border: 2px dashed #a5b4fc; border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: all .2s; }
+  .email-analysis-box:hover { border-color: #6366f1; background: linear-gradient(135deg, #e0e7ff, #e0f2fe); }
+  .email-analysis-box.dragover { border-color: #4f46e5; background: #e0e7ff; transform: scale(1.01); }
+  .email-analysis-result { border-radius: 16px; padding: 20px; margin-top: 12px; }
+  .email-analysis-result.approved { background: linear-gradient(135deg, #ecfdf5, #f0fdf4); border: 2px solid #34d399; }
+  .email-analysis-result.corrections { background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 2px solid #fbbf24; }
+  .email-analysis-result.rejected { background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px solid #f87171; }
+  .email-analysis-result.unclear { background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 2px solid #94a3b8; }
+
+  /* REDCap config */
+  .redcap-config-modal { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.5); }
+  .redcap-config-panel { background: white; border-radius: 20px; padding: 32px; max-width: 520px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,.25); }
+
   /* Timeline */
   .fsfb-timeline { position: relative; padding-left: 40px; }
   .fsfb-timeline::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #4DA8A1, #89BA17); }
@@ -7241,6 +7255,7 @@ function renderSubmissionProgress() {
   return h;
 }
 var _submissionStartDate = null;
+var _eticaSubmissionDate = null;
 var _emailStatus = { subdireccion: '', etica: '' };
 
 function updateProjectEmailStatus(entity, status) {
@@ -7260,6 +7275,195 @@ function updateProjectEmailStatus(entity, status) {
   if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
 }
 
+var _emailAnalysis = { subdireccion: null, etica: null };
+var _emailAnalyzing = { subdireccion: false, etica: false };
+
+function renderEmailAnalysisBox(entity) {
+  var label = entity === 'subdireccion' ? 'Subdireccion de Estudios Clinicos' : 'Comite de Etica';
+  var h = '<div class="mt-4">';
+  h += '<div class="flex items-center gap-2 mb-3"><svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>';
+  h += '<span class="text-xs font-bold text-indigo-700">Analisis de respuesta — ' + label + '</span></div>';
+
+  // Manual status buttons
+  h += '<div class="flex items-center gap-2 mb-3">';
+  h += '<span class="text-[10px] text-gray-400 mr-1">Manual:</span>';
+  h += '<button onclick="updateProjectEmailStatus(\'' + entity + '\',\'corrections\')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ' + (_emailStatus[entity] === 'corrections' ? 'bg-amber-100 border-amber-400 text-amber-700' : 'border-gray-200 text-gray-500 hover:border-amber-300') + '">Correcciones</button>';
+  h += '<button onclick="updateProjectEmailStatus(\'' + entity + '\',\'approved\')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ' + (_emailStatus[entity] === 'approved' ? 'bg-verde/20 border-verde/50 text-verde' : 'border-gray-200 text-gray-500 hover:border-verde/40') + '">Aprobado</button>';
+  h += '</div>';
+
+  // Divider
+  h += '<div class="flex items-center gap-2 mb-3"><div class="flex-1 h-px bg-gray-200"></div><span class="text-[10px] text-gray-400 font-bold">O ANALIZAR CON IA</span><div class="flex-1 h-px bg-gray-200"></div></div>';
+
+  if (_emailAnalyzing[entity]) {
+    h += '<div class="flex items-center justify-center gap-3 p-6 rounded-xl bg-indigo-50 border border-indigo-200"><div class="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div><span class="text-sm text-indigo-700 font-bold">Analizando correo con IA...</span></div>';
+  } else if (!_emailAnalysis[entity]) {
+    // Drop zone / input
+    h += '<div id="emailDropZone_' + entity + '" class="email-analysis-box" ondragover="event.preventDefault();this.classList.add(\'dragover\')" ondragleave="this.classList.remove(\'dragover\')" ondrop="handleEmailDrop(event,\'' + entity + '\')">';
+    h += '<svg class="w-8 h-8 mx-auto mb-2 text-indigo-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>';
+    h += '<div class="text-sm font-bold text-indigo-700 mb-1">Pega o arrastra el correo de respuesta</div>';
+    h += '<div class="text-[10px] text-gray-500 mb-3">Galatea analizara automaticamente si es aprobacion, correcciones o rechazo</div>';
+    h += '<div class="flex items-center justify-center gap-2">';
+    h += '<button onclick="showEmailTextInput(\'' + entity + '\')" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-all">Pegar texto del correo</button>';
+    h += '<label class="px-4 py-2 rounded-xl bg-white border border-indigo-300 text-indigo-700 text-xs font-bold hover:bg-indigo-50 transition-all cursor-pointer">Subir archivo (.eml, .pdf, .txt)<input type="file" accept=".eml,.pdf,.txt,.msg" class="hidden" onchange="handleEmailFileUpload(this.files[0],\'' + entity + '\')"></label>';
+    h += '</div></div>';
+  } else {
+    // Show analysis result
+    h += renderEmailAnalysisResult(entity);
+  }
+  h += '</div>';
+  return h;
+}
+
+function renderEmailAnalysisResult(entity) {
+  var r = _emailAnalysis[entity];
+  if (!r) return '';
+  var statusClass = r.status || 'unclear';
+  var statusLabels = { approved: 'Aprobado', corrections: 'Aprobado con correcciones', rejected: 'Rechazado', unclear: 'No determinado' };
+  var statusIcons = { approved: '&#x2705;', corrections: '&#x1F4DD;', rejected: '&#x274C;', unclear: '&#x2753;' };
+  var h = '<div class="email-analysis-result ' + statusClass + '">';
+  h += '<div class="flex items-center justify-between mb-3">';
+  h += '<div class="flex items-center gap-2"><span class="text-xl">' + (statusIcons[r.status] || '&#x2753;') + '</span><span class="text-sm font-black text-gray-900">' + (statusLabels[r.status] || 'Desconocido') + '</span></div>';
+  h += '<div class="flex items-center gap-2"><span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700">Confianza: ' + (r.confidence || 0) + '%</span>';
+  h += '<button onclick="_emailAnalysis.' + entity + '=null;renderSubdireccionResponse?renderSubdireccionResponse():renderEthicsTimeline();if(currentStage===3)renderStage3InstDetailedViews();else renderStage2DetailedViews();" class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-gray-100 text-gray-500 hover:bg-gray-200">Reiniciar</button></div></div>';
+
+  h += '<div class="text-sm text-gray-700 mb-3">' + esc(r.summary || '') + '</div>';
+
+  if (r.corrections && r.corrections.length > 0) {
+    h += '<div class="mb-3"><div class="text-[10px] font-bold text-amber-700 uppercase mb-1">Correcciones solicitadas:</div>';
+    h += '<ul class="space-y-1">';
+    r.corrections.forEach(function(c) { h += '<li class="text-xs text-gray-700 flex items-start gap-1.5"><span class="text-amber-500 mt-0.5">&#x25B6;</span>' + esc(c) + '</li>'; });
+    h += '</ul></div>';
+  }
+
+  if (r.nextSteps && r.nextSteps.length > 0) {
+    h += '<div class="mb-3"><div class="text-[10px] font-bold text-blue-700 uppercase mb-1">Proximos pasos:</div>';
+    h += '<ul class="space-y-1">';
+    r.nextSteps.forEach(function(s) { h += '<li class="text-xs text-gray-700 flex items-start gap-1.5"><span class="text-blue-500 mt-0.5">&#x2192;</span>' + esc(s) + '</li>'; });
+    h += '</ul></div>';
+  }
+
+  if (r.keyDates && r.keyDates.length > 0) {
+    h += '<div class="mb-2"><div class="text-[10px] font-bold text-purple-700 uppercase mb-1">Fechas clave:</div>';
+    r.keyDates.forEach(function(d) { h += '<span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 mr-1 mb-1">' + esc(d) + '</span>'; });
+    h += '</div>';
+  }
+
+  if (r.urgency) {
+    var urgColors = { alta: 'bg-red-100 text-red-700', media: 'bg-amber-100 text-amber-700', baja: 'bg-green-100 text-green-700' };
+    h += '<div class="flex items-center gap-2 mt-2"><span class="text-[9px] text-gray-400">Urgencia:</span><span class="px-2 py-0.5 rounded-full text-[9px] font-bold ' + (urgColors[r.urgency] || 'bg-gray-100 text-gray-600') + '">' + (r.urgency || 'N/A') + '</span></div>';
+  }
+
+  // Apply status button
+  if (r.status === 'approved' || r.status === 'corrections') {
+    h += '<div class="mt-3 pt-3 border-t border-gray-200"><button onclick="updateProjectEmailStatus(\'' + entity + '\',\'' + r.status + '\')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold hover:shadow-lg transition-all">Aplicar estado: ' + (statusLabels[r.status] || '') + '</button></div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function showEmailTextInput(entity) {
+  var zone = document.getElementById('emailDropZone_' + entity);
+  if (!zone) return;
+  zone.innerHTML = '<textarea id="emailTextArea_' + entity + '" class="w-full h-40 p-4 rounded-xl border border-indigo-300 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="Pega aqui el texto completo del correo de respuesta de la ' + (entity === 'subdireccion' ? 'Subdireccion' : 'Comite de Etica') + '..."></textarea>' +
+    '<div class="flex items-center gap-2 mt-3">' +
+    '<button onclick="analyzeEmailText(\'' + entity + '\')" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold hover:shadow-lg transition-all">Analizar con IA</button>' +
+    '<button onclick="if(currentStage===3)renderStage3InstDetailedViews();else renderStage2DetailedViews();" class="px-4 py-2 rounded-xl border border-gray-200 text-gray-500 text-xs font-bold hover:bg-gray-50">Cancelar</button></div>';
+  setTimeout(function() { var ta = document.getElementById('emailTextArea_' + entity); if (ta) ta.focus(); }, 100);
+}
+
+async function analyzeEmailText(entity) {
+  var ta = document.getElementById('emailTextArea_' + entity);
+  if (!ta || !ta.value.trim()) { showToast('Pega el texto del correo primero', 'warning'); return; }
+  var text = ta.value.trim();
+  _emailAnalyzing[entity] = true;
+  if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
+  try {
+    var resp = await fetch(API_BASE + '/api/evidence/pipeline?action=analyze-email', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emailText: text, entity: entity, projectTitle: simData && simData.titulo ? simData.titulo : (project ? project.title : '') })
+    });
+    var json = await resp.json();
+    if (json.success && json.data) {
+      _emailAnalysis[entity] = json.data;
+      if (json.data.status === 'approved' || json.data.status === 'corrections') {
+        updateProjectEmailStatus(entity, json.data.status);
+      }
+      showToast('Correo analizado: ' + (json.data.status === 'approved' ? 'Aprobado' : json.data.status === 'corrections' ? 'Con correcciones' : json.data.status), 'success');
+    } else {
+      showToast('Error al analizar: ' + (json.error || 'desconocido'), 'error');
+    }
+  } catch (err) {
+    showToast('Error de conexion: ' + err.message, 'error');
+  }
+  _emailAnalyzing[entity] = false;
+  if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
+}
+
+function handleEmailDrop(e, entity) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  var text = e.dataTransfer.getData('text/plain');
+  if (text && text.trim().length > 20) {
+    showEmailTextInput(entity);
+    setTimeout(function() {
+      var ta = document.getElementById('emailTextArea_' + entity);
+      if (ta) { ta.value = text; analyzeEmailText(entity); }
+    }, 200);
+  } else if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    handleEmailFileUpload(e.dataTransfer.files[0], entity);
+  }
+}
+
+function handleEmailFileUpload(file, entity) {
+  if (!file) return;
+  var ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'txt' || ext === 'eml') {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var text = ev.target.result;
+      // For .eml, extract body content
+      if (ext === 'eml') {
+        var bodyStart = text.indexOf('\n\n');
+        if (bodyStart > 0) text = text.substring(bodyStart + 2);
+        // Strip HTML tags if present
+        text = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+      _emailAnalyzing[entity] = true;
+      if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
+      analyzeEmailFromText(text, entity);
+    };
+    reader.readAsText(file);
+  } else {
+    showToast('Formato no soportado. Usa .txt o .eml, o pega el texto directamente.', 'warning');
+  }
+}
+
+async function analyzeEmailFromText(text, entity) {
+  _emailAnalyzing[entity] = true;
+  if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
+  try {
+    var resp = await fetch(API_BASE + '/api/evidence/pipeline?action=analyze-email', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emailText: text, entity: entity, projectTitle: simData && simData.titulo ? simData.titulo : (project ? project.title : '') })
+    });
+    var json = await resp.json();
+    if (json.success && json.data) {
+      _emailAnalysis[entity] = json.data;
+      if (json.data.status === 'approved' || json.data.status === 'corrections') {
+        updateProjectEmailStatus(entity, json.data.status);
+      }
+      showToast('Correo analizado exitosamente', 'success');
+    } else {
+      showToast('Error: ' + (json.error || 'desconocido'), 'error');
+    }
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+  _emailAnalyzing[entity] = false;
+  if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
+}
+
 // ── Paso 7: Subdireccion Response ──
 function renderSubdireccionResponse() {
   var h = '<div class="phase-divider"><span>Paso 7: Respuesta de Subdireccion</span></div>';
@@ -7274,14 +7478,8 @@ function renderSubdireccionResponse() {
   h += '<li>&#x2022; <strong>Cronograma:</strong> Detallar el periodo de reclutamiento estimado.</li>';
   h += '</ul></div>';
   h += '<div class="p-3 rounded-xl bg-blue-50 border border-blue-100 text-xs text-blue-700">Una vez realizados los ajustes, enviar documento corregido a <strong>investigacion.cirugia@fsfb.org.co</strong></div>';
-  // Email status connection
-  h += '<div class="mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-200">';
-  h += '<div class="flex items-center gap-2 mb-2"><svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>';
-  h += '<span class="text-xs font-bold text-indigo-700">Estado por correo</span></div>';
-  h += '<div class="flex items-center gap-2">';
-  h += '<button onclick="updateProjectEmailStatus(\'subdireccion\',\'corrections\')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ' + (_emailStatus.subdireccion === 'corrections' ? 'bg-amber-100 border-amber-400 text-amber-700' : 'border-gray-200 text-gray-500 hover:border-amber-300') + '">Correcciones solicitadas</button>';
-  h += '<button onclick="updateProjectEmailStatus(\'subdireccion\',\'approved\')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ' + (_emailStatus.subdireccion === 'approved' ? 'bg-verde/20 border-verde/50 text-verde' : 'border-gray-200 text-gray-500 hover:border-verde/40') + '">Aprobado</button>';
-  h += '</div></div>';
+  // Email analysis system
+  h += renderEmailAnalysisBox('subdireccion');
   h += '</div></div>';
   return h;
 }
@@ -7320,14 +7518,28 @@ function renderEthicsTimeline() {
   });
 
   h += '</div>';
-  // Email status for Comité de Ética
-  h += '<div class="mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-200">';
-  h += '<div class="flex items-center gap-2 mb-2"><svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>';
-  h += '<span class="text-xs font-bold text-indigo-700">Respuesta Comite de Etica</span></div>';
-  h += '<div class="flex items-center gap-2">';
-  h += '<button onclick="updateProjectEmailStatus(\'etica\',\'corrections\')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ' + (_emailStatus.etica === 'corrections' ? 'bg-amber-100 border-amber-400 text-amber-700' : 'border-gray-200 text-gray-500 hover:border-amber-300') + '">Correcciones</button>';
-  h += '<button onclick="updateProjectEmailStatus(\'etica\',\'approved\')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ' + (_emailStatus.etica === 'approved' ? 'bg-verde/20 border-verde/50 text-verde' : 'border-gray-200 text-gray-500 hover:border-verde/40') + '">Aprobado</button>';
+
+  // Day tracker for ethics
+  var eticaSubmitDate = _eticaSubmissionDate || new Date();
+  if (!_eticaSubmissionDate) _eticaSubmissionDate = eticaSubmitDate;
+  var eticaDays = Math.max(0, Math.floor((new Date() - eticaSubmitDate) / (1000 * 60 * 60 * 24)));
+  var eticaMax = 60; // Ethics committee takes longer
+  var eticaPct = Math.min(100, Math.round((eticaDays / eticaMax) * 100));
+  var eticaBarColor = eticaDays <= 21 ? 'bg-blue-500' : eticaDays <= 42 ? 'bg-amber-500' : 'bg-red-500';
+  h += '<div class="mt-4 p-4 rounded-xl bg-gray-50 border border-gray-200">';
+  h += '<div class="flex items-center justify-between mb-2"><span class="text-[10px] font-bold text-gray-600 uppercase">Seguimiento de tiempo — Comite de Etica</span>';
+  h += '<span class="px-2 py-0.5 rounded-lg text-[10px] font-bold ' + (eticaDays <= 21 ? 'text-blue-600 bg-blue-50' : eticaDays <= 42 ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50') + '">Dia ' + eticaDays + ' / ' + eticaMax + '</span></div>';
+  h += '<div class="mb-2"><div class="flex justify-between text-[9px] text-gray-400 mb-0.5"><span>Enviado</span><span>3 sem</span><span>6 sem</span><span>8 sem</span></div>';
+  h += '<div class="relative h-2.5 bg-gray-200 rounded-full overflow-hidden">';
+  h += '<div class="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ' + eticaBarColor + '" style="width:' + eticaPct + '%"></div>';
+  h += '<div class="absolute inset-y-0 left-[35%] w-px bg-gray-300"></div>';
+  h += '<div class="absolute inset-y-0 left-[70%] w-px bg-gray-300"></div>';
   h += '</div></div>';
+  h += '<div class="text-[9px] text-gray-400">Tiempo estimado de respuesta: 4 a 6 semanas (' + Math.max(0, eticaMax - eticaDays) + ' dias restantes)</div>';
+  h += '</div>';
+
+  // Email analysis for Comité de Ética
+  h += renderEmailAnalysisBox('etica');
   h += '</div>';
   return h;
 }
@@ -7378,11 +7590,37 @@ function renderEthicsDocuments() {
 function renderFinalSteps() {
   var h = '<div class="phase-divider"><span>Paso 10: Ultimos Pasos</span></div>';
 
-  // REDCap notice
-  h += '<div class="redcap-notice mb-6 s2-appear">';
-  h += '<div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 rounded-xl bg-amber-200 flex items-center justify-center"><svg class="w-5 h-5 text-amber-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg></div>';
-  h += '<div><h4 class="font-bold text-amber-800">REDCap — Base de Datos</h4><p class="text-xs text-amber-600">Esperando aval del Comite de Etica para disparar correo automatico a <strong>gestion.redcap@fsfb.org.co</strong></p></div></div>';
-  h += '<div class="text-xs text-amber-700 mt-2">Una vez obtenga el aval, recibira un correo de <strong>gestion.redcap@fsfb.org.co</strong> para iniciar la configuracion de su base de datos.</div>';
+  // REDCap connection
+  var rcfg = getREDCapConfig();
+  h += '<div class="bg-white border-2 ' + (rcfg.connected ? 'border-green-300' : 'border-amber-300') + ' rounded-2xl p-6 shadow-sm mb-6 s2-appear">';
+  h += '<div class="flex items-center justify-between mb-4">';
+  h += '<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl ' + (rcfg.connected ? 'bg-green-100' : 'bg-amber-200') + ' flex items-center justify-center"><svg class="w-5 h-5 ' + (rcfg.connected ? 'text-green-700' : 'text-amber-700') + '" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg></div>';
+  h += '<div><h4 class="font-bold ' + (rcfg.connected ? 'text-green-800' : 'text-amber-800') + '">REDCap — Base de Datos</h4>';
+  h += '<p class="text-xs ' + (rcfg.connected ? 'text-green-600' : 'text-amber-600') + '">' + (rcfg.connected ? 'Conectado a REDCap' : 'Sin conexion — configure su API REDCap') + '</p></div></div>';
+  if (rcfg.connected) {
+    h += '<span class="px-3 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700 border border-green-300">&#x2713; Conectado</span>';
+  }
+  h += '</div>';
+
+  if (rcfg.connected) {
+    // Connected: show actions
+    h += '<div class="grid grid-cols-2 gap-3 mb-4">';
+    h += '<button onclick="exportDictToREDCap()" class="p-3 rounded-xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 text-left hover:shadow-md transition-all"><div class="text-xs font-bold text-red-700">Exportar Diccionario</div><div class="text-[9px] text-gray-500 mt-0.5">Variables y formularios</div></button>';
+    h += '<button onclick="exportToREDCap()" class="p-3 rounded-xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 text-left hover:shadow-md transition-all"><div class="text-xs font-bold text-red-700">Exportar Datos</div><div class="text-[9px] text-gray-500 mt-0.5">Registros de extraccion</div></button>';
+    h += '<button onclick="importFromREDCap(\'viaB\')" class="p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-left hover:shadow-md transition-all"><div class="text-xs font-bold text-blue-700">Importar Registros</div><div class="text-[9px] text-gray-500 mt-0.5">Traer datos de REDCap</div></button>';
+    h += '<button onclick="showREDCapConfigModal()" class="p-3 rounded-xl bg-gray-50 border border-gray-200 text-left hover:shadow-md transition-all"><div class="text-xs font-bold text-gray-700">Configuracion</div><div class="text-[9px] text-gray-500 mt-0.5">Cambiar URL o Token</div></button>';
+    h += '</div>';
+    h += '<div class="p-3 rounded-xl bg-green-50 border border-green-200 text-xs text-green-700">Los datos de extraccion de Etapa 4 pueden sincronizarse bidireccional con su proyecto REDCap.</div>';
+  } else {
+    // Not connected: show setup flow
+    h += '<div class="space-y-3">';
+    h += '<div class="text-xs text-amber-700">Para conectar con REDCap necesita el <strong>URL de la API</strong> y un <strong>API Token</strong> de su proyecto REDCap. Contacte a <strong>gestion.redcap@fsfb.org.co</strong> para obtenerlos.</div>';
+    h += '<div class="flex items-center gap-3">';
+    h += '<button onclick="showREDCapConfigModal()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-orange-500 text-white text-sm font-bold hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">Configurar REDCap</button>';
+    var rcEmail = 'mailto:gestion.redcap@fsfb.org.co?subject=' + encodeURIComponent('Solicitud API Token REDCap — ' + (project && project.project_code ? project.project_code : 'Proyecto Galatea'));
+    h += '<a href="' + rcEmail + '" class="px-4 py-2.5 rounded-xl border border-amber-300 text-amber-700 text-xs font-bold hover:bg-amber-50 transition-all">Solicitar Token por correo</a>';
+    h += '</div></div>';
+  }
   if (stage2ProjectType === 'multicentrico') {
     h += '<div class="mt-3 p-3 rounded-lg bg-amber-100 text-xs text-amber-800"><strong>Proyecto multicentrico:</strong> Si ya tiene una base de datos en REDCap, envie el link a <strong>investigacion.subd@fsfb.org.co</strong> y a <strong>ciberseguridad.fsfb@fsfb.org.co</strong> para evaluacion de seguridad.</div>';
   }

@@ -298,6 +298,47 @@ Return a JSON array with one object per article:
 }
 
 // ═══════════════════════════════════════════════════════════════
+// ACTION: analyze-email — AI analysis of institutional email responses
+// ═══════════════════════════════════════════════════════════════
+async function handleAnalyzeEmail(body) {
+  const { emailText, entity, projectTitle } = body;
+  if (!emailText || !entity) throw new Error('Missing emailText or entity (subdireccion|etica)');
+
+  const { callClaude } = await import('../_utils/anthropic-client.js');
+
+  const entityName = entity === 'subdireccion'
+    ? 'Subdireccion de Estudios Clinicos y Epidemiologia Clinica'
+    : 'Comite Corporativo de Etica en Investigacion';
+
+  const systemPrompt = `Eres un asistente experto en investigacion clinica institucional de la Fundacion Santa Fe de Bogota (FSFB).
+Tu tarea es analizar correos de respuesta de la ${entityName} sobre proyectos de investigacion.
+
+Analiza el correo y determina:
+1. El ESTADO del proyecto: "approved" (aprobado sin cambios), "corrections" (aprobado con correcciones/ajustes), "rejected" (rechazado), o "unclear" (no se puede determinar)
+2. Un RESUMEN breve en español de la decision
+3. Lista de CORRECCIONES solicitadas (si las hay)
+4. PROXIMOS PASOS recomendados
+5. NIVEL DE URGENCIA: "alta", "media", "baja"
+
+Responde SOLO en JSON con este formato exacto:
+{
+  "status": "approved"|"corrections"|"rejected"|"unclear",
+  "summary": "Resumen de la decision en 1-2 oraciones",
+  "corrections": ["correccion 1", "correccion 2"],
+  "nextSteps": ["paso 1", "paso 2"],
+  "urgency": "alta"|"media"|"baja",
+  "keyDates": ["fechas importantes mencionadas"],
+  "confidence": 0-100
+}`;
+
+  const userPrompt = `Analiza el siguiente correo de la ${entityName} sobre el proyecto "${projectTitle || 'sin titulo'}":\n\n---\n${emailText.slice(0, 3000)}\n---\n\nResponde en JSON.`;
+
+  const result = await callClaude(systemPrompt, userPrompt, { max_tokens: 1024 });
+  const cleaned = result.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  return JSON.parse(cleaned);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ROUTER
 // ═══════════════════════════════════════════════════════════════
 export default async function handler(req, res) {
@@ -321,6 +362,7 @@ export default async function handler(req, res) {
       case 'build-dataset': data = handleBuildDataset(req.body); break;
       case 'pdf-upload': data = await handlePdfUpload(req.body); break;
       case 'screen-abstract': data = await handleScreenAbstract(req.body); break;
+      case 'analyze-email': data = await handleAnalyzeEmail(req.body); break;
       default: return res.status(400).json({ success: false, error: `Unknown action: ${action}` });
     }
     return res.status(200).json({ success: true, data, metrics: { duration: Date.now() - start } });
