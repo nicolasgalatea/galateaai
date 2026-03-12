@@ -130,9 +130,9 @@ const agents = {
   'manuscript-writer': async (body) => {
     const { projectId, researchQuestion, picot, framework, studyType, planteamiento, hypothesis, searchStrategy, criteria, extractionTable, stats, equatorChecklist } = body;
     if (!researchQuestion) throw { status: 400, message: 'Missing researchQuestion' };
-    const contextData = { pregunta: researchQuestion, framework: framework || '', tipo_estudio: studyType || '', picot: picot || {}, planteamiento: (planteamiento || '').slice(0, 1000), hipotesis: hypothesis || {}, estrategia_busqueda: searchStrategy || {}, criterios: criteria || {}, tabla_extraccion: (extractionTable || []).slice(0, 15), estadisticas: stats || {}, equator: equatorChecklist || [] };
-    const userPrompt = `Datos completos del proyecto de investigacion:\n${JSON.stringify(contextData, null, 2)}\n\nRedacta el manuscrito cientifico completo en formato IMRaD.`;
-    const result = await callClaude(PROMPTS.MANUSCRIPT_WRITER, userPrompt, { max_tokens: 4096 });
+    const contextData = { pregunta: researchQuestion, framework: framework || '', tipo_estudio: studyType || '', picot: picot || {}, planteamiento: (planteamiento || '').slice(0, 500), hipotesis: hypothesis || {}, criterios: criteria || {}, tabla_extraccion: (extractionTable || []).slice(0, 5).map(r => ({ titulo: (r.title || r.titulo || '').slice(0, 80), resultado: (r.resultado || r.result || '').slice(0, 100) })), estadisticas: stats ? { pooled: stats.pooled, heterogeneity: stats.heterogeneity } : {} };
+    const userPrompt = `Datos del proyecto:\n${JSON.stringify(contextData)}\n\nRedacta el manuscrito IMRaD.`;
+    const result = await callClaude(PROMPTS.MANUSCRIPT_WRITER, userPrompt, { max_tokens: 2048 });
     const data = parseClaudeJSON(result.text);
     if (projectId) await updatePhaseData(projectId, 'manuscript', data.manuscript);
     return { data, result };
@@ -165,9 +165,9 @@ const agents = {
   'protocol-writer': async (body) => {
     const { projectId, researchQuestion, picot, framework, studyType, planteamiento, hypothesis, searchStrategy, criteria, equatorChecklist } = body;
     if (!researchQuestion) throw { status: 400, message: 'Missing researchQuestion' };
-    const contextData = { pregunta: researchQuestion, framework: framework || '', tipo_estudio: studyType || '', picot: picot || {}, planteamiento: (planteamiento || '').slice(0, 1000), hipotesis: hypothesis || {}, estrategia_busqueda: searchStrategy || {}, criterios: criteria || {}, equator: equatorChecklist || [] };
-    const userPrompt = `Datos del proyecto de investigacion:\n${JSON.stringify(contextData, null, 2)}\n\nRedacta el protocolo de investigacion completo.`;
-    const result = await callClaude(PROMPTS.PROTOCOL_WRITER, userPrompt, { max_tokens: 4096 });
+    const contextData = { pregunta: researchQuestion, framework: framework || '', tipo_estudio: studyType || '', picot: picot || {}, planteamiento: (planteamiento || '').slice(0, 500), hipotesis: hypothesis || {}, criterios: criteria || {}, equator: (equatorChecklist || []).slice(0, 5) };
+    const userPrompt = `Datos del proyecto:\n${JSON.stringify(contextData)}\n\nRedacta el protocolo de investigacion.`;
+    const result = await callClaude(PROMPTS.PROTOCOL_WRITER, userPrompt, { max_tokens: 2048 });
     const data = parseClaudeJSON(result.text);
     if (projectId) await updatePhaseData(projectId, 'protocol_draft', data.protocol_draft);
     return { data, result };
