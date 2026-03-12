@@ -3092,8 +3092,9 @@ function renderDetailedViews() {
   if (pd.finer_results) { html += renderFinerRadar(pd); if (pd.feasibility) html += renderFeasibility(pd); html += renderSampleSizeCalculator(pd); html += renderConsistencyChecker(pd); if (pd.hypothesis) html += renderHypothesis(pd); }
   if (pd.descriptor_mapping) html += renderDescriptorTags(pd);
   if (pd.search_registry) html += renderSearchRegistry(pd);
-  if (pd.search_strategy && pd.search_strategy.prisma) html += renderPrisma(pd);
-  if (pd.extraction_table && pd.extraction_table.length) html += renderExtraction(pd);
+  // PRISMA y extraction table movidos fuera de Etapa 1 (se muestran en Etapa 4)
+  // if (pd.search_strategy && pd.search_strategy.prisma) html += renderPrisma(pd);
+  // if (pd.extraction_table && pd.extraction_table.length) html += renderExtraction(pd);
   if (pd._dataset) html += renderDataset(pd);
   // Stats y EQUATOR removidos de la vista principal
   // if (pd.stats) html += renderStats(pd);
