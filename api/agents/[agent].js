@@ -132,7 +132,7 @@ const agents = {
     if (!researchQuestion) throw { status: 400, message: 'Missing researchQuestion' };
     const contextData = { pregunta: researchQuestion, framework: framework || '', tipo_estudio: studyType || '', picot: picot || {}, planteamiento: (planteamiento || '').slice(0, 500), hipotesis: hypothesis || {}, criterios: criteria || {}, tabla_extraccion: (extractionTable || []).slice(0, 5).map(r => ({ titulo: (r.title || r.titulo || '').slice(0, 80), resultado: (r.resultado || r.result || '').slice(0, 100) })), estadisticas: stats ? { pooled: stats.pooled, heterogeneity: stats.heterogeneity } : {} };
     const userPrompt = `Datos del proyecto:\n${JSON.stringify(contextData)}\n\nRedacta el manuscrito IMRaD.`;
-    const result = await callClaude(PROMPTS.MANUSCRIPT_WRITER, userPrompt, { max_tokens: 2048 });
+    const result = await callClaude(PROMPTS.MANUSCRIPT_WRITER, userPrompt, { max_tokens: 4096, timeout: 120000 });
     const data = parseClaudeJSON(result.text);
     if (projectId) await updatePhaseData(projectId, 'manuscript', data.manuscript);
     return { data, result };
@@ -167,7 +167,7 @@ const agents = {
     if (!researchQuestion) throw { status: 400, message: 'Missing researchQuestion' };
     const contextData = { pregunta: researchQuestion, framework: framework || '', tipo_estudio: studyType || '', picot: picot || {}, planteamiento: (planteamiento || '').slice(0, 500), hipotesis: hypothesis || {}, criterios: criteria || {}, equator: (equatorChecklist || []).slice(0, 5) };
     const userPrompt = `Datos del proyecto:\n${JSON.stringify(contextData)}\n\nRedacta el protocolo de investigacion.`;
-    const result = await callClaude(PROMPTS.PROTOCOL_WRITER, userPrompt, { max_tokens: 2048 });
+    const result = await callClaude(PROMPTS.PROTOCOL_WRITER, userPrompt, { max_tokens: 4096, timeout: 120000 });
     const data = parseClaudeJSON(result.text);
     if (projectId) await updatePhaseData(projectId, 'protocol_draft', data.protocol_draft);
     return { data, result };
@@ -195,34 +195,84 @@ const agents = {
   },
 };
 
+// Writer agents use SSE streaming to bypass Vercel's 60s function timeout.
+// As long as data is written to the response, Vercel keeps the function alive.
+const STREAMING_AGENTS = new Set(['protocol-writer', 'manuscript-writer']);
+
+async function handleStreamingAgent(req, res, agentName) {
+  Object.entries(CORS_HEADERS).forEach(([key, val]) => res.setHeader(key, val));
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering if present
+  res.flushHeaders();
+
+  // Send keepalive every 5s to prevent Vercel from killing the function
+  const keepalive = setInterval(() => {
+    try { res.write(':keepalive\n\n'); } catch (e) { /* client disconnected */ }
+  }, 5000);
+
+  try {
+    logAgent(agentName, 'info', `Starting ${agentName} (streaming)`, { projectId: (req.body || {}).projectId });
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      clearInterval(keepalive);
+      res.write('data: ' + JSON.stringify({ success: false, error: 'ANTHROPIC_API_KEY not set' }) + '\n\n');
+      return res.end();
+    }
+
+    const { data, result, extra } = await agents[agentName](req.body || {});
+    clearInterval(keepalive);
+    logMetrics(agentName, result);
+
+    res.write('data: ' + JSON.stringify({
+      success: true,
+      data,
+      metrics: { duration: result.duration, tokensUsed: result.tokensUsed, ...(extra || {}) },
+    }) + '\n\n');
+    res.end();
+  } catch (err) {
+    clearInterval(keepalive);
+    logError(agentName, err);
+    const errorMsg = err.status ? err.message : (err.message || 'Unknown error');
+    res.write('data: ' + JSON.stringify({ success: false, error: errorMsg }) + '\n\n');
+    res.end();
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     Object.entries(CORS_HEADERS).forEach(([key, val]) => res.setHeader(key, val));
     return res.status(200).json({});
   }
 
-  Object.entries(CORS_HEADERS).forEach(([key, val]) => res.setHeader(key, val));
+  const agentName = req.query.agent;
 
   if (req.method !== 'POST') {
+    Object.entries(CORS_HEADERS).forEach(([key, val]) => res.setHeader(key, val));
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const agentName = req.query.agent;
-  const agentHandler = agents[agentName];
-
-  if (!agentHandler) {
+  if (!agents[agentName]) {
+    Object.entries(CORS_HEADERS).forEach(([key, val]) => res.setHeader(key, val));
     return res.status(404).json({ success: false, error: `Unknown agent: ${agentName}`, available: Object.keys(agents) });
   }
+
+  // Use streaming for heavy writer agents to bypass Vercel 60s limit
+  if (STREAMING_AGENTS.has(agentName)) {
+    return handleStreamingAgent(req, res, agentName);
+  }
+
+  // Standard JSON response for all other agents
+  Object.entries(CORS_HEADERS).forEach(([key, val]) => res.setHeader(key, val));
 
   try {
     logAgent(agentName, 'info', `Starting ${agentName}`, { projectId: (req.body || {}).projectId });
 
-    // Validate ANTHROPIC_API_KEY exists
     if (!process.env.ANTHROPIC_API_KEY) {
       return res.status(500).json({ success: false, error: 'Server misconfiguration: ANTHROPIC_API_KEY not set' });
     }
 
-    const { data, result, extra } = await agentHandler(req.body || {});
+    const { data, result, extra } = await agents[agentName](req.body || {});
     logMetrics(agentName, result);
 
     return res.status(200).json({
@@ -236,7 +286,6 @@ export default async function handler(req, res) {
     }
     logError(agentName, err);
     const errorMsg = err.message || 'Unknown error';
-    // Provide more context for common failures
     const detail = errorMsg.includes('JSON')
       ? `${errorMsg} (Claude returned non-JSON response)`
       : errorMsg.includes('Supabase')
