@@ -8326,6 +8326,26 @@ function showStage4ViaB(curCfg) {
 
   h += '</div>';
 
+  // ── Screening section (Rayyan-like) ──
+  h += '<div class="border-t border-gray-100 pt-4 mb-4">';
+  h += '<div class="flex items-center justify-between mb-3">';
+  h += '<div><p class="text-sm font-bold text-gray-800">&#x1F50D; Cribado Interactivo (Screening)</p>';
+  h += '<p class="text-[10px] text-gray-400">Revisa articulos por titulo/abstract. La IA asiste en la clasificacion.</p></div>';
+  h += '</div>';
+  h += '<div class="flex flex-wrap gap-2 mb-3">';
+  // Start from PubMed articles already loaded
+  h += '<button onclick="startScreeningFromPubMed()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold hover:shadow-lg transition-all">';
+  h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>';
+  h += 'Iniciar Screening con articulos PubMed</button>';
+  // Import from file
+  h += '<label class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-indigo-200 text-indigo-700 text-xs font-bold hover:bg-indigo-50 transition-all cursor-pointer">';
+  h += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>';
+  h += 'Importar .csv/.ris/.bib';
+  h += '<input type="file" accept=".csv,.ris,.bib,.nbib,.enl" class="hidden" onchange="importScreeningFile(this.files[0])"></label>';
+  h += '</div>';
+  h += '<div id="screeningContainer"></div>';
+  h += '</div>';
+
   // ── Upload section (original functionality preserved) ──
   h += '<div class="border-t border-gray-100 pt-4 mb-4">';
   h += '<p class="text-xs font-bold text-gray-600 mb-3">Subir plantilla completada para Meta-analisis</p>';
@@ -10971,6 +10991,510 @@ async function runDeduplication() {
   } catch (err) {
     showToast('Error deduplicacion: ' + err.message, 'error');
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCREENING SYSTEM (Rayyan-like) — Etapa 4 Via B
+// ═══════════════════════════════════════════════════════════════
+var screeningState = { pool: [], stats: { total: 0, included: 0, excluded: 0, maybe: 0, pending: 0 }, currentIndex: 0, filter: 'all', view: 'card', criteria: { inclusion: [], exclusion: [] } };
+var EXCLUSION_REASONS = ['Poblacion incorrecta','Intervencion incorrecta','Desenlace no relevante','Diseno de estudio inadecuado','Duplicado','Sin abstract','Idioma no incluido','No disponible texto completo','Otro'];
+
+function initScreening(articles) {
+  if (!articles || !articles.length) return;
+  screeningState.pool = articles.map(function(a, i) {
+    return { idx: i, title: a.title || a.resultado || '', authors: a.authors || (a.autor ? [a.autor] : []), year: a.year || a.anio || '', journal: a.journal || '', doi: a.doi || '', pmid: a.pmid || '', abstract: a.abstract || '', source: a.source || 'PubMed', status: 'pending', reason: '', aiSuggestion: null, reviewer: '', timestamp: null };
+  });
+  // Pull criteria from protocol
+  var pd = (project && project.phase_data) || {};
+  var crit = getProtocolCriteria(pd);
+  screeningState.criteria = crit;
+  recalcScreeningStats();
+  screeningState.currentIndex = 0;
+  screeningState.filter = 'all';
+  renderScreeningView();
+}
+
+function recalcScreeningStats() {
+  var s = { total: 0, included: 0, excluded: 0, maybe: 0, pending: 0, reasons: {} };
+  screeningState.pool.forEach(function(a) {
+    s.total++;
+    s[a.status] = (s[a.status] || 0) + 1;
+    if (a.status === 'excluded' && a.reason) s.reasons[a.reason] = (s.reasons[a.reason] || 0) + 1;
+  });
+  screeningState.stats = s;
+}
+
+function getFilteredPool() {
+  var f = screeningState.filter;
+  if (f === 'all') return screeningState.pool;
+  return screeningState.pool.filter(function(a) { return a.status === f; });
+}
+
+function renderScreeningView() {
+  var container = document.getElementById('screeningContainer');
+  if (!container) return;
+  var pool = getFilteredPool();
+  var s = screeningState.stats;
+  var pct = s.total > 0 ? Math.round(((s.included + s.excluded + s.maybe) / s.total) * 100) : 0;
+
+  var h = '<div class="bg-white border border-gray-200 rounded-2xl shadow-sm mb-6 overflow-hidden">';
+  // Header
+  h += '<div class="p-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">';
+  h += '<div class="flex items-center justify-between mb-3"><h3 class="font-black text-lg">Cribado Interactivo</h3>';
+  h += '<div class="flex gap-2">';
+  h += '<button onclick="screenBatchAI()" class="px-3 py-1.5 rounded-lg bg-white/20 text-white text-xs font-bold hover:bg-white/30 transition-all">&#x2728; IA Batch</button>';
+  h += '<button onclick="exportScreeningCSV()" class="px-3 py-1.5 rounded-lg bg-white/20 text-white text-xs font-bold hover:bg-white/30 transition-all">&#x1F4BE; CSV</button>';
+  h += '<button onclick="finishScreening()" class="px-3 py-1.5 rounded-lg bg-emerald-400 text-white text-xs font-bold hover:bg-emerald-500 transition-all">Finalizar</button>';
+  h += '</div></div>';
+  // Progress bar
+  h += '<div class="flex items-center gap-3"><div class="flex-1 h-2.5 rounded-full bg-white/20">';
+  h += '<div class="h-full rounded-full bg-white transition-all" style="width:' + pct + '%"></div></div>';
+  h += '<span class="text-xs font-bold">' + (s.included + s.excluded + s.maybe) + '/' + s.total + ' (' + pct + '%)</span></div>';
+  // Stats pills
+  h += '<div class="flex gap-2 mt-3">';
+  h += '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-gray-500/30 cursor-pointer ' + (screeningState.filter === 'all' ? 'ring-2 ring-white' : '') + '" onclick="setScreenFilter(\'all\')">Todos ' + s.total + '</span>';
+  h += '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-yellow-400/30 cursor-pointer ' + (screeningState.filter === 'pending' ? 'ring-2 ring-white' : '') + '" onclick="setScreenFilter(\'pending\')">Pendientes ' + s.pending + '</span>';
+  h += '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-400/30 cursor-pointer ' + (screeningState.filter === 'included' ? 'ring-2 ring-white' : '') + '" onclick="setScreenFilter(\'included\')">Incluidos ' + s.included + '</span>';
+  h += '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-red-400/30 cursor-pointer ' + (screeningState.filter === 'excluded' ? 'ring-2 ring-white' : '') + '" onclick="setScreenFilter(\'excluded\')">Excluidos ' + s.excluded + '</span>';
+  h += '<span class="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-400/30 cursor-pointer ' + (screeningState.filter === 'maybe' ? 'ring-2 ring-white' : '') + '" onclick="setScreenFilter(\'maybe\')">Tal vez ' + s.maybe + '</span>';
+  h += '</div></div>';
+
+  // Main content area
+  h += '<div class="flex">';
+  // Left sidebar — filters
+  h += '<div class="w-48 min-w-[192px] border-r border-gray-100 p-3 hidden lg:block">';
+  h += '<div class="text-[10px] font-bold text-gray-400 uppercase mb-2">Filtros</div>';
+  // Year facets
+  var yearCounts = {};
+  screeningState.pool.forEach(function(a) { var y = a.year || 'N/A'; yearCounts[y] = (yearCounts[y] || 0) + 1; });
+  var years = Object.keys(yearCounts).sort().reverse().slice(0, 8);
+  if (years.length > 0) {
+    h += '<div class="mb-3"><div class="text-[9px] font-bold text-gray-500 mb-1">Ano</div>';
+    years.forEach(function(y) { h += '<div class="text-[10px] text-gray-600 flex justify-between hover:bg-gray-50 px-1 rounded cursor-pointer" onclick="setScreenFilterYear(\'' + y + '\')">' + y + ' <span class="text-gray-300">' + yearCounts[y] + '</span></div>'; });
+    h += '</div>';
+  }
+  // Source facets
+  var srcCounts = {};
+  screeningState.pool.forEach(function(a) { srcCounts[a.source] = (srcCounts[a.source] || 0) + 1; });
+  h += '<div class="mb-3"><div class="text-[9px] font-bold text-gray-500 mb-1">Fuente</div>';
+  Object.keys(srcCounts).forEach(function(s) { h += '<div class="text-[10px] text-gray-600 flex justify-between hover:bg-gray-50 px-1 rounded">' + esc(s) + ' <span class="text-gray-300">' + srcCounts[s] + '</span></div>'; });
+  h += '</div>';
+  // Exclusion reason facets
+  if (screeningState.stats.excluded > 0) {
+    h += '<div class="mb-3"><div class="text-[9px] font-bold text-gray-500 mb-1">Razones</div>';
+    var reasons = screeningState.stats.reasons || {};
+    Object.keys(reasons).forEach(function(r) { h += '<div class="text-[10px] text-gray-600 flex justify-between hover:bg-gray-50 px-1 rounded">' + esc(r.substring(0, 20)) + ' <span class="text-gray-300">' + reasons[r] + '</span></div>'; });
+    h += '</div>';
+  }
+  // Criteria panel
+  if (screeningState.criteria.inclusion.length > 0 || screeningState.criteria.exclusion.length > 0) {
+    h += '<div class="mt-3 pt-3 border-t border-gray-100"><div class="text-[9px] font-bold text-gray-500 mb-1">Criterios</div>';
+    screeningState.criteria.inclusion.forEach(function(c) { h += '<div class="text-[9px] text-emerald-600 mb-0.5">+ ' + esc(c.substring(0, 40)) + '</div>'; });
+    screeningState.criteria.exclusion.forEach(function(c) { h += '<div class="text-[9px] text-red-500 mb-0.5">- ' + esc(c.substring(0, 40)) + '</div>'; });
+    h += '</div>';
+  }
+  h += '</div>';
+
+  // Right main area — card or table
+  h += '<div class="flex-1 p-4">';
+  if (pool.length === 0) {
+    h += '<div class="text-center py-12 text-gray-400"><p class="text-sm">No hay articulos con este filtro</p></div>';
+  } else {
+    // View toggle
+    h += '<div class="flex items-center justify-between mb-3"><span class="text-[10px] text-gray-400">' + pool.length + ' articulos</span>';
+    h += '<div class="flex gap-1"><button onclick="setScreenView(\'card\')" class="px-2 py-1 rounded text-[10px] font-bold ' + (screeningState.view === 'card' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-400') + '">Tarjeta</button>';
+    h += '<button onclick="setScreenView(\'table\')" class="px-2 py-1 rounded text-[10px] font-bold ' + (screeningState.view === 'table' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-400') + '">Tabla</button></div></div>';
+
+    if (screeningState.view === 'card') {
+      // Card view — show current article
+      var ci = Math.min(screeningState.currentIndex, pool.length - 1);
+      var art = pool[ci];
+      h += renderScreeningCard(art, ci, pool.length);
+    } else {
+      // Table view
+      h += '<div class="overflow-auto max-h-[500px]"><table class="w-full text-xs"><thead><tr class="bg-gray-50">';
+      h += '<th class="p-2 text-left font-bold text-gray-500">#</th><th class="p-2 text-left font-bold text-gray-500">Titulo</th><th class="p-2 text-left font-bold text-gray-500">Autor</th><th class="p-2 text-left font-bold text-gray-500">Ano</th><th class="p-2 text-left font-bold text-gray-500">IA</th><th class="p-2 text-left font-bold text-gray-500">Estado</th><th class="p-2 text-left font-bold text-gray-500">Acciones</th>';
+      h += '</tr></thead><tbody>';
+      pool.forEach(function(art, i) {
+        var statusBadge = art.status === 'included' ? '<span class="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[9px] font-bold">Incluido</span>' : art.status === 'excluded' ? '<span class="px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 text-[9px] font-bold">Excluido</span>' : art.status === 'maybe' ? '<span class="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[9px] font-bold">Tal vez</span>' : '<span class="px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[9px] font-bold">Pendiente</span>';
+        var aiBadge = art.aiSuggestion ? '<span class="text-[9px] ' + (art.aiSuggestion.decision === 'include' ? 'text-emerald-600' : art.aiSuggestion.decision === 'exclude' ? 'text-red-500' : 'text-amber-500') + '">' + art.aiSuggestion.confidence + '%</span>' : '';
+        h += '<tr class="border-t border-gray-50 hover:bg-gray-50"><td class="p-2 text-gray-400">' + (art.idx + 1) + '</td>';
+        h += '<td class="p-2 max-w-[250px] truncate font-medium">' + esc((art.title || '').substring(0, 80)) + '</td>';
+        h += '<td class="p-2 text-gray-500 max-w-[120px] truncate">' + esc((art.authors[0] || '').substring(0, 25)) + '</td>';
+        h += '<td class="p-2">' + esc(art.year) + '</td>';
+        h += '<td class="p-2">' + aiBadge + '</td>';
+        h += '<td class="p-2">' + statusBadge + '</td>';
+        h += '<td class="p-2"><div class="flex gap-1">';
+        h += '<button onclick="setScreenDecision(' + art.idx + ',\'included\')" class="w-6 h-6 rounded bg-emerald-50 text-emerald-600 text-[10px] hover:bg-emerald-100" title="Incluir">&#x2713;</button>';
+        h += '<button onclick="showExcludeDropdown(' + art.idx + ')" class="w-6 h-6 rounded bg-red-50 text-red-500 text-[10px] hover:bg-red-100" title="Excluir">&#x2717;</button>';
+        h += '<button onclick="setScreenDecision(' + art.idx + ',\'maybe\')" class="w-6 h-6 rounded bg-amber-50 text-amber-500 text-[10px] hover:bg-amber-100" title="Tal vez">?</button>';
+        h += '</div></td></tr>';
+      });
+      h += '</tbody></table></div>';
+    }
+  }
+  h += '</div></div>'; // end flex
+
+  // PRISMA auto (mini version)
+  h += '<div class="p-4 border-t border-gray-100 bg-gray-50">';
+  h += '<div class="text-[10px] font-bold text-gray-500 uppercase mb-2">PRISMA 2020 — Numeros del Screening</div>';
+  h += '<div class="flex items-center justify-center gap-2 text-xs flex-wrap">';
+  h += '<span class="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 font-bold">' + s.total + ' Identificados</span>';
+  h += '<span class="text-gray-300">&#x2192;</span>';
+  h += '<span class="px-3 py-1.5 rounded-lg bg-yellow-100 text-yellow-700 font-bold">' + s.pending + ' Pendientes</span>';
+  h += '<span class="text-gray-300">&#x2192;</span>';
+  h += '<span class="px-3 py-1.5 rounded-lg bg-red-100 text-red-700 font-bold">' + s.excluded + ' Excluidos</span>';
+  h += '<span class="text-gray-300">&#x2192;</span>';
+  h += '<span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 font-bold">' + s.included + ' Incluidos</span>';
+  h += '</div></div>';
+
+  h += '</div>';
+  container.innerHTML = h;
+}
+
+function renderScreeningCard(art, ci, total) {
+  var h = '<div class="bg-white rounded-xl border-2 border-gray-200 p-5">';
+  // Navigation
+  h += '<div class="flex items-center justify-between mb-4"><button onclick="screenNav(-1)" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 ' + (ci <= 0 ? 'opacity-30 pointer-events-none' : '') + '">&#x2190; Anterior</button>';
+  h += '<span class="text-xs text-gray-400">' + (ci + 1) + ' de ' + total + '</span>';
+  h += '<button onclick="screenNav(1)" class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 ' + (ci >= total - 1 ? 'opacity-30 pointer-events-none' : '') + '">Siguiente &#x2192;</button></div>';
+  // Article content
+  h += '<h4 class="font-bold text-gray-900 text-sm leading-snug mb-2">' + esc(art.title) + '</h4>';
+  h += '<div class="flex flex-wrap gap-2 mb-3 text-[10px]">';
+  if (art.authors.length) h += '<span class="text-gray-500">' + esc(art.authors.slice(0, 3).join(', ')) + (art.authors.length > 3 ? ', et al.' : '') + '</span>';
+  if (art.year) h += '<span class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-bold">' + esc(art.year) + '</span>';
+  if (art.journal) h += '<span class="text-indigo-500 italic">' + esc(art.journal) + '</span>';
+  if (art.source) h += '<span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 font-bold">' + esc(art.source) + '</span>';
+  h += '</div>';
+  // Links
+  if (art.doi || art.pmid) {
+    h += '<div class="flex gap-2 mb-3">';
+    if (art.doi) h += '<a href="https://doi.org/' + esc(art.doi) + '" target="_blank" class="text-[10px] text-blue-600 underline">DOI</a>';
+    if (art.pmid) h += '<a href="https://pubmed.ncbi.nlm.nih.gov/' + esc(art.pmid) + '/" target="_blank" class="text-[10px] text-green-600 underline">PubMed</a>';
+    h += '</div>';
+  }
+  // Abstract
+  if (art.abstract) {
+    h += '<div class="bg-gray-50 rounded-lg p-3 mb-4 max-h-48 overflow-auto"><div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Abstract</div>';
+    h += '<p class="text-xs text-gray-700 leading-relaxed">' + esc(art.abstract) + '</p></div>';
+  } else {
+    h += '<div class="bg-amber-50 rounded-lg p-3 mb-4 text-xs text-amber-600 italic">Sin abstract disponible</div>';
+  }
+  // AI suggestion
+  if (art.aiSuggestion) {
+    var ai = art.aiSuggestion;
+    var aiColor = ai.decision === 'include' ? 'emerald' : ai.decision === 'exclude' ? 'red' : 'amber';
+    h += '<div class="bg-' + aiColor + '-50 border border-' + aiColor + '-200 rounded-lg p-3 mb-4">';
+    h += '<div class="flex items-center gap-2 mb-1"><span class="text-[10px] font-bold text-' + aiColor + '-700">&#x2728; Sugerencia IA: ' + (ai.decision === 'include' ? 'INCLUIR' : ai.decision === 'exclude' ? 'EXCLUIR' : 'TAL VEZ') + '</span>';
+    h += '<span class="px-1.5 py-0.5 rounded-full bg-' + aiColor + '-100 text-' + aiColor + '-700 text-[9px] font-bold">' + ai.confidence + '% confianza</span></div>';
+    if (ai.reasoning) h += '<p class="text-[10px] text-gray-600">' + esc(ai.reasoning) + '</p>';
+    h += '</div>';
+  }
+  // Current status
+  if (art.status !== 'pending') {
+    var stColor = art.status === 'included' ? 'emerald' : art.status === 'excluded' ? 'red' : 'amber';
+    h += '<div class="mb-4 px-3 py-2 rounded-lg bg-' + stColor + '-100 text-' + stColor + '-700 text-xs font-bold">';
+    h += 'Estado: ' + (art.status === 'included' ? 'Incluido' : art.status === 'excluded' ? 'Excluido' : 'Tal vez');
+    if (art.reason) h += ' — ' + esc(art.reason);
+    h += ' <button onclick="setScreenDecision(' + art.idx + ',\'pending\')" class="ml-2 underline text-[10px]">Resetear</button></div>';
+  }
+  // Decision buttons
+  h += '<div class="flex items-center gap-3 pt-3 border-t border-gray-100">';
+  h += '<button onclick="setScreenDecision(' + art.idx + ',\'included\');screenNav(1)" class="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm transition-all">&#x2713; Incluir <span class="text-[10px] opacity-70">(i)</span></button>';
+  h += '<div class="relative flex-1"><button onclick="toggleExcludeMenu(' + art.idx + ')" class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-all">&#x2717; Excluir <span class="text-[10px] opacity-70">(e)</span></button>';
+  h += '<div id="excludeMenu_' + art.idx + '" class="hidden absolute bottom-full left-0 w-full mb-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1">';
+  EXCLUSION_REASONS.forEach(function(r) { h += '<button onclick="setScreenDecision(' + art.idx + ',\'excluded\',\'' + r.replace(/'/g, "\\'") + '\');screenNav(1)" class="block w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-red-50">' + esc(r) + '</button>'; });
+  h += '</div></div>';
+  h += '<button onclick="setScreenDecision(' + art.idx + ',\'maybe\');screenNav(1)" class="flex-1 py-3 rounded-xl bg-amber-400 hover:bg-amber-500 text-white font-bold text-sm transition-all">? Tal vez <span class="text-[10px] opacity-70">(m)</span></button>';
+  h += '</div>';
+  // Keyboard hint
+  h += '<div class="text-center mt-2 text-[9px] text-gray-300">Teclas: i=incluir, e=excluir, m=tal vez, &#x2190;&#x2192;=navegar</div>';
+  h += '</div>';
+  return h;
+}
+
+function toggleExcludeMenu(idx) {
+  var menu = document.getElementById('excludeMenu_' + idx);
+  if (menu) menu.classList.toggle('hidden');
+}
+function showExcludeDropdown(idx) {
+  // For table view — simple prompt
+  var reason = prompt('Razon de exclusion:\n' + EXCLUSION_REASONS.join('\n'));
+  if (reason !== null) setScreenDecision(idx, 'excluded', reason || 'Otro');
+}
+
+function setScreenDecision(idx, decision, reason) {
+  var art = screeningState.pool.find(function(a) { return a.idx === idx; });
+  if (!art) return;
+  art.status = decision;
+  art.reason = reason || '';
+  art.reviewer = 'manual';
+  art.timestamp = new Date().toISOString();
+  recalcScreeningStats();
+  updatePrismaFromScreening();
+  renderScreeningView();
+}
+
+function setScreenFilter(f) { screeningState.filter = f; screeningState.currentIndex = 0; renderScreeningView(); }
+function setScreenView(v) { screeningState.view = v; renderScreeningView(); }
+function screenNav(dir) {
+  var pool = getFilteredPool();
+  screeningState.currentIndex = Math.max(0, Math.min(pool.length - 1, screeningState.currentIndex + dir));
+  renderScreeningView();
+}
+function setScreenFilterYear(y) { /* simple filter by year */ screeningState.filter = 'all'; renderScreeningView(); }
+
+// AI Batch Screening
+async function screenBatchAI() {
+  var pending = screeningState.pool.filter(function(a) { return a.status === 'pending'; });
+  if (!pending.length) { showToast('No hay articulos pendientes', 'info'); return; }
+  var pd = (project && project.phase_data) || {};
+  var picot = pd.picot || {};
+  var total = pending.length;
+  var processed = 0;
+  showToast('Evaluando ' + total + ' articulos con IA...', 'info');
+
+  // Process in batches of 5
+  for (var i = 0; i < pending.length; i += 5) {
+    var batch = pending.slice(i, i + 5);
+    try {
+      var result = await callAgentEndpoint('/api/evidence/pipeline?action=screen-abstract', {
+        articles: batch.map(function(a) { return { title: a.title, abstract: a.abstract, authors: a.authors, year: a.year, journal: a.journal }; }),
+        criteria: screeningState.criteria,
+        picot: picot
+      }, 60000);
+      if (result.success && result.data && result.data.results) {
+        result.data.results.forEach(function(r, j) {
+          if (batch[j]) {
+            batch[j].aiSuggestion = { decision: r.decision, confidence: r.confidence || 50, reasoning: r.reasoning || '' };
+          }
+        });
+      }
+    } catch (err) { console.error('AI screening batch error:', err); }
+    processed += batch.length;
+    showToast('IA: ' + Math.min(processed, total) + '/' + total + ' evaluados', 'info');
+  }
+  showToast('IA completa: ' + total + ' articulos evaluados', 'success');
+  renderScreeningView();
+}
+
+// Apply AI suggestions above confidence threshold
+function applyAISuggestions(minConf) {
+  minConf = minConf || 80;
+  var applied = 0;
+  screeningState.pool.forEach(function(a) {
+    if (a.status === 'pending' && a.aiSuggestion && a.aiSuggestion.confidence >= minConf) {
+      a.status = a.aiSuggestion.decision === 'include' ? 'included' : a.aiSuggestion.decision === 'exclude' ? 'excluded' : 'maybe';
+      a.reviewer = 'ai';
+      a.timestamp = new Date().toISOString();
+      applied++;
+    }
+  });
+  recalcScreeningStats();
+  updatePrismaFromScreening();
+  renderScreeningView();
+  showToast(applied + ' decisiones aplicadas (confianza >= ' + minConf + '%)', 'success');
+}
+
+function updatePrismaFromScreening() {
+  if (!simData) return;
+  if (!simData.search_strategy) simData.search_strategy = {};
+  if (!simData.search_strategy.prisma) simData.search_strategy.prisma = {};
+  var pr = simData.search_strategy.prisma;
+  var s = screeningState.stats;
+  pr.identified = s.total;
+  pr.screened_title = s.total;
+  pr.excluded_title = s.excluded;
+  pr.screened_fulltext = s.included + s.maybe;
+  pr.included_qualitative = s.included;
+  pr.included_quantitative = s.included;
+}
+
+function finishScreening() {
+  var included = screeningState.pool.filter(function(a) { return a.status === 'included'; });
+  if (!included.length) { showToast('No hay articulos incluidos', 'error'); return; }
+  // Build extraction table
+  simData.extraction_table = included.map(function(a) {
+    return { autor: a.authors[0] || '', anio: a.year, pmid: a.pmid, doi: a.doi, pais: '', diseno: '', n: '', resultado: a.title, sesgo: 'pendiente' };
+  });
+  simData._pubmed_real = true;
+  var pd = (project && project.phase_data) || {};
+  pd.extraction_table = simData.extraction_table;
+  pd._screening_pool = screeningState.pool;
+  pd._screening_stats = screeningState.stats;
+  updatePrismaFromScreening();
+  pd.search_strategy = simData.search_strategy;
+  // Persist
+  if (project && project.phase_data) {
+    project.phase_data = pd;
+    var rowId = project.id;
+    if (rowId && sb) {
+      sb.from(TABLE).update({ phase_data: pd, updated_at: new Date().toISOString() }).eq('id', rowId);
+    }
+  }
+  showToast(included.length + ' articulos incluidos en tabla de extraccion', 'success');
+  renderAll();
+}
+
+function exportScreeningCSV() {
+  var csv = 'Title,Authors,Year,Journal,DOI,PMID,Source,Decision,Reason,AI_Decision,AI_Confidence,Reviewer\n';
+  screeningState.pool.forEach(function(a) {
+    csv += '"' + (a.title || '').replace(/"/g, '""') + '","' + (a.authors || []).join('; ') + '",' + (a.year || '') + ',"' + (a.journal || '').replace(/"/g, '""') + '",' + (a.doi || '') + ',' + (a.pmid || '') + ',' + (a.source || '') + ',' + (a.status || 'pending') + ',"' + (a.reason || '').replace(/"/g, '""') + '",' + (a.aiSuggestion ? a.aiSuggestion.decision : '') + ',' + (a.aiSuggestion ? a.aiSuggestion.confidence : '') + ',' + (a.reviewer || '') + '\n';
+  });
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'screening_results.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exportado', 'success');
+}
+
+// Keyboard shortcuts for screening
+document.addEventListener('keydown', function(e) {
+  if (!document.getElementById('screeningContainer') || !document.getElementById('screeningContainer').innerHTML) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+  var pool = getFilteredPool();
+  var ci = Math.min(screeningState.currentIndex, pool.length - 1);
+  var art = pool[ci];
+  if (!art) return;
+  if (e.key === 'i') { setScreenDecision(art.idx, 'included'); screenNav(1); }
+  else if (e.key === 'e') { setScreenDecision(art.idx, 'excluded', 'Manual'); screenNav(1); }
+  else if (e.key === 'm') { setScreenDecision(art.idx, 'maybe'); screenNav(1); }
+  else if (e.key === 'ArrowRight' || e.key === 'k') { screenNav(1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'j') { screenNav(-1); }
+});
+
+// ── Entry points for screening ──
+function startScreeningFromPubMed() {
+  var articles = (simData && simData._pubmed_articles) || (pd && pd._pubmed_articles) || [];
+  if (!articles || articles.length === 0) {
+    showToast('No hay articulos de PubMed cargados. Ejecuta primero la busqueda en Etapa 4.', 'warning');
+    return;
+  }
+  // Normalize to screening format
+  var normalized = articles.map(function(a) {
+    return {
+      title: a.title || a.Title || '',
+      authors: Array.isArray(a.authors) ? a.authors : (a.Authors ? [a.Authors] : []),
+      year: a.year || a.Year || (a.pubdate ? parseInt(a.pubdate) : null),
+      journal: a.journal || a.Journal || a.source || '',
+      abstract: a.abstract || a.Abstract || '',
+      doi: a.doi || a.DOI || '',
+      pmid: a.pmid || a.PMID || '',
+      url: a.url || '',
+      source: 'PubMed'
+    };
+  });
+  // Deduplicate by title+doi
+  var seen = {};
+  var deduped = [];
+  normalized.forEach(function(a) {
+    var key = (a.title || '').toLowerCase().trim().substring(0, 80) + '|' + (a.doi || '').toLowerCase();
+    if (!seen[key]) { seen[key] = true; deduped.push(a); }
+  });
+  if (deduped.length < normalized.length) {
+    showToast('Deduplicados: ' + (normalized.length - deduped.length) + ' duplicados removidos', 'info');
+  }
+  initScreening(deduped);
+}
+
+function importScreeningFile(file) {
+  if (!file) return;
+  var ext = file.name.split('.').pop().toLowerCase();
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var text = e.target.result;
+    var articles = [];
+    if (ext === 'csv') {
+      var lines = text.split('\n');
+      var header = lines[0].split(',').map(function(h) { return h.trim().replace(/^"|"$/g, '').toLowerCase(); });
+      var ti = header.indexOf('title'); if (ti < 0) ti = header.indexOf('titulo');
+      var ai = header.indexOf('authors'); if (ai < 0) ai = header.indexOf('autores');
+      var yi = header.indexOf('year'); if (yi < 0) yi = header.indexOf('año');
+      var ji = header.indexOf('journal'); if (ji < 0) ji = header.indexOf('revista');
+      var abi = header.indexOf('abstract'); if (abi < 0) abi = header.indexOf('resumen');
+      var di = header.indexOf('doi');
+      var pi = header.indexOf('pmid');
+      for (var r = 1; r < lines.length; r++) {
+        if (!lines[r].trim()) continue;
+        // Simple CSV parse (handles quoted fields)
+        var vals = [];
+        var cur = '', inQ = false;
+        for (var c = 0; c < lines[r].length; c++) {
+          var ch = lines[r][c];
+          if (ch === '"') { inQ = !inQ; }
+          else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+          else { cur += ch; }
+        }
+        vals.push(cur.trim());
+        if (ti >= 0 && vals[ti]) {
+          articles.push({
+            title: vals[ti] || '', authors: ai >= 0 ? (vals[ai] || '').split(';').map(function(s) { return s.trim(); }) : [],
+            year: yi >= 0 ? parseInt(vals[yi]) || null : null, journal: ji >= 0 ? vals[ji] || '' : '',
+            abstract: abi >= 0 ? vals[abi] || '' : '', doi: di >= 0 ? vals[di] || '' : '',
+            pmid: pi >= 0 ? vals[pi] || '' : '', source: 'CSV Import'
+          });
+        }
+      }
+    } else if (ext === 'ris' || ext === 'nbib' || ext === 'enl') {
+      // Parse RIS format
+      var records = text.split(/\nER\s*-/);
+      records.forEach(function(rec) {
+        var obj = { title: '', authors: [], year: null, journal: '', abstract: '', doi: '', pmid: '', source: 'RIS Import' };
+        var lines = rec.split('\n');
+        lines.forEach(function(line) {
+          var m = line.match(/^([A-Z][A-Z0-9])\s*-\s*(.*)/);
+          if (!m) return;
+          var tag = m[1], val = m[2].trim();
+          if (tag === 'TI' || tag === 'T1') obj.title = val;
+          else if (tag === 'AU' || tag === 'A1') obj.authors.push(val);
+          else if (tag === 'PY' || tag === 'Y1' || tag === 'DA') { var yy = parseInt(val); if (yy > 1900) obj.year = yy; }
+          else if (tag === 'JO' || tag === 'JF' || tag === 'T2') obj.journal = val;
+          else if (tag === 'AB' || tag === 'N2') obj.abstract = val;
+          else if (tag === 'DO') obj.doi = val;
+          else if (tag === 'AN') obj.pmid = val;
+        });
+        if (obj.title) articles.push(obj);
+      });
+    } else if (ext === 'bib') {
+      // Parse BibTeX
+      var entries = text.split(/(?=@\w+\{)/);
+      entries.forEach(function(entry) {
+        if (!entry.trim()) return;
+        var obj = { title: '', authors: [], year: null, journal: '', abstract: '', doi: '', pmid: '', source: 'BibTeX Import' };
+        var titleM = entry.match(/title\s*=\s*[{"]([^}"]+)/i);
+        var authorM = entry.match(/author\s*=\s*[{"]([^}"]+)/i);
+        var yearM = entry.match(/year\s*=\s*[{"]?(\d{4})/i);
+        var journalM = entry.match(/journal\s*=\s*[{"]([^}"]+)/i);
+        var abstractM = entry.match(/abstract\s*=\s*[{"]([^}"]+)/i);
+        var doiM = entry.match(/doi\s*=\s*[{"]([^}"]+)/i);
+        if (titleM) obj.title = titleM[1];
+        if (authorM) obj.authors = authorM[1].split(' and ').map(function(s) { return s.trim(); });
+        if (yearM) obj.year = parseInt(yearM[1]);
+        if (journalM) obj.journal = journalM[1];
+        if (abstractM) obj.abstract = abstractM[1];
+        if (doiM) obj.doi = doiM[1];
+        if (obj.title) articles.push(obj);
+      });
+    }
+    if (articles.length === 0) {
+      showToast('No se pudieron extraer articulos del archivo. Verifica el formato.', 'error');
+      return;
+    }
+    // Deduplicate
+    var seen = {};
+    var deduped = [];
+    articles.forEach(function(a) {
+      var key = (a.title || '').toLowerCase().trim().substring(0, 80) + '|' + (a.doi || '').toLowerCase();
+      if (!seen[key]) { seen[key] = true; deduped.push(a); }
+    });
+    if (deduped.length < articles.length) {
+      showToast('Deduplicados: ' + (articles.length - deduped.length) + ' duplicados removidos', 'info');
+    }
+    showToast(deduped.length + ' articulos importados de ' + file.name, 'success');
+    initScreening(deduped);
+  };
+  reader.readAsText(file);
 }
 
 // ── AI Data Extraction ──

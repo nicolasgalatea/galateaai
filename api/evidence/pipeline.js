@@ -262,6 +262,42 @@ async function handlePdfUpload(body) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// ACTION: screen-abstract — AI-assisted screening of articles
+// ═══════════════════════════════════════════════════════════════
+async function handleScreenAbstract(body) {
+  const { articles, criteria, picot } = body;
+  if (!articles || !articles.length) throw new Error('Missing articles');
+  const batch = articles.slice(0, 5); // Max 5 per request
+  const { callClaude } = await import('../_utils/anthropic-client.js');
+  const systemPrompt = `You are a systematic review screening assistant. You evaluate articles for inclusion in a systematic review based on specific eligibility criteria.
+
+For each article, analyze the title and abstract against the inclusion and exclusion criteria provided. Return your assessment as JSON.
+
+IMPORTANT:
+- Be conservative: when in doubt, mark as "maybe" rather than "exclude"
+- Base decisions ONLY on information present in the title/abstract
+- If no abstract is available, base the decision on the title only and lower confidence
+- Consider the PICOT framework when evaluating relevance
+
+Return a JSON array with one object per article:
+[{ "decision": "include"|"exclude"|"maybe", "confidence": 0-100, "reasoning": "brief explanation in Spanish", "matchedCriteria": ["which criteria matched"] }]`;
+
+  const criteriaText = criteria ? `\nCriterios de Inclusion:\n${(criteria.inclusion || []).map(function(c,i){return (i+1)+'. '+c;}).join('\n')}\n\nCriterios de Exclusion:\n${(criteria.exclusion || []).map(function(c,i){return (i+1)+'. '+c;}).join('\n')}` : '';
+  const picotText = picot ? `\nPICOT: P=${picot.P||''}, I=${picot.I||''}, C=${picot.C||''}, O=${picot.O||''}, T=${picot.T||''}` : '';
+
+  const articlesText = batch.map(function(a, i) {
+    return `\n--- Article ${i+1} ---\nTitle: ${a.title || 'N/A'}\nAuthors: ${(a.authors || []).join(', ') || 'N/A'}\nYear: ${a.year || 'N/A'}\nJournal: ${a.journal || 'N/A'}\nAbstract: ${(a.abstract || 'No abstract available').slice(0, 800)}`;
+  }).join('');
+
+  const userPrompt = `Evaluate the following ${batch.length} articles for inclusion in a systematic review.${criteriaText}${picotText}\n${articlesText}\n\nReturn JSON array with ${batch.length} objects.`;
+
+  const result = await callClaude(systemPrompt, userPrompt, { max_tokens: 2048 });
+  const cleaned = result.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  const results = JSON.parse(cleaned);
+  return { results: Array.isArray(results) ? results : [results] };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ROUTER
 // ═══════════════════════════════════════════════════════════════
 export default async function handler(req, res) {
@@ -284,6 +320,7 @@ export default async function handler(req, res) {
       case 'extract-batch': data = await handleExtractBatch(req.body); break;
       case 'build-dataset': data = handleBuildDataset(req.body); break;
       case 'pdf-upload': data = await handlePdfUpload(req.body); break;
+      case 'screen-abstract': data = await handleScreenAbstract(req.body); break;
       default: return res.status(400).json({ success: false, error: `Unknown action: ${action}` });
     }
     return res.status(200).json({ success: true, data, metrics: { duration: Date.now() - start } });
