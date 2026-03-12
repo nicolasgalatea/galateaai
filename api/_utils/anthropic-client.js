@@ -72,6 +72,7 @@ export async function callClaude(systemPrompt, userPrompt, options = {}) {
       }
       break;
     } catch (err) {
+      const isAbort = err.name === 'AbortError' || /abort/i.test(err.message);
       const isRetryable = err.status === 529 || err.status === 429;
       if (isRetryable && attempt < maxAttempts - 1) {
         const backoff = 2000;
@@ -79,7 +80,7 @@ export async function callClaude(systemPrompt, userPrompt, options = {}) {
         await new Promise((r) => setTimeout(r, backoff));
         continue;
       }
-      if (err.name === 'AbortError') {
+      if (isAbort) {
         throw new Error('Claude API timeout after ' + timeoutMs + 'ms');
       }
       throw err;
