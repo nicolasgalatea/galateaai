@@ -198,6 +198,7 @@ const agents = {
 // Writer agents use SSE streaming to bypass Vercel's 60s function timeout.
 // As long as data is written to the response, Vercel keeps the function alive.
 const STREAMING_AGENTS = new Set(['protocol-writer', 'manuscript-writer']);
+const CODE_VERSION = '2026-03-12-streaming-v1';
 
 async function handleStreamingAgent(req, res, agentName) {
   Object.entries(CORS_HEADERS).forEach(([key, val]) => res.setHeader(key, val));
@@ -240,6 +241,8 @@ async function handleStreamingAgent(req, res, agentName) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader('X-Code-Version', CODE_VERSION);
+
   if (req.method === 'OPTIONS') {
     Object.entries(CORS_HEADERS).forEach(([key, val]) => res.setHeader(key, val));
     return res.status(200).json({});
