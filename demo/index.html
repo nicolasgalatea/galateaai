@@ -7075,6 +7075,13 @@ function renderDocumentChecklist() {
             // Interactive Gantt for cronograma/actividades fields
             if (f.key === 'cronograma' || f.key === 'actividades') {
               h += renderInlineGantt(idx, f.key, val);
+            } else if (f.key === 'variables') {
+              // Interactive spreadsheet for variable matrix
+              h += renderInlineSpreadsheet(idx, f.key, ['Variable','Definicion Operativa','Naturaleza','Nivel Medicion','Dependencia','Instrumento'], [
+                ['Edad','Anos cumplidos al momento del estudio','Cuantitativa','Continua','Independiente','HC'],
+                ['Sexo','Masculino/Femenino','Cualitativa','Nominal','Independiente','HC'],
+                ['Desenlace primario','Segun definicion del protocolo','','','Dependiente','']
+              ]);
             } else if (f.large) {
               h += '<textarea onblur="saveDocField(' + idx + ',\'' + f.key + '\',this.value)" rows="5" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 focus:border-galatea focus:ring-1 focus:ring-galatea/30 outline-none resize-y bg-white placeholder:text-gray-300" placeholder="' + esc(f.placeholder || '') + '">' + esc(val) + '</textarea>';
             } else {
@@ -8851,6 +8858,11 @@ function renderStage3DetailedViews() {
     html += '<span class="text-xs font-medium text-amber-700">Plan estadistico estimado — Conecte el API R para analisis real</span>';
     html += '</div>';
   }
+
+  // PRISMA y tabla de extracción (movidos de Etapa 1 a Etapa 4)
+  var pd = (project && project.phase_data) || {};
+  if (pd.search_strategy && pd.search_strategy.prisma) html += renderPrisma(pd);
+  if (pd.extraction_table && pd.extraction_table.length) html += renderExtraction(pd);
 
   if (stage3Step >= 1) html += renderDataExtraction(sd);
   if (stage3Step >= 2) html += renderHeterogeneity(sd);
