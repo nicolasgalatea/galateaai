@@ -7218,7 +7218,7 @@ function renderPreliminaryReview() {
 function renderSubmissionProgress() {
   // Calculate days since submission
   var submissionDate = project && project.submission_date ? new Date(project.submission_date) : _submissionStartDate || new Date();
-  if (!_submissionStartDate) _submissionStartDate = submissionDate;
+  if (!_submissionStartDate) { _submissionStartDate = submissionDate; _saveTrackerState(); }
   var now = new Date();
   var daysDiff = Math.max(0, Math.floor((now - submissionDate) / (1000 * 60 * 60 * 24)));
   var maxDays = 45; // Max expected response time
@@ -7258,6 +7258,37 @@ var _submissionStartDate = null;
 var _eticaSubmissionDate = null;
 var _emailStatus = { subdireccion: '', etica: '' };
 
+// Persist submission dates and email status/analysis to localStorage
+function _loadTrackerState() {
+  try {
+    var key = 'galatea_tracker_' + (rowId || 'local');
+    var saved = localStorage.getItem(key);
+    if (saved) {
+      var s = JSON.parse(saved);
+      if (s.submissionDate) _submissionStartDate = new Date(s.submissionDate);
+      if (s.eticaDate) _eticaSubmissionDate = new Date(s.eticaDate);
+      if (s.emailStatus) _emailStatus = s.emailStatus;
+      if (s.emailAnalysis) _emailAnalysis = s.emailAnalysis;
+    }
+  } catch(e) {}
+}
+function _saveTrackerState() {
+  try {
+    var key = 'galatea_tracker_' + (rowId || 'local');
+    localStorage.setItem(key, JSON.stringify({
+      submissionDate: _submissionStartDate ? _submissionStartDate.toISOString() : null,
+      eticaDate: _eticaSubmissionDate ? _eticaSubmissionDate.toISOString() : null,
+      emailStatus: _emailStatus,
+      emailAnalysis: _emailAnalysis
+    }));
+  } catch(e) {}
+  // Also persist submission_date to Supabase if available
+  if (rowId && _submissionStartDate && sb) {
+    sb.from(TABLE).update({ submission_date: _submissionStartDate.toISOString() }).eq('id', rowId).then(function(){}).catch(function(){});
+  }
+}
+_loadTrackerState();
+
 function updateProjectEmailStatus(entity, status) {
   _emailStatus[entity] = _emailStatus[entity] === status ? '' : status;
   // Save to project
@@ -7271,6 +7302,7 @@ function updateProjectEmailStatus(entity, status) {
       sb.from(TABLE).update(update).eq('id', rowId).then(function() {}).catch(function() {});
     }
   }
+  _saveTrackerState();
   showToast('Estado actualizado: ' + entity + ' → ' + status, 'success');
   if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
 }
@@ -7386,6 +7418,7 @@ async function analyzeEmailText(entity) {
     var json = await resp.json();
     if (json.success && json.data) {
       _emailAnalysis[entity] = json.data;
+      _saveTrackerState();
       if (json.data.status === 'approved' || json.data.status === 'corrections') {
         updateProjectEmailStatus(entity, json.data.status);
       }
@@ -7521,7 +7554,7 @@ function renderEthicsTimeline() {
 
   // Day tracker for ethics
   var eticaSubmitDate = _eticaSubmissionDate || new Date();
-  if (!_eticaSubmissionDate) _eticaSubmissionDate = eticaSubmitDate;
+  if (!_eticaSubmissionDate) { _eticaSubmissionDate = eticaSubmitDate; _saveTrackerState(); }
   var eticaDays = Math.max(0, Math.floor((new Date() - eticaSubmitDate) / (1000 * 60 * 60 * 24)));
   var eticaMax = 60; // Ethics committee takes longer
   var eticaPct = Math.min(100, Math.round((eticaDays / eticaMax) * 100));
@@ -9675,9 +9708,8 @@ function formatVancouver(article, index) {
   var iss = a.issue ? '(' + a.issue + ')' : '';
   var pg = a.pages ? ':' + a.pages.replace('--', '-') : '';
   var volBlock = vol + iss + pg;
-  if (!volBlock && y) volBlock = ';';
   var d = a.doi ? ' doi:' + a.doi + '.' : '';
-  return index + '. ' + authStr + '. ' + t + j + (y ? ' ' + y : '') + volBlock + '.' + d;
+  return index + '. ' + authStr + '. ' + t + j + (y ? ' ' + y : '') + (volBlock ? volBlock : '') + '.' + d;
 }
 
 function getProjectVancouverRefs(pd) {
@@ -13221,6 +13253,17 @@ function getProtocolCriteria(pd) {
 // ── Interactive Gantt Chart for Cronograma ──
 var _ganttData = {};
 
+function _loadGanttFromStorage() {
+  try {
+    var saved = localStorage.getItem('galatea_gantt_' + (rowId || 'local'));
+    if (saved) { _ganttData = JSON.parse(saved); }
+  } catch(e) {}
+}
+function _saveGanttToStorage() {
+  try { localStorage.setItem('galatea_gantt_' + (rowId || 'local'), JSON.stringify(_ganttData)); } catch(e) {}
+}
+_loadGanttFromStorage();
+
 function getGanttActivities(docIdx, key) {
   var k = docIdx + '_' + key;
   if (!_ganttData[k]) {
@@ -13233,13 +13276,14 @@ function getGanttActivities(docIdx, key) {
       { name: 'Redaccion manuscrito', start: 10, duration: 2, color: '#4DA8A1' },
       { name: 'Publicacion', start: 11, duration: 2, color: '#89BA17' }
     ];
+    _saveGanttToStorage();
   }
   return _ganttData[k];
 }
 
 function renderInlineGantt(docIdx, key, textVal) {
   var acts = getGanttActivities(docIdx, key);
-  var totalWeeks = 52;
+  var totalWeeks = 48;
   var months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   var gid = 'gantt_' + docIdx + '_' + key;
 
@@ -13261,7 +13305,7 @@ function renderInlineGantt(docIdx, key, textVal) {
   h += '<th class="px-2 py-1.5 bg-gray-50 border-b text-center font-bold text-gray-500 text-[9px] min-w-[40px]"></th></tr>';
   // Week subheaders
   h += '<tr><th class="bg-gray-50 border-b sticky left-0 z-10"></th>';
-  for (var w = 1; w <= 48; w++) { h += '<th class="px-0 py-0.5 text-center bg-gray-50/50 border-b border-l border-gray-50 text-[8px] text-gray-300 w-[18px]">' + w + '</th>'; }
+  for (var w = 1; w <= totalWeeks; w++) { h += '<th class="px-0 py-0.5 text-center bg-gray-50/50 border-b border-l border-gray-50 text-[8px] text-gray-300 w-[18px]">' + w + '</th>'; }
   h += '<th class="bg-gray-50 border-b"></th></tr></thead>';
 
   // Rows
@@ -13269,7 +13313,7 @@ function renderInlineGantt(docIdx, key, textVal) {
   acts.forEach(function(act, ai) {
     h += '<tr class="hover:bg-blue-50/30 transition-colors">';
     h += '<td class="px-2 py-1.5 border-b border-gray-100 sticky left-0 bg-white z-10"><input type="text" value="' + esc(act.name) + '" onblur="updateGanttName(' + docIdx + ',\'' + key + '\',' + ai + ',this.value)" class="w-full border-0 bg-transparent text-[11px] text-gray-800 font-medium outline-none focus:ring-0 px-0"></td>';
-    for (var w = 1; w <= 48; w++) {
+    for (var w = 1; w <= totalWeeks; w++) {
       var inRange = w >= act.start && w < act.start + act.duration;
       var isStart = w === act.start;
       var isEnd = w === act.start + act.duration - 1;
@@ -13325,6 +13369,7 @@ function syncGanttToDocField(docIdx, key) {
   var acts = getGanttActivities(docIdx, key);
   var text = acts.map(function(a) { return a.name + '  |  Semana ' + a.start + '-' + (a.start + a.duration - 1); }).join('\n');
   saveDocField(docIdx, key, text);
+  _saveGanttToStorage();
 }
 
 function exportGanttCSV(docIdx, key) {
@@ -13334,7 +13379,8 @@ function exportGanttCSV(docIdx, key) {
   var blob = new Blob([csv], { type: 'text/csv' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
-  a.href = url; a.download = 'cronograma_gantt.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  var prefix = (project && project.project_code) ? project.project_code + '_' : '';
+  a.href = url; a.download = prefix + 'cronograma_gantt.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
@@ -13344,11 +13390,23 @@ function exportGanttXLSX(docIdx, key) {
   var ws = XLSX.utils.json_to_sheet(data);
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Cronograma');
-  XLSX.writeFile(wb, 'cronograma_gantt.xlsx');
+  var prefix = (project && project.project_code) ? project.project_code + '_' : '';
+  XLSX.writeFile(wb, prefix + 'cronograma_gantt.xlsx');
 }
 
 // ── Interactive Spreadsheet for Matriz de Variables ──
 var _spreadsheetData = {};
+
+function _loadSpreadsheetFromStorage() {
+  try {
+    var saved = localStorage.getItem('galatea_spreadsheet_' + (rowId || 'local'));
+    if (saved) { _spreadsheetData = JSON.parse(saved); }
+  } catch(e) {}
+}
+function _saveSpreadsheetToStorage() {
+  try { localStorage.setItem('galatea_spreadsheet_' + (rowId || 'local'), JSON.stringify(_spreadsheetData)); } catch(e) {}
+}
+_loadSpreadsheetFromStorage();
 
 function renderInlineSpreadsheet(docIdx, key, headers, defaultRows) {
   var sid = docIdx + '_' + key;
@@ -13387,16 +13445,18 @@ function renderInlineSpreadsheet(docIdx, key, headers, defaultRows) {
 function addSpreadsheetRow(sid, cols) {
   if (!_spreadsheetData[sid]) _spreadsheetData[sid] = [];
   _spreadsheetData[sid].push(new Array(cols).fill(''));
+  _saveSpreadsheetToStorage();
   if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
 }
 
 function removeSpreadsheetRow(sid, ri) {
   if (_spreadsheetData[sid]) _spreadsheetData[sid].splice(ri, 1);
+  _saveSpreadsheetToStorage();
   if (currentStage === 3) renderStage3InstDetailedViews(); else renderStage2DetailedViews();
 }
 
 function updateSpreadsheetCell(sid, ri, ci, val) {
-  if (_spreadsheetData[sid] && _spreadsheetData[sid][ri]) _spreadsheetData[sid][ri][ci] = val;
+  if (_spreadsheetData[sid] && _spreadsheetData[sid][ri]) { _spreadsheetData[sid][ri][ci] = val; _saveSpreadsheetToStorage(); }
 }
 
 function exportSpreadsheetXLSX(sid, headers) {
@@ -13409,7 +13469,8 @@ function exportSpreadsheetXLSX(sid, headers) {
   var ws = XLSX.utils.json_to_sheet(data);
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Datos');
-  XLSX.writeFile(wb, 'matriz_datos.xlsx');
+  var prefix = (project && project.project_code) ? project.project_code + '_' : '';
+  XLSX.writeFile(wb, prefix + 'matriz_datos.xlsx');
 }
 
 // ── Reference Tooltip System ──
@@ -13672,7 +13733,8 @@ window.exportEditorToDocx = function(editorId) {
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
-  a.download = (editorId || 'documento') + '.doc';
+  var pcPrefix = (typeof project !== 'undefined' && project && project.project_code) ? project.project_code + '_' : '';
+  a.download = pcPrefix + (editorId || 'documento') + '.doc';
   a.click();
   URL.revokeObjectURL(url);
   if (typeof showToast === 'function') showToast('Documento exportado', 'success');
