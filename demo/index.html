@@ -21,6 +21,7 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://unpkg.com/docx@9.5.0/build/index.umd.js"></script>
+  <script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { font-family: 'Inter', system-ui, sans-serif; }
@@ -815,6 +816,30 @@
   .forest-null-line { stroke: #ef4444; stroke-width: 1; stroke-dasharray: 4,3; }
   .forest-tooltip { position: absolute; background: rgba(15,23,42,.92); color: white; padding: 8px 12px; border-radius: 10px; font-size: 11px; pointer-events: none; z-index: 300; white-space: nowrap; transform: translateY(-110%); opacity: 0; transition: opacity .2s; }
   .forest-tooltip.visible { opacity: 1; }
+
+  /* TipTap Document Editor */
+  .doc-editor-toolbar { display: flex; flex-wrap: wrap; gap: 2px; padding: 8px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; border-radius: 12px 12px 0 0; }
+  .doc-editor-toolbar button { padding: 6px 8px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 13px; color: #64748b; transition: all .15s; min-width: 32px; display: inline-flex; align-items: center; justify-content: center; }
+  .doc-editor-toolbar button:hover { background: #e2e8f0; color: #1e293b; }
+  .doc-editor-toolbar button.is-active { background: #6366f1; color: white; }
+  .doc-editor-toolbar .sep { width: 1px; height: 24px; background: #e2e8f0; margin: 0 4px; align-self: center; }
+  .doc-editor-wrap { border: 2px solid #e2e8f0; border-radius: 12px; background: white; transition: border-color .2s; }
+  .doc-editor-wrap:focus-within { border-color: #6366f1; }
+  .doc-editor-wrap .tiptap { padding: 24px 32px; min-height: 400px; max-height: 600px; overflow-y: auto; outline: none; font-family: 'Times New Roman', Georgia, serif; font-size: 14px; line-height: 1.8; color: #1e293b; }
+  .doc-editor-wrap .tiptap p { margin-bottom: 0.8em; }
+  .doc-editor-wrap .tiptap h1 { font-size: 1.5em; font-weight: 800; margin: 1em 0 0.5em; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.3em; }
+  .doc-editor-wrap .tiptap h2 { font-size: 1.25em; font-weight: 700; margin: 0.8em 0 0.4em; color: #1e293b; }
+  .doc-editor-wrap .tiptap h3 { font-size: 1.1em; font-weight: 600; margin: 0.6em 0 0.3em; color: #334155; }
+  .doc-editor-wrap .tiptap ul { list-style: disc; padding-left: 1.5em; margin-bottom: 0.8em; }
+  .doc-editor-wrap .tiptap ol { list-style: decimal; padding-left: 1.5em; margin-bottom: 0.8em; }
+  .doc-editor-wrap .tiptap li { margin-bottom: 0.3em; }
+  .doc-editor-wrap .tiptap strong { font-weight: 700; }
+  .doc-editor-wrap .tiptap em { font-style: italic; }
+  .doc-editor-wrap .tiptap u { text-decoration: underline; }
+  .doc-editor-wrap .tiptap table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+  .doc-editor-wrap .tiptap table td, .doc-editor-wrap .tiptap table th { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; font-size: 13px; }
+  .doc-editor-wrap .tiptap table th { background: #f1f5f9; font-weight: 700; }
+  .doc-editor-wrap .tiptap .is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: #94a3b8; pointer-events: none; height: 0; font-style: italic; }
 
   /* Reference tooltip popup */
   .ref-tooltip { position: fixed; z-index: 9999; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,.15), 0 4px 12px rgba(0,0,0,.08); padding: 16px; max-width: 420px; min-width: 280px; opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .2s; pointer-events: none; }
@@ -4200,9 +4225,21 @@ function renderProtocol(pd, ue) {
     h += '</div></div>';
   }
 
-  // ── 6. Texto del protocolo (editable) ──
-  h += '<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Texto del Protocolo <span class="text-gray-400 font-normal">(editable)</span></div>';
-  h += '<pre class="whitespace-pre-wrap text-xs text-gray-700 bg-gray-50 rounded-xl p-4 border leading-relaxed max-h-96 overflow-auto" contenteditable="true" onblur="debounceSave(\'protocol_draft\',this.textContent)">' + esc(d) + '</pre></div>';
+  // ── 6. Texto del protocolo (TipTap editor) ──
+  h += '<div class="mb-2"><div class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Protocolo de Investigacion <span class="text-gray-400 font-normal">(editor Word)</span></div>';
+  h += '<div id="protocolEditor"></div></div>';
+  // Defer TipTap init after DOM render
+  setTimeout(function() {
+    if (window._tiptapReady && document.getElementById('protocolEditor')) {
+      window.createDocEditor('protocolEditor', d, {
+        placeholder: 'El protocolo de investigacion aparecera aqui...',
+        onSave: function(html) { debounceSave('protocol_draft', html); }
+      });
+    } else if (document.getElementById('protocolEditor')) {
+      // Fallback if TipTap hasn't loaded yet
+      document.getElementById('protocolEditor').innerHTML = '<pre class="whitespace-pre-wrap text-xs text-gray-700 bg-gray-50 rounded-xl p-4 border leading-relaxed max-h-96 overflow-auto" contenteditable="true" onblur="debounceSave(\'protocol_draft\',this.textContent)">' + esc(d) + '</pre>';
+    }
+  }, 100);
 
   // References footer
   h += renderReferencesFooter(pd);
@@ -4432,7 +4469,21 @@ function renderManuscriptGenerator(pd, ue) {
     h += '<span class="text-[9px] text-gray-300 ml-auto">' + sec.wordCount + ' palabras</span>';
     h += '</div>';
     if (sec.complete) {
-      h += '<div class="text-xs text-gray-700 bg-gray-50 rounded-xl p-4 border leading-relaxed whitespace-pre-wrap" contenteditable="true" onblur="debounceSave(\'manuscript_sections.' + sec.key + '\',this.textContent)">' + esc(sec.content) + '</div>';
+      var msEditorId = 'msEditor_' + sec.key;
+      h += '<div id="' + msEditorId + '"></div>';
+      // Defer TipTap init
+      (function(eid, content, key) {
+        setTimeout(function() {
+          if (window._tiptapReady && document.getElementById(eid)) {
+            window.createDocEditor(eid, content, {
+              placeholder: 'Escribe la seccion ' + key + '...',
+              onSave: function(html) { debounceSave('manuscript_sections.' + key, html); }
+            });
+          } else if (document.getElementById(eid)) {
+            document.getElementById(eid).innerHTML = '<div class="text-xs text-gray-700 bg-gray-50 rounded-xl p-4 border leading-relaxed whitespace-pre-wrap" contenteditable="true" onblur="debounceSave(\'manuscript_sections.' + key + '\',this.textContent)">' + content.replace(/</g,'&lt;') + '</div>';
+          }
+        }, 150);
+      })(msEditorId, sec.content, sec.key);
     } else {
       h += '<div class="text-xs text-gray-300 bg-gray-50/50 rounded-xl p-4 border border-dashed italic">' + esc(sec.content) + '</div>';
     }
@@ -12689,5 +12740,202 @@ document.addEventListener('keydown', function(e) {
 
 </script>
 <div id="refTooltipPopup" class="ref-tooltip"></div>
+
+<!-- TipTap Editor (ES Module) -->
+<script type="module">
+import { Editor } from 'https://esm.sh/@tiptap/core@2.11.5';
+import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.11.5';
+import Underline from 'https://esm.sh/@tiptap/extension-underline@2.11.5';
+import Table from 'https://esm.sh/@tiptap/extension-table@2.11.5';
+import TableRow from 'https://esm.sh/@tiptap/extension-table-row@2.11.5';
+import TableCell from 'https://esm.sh/@tiptap/extension-table-cell@2.11.5';
+import TableHeader from 'https://esm.sh/@tiptap/extension-table-header@2.11.5';
+import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@2.11.5';
+import Placeholder from 'https://esm.sh/@tiptap/extension-placeholder@2.11.5';
+
+var _editors = {};
+
+function buildToolbar(editorId, editor) {
+  var bar = document.createElement('div');
+  bar.className = 'doc-editor-toolbar';
+  var btns = [
+    { cmd: function() { editor.chain().focus().toggleBold().run(); }, icon: '<b>B</b>', active: 'bold', title: 'Negrita' },
+    { cmd: function() { editor.chain().focus().toggleItalic().run(); }, icon: '<i>I</i>', active: 'italic', title: 'Cursiva' },
+    { cmd: function() { editor.chain().focus().toggleUnderline().run(); }, icon: '<u>U</u>', active: 'underline', title: 'Subrayado' },
+    { sep: true },
+    { cmd: function() { editor.chain().focus().toggleHeading({ level: 1 }).run(); }, icon: 'H1', active: function() { return editor.isActive('heading', { level: 1 }); }, title: 'Titulo 1' },
+    { cmd: function() { editor.chain().focus().toggleHeading({ level: 2 }).run(); }, icon: 'H2', active: function() { return editor.isActive('heading', { level: 2 }); }, title: 'Titulo 2' },
+    { cmd: function() { editor.chain().focus().toggleHeading({ level: 3 }).run(); }, icon: 'H3', active: function() { return editor.isActive('heading', { level: 3 }); }, title: 'Titulo 3' },
+    { sep: true },
+    { cmd: function() { editor.chain().focus().toggleBulletList().run(); }, icon: '&#x2022;', active: 'bulletList', title: 'Lista' },
+    { cmd: function() { editor.chain().focus().toggleOrderedList().run(); }, icon: '1.', active: 'orderedList', title: 'Lista numerada' },
+    { sep: true },
+    { cmd: function() { editor.chain().focus().setTextAlign('left').run(); }, icon: '&#x2261;', title: 'Izquierda' },
+    { cmd: function() { editor.chain().focus().setTextAlign('center').run(); }, icon: '&#x2250;', title: 'Centro' },
+    { cmd: function() { editor.chain().focus().setTextAlign('justify').run(); }, icon: '&#x2263;', title: 'Justificar' },
+    { sep: true },
+    { cmd: function() { editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); }, icon: '&#x229E;', title: 'Insertar tabla' },
+    { sep: true },
+    { cmd: function() { editor.chain().focus().undo().run(); }, icon: '&#x21B6;', title: 'Deshacer' },
+    { cmd: function() { editor.chain().focus().redo().run(); }, icon: '&#x21B7;', title: 'Rehacer' },
+  ];
+  btns.forEach(function(b) {
+    if (b.sep) { var s = document.createElement('div'); s.className = 'sep'; bar.appendChild(s); return; }
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.innerHTML = b.icon;
+    btn.title = b.title || '';
+    btn.onclick = b.cmd;
+    bar.appendChild(btn);
+  });
+
+  // Update active state on selection change
+  editor.on('selectionUpdate', function() { updateToolbarActive(bar, btns, editor); });
+  editor.on('update', function() { updateToolbarActive(bar, btns, editor); });
+  return bar;
+}
+
+function updateToolbarActive(bar, btns, editor) {
+  var buttons = bar.querySelectorAll('button');
+  var bi = 0;
+  btns.forEach(function(b) {
+    if (b.sep) return;
+    var btn = buttons[bi++];
+    if (!btn) return;
+    var isActive = false;
+    if (typeof b.active === 'function') isActive = b.active();
+    else if (typeof b.active === 'string') isActive = editor.isActive(b.active);
+    btn.classList.toggle('is-active', isActive);
+  });
+}
+
+window.createDocEditor = function(containerId, content, options) {
+  options = options || {};
+  var container = document.getElementById(containerId);
+  if (!container) return null;
+  container.innerHTML = '';
+
+  var wrap = document.createElement('div');
+  wrap.className = 'doc-editor-wrap';
+
+  var editorEl = document.createElement('div');
+  editorEl.className = 'tiptap-editor-el';
+
+  // Convert plain text to HTML paragraphs
+  var htmlContent = content || '';
+  if (htmlContent && !htmlContent.includes('<')) {
+    htmlContent = htmlContent.split('\n').filter(function(l) { return l.trim(); }).map(function(line) {
+      line = line.trim();
+      if (/^\d+\.\s/.test(line) || /^[A-Z\u00C0-\u00FF][A-Z\u00C0-\u00FF\s]+$/.test(line)) return '<h2>' + line + '</h2>';
+      if (/^={3,}/.test(line)) return '';
+      return '<p>' + line + '</p>';
+    }).join('');
+  }
+
+  var editor = new Editor({
+    element: editorEl,
+    extensions: [
+      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      Underline,
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      Placeholder.configure({ placeholder: options.placeholder || 'Escribe aqui...' }),
+    ],
+    content: htmlContent,
+    onUpdate: function(props) {
+      if (options.onSave) {
+        options.onSave(props.editor.getHTML());
+      }
+    },
+  });
+
+  var toolbar = buildToolbar(containerId, editor);
+  wrap.appendChild(toolbar);
+
+  // Action buttons row
+  var actions = document.createElement('div');
+  actions.className = 'flex items-center gap-2 px-3 py-2 border-b border-gray-100 bg-gray-50/50';
+
+  // Export DOCX button
+  var exportBtn = document.createElement('button');
+  exportBtn.className = 'flex items-center gap-1.5 text-[11px] bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-100 transition-all';
+  exportBtn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Exportar .docx';
+  exportBtn.onclick = function() { window.exportEditorToDocx(containerId); };
+  actions.appendChild(exportBtn);
+
+  // Import DOCX button
+  var importLabel = document.createElement('label');
+  importLabel.className = 'flex items-center gap-1.5 text-[11px] bg-green-50 text-green-700 px-3 py-1.5 rounded-lg font-bold hover:bg-green-100 transition-all cursor-pointer';
+  importLabel.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>Importar .docx';
+  var fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.docx';
+  fileInput.className = 'hidden';
+  fileInput.onchange = function() { window.importDocxToEditor(containerId, this.files[0]); this.value = ''; };
+  importLabel.appendChild(fileInput);
+  actions.appendChild(importLabel);
+
+  // Word count
+  var wcSpan = document.createElement('span');
+  wcSpan.className = 'ml-auto text-[10px] text-gray-400';
+  wcSpan.id = containerId + '_wc';
+  var wc = editor.getText().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+  wcSpan.textContent = wc + ' palabras';
+  actions.appendChild(wcSpan);
+  editor.on('update', function() {
+    var c = editor.getText().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+    wcSpan.textContent = c + ' palabras';
+  });
+
+  wrap.appendChild(actions);
+  wrap.appendChild(editorEl);
+  container.appendChild(wrap);
+
+  _editors[containerId] = editor;
+  return editor;
+};
+
+window.getDocEditor = function(id) { return _editors[id] || null; };
+
+window.exportEditorToDocx = function(editorId) {
+  var editor = _editors[editorId];
+  if (!editor) return;
+  var html = editor.getHTML();
+  // Use html-docx-js if available, otherwise fallback to .doc blob
+  var fullHtml = '<html><head><meta charset="UTF-8"><style>body{font-family:"Times New Roman",serif;font-size:12pt;line-height:1.8;margin:72px}h1{font-size:16pt;font-weight:bold;border-bottom:1px solid #ccc;padding-bottom:6px}h2{font-size:14pt;font-weight:bold}h3{font-size:12pt;font-weight:bold}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:6px 10px}th{background:#f0f0f0;font-weight:bold}</style></head><body>' + html + '</body></html>';
+  var blob = new Blob([fullHtml], { type: 'application/msword' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (editorId || 'documento') + '.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  if (typeof showToast === 'function') showToast('Documento exportado', 'success');
+};
+
+window.importDocxToEditor = async function(editorId, file) {
+  var editor = _editors[editorId];
+  if (!editor || !file) return;
+  try {
+    var arrayBuffer = await file.arrayBuffer();
+    if (typeof mammoth !== 'undefined') {
+      var result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+      editor.commands.setContent(result.value);
+      if (typeof showToast === 'function') showToast('Documento importado (' + file.name + ')', 'success');
+    } else {
+      if (typeof showToast === 'function') showToast('mammoth.js no disponible', 'error');
+    }
+  } catch (err) {
+    console.error('Import DOCX error:', err);
+    if (typeof showToast === 'function') showToast('Error al importar: ' + err.message, 'error');
+  }
+};
+
+window._tiptapReady = true;
+console.log('Galatea: TipTap editor loaded');
+</script>
 </body>
 </html>
