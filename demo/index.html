@@ -1966,35 +1966,40 @@ async function runFullSimulation(question) {
     return;
   }
 
-  // ── Early PubMed fetch: get real articles for references BEFORE planteamiento ──
-  // Fetch TWO separate batches so planteamiento and FINER never share references
+  // ── Early PubMed fetch: TWO INDEPENDENT queries so planteamiento and FINER NEVER share references ──
   if (!simData._pubmed_articles || simData._pubmed_articles.length === 0) {
     try {
       var earlyPicot = simData.picot || {};
       var earlyQuery = buildPubMedQuery(earlyPicot);
       if (earlyQuery) {
-        var earlyPubmed = await searchPubMedDirect(earlyQuery, 20);
-        if (earlyPubmed.articles.length > 0) {
-          var allArts = earlyPubmed.articles;
-          // Split articles: first half for planteamiento, second half for FINER
-          var splitIdx = Math.max(Math.ceil(allArts.length / 2), 5);
-          simData._pubmed_articles_planteamiento = allArts.slice(0, splitIdx);
-          simData._pubmed_articles_finer = allArts.slice(splitIdx);
-          // If not enough for FINER, try a secondary query with different terms
-          if (simData._pubmed_articles_finer.length < 3) {
-            try {
-              var finerQuery = earlyQuery + ' AND (feasibility OR methodology OR systematic review)';
-              var finerPubmed = await searchPubMedDirect(finerQuery, 10);
-              if (finerPubmed.articles.length >= 3) {
-                // Filter out duplicates by PMID
-                var usedPmids = {};
-                simData._pubmed_articles_planteamiento.forEach(function(a) { if (a.pmid) usedPmids[a.pmid] = true; });
-                var uniqueFiner = finerPubmed.articles.filter(function(a) { return !usedPmids[a.pmid]; });
-                if (uniqueFiner.length >= 3) simData._pubmed_articles_finer = uniqueFiner;
-              }
-            } catch(e2) { console.warn('Secondary FINER fetch failed:', e2); }
-          }
-          // Keep combined array for general use (extraction table, etc.)
+        // Query 1: Planteamiento — focused on the clinical topic (epidemiology, prevalence, burden)
+        var planQuery = earlyQuery + ' AND (epidemiology OR prevalence OR incidence OR burden OR outcomes)';
+        var planPubmed = await searchPubMedDirect(planQuery, 12);
+        // Fallback to base query if specific one yields too few
+        if (planPubmed.articles.length < 5) planPubmed = await searchPubMedDirect(earlyQuery, 15);
+        var planArts = planPubmed.articles;
+
+        // Query 2: FINER — focused on methodology/feasibility (completely separate search)
+        var finerQuery = earlyQuery + ' AND (feasibility OR methodology OR systematic review OR study design OR research methods)';
+        var finerPubmed = await searchPubMedDirect(finerQuery, 12);
+        // Filter out any PMIDs already used in planteamiento
+        var usedPmids = {};
+        planArts.forEach(function(a) { if (a.pmid) usedPmids[a.pmid] = true; });
+        var finerArts = finerPubmed.articles.filter(function(a) { return !usedPmids[a.pmid]; });
+        // If FINER query yielded too few unique articles, try broader methodology query
+        if (finerArts.length < 3) {
+          try {
+            var broadFiner = await searchPubMedDirect(earlyQuery + ' AND (meta-analysis OR review OR clinical trial design)', 10);
+            var extraArts = broadFiner.articles.filter(function(a) { return !usedPmids[a.pmid]; });
+            if (extraArts.length > finerArts.length) finerArts = extraArts;
+          } catch(e2) { console.warn('Broad FINER fetch failed:', e2); }
+        }
+
+        if (planArts.length > 0) {
+          simData._pubmed_articles_planteamiento = planArts;
+          simData._pubmed_articles_finer = finerArts.length > 0 ? finerArts : planArts.slice(Math.ceil(planArts.length / 2));
+          // Combined array for general use (extraction table, PRISMA, etc.)
+          var allArts = planArts.concat(finerArts);
           simData._pubmed_articles = allArts;
           // Update extraction table with real articles
           simData.extraction_table = allArts.map(function(a) {
@@ -3159,7 +3164,7 @@ function renderPlanteamiento(pd) {
   var rawText = pd.planteamiento || '';
   var planArts = (simData && simData._pubmed_articles_planteamiento) || (simData && simData._pubmed_articles) || pd._pubmed_articles || [];
   var numRefs = planArts.length || (pd.extraction_table || []).length || 10;
-  var withCites = buildCitedHTML(rawText, numRefs);
+  var withCites = buildCitedHTML(rawText, numRefs, 'planteamiento');
   var refsHtml = renderReferencesFooter(pd, 'planteamiento');
   return '<div class="planteamiento-section bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6"><div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-galatea" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div><h3 class="font-bold text-gray-900">Fase 1 — Planteamiento</h3></div><div class="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">' + withCites + '</div>' + refsHtml + '</div>';
 }
@@ -5525,7 +5530,7 @@ function startStage3Institutional() {
   simulationRunning = true;
   simulationAborted = false;
   $('projectTitle').textContent = 'Ruta Institucional — FSFB';
-  $('projectMeta').textContent = 'Etapa 3: Ruta Institucional | Paso 0 / 6';
+  $('projectMeta').textContent = 'Etapa 3: Ruta Institucional | Paso 0 / 8';
   showBubble();
   renderStage3InstAgentGrid();
   renderStageNav();
@@ -7705,9 +7710,9 @@ var stage3HoveredStudy = -1;
 
 var STAGE3_AGENTS = [
   { id:9, name:'Data Mining', phases:[1,1], color:'#0891B2', desc:'Extraccion de datos cuantitativos: eventos, medias, SD, tamaños de muestra', activeMsg:'Extrayendo datos cuantitativos de los estudios incluidos...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>', check: function() { return stage3Step > 1; } },
-  { id:10, name:'Estadistico', phases:[2,3], color:'#7C3AED', desc:'Heterogeneidad I², modelo de efectos, Forest Plot', activeMsg:'Evaluando heterogeneidad y generando Forest Plot...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>', check: function() { return stage3Step > 3; } },
-  { id:11, name:'Sesgo', phases:[4,5], color:'#D97706', desc:'Funnel Plot, Test de Egger, analisis leave-one-out', activeMsg:'Ejecutando analisis de sesgo de publicacion y sensibilidad...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>', check: function() { return stage3Step > 5; } },
-  { id:12, name:'GRADE', phases:[6,6], color:'#059669', desc:'Certeza de la evidencia, conclusion final, exportacion PRISMA', activeMsg:'Calificando certeza GRADE y redactando conclusion final...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"/></svg>', check: function() { return stage3Step > 6; } },
+  { id:10, name:'Estadistico', phases:[2,3], color:'#7C3AED', desc:'Heterogeneidad I²/τ², modelo de efectos, Forest Plot', activeMsg:'Evaluando heterogeneidad y generando Forest Plot...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>', check: function() { return stage3Step > 3; } },
+  { id:11, name:'Sesgo', phases:[4,5], color:'#D97706', desc:'Funnel Plot, Egger, Trim & Fill, Fail-Safe N, diagnosticos de influencia', activeMsg:'Ejecutando analisis de sesgo de publicacion, trim & fill y diagnosticos de influencia...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>', check: function() { return stage3Step > 7; } },
+  { id:12, name:'GRADE', phases:[8,8], color:'#059669', desc:'Certeza de la evidencia, conclusion final, exportacion PRISMA', activeMsg:'Calificando certeza GRADE y redactando conclusion final...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"/></svg>', check: function() { return stage3Step > 8; } },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -7731,7 +7736,9 @@ var STAGE3_PHASE_BUTTONS = {
   extraccion: { label: 'Evaluar Heterogeneidad', icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75Z' },
   heterogeneidad: { label: 'Generar Forest Plot', icon: 'M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5' },
   forest: { label: 'Analizar Sesgo de Publicacion', icon: 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126Z' },
-  funnel: { label: 'Ejecutar Leave-One-Out', icon: 'M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79' },
+  funnel: { label: 'Analizar Trim & Fill y Fail-Safe N', icon: 'M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75' },
+  pubbiasdeep: { label: 'Diagnosticos de Influencia', icon: 'M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z' },
+  influencia: { label: 'Ejecutar Leave-One-Out', icon: 'M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79' },
   sensibilidad: { label: 'Calificar Evidencia GRADE', icon: 'M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442' },
   grade: { label: 'Finalizar Investigacion y Exportar a Manuscrito PRISMA', icon: 'M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3' },
 };
@@ -7745,8 +7752,12 @@ var STAGE3_REASONING = {
   forest_pre: 'Generando el Forest Plot — el corazon del metaanalisis. Cada estudio aparece como un cuadrado (su tamaño refleja el peso), con lineas horizontales para los intervalos de confianza al 95%. El diamante al final es el resultado combinado.',
   forest_done: function(or, lo, hi, p) { return 'Forest Plot completado. El resultado global muestra un <strong>OR de ' + or + ' [IC 95%: ' + lo + ' – ' + hi + ']</strong>, p ' + (p < 0.001 ? '< 0.001' : '= ' + p) + '. El diamante <strong>' + (hi < 1 ? 'no cruza' : 'cruza') + ' la linea de nulidad</strong>, lo que indica ' + (hi < 1 ? 'significancia estadistica.' : 'ausencia de significancia.'); },
   funnel_pre: 'Evaluando sesgo de publicacion con el Funnel Plot. Si la distribucion de puntos es simetrica alrededor de la linea central, no hay sesgo. Si falta un lado, podrian existir estudios no publicados por resultados negativos.',
-  funnel_done: 'He realizado un <strong>Test de Egger</strong>. La asimetria del Funnel Plot sugiere que el efecto podria estar ligeramente sobreestimado por falta de estudios pequeños con resultados negativos. Esto se reflejara en la calificacion GRADE.',
-  sensibilidad_pre: 'Ejecutando analisis de sensibilidad leave-one-out. Voy a retirar un estudio a la vez y recalcular el OR global para verificar que ningun estudio individual este distorsionando el resultado.',
+  funnel_done: 'He realizado un <strong>Test de Egger</strong>. La asimetria del Funnel Plot sugiere que el efecto podria estar ligeramente sobreestimado por falta de estudios pequeños con resultados negativos. Procedo con analisis avanzados de sesgo.',
+  pubbiasdeep_pre: 'Aplicando metodos avanzados de sesgo de publicacion: <strong>Trim & Fill</strong> (Duval & Tweedie) para estimar estudios faltantes y <strong>Fail-Safe N</strong> (Rosenthal, Orwin, Rosenberg) para evaluar cuantos estudios nulos se necesitarian para anular el resultado.',
+  pubbiasdeep_done: function(k0, fsn, criterion) { return 'Trim & Fill estimo <strong>' + k0 + ' estudios faltantes</strong>. El Fail-Safe N de Rosenthal es <strong>' + fsn + '</strong>' + (criterion ? ', superando el criterio 5k+10' : '') + '. La evidencia es robusta frente al sesgo de publicacion.'; },
+  influencia_pre: 'Ejecutando diagnosticos de influencia: <strong>Cook\'s distance</strong>, <strong>DFBETAS</strong>, <strong>hat values</strong> y residuos estudentizados para identificar estudios atipicos (outliers) e influyentes que puedan distorsionar el resultado global.',
+  influencia_done: function(nOut, nInf) { return 'Se identificaron <strong>' + nOut + ' outlier(s)</strong> (|rstudent| > 1.96) y <strong>' + nInf + ' estudio(s) influyente(s)</strong> (Cook\'s distance elevada). Estos hallazgos se consideran en la evaluacion de sensibilidad.'; },
+  sensibilidad_pre: 'Ejecutando analisis de sensibilidad leave-one-out. Voy a retirar un estudio a la vez y recalcular el efecto global para verificar que ningun estudio individual este distorsionando el resultado.',
   sensibilidad_done: function(removed, stable) { return 'He retirado el estudio de <strong>' + removed + '</strong> por tener el mayor impacto; el diamante se mantiene <strong>' + (stable ? 'estable' : 'inestable') + '</strong>, lo que ' + (stable ? 'confirma la robustez del hallazgo.' : 'sugiere cautela en la interpretacion.'); },
   grade_pre: 'Ultimo paso: calificar la certeza de la evidencia con el sistema GRADE. Evaluare 5 dominios: riesgo de sesgo, inconsistencia, evidencia indirecta, imprecision y sesgo de publicacion.',
   grade_done: function(level, or, lo, hi) { return 'Con una certeza de evidencia <strong>' + level + '</strong> (GRADE), el metaanalisis favorece la intervencion con un <strong>OR de ' + or + ' [IC 95% ' + lo + ' – ' + hi + '], p < 0.001</strong>. La investigacion esta completa.'; },
@@ -7867,16 +7878,78 @@ function generateStage3SimData() {
   var totalDowngrades = grade.reduce(function(s, g) { return s + g.downgrade; }, 0);
   var certainty = totalDowngrades === 0 ? 'Alta' : totalDowngrades >= -1 ? 'Moderada' : totalDowngrades >= -2 ? 'Baja' : 'Muy Baja';
 
+  // ── Tau² (between-study variance) ──
+  var tau2 = parseFloat((cochranQ > dfQ ? (cochranQ - dfQ) / (totalWeight - (studies.reduce(function(s,st){var w=1/(st.se*st.se||1);return s+w*w;},0)/totalWeight)) : 0).toFixed(4));
+  var tau = parseFloat(Math.sqrt(Math.max(0,tau2)).toFixed(4));
+  var H2 = parseFloat(Math.max(1, cochranQ / dfQ).toFixed(2));
+
+  // ── Trim & Fill (simulated) ──
+  var tfK0 = funnel_asymmetry ? Math.max(1, Math.round(studies.length * 0.2)) : 0;
+  var tfShift = tfK0 > 0 ? -0.05 * tfK0 : 0;
+  var trimfill = {
+    k0: tfK0,
+    side: tfK0 > 0 ? 'left' : 'NA',
+    estimate: parseFloat((pooled.or + tfShift).toFixed(2)),
+    ci_lb: parseFloat((pooled.or_lo + tfShift - 0.05).toFixed(2)),
+    ci_ub: parseFloat((pooled.or_hi + tfShift + 0.02).toFixed(2)),
+    p: tfK0 > 0 ? parseFloat((pVal * 1.5).toFixed(4)) : pVal
+  };
+
+  // ── Fail-Safe N (simulated) ──
+  var fsnRosenthal = Math.round(studies.length * (5 + Math.abs(zVal) * 2));
+  var failsafe_n = {
+    rosenthal: { fsnum: fsnRosenthal, pval: 0.0001 },
+    rosenberg: { fsnum: Math.round(fsnRosenthal * 0.8), pval: 0.0001 },
+    orwin: { fsnum: Math.round(fsnRosenthal * 0.6) },
+    criterion_5k10: fsnRosenthal > (5 * studies.length + 10)
+  };
+
+  // ── Influence Diagnostics (simulated) ──
+  var influenceStudies = studies.map(function(s, idx) {
+    var rstud = parseFloat(((Math.random() - 0.5) * 3).toFixed(3));
+    var cooksd = parseFloat((Math.random() * 0.15).toFixed(4));
+    if (idx === 0) { rstud = 2.1; cooksd = 0.22; } // make first study an outlier for demo
+    return {
+      study: s.author + ' ' + s.year,
+      rstudent: rstud,
+      dffits: parseFloat((rstud * 0.3).toFixed(3)),
+      cooks_d: cooksd,
+      cov_r: parseFloat((1 + Math.random() * 0.2 - 0.1).toFixed(3)),
+      tau2_del: parseFloat((tau2 * (0.8 + Math.random() * 0.4)).toFixed(4)),
+      QE_del: parseFloat((cochranQ * (0.7 + Math.random() * 0.5)).toFixed(2)),
+      hat: parseFloat((1 / studies.length + Math.random() * 0.05).toFixed(3)),
+      dfbs: parseFloat(((Math.random() - 0.5) * 0.8).toFixed(3)),
+      is_outlier: Math.abs(rstud) > 1.96,
+      is_influential: cooksd > 0.18
+    };
+  });
+  var influence = {
+    studies: influenceStudies,
+    n_outliers: influenceStudies.filter(function(s){return s.is_outlier;}).length,
+    n_influential: influenceStudies.filter(function(s){return s.is_influential;}).length,
+    outlier_labels: influenceStudies.filter(function(s){return s.is_outlier;}).map(function(s){return s.study;}),
+    influential_labels: influenceStudies.filter(function(s){return s.is_influential;}).map(function(s){return s.study;})
+  };
+
   return {
     studies: studies,
     pooled: pooled,
+    measure: 'OR',
+    is_continuous: false,
+    effect_label: 'Odds Ratio',
     i2: i2,
     cochran_q: parseFloat(cochranQ.toFixed(2)),
     cochran_p: cochran_p,
+    tau2: tau2,
+    tau: tau,
+    H2: H2,
     model: model,
     egger_intercept: egger_intercept,
     egger_p: egger_p,
     funnel_asymmetry: funnel_asymmetry,
+    trimfill: trimfill,
+    failsafe_n: failsafe_n,
+    influence: influence,
     loo: loo,
     maxImpact: maxImpact,
     grade: grade,
@@ -8736,7 +8809,7 @@ async function runViaBMetaAnalysis() {
   simulationRunning = true;
   simulationAborted = false;
   $('projectTitle').textContent = 'Motor de Sintesis Cuantitativa';
-  $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso 0 / 6';
+  $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso 0 / 8';
   renderStage3AgentGrid();
   runStage3Simulation();
 }
@@ -8761,7 +8834,7 @@ function skipViaBUpload() {
     simulationRunning = true;
     simulationAborted = false;
     $('projectTitle').textContent = 'Motor de Sintesis Cuantitativa';
-    $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso 0 / 6';
+    $('projectMeta').textContent = 'Etapa 4: Metaanalisis | Paso 0 / 8';
     renderStage3AgentGrid();
     runStage3Simulation();
   })();
@@ -9083,10 +9156,45 @@ async function runStage3Simulation() {
   await awaitStage3Confirmation('4 — Funnel Plot', 'funnel');
   if (simulationAborted) return;
 
-  // ── PASO 5: Sensibilidad Leave-one-out ──
+  // ── PASO 5: Publication Bias Deep Dive (Trim & Fill + Fail-Safe N) ──
   stage3Step = 5;
+  currentSimPhase = 's3_pubbiasdeep';
+  setBubbleStatus('thinking', 'Paso 5 — Trim & Fill / Fail-Safe N');
+  setBubbleThinking();
+  renderStage3Header(); renderStage3AgentGrid();
+  await delay(2000);
+  await bubbleTypewriter(STAGE3_REASONING.pubbiasdeep_pre, 32);
+  await delay(4000);
+  renderStage3DetailedViews();
+  await delay(1500);
+  var tfK0 = sd.trimfill ? (sd.trimfill.k0 || 0) : 0;
+  var fsnVal = sd.failsafe_n && sd.failsafe_n.rosenthal ? sd.failsafe_n.rosenthal.fsnum : 0;
+  var fsnCrit = sd.failsafe_n ? sd.failsafe_n.criterion_5k10 : false;
+  await bubbleTypewriter(STAGE3_REASONING.pubbiasdeep_done(tfK0, fsnVal, fsnCrit), 28);
+  await awaitStage3Confirmation('5 — Sesgo Avanzado', 'pubbiasdeep');
+  if (simulationAborted) return;
+
+  // ── PASO 6: Influence Diagnostics ──
+  stage3Step = 6;
+  currentSimPhase = 's3_influencia';
+  setBubbleStatus('thinking', 'Paso 6 — Diagnosticos de Influencia');
+  setBubbleThinking();
+  renderStage3Header(); renderStage3AgentGrid();
+  await delay(2000);
+  await bubbleTypewriter(STAGE3_REASONING.influencia_pre, 32);
+  await delay(4000);
+  renderStage3DetailedViews();
+  await delay(1500);
+  var nOut = sd.influence ? (sd.influence.n_outliers || 0) : 0;
+  var nInf = sd.influence ? (sd.influence.n_influential || 0) : 0;
+  await bubbleTypewriter(STAGE3_REASONING.influencia_done(nOut, nInf), 28);
+  await awaitStage3Confirmation('6 — Influencia', 'influencia');
+  if (simulationAborted) return;
+
+  // ── PASO 7: Sensibilidad Leave-one-out ──
+  stage3Step = 7;
   currentSimPhase = 's3_sensibilidad';
-  setBubbleStatus('thinking', 'Paso 5 — Sensibilidad');
+  setBubbleStatus('thinking', 'Paso 7 — Sensibilidad');
   setBubbleThinking();
   renderStage3Header(); renderStage3AgentGrid();
   await delay(2000);
@@ -9095,13 +9203,13 @@ async function runStage3Simulation() {
   renderStage3DetailedViews();
   await delay(1500);
   await bubbleTypewriter(STAGE3_REASONING.sensibilidad_done(sd.maxImpact.removed, true), 28);
-  await awaitStage3Confirmation('5 — Sensibilidad', 'sensibilidad');
+  await awaitStage3Confirmation('7 — Sensibilidad', 'sensibilidad');
   if (simulationAborted) return;
 
-  // ── PASO 6: GRADE ──
-  stage3Step = 6;
+  // ── PASO 8: GRADE ──
+  stage3Step = 8;
   currentSimPhase = 's3_grade';
-  setBubbleStatus('thinking', 'Paso 6 — GRADE');
+  setBubbleStatus('thinking', 'Paso 8 — GRADE');
   setBubbleThinking();
   renderStage3Header(); renderStage3AgentGrid();
   await delay(2000);
@@ -9110,11 +9218,11 @@ async function runStage3Simulation() {
   renderStage3DetailedViews();
   await delay(2000);
   await bubbleTypewriter(STAGE3_REASONING.grade_done(sd.certainty, sd.pooled.or, sd.pooled.or_lo, sd.pooled.or_hi), 28);
-  await awaitStage3Confirmation('6 — GRADE', 'grade');
+  await awaitStage3Confirmation('8 — GRADE', 'grade');
   if (simulationAborted) return;
 
   // ── FINAL ──
-  stage3Step = 7;
+  stage3Step = 9;
   currentSimPhase = 's3_done';
   simulationRunning = false;
   setBubbleStatus('done', 'Investigacion Completa');
@@ -9150,7 +9258,7 @@ function renderStage3Header() {
   var step = stage3Step || 0;
   var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
   var needsMA = curCfg ? curCfg.needsMetaAnalysis : true;
-  var totalSteps = needsMA ? 6 : 3;
+  var totalSteps = needsMA ? 8 : 3;
   var titleText = needsMA ? 'Metaanalisis' : (curCfg && curCfg.id === 'cualitativo' ? 'Analisis Tematico' : curCfg && curCfg.id === 'caso_reporte' ? 'Analisis Descriptivo' : 'Plan Estadistico');
   var pct = Math.min(100, Math.round((step / totalSteps) * 100));
   $('projectMeta').textContent = 'Etapa 4: ' + titleText + ' | Paso ' + step + ' / ' + totalSteps;
@@ -9210,9 +9318,11 @@ function renderStage3DetailedViews() {
   if (stage3Step >= 2) html += renderHeterogeneity(sd);
   if (stage3Step >= 3) html += renderForestPlot(sd);
   if (stage3Step >= 4) html += renderFunnelPlot(sd);
-  if (stage3Step >= 5) html += renderLeaveOneOut(sd);
-  if (stage3Step >= 6) html += renderGradeTable(sd);
-  if (stage3Step >= 7) html += renderMetaConclusion(sd);
+  if (stage3Step >= 5) html += renderPublicationBiasDeep(sd);
+  if (stage3Step >= 6) html += renderInfluenceDiagnostics(sd);
+  if (stage3Step >= 7) html += renderLeaveOneOut(sd);
+  if (stage3Step >= 8) html += renderGradeTable(sd);
+  if (stage3Step >= 9) html += renderMetaConclusion(sd);
 
   if (!html) html = '<div class="text-center py-16 text-gray-400"><div class="text-4xl mb-4">&#x1F4CA;</div><p class="text-lg font-semibold">Iniciando Motor de Sintesis...</p></div>';
   v.innerHTML = html;
@@ -9267,10 +9377,17 @@ function renderHeterogeneity(sd) {
 
   // Details
   h += '<div class="flex-1 space-y-3">';
-  h += '<div class="p-4 rounded-xl bg-gray-50 border border-gray-100"><div class="grid grid-cols-2 gap-4">';
+  h += '<div class="p-4 rounded-xl bg-gray-50 border border-gray-100"><div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
   h += '<div><div class="text-[10px] font-bold text-gray-500 uppercase">Cochran Q</div><div class="text-lg font-black text-gray-900">' + sd.cochran_q + '</div><div class="text-[10px] text-gray-400">p = ' + sd.cochran_p + '</div></div>';
-  h += '<div><div class="text-[10px] font-bold text-gray-500 uppercase">Modelo</div><div class="text-sm font-bold text-gray-900">' + sd.model + '</div></div>';
+  h += '<div><div class="text-[10px] font-bold text-gray-500 uppercase">&tau;&sup2;</div><div class="text-lg font-black text-gray-900">' + (sd.tau2 != null ? sd.tau2 : '—') + '</div><div class="text-[10px] text-gray-400">Varianza entre estudios</div></div>';
+  h += '<div><div class="text-[10px] font-bold text-gray-500 uppercase">&tau;</div><div class="text-lg font-black text-gray-900">' + (sd.tau != null ? sd.tau : '—') + '</div><div class="text-[10px] text-gray-400">DE entre estudios</div></div>';
+  h += '<div><div class="text-[10px] font-bold text-gray-500 uppercase">H&sup2;</div><div class="text-lg font-black text-gray-900">' + (sd.H2 != null ? sd.H2 : '—') + '</div><div class="text-[10px] text-gray-400">Variabilidad relativa</div></div>';
   h += '</div></div>';
+  h += '<div class="p-3 mt-3 rounded-xl bg-blue-50 border border-blue-100">';
+  h += '<div class="text-[10px] font-bold text-blue-500 uppercase mb-1">Modelo Seleccionado</div>';
+  h += '<div class="text-sm font-bold text-gray-900">' + sd.model + '</div>';
+  h += '<div class="text-[10px] text-gray-500 mt-1">' + (sd.i2 > 40 ? 'El modelo de efectos aleatorios se selecciono porque I&sup2; > 40% indica heterogeneidad sustancial entre estudios. Este modelo asume que los verdaderos efectos varian entre estudios.' : 'Con I&sup2; &le; 40%, la heterogeneidad es baja. Se puede usar tanto efectos fijos como aleatorios; se usa aleatorios como enfoque conservador.') + '</div>';
+  h += '</div>';
 
   // I2 scale
   h += '<div class="p-3 rounded-xl border border-gray-100">';
@@ -9439,7 +9556,179 @@ function renderFunnelPlot(sd) {
   return h;
 }
 
-// ── Paso 5: Leave-One-Out ──
+// ── Paso 5: Publication Bias Deep Dive (Trim & Fill + Fail-Safe N) ──
+function renderPublicationBiasDeep(sd) {
+  var tf = sd.trimfill || {};
+  var fsn = sd.failsafe_n || {};
+  var effectLabel = sd.effect_label || 'OR';
+
+  var h = '<div class="phase-divider"><span>Paso 5: Sesgo de Publicacion Avanzado</span></div>';
+
+  // ── Trim & Fill ──
+  h += '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 fade-up">';
+  h += '<div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center"><svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"/></svg></div>';
+  h += '<div><h3 class="font-bold text-gray-900">Trim & Fill (Duval & Tweedie)</h3>';
+  h += '<p class="text-[10px] text-gray-400">Estimacion de estudios faltantes por sesgo de publicacion</p></div></div>';
+
+  // Results grid
+  h += '<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">';
+  h += '<div class="p-4 rounded-xl bg-violet-50 border border-violet-200 text-center"><div class="text-[10px] font-bold text-violet-500 uppercase mb-1">Estudios Imputados</div>';
+  h += '<div class="text-3xl font-black text-violet-700">' + (tf.k0 || 0) + '</div>';
+  h += '<div class="text-[10px] text-violet-400">Lado: ' + (tf.side || 'N/A') + '</div></div>';
+  h += '<div class="p-4 rounded-xl bg-gray-50 border border-gray-200 text-center"><div class="text-[10px] font-bold text-gray-500 uppercase mb-1">Efecto Ajustado</div>';
+  h += '<div class="text-2xl font-black text-gray-900">' + (tf.estimate || '—') + '</div>';
+  h += '<div class="text-[10px] text-gray-400">IC 95%: ' + (tf.ci_lb || '—') + ' – ' + (tf.ci_ub || '—') + '</div></div>';
+  h += '<div class="p-4 rounded-xl ' + (tf.k0 > 0 ? 'bg-amber-50 border-amber-200' : 'bg-verde/5 border-verde/20') + ' border text-center"><div class="text-[10px] font-bold text-gray-500 uppercase mb-1">Impacto</div>';
+  var origEff = sd.pooled.or;
+  var adjEff = tf.estimate || origEff;
+  var diffPct = origEff !== 0 ? Math.abs(((adjEff - origEff) / origEff) * 100).toFixed(1) : '0';
+  h += '<div class="text-2xl font-black ' + (tf.k0 > 0 ? 'text-amber-700' : 'text-verde') + '">' + diffPct + '%</div>';
+  h += '<div class="text-[10px] text-gray-400">Cambio en el efecto</div></div>';
+  h += '</div>';
+
+  // Trim & fill funnel plot (if from R)
+  if (sd.trimfill_funnel_png) {
+    h += '<div class="mb-4"><img src="' + sd.trimfill_funnel_png + '" class="w-full max-w-lg mx-auto rounded-xl border border-gray-100" alt="Trim & Fill Funnel Plot"></div>';
+  }
+
+  // Interpretation
+  h += '<div class="p-4 rounded-xl ' + (tf.k0 > 0 ? 'bg-amber-50 border border-amber-200' : 'bg-verde/5 border border-verde/20') + '">';
+  if (tf.k0 > 0) {
+    h += '<p class="text-xs text-amber-800"><strong>Interpretacion:</strong> Se estimaron <strong>' + tf.k0 + ' estudios faltantes</strong> en el lado ' + tf.side + '. El efecto ajustado (' + adjEff + ') difiere del original (' + origEff + ') en ' + diffPct + '%. ';
+    h += 'Esto sugiere que el sesgo de publicacion podria estar inflando ligeramente el efecto observado.</p>';
+  } else {
+    h += '<p class="text-xs text-verde"><strong>Interpretacion:</strong> No se detectaron estudios faltantes. El Funnel Plot es simetrico, lo que sugiere ausencia de sesgo de publicacion significativo.</p>';
+  }
+  h += '</div></div>';
+
+  // ── Fail-Safe N ──
+  h += '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 fade-up">';
+  h += '<div class="flex items-center gap-3 mb-4"><div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg></div>';
+  h += '<div><h3 class="font-bold text-gray-900">Fail-Safe N (File Drawer Problem)</h3>';
+  h += '<p class="text-[10px] text-gray-400">Numero de estudios nulos necesarios para anular el resultado</p></div></div>';
+
+  var k = sd.studies.length;
+  var criterion5k10 = 5 * k + 10;
+  var rosenthalN = (fsn.rosenthal && fsn.rosenthal.fsnum) || 0;
+  var rosenbergN = (fsn.rosenberg && fsn.rosenberg.fsnum) || 0;
+  var orwinN = (fsn.orwin && fsn.orwin.fsnum) || 0;
+  var passesCriterion = rosenthalN > criterion5k10;
+
+  h += '<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">';
+  // Rosenthal
+  h += '<div class="p-4 rounded-xl border border-blue-200 bg-blue-50">';
+  h += '<div class="text-[10px] font-bold text-blue-500 uppercase mb-1">Rosenthal</div>';
+  h += '<div class="text-3xl font-black text-blue-700">' + rosenthalN + '</div>';
+  h += '<div class="text-[10px] text-blue-400">p = ' + ((fsn.rosenthal && fsn.rosenthal.pval) || '—') + '</div></div>';
+  // Rosenberg
+  h += '<div class="p-4 rounded-xl border border-indigo-200 bg-indigo-50">';
+  h += '<div class="text-[10px] font-bold text-indigo-500 uppercase mb-1">Rosenberg</div>';
+  h += '<div class="text-3xl font-black text-indigo-700">' + rosenbergN + '</div>';
+  h += '<div class="text-[10px] text-indigo-400">p = ' + ((fsn.rosenberg && fsn.rosenberg.pval) || '—') + '</div></div>';
+  // Orwin
+  h += '<div class="p-4 rounded-xl border border-purple-200 bg-purple-50">';
+  h += '<div class="text-[10px] font-bold text-purple-500 uppercase mb-1">Orwin</div>';
+  h += '<div class="text-3xl font-black text-purple-700">' + orwinN + '</div>';
+  h += '<div class="text-[10px] text-purple-400">Efecto trivial como target</div></div>';
+  h += '</div>';
+
+  // 5k+10 criterion
+  h += '<div class="p-4 rounded-xl ' + (passesCriterion ? 'bg-verde/5 border border-verde/20' : 'bg-red-50 border border-red-200') + '">';
+  h += '<div class="flex items-center gap-2 mb-2">';
+  h += '<span class="text-sm font-bold ' + (passesCriterion ? 'text-verde' : 'text-red-600') + '">' + (passesCriterion ? '&#x2705;' : '&#x26A0;') + ' Criterio de Rosenthal (5k+10)</span></div>';
+  h += '<p class="text-xs text-gray-600">Se necesitan <strong>' + criterion5k10 + '</strong> estudios nulos para k=' + k + ' estudios. Rosenthal N = <strong>' + rosenthalN + '</strong>. ';
+  h += passesCriterion ? 'El resultado es robusto: se necesitarian mas estudios nulos de los que el criterio exige.' : 'El resultado podria no ser robusto frente al sesgo de publicacion.';
+  h += '</p></div></div>';
+
+  return h;
+}
+
+// ── Paso 6: Influence Diagnostics & Outliers ──
+function renderInfluenceDiagnostics(sd) {
+  var inf = sd.influence || {};
+  var infStudies = inf.studies || [];
+
+  var h = '<div class="phase-divider"><span>Paso 6: Diagnosticos de Influencia y Outliers</span></div>';
+  h += '<div id="influenceContainer" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 fade-up">';
+  h += '<div class="flex items-center justify-between mb-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center"><svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg></div>';
+  h += '<div><h3 class="font-bold text-gray-900">Diagnosticos de Influencia</h3>';
+  h += '<p class="text-[10px] text-gray-400">Cook\'s distance, DFBETAS, hat values, residuos estudentizados</p></div></div>';
+  h += '<button class="add-to-ms-btn" onclick="addToManuscript(\'influence\',\'influenceContainer\')"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15"/></svg>Anadir al manuscrito</button></div>';
+
+  // Summary cards
+  h += '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">';
+  h += '<div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-center"><div class="text-[10px] font-bold text-rose-500 uppercase">Outliers</div><div class="text-2xl font-black text-rose-700">' + (inf.n_outliers || 0) + '</div><div class="text-[10px] text-rose-400">|rstudent| > 1.96</div></div>';
+  h += '<div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-center"><div class="text-[10px] font-bold text-amber-500 uppercase">Influyentes</div><div class="text-2xl font-black text-amber-700">' + (inf.n_influential || 0) + '</div><div class="text-[10px] text-amber-400">Cook\'s D elevada</div></div>';
+  h += '<div class="p-3 rounded-xl bg-gray-50 border border-gray-200 text-center"><div class="text-[10px] font-bold text-gray-500 uppercase">Total Estudios</div><div class="text-2xl font-black text-gray-700">' + infStudies.length + '</div></div>';
+  var pctClean = infStudies.length > 0 ? Math.round(((infStudies.length - (inf.n_outliers || 0)) / infStudies.length) * 100) : 100;
+  h += '<div class="p-3 rounded-xl bg-verde/5 border border-verde/20 text-center"><div class="text-[10px] font-bold text-verde uppercase">Sin Problemas</div><div class="text-2xl font-black text-verde">' + pctClean + '%</div></div>';
+  h += '</div>';
+
+  // Influence plot from R
+  if (sd.influence_plot_png) {
+    h += '<div class="mb-5"><img src="' + sd.influence_plot_png + '" class="w-full rounded-xl border border-gray-100" alt="Influence Diagnostics Plot (R metafor)"></div>';
+  }
+
+  // Table
+  if (infStudies.length > 0) {
+    h += '<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="border-b-2 border-gray-200">';
+    ['Estudio','rstudent','Cook\'s D','DFBETAS','Hat','τ² sin','QE sin','Estado'].forEach(function(hd) {
+      h += '<th class="text-left py-2 px-2 text-gray-500 font-bold uppercase text-[10px]">' + hd + '</th>';
+    });
+    h += '</tr></thead><tbody>';
+    infStudies.forEach(function(s) {
+      var rowClass = s.is_outlier ? 'bg-rose-50' : s.is_influential ? 'bg-amber-50' : '';
+      h += '<tr class="border-b border-gray-50 ' + rowClass + '">';
+      h += '<td class="py-2 px-2 font-semibold text-gray-800 text-xs">' + esc(s.study) + '</td>';
+      h += '<td class="py-2 px-2 font-mono text-xs ' + (Math.abs(s.rstudent) > 1.96 ? 'text-rose-600 font-bold' : 'text-gray-600') + '">' + s.rstudent + '</td>';
+      h += '<td class="py-2 px-2 font-mono text-xs ' + (s.is_influential ? 'text-amber-600 font-bold' : 'text-gray-600') + '">' + s.cooks_d + '</td>';
+      h += '<td class="py-2 px-2 font-mono text-xs text-gray-600">' + s.dfbs + '</td>';
+      h += '<td class="py-2 px-2 font-mono text-xs text-gray-600">' + s.hat + '</td>';
+      h += '<td class="py-2 px-2 font-mono text-xs text-gray-600">' + s.tau2_del + '</td>';
+      h += '<td class="py-2 px-2 font-mono text-xs text-gray-600">' + s.QE_del + '</td>';
+      h += '<td class="py-2 px-2">';
+      if (s.is_outlier && s.is_influential) h += '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-700">Outlier + Influyente</span>';
+      else if (s.is_outlier) h += '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-600">Outlier</span>';
+      else if (s.is_influential) h += '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-700">Influyente</span>';
+      else h += '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-verde/10 text-verde">OK</span>';
+      h += '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+
+  // Cook's Distance visual bar chart
+  if (infStudies.length > 0) {
+    var maxCooks = Math.max.apply(null, infStudies.map(function(s) { return s.cooks_d; }));
+    h += '<div class="mt-5"><div class="text-[10px] font-bold text-gray-500 uppercase mb-3">Cook\'s Distance por Estudio</div>';
+    h += '<div class="space-y-2">';
+    infStudies.forEach(function(s) {
+      var pct = maxCooks > 0 ? (s.cooks_d / maxCooks * 100).toFixed(1) : 0;
+      var barColor = s.is_influential ? 'bg-amber-400' : s.is_outlier ? 'bg-rose-300' : 'bg-galatea/60';
+      h += '<div class="flex items-center gap-2">';
+      h += '<span class="text-[10px] text-gray-600 w-32 truncate text-right">' + esc(s.study) + '</span>';
+      h += '<div class="flex-1 h-4 rounded-full bg-gray-100 overflow-hidden"><div class="h-full rounded-full ' + barColor + ' transition-all" style="width:' + pct + '%"></div></div>';
+      h += '<span class="text-[10px] font-mono text-gray-500 w-12">' + s.cooks_d + '</span>';
+      h += '</div>';
+    });
+    h += '</div></div>';
+  }
+
+  // Interpretation
+  h += '<div class="mt-4 p-4 rounded-xl ' + ((inf.n_outliers || 0) > 0 ? 'bg-amber-50 border border-amber-200' : 'bg-verde/5 border border-verde/20') + '">';
+  if ((inf.n_outliers || 0) > 0 || (inf.n_influential || 0) > 0) {
+    h += '<p class="text-xs text-amber-800"><strong>Interpretacion:</strong> ';
+    if ((inf.n_outliers || 0) > 0) h += 'Se detectaron <strong>' + inf.n_outliers + ' outlier(s)</strong> (' + (inf.outlier_labels || []).join(', ') + ') con residuos estudentizados fuera del rango ±1.96. ';
+    if ((inf.n_influential || 0) > 0) h += '<strong>' + inf.n_influential + ' estudio(s) influyente(s)</strong> (' + (inf.influential_labels || []).join(', ') + ') con Cook\'s distance elevada. ';
+    h += 'Se recomienda analisis de sensibilidad excluyendo estos estudios.</p>';
+  } else {
+    h += '<p class="text-xs text-verde"><strong>Interpretacion:</strong> Ningun estudio muestra indicios de ser outlier o influyente. Los resultados del metaanalisis son robustos.</p>';
+  }
+  h += '</div></div>';
+
+  return h;
+}
+
+// ── Paso 7: Leave-One-Out ──
 function renderLeaveOneOut(sd) {
   var loo = sd.loo;
   var pooledOR = sd.pooled.or;
@@ -9450,7 +9739,7 @@ function renderLeaveOneOut(sd) {
   var vMin = Math.min.apply(null, allVals) - 0.2;
   var vMax = Math.max.apply(null, allVals) + 0.2;
 
-  var h = '<div class="phase-divider"><span>Paso 5: Analisis de Sensibilidad</span></div>';
+  var h = '<div class="phase-divider"><span>Paso 7: Analisis de Sensibilidad</span></div>';
   h += '<div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 fade-up">';
   h += '<div class="flex items-center gap-3 mb-4"><h3 class="font-bold text-gray-900">Leave-One-Out</h3>';
   h += '<span class="text-[10px] text-gray-400">OR global al retirar cada estudio</span></div>';
@@ -9487,13 +9776,13 @@ function renderLeaveOneOut(sd) {
   return h;
 }
 
-// ── Paso 6: GRADE Table ──
+// ── Paso 8: GRADE Table ──
 function renderGradeTable(sd) {
   var grade = sd.grade;
   var certainty = sd.certainty;
   var certClass = certainty === 'Alta' ? 'grade-high' : certainty === 'Moderada' ? 'grade-moderate' : certainty === 'Baja' ? 'grade-low' : 'grade-very-low';
 
-  var h = '<div class="phase-divider"><span>Paso 6: Certeza de la Evidencia</span></div>';
+  var h = '<div class="phase-divider"><span>Paso 8: Certeza de la Evidencia</span></div>';
   h += '<div id="gradeContainer" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6 fade-up">';
   h += '<div class="flex items-center justify-between mb-4"><div class="flex items-center gap-3"><h3 class="font-bold text-gray-900">Tabla GRADE</h3>';
   h += '<span class="grade-badge ' + certClass + '">Certeza: ' + certainty + '</span></div>';
@@ -9536,12 +9825,23 @@ function renderMetaConclusion(sd) {
   h += '<p class="text-[10px] text-gray-400">Generada por Galatea AI — Motor de Sintesis Cuantitativa</p></div></div>';
 
   h += '<div class="bg-white/80 rounded-xl p-5 mb-4">';
+  var effLabel = sd.effect_label || 'OR';
+  var hetLevel = sd.i2 <= 40 ? 'baja' : sd.i2 <= 75 ? 'moderada' : 'alta';
   h += '<p class="text-sm text-gray-800 leading-relaxed">Con una certeza de evidencia <strong class="text-' + (sd.certainty === 'Alta' ? 'verde' : sd.certainty === 'Moderada' ? 'amber-600' : 'red-600') + '">' + sd.certainty + '</strong> (GRADE), ';
-  h += 'el metaanalisis de <strong>' + sd.studies.length + ' estudios</strong> (N = ' + sd.studies.reduce(function(s, st) { return s + st.total_i + st.total_c; }, 0).toLocaleString() + ') ';
-  h += 'favorece la intervencion con un <strong>OR de ' + sd.pooled.or + ' [IC 95% ' + sd.pooled.or_lo + ' – ' + sd.pooled.or_hi + ']</strong>, ';
-  h += 'p < 0.001 (Z = ' + sd.pooled.z + '). ';
-  h += 'La heterogeneidad fue moderada (I² = ' + sd.i2 + '%), manejada con modelo de efectos aleatorios. ';
-  h += 'Se detecto posible sesgo de publicacion (Egger p = ' + sd.egger_p + ').</p>';
+  h += 'el metaanalisis de <strong>' + sd.studies.length + ' estudios</strong> ';
+  h += 'muestra un efecto combinado de <strong>' + effLabel + ' = ' + sd.pooled.or + ' [IC 95%: ' + sd.pooled.or_lo + ' – ' + sd.pooled.or_hi + ']</strong>, ';
+  h += 'p ' + (sd.pooled.p < 0.001 ? '< 0.001' : '= ' + sd.pooled.p) + ' (Z = ' + sd.pooled.z + '). ';
+  h += 'La heterogeneidad fue ' + hetLevel + ' (I&sup2; = ' + sd.i2 + '%, &tau;&sup2; = ' + (sd.tau2 || '—') + '), manejada con modelo de ' + sd.model.split('(')[0].trim().toLowerCase() + '. ';
+  if (sd.trimfill && sd.trimfill.k0 > 0) {
+    h += 'Trim & Fill estimo ' + sd.trimfill.k0 + ' estudios faltantes (efecto ajustado: ' + sd.trimfill.estimate + '). ';
+  }
+  if (sd.failsafe_n && sd.failsafe_n.rosenthal) {
+    h += 'Fail-Safe N de Rosenthal = ' + sd.failsafe_n.rosenthal.fsnum + (sd.failsafe_n.criterion_5k10 ? ' (supera criterio 5k+10)' : '') + '. ';
+  }
+  if (sd.influence && sd.influence.n_outliers > 0) {
+    h += 'Se detectaron ' + sd.influence.n_outliers + ' outlier(s) en los diagnosticos de influencia. ';
+  }
+  h += 'Test de Egger: p = ' + sd.egger_p + (sd.funnel_asymmetry ? ' (asimetria detectada).' : ' (sin asimetria).') + '</p>';
   h += '</div>';
 
   h += '<div class="flex flex-wrap gap-3">';
@@ -9561,14 +9861,14 @@ function renderMetaConclusion(sd) {
   h += '<div class="w-10 h-10 rounded-full bg-gradient-to-br from-galatea to-verde flex items-center justify-center shadow-md">';
   h += '<svg class="w-5 h-5 text-white" viewBox="0 0 120 120" fill="currentColor"><circle cx="60" cy="35" r="16" opacity=".9"/><path d="M34 90 C34 70, 44 60, 60 60 C76 60, 86 70, 86 90 L86 110 L34 110Z" opacity=".9"/></svg></div>';
   h += '<div><span class="text-xs font-black text-galatea">Galatea AI</span>';
-  h += '<p class="text-sm text-gray-700 mt-1">He completado la sintesis cuantitativa bajo estandares <strong>PRISMA 2020</strong> y <strong>GRADE</strong>. El siguiente paso es generar el <strong>Articulo Cientifico IMRyD</strong> (Etapa 5) con manuscrito estructurado, compliance editorial, plan estadistico y exportacion final.</p>';
+  h += '<p class="text-sm text-gray-700 mt-1">He completado la sintesis cuantitativa completa: <strong>Forest Plot</strong>, <strong>Funnel Plot + Egger</strong>, <strong>Trim & Fill</strong>, <strong>Fail-Safe N</strong>, <strong>diagnosticos de influencia</strong> (Cook\'s D, DFBETAS), <strong>Leave-One-Out</strong> y <strong>GRADE</strong>. Todo bajo estandares <strong>PRISMA 2020</strong>. El siguiente paso es generar el <strong>Articulo Cientifico IMRyD</strong> (Etapa 5).</p>';
   h += '</div></div></div>';
 
   // Transition to Stage 5
   h += '<div class="bg-gradient-to-br from-pink-50 via-purple-50 to-galatea/10 border-2 border-pink-300/40 rounded-2xl p-8 text-center mb-6 fade-up">';
   h += '<div class="text-5xl mb-3">&#x1F4DD;</div>';
   h += '<h3 class="text-xl font-black text-gray-900 mb-2">Sintesis Cuantitativa Completa</h3>';
-  h += '<p class="text-sm text-gray-600 max-w-lg mx-auto mb-4">El metaanalisis ha finalizado. Ahora puedes generar el <strong>Articulo Cientifico IMRyD</strong> con manuscrito estructurado, plan estadistico y exportacion.</p>';
+  h += '<p class="text-sm text-gray-600 max-w-lg mx-auto mb-4">El metaanalisis de 8 pasos ha finalizado (extraccion, heterogeneidad, forest plot, funnel plot, trim & fill, influencia, sensibilidad, GRADE). Ahora puedes generar el <strong>Articulo Cientifico IMRyD</strong>.</p>';
   h += '<button onclick="showStage5TransitionCard()" class="bg-gradient-to-r from-pink-600 to-purple-600 hover:shadow-lg hover:shadow-pink-500/25 text-white px-8 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2 btn-attention">';
   h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>';
   h += 'Iniciar Articulo Cientifico</button>';
@@ -9794,9 +10094,10 @@ function enrichSimDataWithCitations(sd) {
 }
 
 // ── BULLETPROOF citation injector: char-by-char, inline styles, manual escape ──
-function buildCitedHTML(text, numRefs) {
+function buildCitedHTML(text, numRefs, section) {
   if (!text) return '';
   if (!numRefs || numRefs < 1) numRefs = 10;
+  var secAttr = section ? ' data-section="' + section + '"' : '';
   // Strip existing [N] markers from raw text
   text = text.replace(/\s*\[\d+(?:-\d+)?\]/g, '');
   var h = '';
@@ -9819,7 +10120,7 @@ function buildCitedHTML(text, numRefs) {
         if (!isDecimal) {
           var rn = ((cn - 1) % numRefs) + 1;
           cn++;
-          h += '<sup data-ref="' + rn + '" onclick="showRefTooltip(' + rn + ',event)" style="color:#2563EB;font-weight:700;vertical-align:super;font-size:0.75em;cursor:pointer;background:#eff6ff;padding:1px 3px;border-radius:3px;transition:background .15s" onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'" title="Click para ver referencia"> [' + rn + ']</sup>';
+          h += '<sup data-ref="' + rn + '"' + secAttr + ' onclick="showRefTooltip(' + rn + ',event)" style="color:#2563EB;font-weight:700;vertical-align:super;font-size:0.75em;cursor:pointer;background:#eff6ff;padding:1px 3px;border-radius:3px;transition:background .15s" onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'" title="Click para ver referencia"> [' + rn + ']</sup>';
         }
       }
     }
@@ -9831,7 +10132,7 @@ function highlightCitations(text) {
   if (!text) return '';
   var arts = (simData && simData._pubmed_articles_finer) || (simData && simData._pubmed_articles) || [];
   var numRefs = arts.length || ((simData && simData.extraction_table) || []).length || 10;
-  return buildCitedHTML(text, numRefs);
+  return buildCitedHTML(text, numRefs, 'finer');
 }
 
 // ── Render references footer (Vancouver format) for any section ──
@@ -9851,7 +10152,7 @@ function renderReferencesFooter(pd, section) {
   h += '<div class="space-y-1 max-h-48 overflow-y-auto">';
   arts.forEach(function(a, i) {
     var vanc = formatVancouver(a, i + 1);
-    h += '<div class="text-[9px] text-gray-500 leading-relaxed cursor-pointer hover:text-gray-700 hover:bg-blue-50/50 rounded px-1 -mx-1 transition-colors" data-ref="' + (i+1) + '" onclick="showRefTooltip(' + (i+1) + ',event)">';
+    h += '<div class="text-[9px] text-gray-500 leading-relaxed cursor-pointer hover:text-gray-700 hover:bg-blue-50/50 rounded px-1 -mx-1 transition-colors" data-ref="' + (i+1) + '" data-section="' + (section || 'general') + '" onclick="showRefTooltip(' + (i+1) + ',event)">';
     h += esc(vanc);
     if (a.doi) h += ' <a href="https://doi.org/' + esc(a.doi) + '" target="_blank" class="text-blue-400 hover:underline" onclick="event.stopPropagation()">[DOI]</a>';
     if (a.pmid) h += ' <a href="https://pubmed.ncbi.nlm.nih.gov/' + esc(a.pmid) + '/" target="_blank" class="text-blue-400 hover:underline" onclick="event.stopPropagation()">[PubMed]</a>';
@@ -13478,12 +13779,13 @@ function showRefTooltip(refNum, evt) {
   evt.stopPropagation();
   var popup = document.getElementById('refTooltipPopup');
   if (!popup) return;
-  // Determine which article pool to use based on which section the citation is in
-  var clickEl = evt.target.closest('.planteamiento-section') ? 'planteamiento' : 'finer';
+  // Determine which article pool to use based on data-section attribute
+  var clickedEl = evt.target.closest('[data-section]');
+  var section = clickedEl ? clickedEl.getAttribute('data-section') : '';
   var arts;
-  if (clickEl === 'planteamiento' && simData && simData._pubmed_articles_planteamiento) {
+  if (section === 'planteamiento' && simData && simData._pubmed_articles_planteamiento) {
     arts = simData._pubmed_articles_planteamiento;
-  } else if (simData && simData._pubmed_articles_finer && simData._pubmed_articles_finer.length > 0) {
+  } else if (section === 'finer' && simData && simData._pubmed_articles_finer && simData._pubmed_articles_finer.length > 0) {
     arts = simData._pubmed_articles_finer;
   } else {
     arts = (simData && simData._pubmed_articles) || [];
