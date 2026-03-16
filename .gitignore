@@ -11,6 +11,11 @@ node_modules
 dist
 .env
 .env.local
+.env.production
+.env.production.local
+.env.development
+.env.development.local
+.env.staging
 dist-ssr
 *.local
 

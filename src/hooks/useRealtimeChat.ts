@@ -58,7 +58,8 @@ export const useRealtimeChat = (config?: UseRealtimeChatConfig): UseRealtimeChat
     console.log('Connecting to Dr. Sofia chat with user:', user.id);
 
     try {
-      const wsUrl = `wss://jytsldbqgvntrqfjnkhz.supabase.co/functions/v1/realtime-chat`;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.replace('https://', '') || '';
+      const wsUrl = `wss://${supabaseUrl}/functions/v1/realtime-chat`;
       console.log('Connecting to WebSocket:', wsUrl);
       socketRef.current = new WebSocket(wsUrl);
 
