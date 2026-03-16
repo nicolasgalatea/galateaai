@@ -10030,112 +10030,35 @@ function getProjectVancouverRefs(pd) {
   return VANCOUVER_REFS;
 }
 
-// ── Enrich all simData sections with real PubMed citations ──
-// Uses separate article pools: FINER/feasibility use _pubmed_articles_finer
+// ── enrichSimDataWithCitations: DISABLED ──
+// Previously injected fake [N] citations after every sentence.
+// Removed because citations must correspond to actual paper content.
+// Real PubMed references are shown as "Referencias consultadas" at the bottom.
 function enrichSimDataWithCitations(sd) {
-  var finerArts = sd._pubmed_articles_finer || sd._pubmed_articles || [];
-  var arts = sd._pubmed_articles || [];
-  if (arts.length < 1 && finerArts.length < 1) return;
-  var n = finerArts.length || arts.length;
-  var globalRef = 1;
-  // Helper: inject [N] after every sentence in a text
-  function citeAllSentences(text) {
-    if (!text) return text;
-    // Remove existing citations first
-    text = text.replace(/\s*\[\d+(?:-\d+)?\]/g, '');
-    var result = '';
-    for (var ci = 0; ci < text.length; ci++) {
-      result += text[ci];
-      if (text[ci] === '.' && (ci === text.length - 1 || text[ci + 1] === ' ' || text[ci + 1] === '\n')) {
-        var isAbbrev = /\b(al|vs|Dr|etc)\s*$/i.test(result.slice(0, -1));
-        var isNum = ci > 0 && /\d/.test(text[ci - 1]) && ci < text.length - 1 && /\d/.test(text[ci + 1]);
-        if (!isAbbrev && !isNum) {
-          var ref = ((globalRef - 1) % n) + 1;
-          globalRef++;
-          result = result.slice(0, -1) + ' [' + ref + '].';
-        }
-      }
-    }
-    return result;
-  }
-  // Helper: add single cite at end of short text
-  function citeEnd(text) {
-    if (!text) return text;
-    var ref = ((globalRef - 1) % n) + 1;
-    globalRef++;
-    return text.replace(/\.\s*$/, '') + ' [' + ref + '].';
-  }
-  // Enrich FINER notes — cite every sentence
-  var fr = sd.finer_results || {};
-  if (fr.feasible && fr.feasible.note) fr.feasible.note = citeAllSentences(fr.feasible.note);
-  if (fr.interesting && fr.interesting.note) fr.interesting.note = citeAllSentences(fr.interesting.note);
-  if (fr.novel && fr.novel.note) fr.novel.note = citeAllSentences(fr.novel.note);
-  if (fr.ethical && fr.ethical.note) fr.ethical.note = citeAllSentences(fr.ethical.note);
-  if (fr.relevant && fr.relevant.note) fr.relevant.note = citeAllSentences(fr.relevant.note);
-  // Enrich feasibility notes — cite every sentence
-  var fe = (sd.feasibility || {}).dimensions || {};
-  ['recursos','tiempo','acceso_datos','equipo','apoyo_institucional','complejidad'].forEach(function(k) {
-    if (fe[k] && fe[k].note) fe[k].note = citeAllSentences(fe[k].note);
-  });
-  if (sd.feasibility && sd.feasibility.summary) sd.feasibility.summary = citeAllSentences(sd.feasibility.summary);
-  if (sd.feasibility && sd.feasibility.recommendations) {
-    sd.feasibility.recommendations = sd.feasibility.recommendations.map(function(r) {
-      return citeEnd(r.replace(/\.\s*$/, '') + '.');
-    });
-  }
-  if (sd.feasibility && sd.feasibility.critical_risks) {
-    sd.feasibility.critical_risks = sd.feasibility.critical_risks.map(function(r) {
-      return citeEnd(r.replace(/\.\s*$/, '') + '.');
-    });
-  }
-  // Enrich hypothesis — cite each one
-  if (sd.hypothesis) {
-    if (sd.hypothesis.null_hypothesis) sd.hypothesis.null_hypothesis = citeEnd(sd.hypothesis.null_hypothesis.replace(/\.\s*$/, '') + '.');
-    if (sd.hypothesis.alternative_hypothesis) sd.hypothesis.alternative_hypothesis = citeEnd(sd.hypothesis.alternative_hypothesis.replace(/\.\s*$/, '') + '.');
-  }
-  sd._citations_enriched = true;
+  sd._citations_enriched = true; // no-op
 }
 
-// ── BULLETPROOF citation injector: char-by-char, inline styles, manual escape ──
+// ── buildCitedHTML: renders text WITHOUT injecting fake [N] citations ──
+// Previously injected [N] after every sentence. Now just renders clean text.
 function buildCitedHTML(text, numRefs, section) {
   if (!text) return '';
-  if (!numRefs || numRefs < 1) numRefs = 10;
-  var secAttr = section ? ' data-section="' + section + '"' : '';
-  // Strip existing [N] markers from raw text
+  // Strip any leftover [N] markers
   text = text.replace(/\s*\[\d+(?:-\d+)?\]/g, '');
+  // HTML escape only
   var h = '';
-  var cn = 1;
   for (var i = 0; i < text.length; i++) {
     var c = text.charAt(i);
-    // Manual HTML escape
-    if (c === '<') { h += '&lt;'; }
-    else if (c === '>') { h += '&gt;'; }
-    else if (c === '&') { h += '&amp;'; }
-    else { h += c; }
-    // Check if this is a sentence-ending period
-    if (c === '.') {
-      var next = (i < text.length - 1) ? text.charAt(i + 1) : '';
-      var isSentenceEnd = (next === ' ' || next === '\n' || next === '\r' || i === text.length - 1);
-      // Skip abbreviations and decimal numbers
-      if (isSentenceEnd && i > 0) {
-        var prev = text.charAt(i - 1);
-        var isDecimal = (prev >= '0' && prev <= '9') && (next >= '0' && next <= '9');
-        if (!isDecimal) {
-          var rn = ((cn - 1) % numRefs) + 1;
-          cn++;
-          h += '<sup data-ref="' + rn + '"' + secAttr + ' onclick="showRefTooltip(' + rn + ',event)" style="color:#2563EB;font-weight:700;vertical-align:super;font-size:0.75em;cursor:pointer;background:#eff6ff;padding:1px 3px;border-radius:3px;transition:background .15s" onmouseover="this.style.background=\'#dbeafe\'" onmouseout="this.style.background=\'#eff6ff\'" title="Click para ver referencia"> [' + rn + ']</sup>';
-        }
-      }
-    }
+    if (c === '<') h += '&lt;';
+    else if (c === '>') h += '&gt;';
+    else if (c === '&') h += '&amp;';
+    else h += c;
   }
   return h;
 }
-// Wrapper used by FINER, Feasibility, Hypotheses renderers (uses FINER-specific pool)
+// highlightCitations: now just returns clean escaped text
 function highlightCitations(text) {
   if (!text) return '';
-  var arts = (simData && simData._pubmed_articles_finer) || (simData && simData._pubmed_articles) || [];
-  var numRefs = arts.length || ((simData && simData.extraction_table) || []).length || 10;
-  return buildCitedHTML(text, numRefs, 'finer');
+  return buildCitedHTML(text, 0, '');
 }
 
 // ── Render references footer (Vancouver format) for any section ──
@@ -10150,7 +10073,7 @@ function renderReferencesFooter(pd, section) {
   }
   if (arts.length < 1) return '';
   var h = '<div class="mt-4 pt-3 border-t border-gray-100">';
-  h += '<div class="flex items-center justify-between mb-2"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Referencias Vancouver (' + arts.length + ')</span>';
+  h += '<div class="flex items-center justify-between mb-2"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Referencias consultadas — PubMed (' + arts.length + ')</span>';
   h += '<div class="flex items-center gap-2">' + renderMendeleyBtn('Mendeley') + '</div></div>';
   h += '<div class="space-y-1 max-h-48 overflow-y-auto">';
   arts.forEach(function(a, i) {
@@ -10165,39 +10088,12 @@ function renderReferencesFooter(pd, section) {
   return h;
 }
 
+// ── injectCitationsInPlanteamiento: DISABLED ──
+// Previously injected fake [N] after every sentence. Now returns text as-is.
 function injectCitationsInPlanteamiento(text, numRefs) {
-  if (!text || numRefs < 1) return text;
-  // Remove any existing citation tags first, preserve paragraph breaks
-  text = text.replace(/\s*\[\d+(?:-\d+)?\]/g, '');
-  var paras = text.split('\n\n');
-  var refIdx = 1;
-
-  // Inject a citation [N] after EVERY sentence-ending period
-  for (var pi = 0; pi < paras.length; pi++) {
-    var p = paras[pi];
-    // Replace each period followed by space or end-of-string with period + citation
-    var result = '';
-    var i = 0;
-    while (i < p.length) {
-      result += p[i];
-      // Check if this is a sentence-ending period (followed by space, newline, or end)
-      if (p[i] === '.' && (i === p.length - 1 || p[i + 1] === ' ' || p[i + 1] === '\n')) {
-        // Skip abbreviations like "et al.", "Dr.", "vs.", numbers like "1.5"
-        var prevChars = result.slice(-4, -1);
-        var isAbbrev = /\b(al|vs|Dr|Sr|Sra|etc|Vol|No|ed|pp)\s*$/i.test(result.slice(0, -1));
-        var isNumber = i > 0 && /\d/.test(p[i - 1]) && i < p.length - 1 && /\d/.test(p[i + 1]);
-        if (!isAbbrev && !isNumber) {
-          var rn = ((refIdx - 1) % numRefs) + 1;
-          result = result.slice(0, -1) + ' [' + rn + '].';
-          refIdx++;
-        }
-      }
-      i++;
-    }
-    paras[pi] = result;
-  }
-
-  return paras.join('\n\n');
+  if (!text) return text;
+  // Strip any leftover [N] markers from AI-generated text
+  return text.replace(/\s*\[\d+(?:-\d+)?\]/g, '');
 }
 
 // ── Vancouver References (strict format) ──
