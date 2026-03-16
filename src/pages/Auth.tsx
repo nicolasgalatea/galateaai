@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,16 +14,18 @@ import galateaAvatar from '@/assets/galatea-avatar.jpg';
 const Auth = () => {
   const { user, loading, signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  
+  const location = useLocation();
+  const redirectTo = (location.state as { from?: string })?.from || '/research-lab';
+
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
-  
+
   // Sign In Form State
   const [signInData, setSignInData] = useState({
     email: '',
     password: ''
   });
-  
+
   // Sign Up Form State
   const [signUpData, setSignUpData] = useState({
     email: '',
@@ -33,9 +35,9 @@ const Auth = () => {
     role: '' as 'medico' | 'hospital' | 'eps' | 'investigador' | 'paciente' | ''
   });
 
-  // If user is already authenticated, redirect to dashboard
+  // If user is already authenticated, redirect back
   if (user && !loading) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -45,7 +47,7 @@ const Auth = () => {
     const { error } = await signIn(signInData.email, signInData.password);
     
     if (!error) {
-      navigate('/dashboard');
+      navigate(redirectTo);
     }
     
     setIsLoading(false);
