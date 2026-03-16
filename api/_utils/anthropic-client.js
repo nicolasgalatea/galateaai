@@ -5,6 +5,58 @@ const client = new Anthropic({
 });
 
 /**
+ * Sanitize unescaped control characters inside JSON string values.
+ * Walks char-by-char; when inside a quoted string, replaces control chars
+ * (code < 0x20) with their escaped equivalents.
+ */
+function sanitizeControlChars(text) {
+  let result = '';
+  let inString = false;
+  let escape = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (escape) { result += ch; escape = false; continue; }
+    if (ch === '\\' && inString) { result += ch; escape = true; continue; }
+    if (ch === '"') { inString = !inString; result += ch; continue; }
+    if (inString) {
+      const code = ch.charCodeAt(0);
+      if (code < 0x20) {
+        if (code === 0x0A) result += '\\n';
+        else if (code === 0x0D) result += '\\r';
+        else if (code === 0x09) result += '\\t';
+        else result += '\\u' + code.toString(16).padStart(4, '0');
+        continue;
+      }
+    }
+    result += ch;
+  }
+  return result;
+}
+
+/**
+ * Parse JSON from Claude response:
+ * 1. Strip markdown fences
+ * 2. Sanitize control characters inside strings
+ * 3. Try JSON.parse; on failure try repairTruncatedJSON then re-parse
+ */
+export function parseClaudeJSON(text) {
+  let cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  cleaned = sanitizeControlChars(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch (firstErr) {
+    // Try repairing truncated JSON
+    try {
+      const repaired = repairTruncatedJSON(cleaned);
+      const sanitized = sanitizeControlChars(repaired);
+      return JSON.parse(sanitized);
+    } catch {
+      throw new Error(`Failed to parse Claude JSON: ${firstErr.message}`);
+    }
+  }
+}
+
+/**
  * Attempt to repair truncated JSON by closing open strings, arrays, and objects
  */
 function repairTruncatedJSON(text) {

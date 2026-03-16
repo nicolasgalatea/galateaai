@@ -1,4 +1,4 @@
-import { callClaude } from './_utils/anthropic-client.js';
+import { callClaude, parseClaudeJSON } from './_utils/anthropic-client.js';
 import { updatePhaseData } from './_utils/supabase-server.js';
 import { logAgent, logError, logMetrics } from './_utils/logger.js';
 import { PROMPTS } from '../prompts/system-prompts.js';
@@ -11,14 +11,6 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
-
-/**
- * Parse JSON from Claude response, cleaning markdown fences if present
- */
-function parseClaudeJSON(text) {
-  const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  return JSON.parse(cleaned);
-}
 
 /**
  * Search PubMed using the internal endpoint logic (direct E-utilities call)

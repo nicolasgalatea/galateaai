@@ -1,4 +1,4 @@
-import { callClaude } from '../_utils/anthropic-client.js';
+import { callClaude, parseClaudeJSON } from '../_utils/anthropic-client.js';
 import { logAgent, logError } from '../_utils/logger.js';
 
 const AGENT_NAME = 'evidence-aggregator';
@@ -434,8 +434,7 @@ ${jsonFields.join(',\n')}
     { temperature: 0.2, max_tokens: 1500 }
   );
 
-  const cleaned = result.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  return { data: JSON.parse(cleaned), metrics: result };
+  return { data: parseClaudeJSON(result.text), metrics: result };
 }
 
 export default async function handler(req, res) {

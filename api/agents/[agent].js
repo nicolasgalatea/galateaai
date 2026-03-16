@@ -1,4 +1,4 @@
-import { callClaude } from '../_utils/anthropic-client.js';
+import { callClaude, parseClaudeJSON } from '../_utils/anthropic-client.js';
 import { updatePhaseData as _updatePhaseData } from '../_utils/supabase-server.js';
 import { logAgent, logError, logMetrics } from '../_utils/logger.js';
 import { PROMPTS } from '../../prompts/system-prompts.js';
@@ -19,11 +19,6 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
-
-function parseClaudeJSON(text) {
-  const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  return JSON.parse(cleaned);
-}
 
 const EUTILS_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 

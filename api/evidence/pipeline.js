@@ -3,6 +3,7 @@
  * Actions: clinicaltrials-search, import-ris, deduplicate, extract-data, extract-batch, build-dataset, pdf-upload
  * This consolidation avoids Vercel Hobby plan's 12-function limit.
  */
+import { parseClaudeJSON } from '../_utils/anthropic-client.js';
 import { logAgent, logError } from '../_utils/logger.js';
 
 const AGENT_NAME = 'evidence-pipeline';
@@ -167,15 +168,14 @@ async function handleExtractData(body) {
   if (!articleText && !meta.title) throw new Error('Missing text or articleMeta');
   const userPrompt = `Extrae los datos estructurados del siguiente articulo para una revision sistematica.\n\nPICOT: ${JSON.stringify(picot || {})}\n\nARTICULO:\n- Titulo: ${meta.title || 'N/A'}\n- Autores: ${(meta.authors || []).join(', ') || 'N/A'}\n- Ano: ${meta.year || 'N/A'}\n- PMID: ${meta.pmid || 'N/A'}\n\nTEXTO:\n${(articleText || '').slice(0, 8000)}\n\nResponde SOLO con JSON valido con la estructura: { population, intervention, comparator, outcomes[], studyDesign, riskOfBias, funding, conflicts, limitations }`;
   const result = await callClaude(PROMPTS.DATA_EXTRACTOR, userPrompt, { temperature: 0.1, max_tokens: 2000 });
-  const cleaned = result.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  const parsed = JSON.parse(cleaned);
+  const parsed = parseClaudeJSON(result.text);
   const validation = ExtractionSchema.safeParse(parsed);
   if (validation.success) return { extraction: validation.data, valid: true };
   // Retry with errors
   const errorDetails = validation.error.issues.map(i => `- ${i.path.join('.')}: ${i.message}`).join('\n');
-  const retryResult = await callClaude(PROMPTS.DATA_EXTRACTOR, `Tu respuesta anterior tuvo errores. Corrige:\n${errorDetails}\n\nRespuesta anterior:\n${cleaned}\n\nCorrige y responde SOLO con JSON valido.`, { temperature: 0.1, max_tokens: 2000 });
-  const retryCleaned = retryResult.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  const retryParsed = JSON.parse(retryCleaned);
+  const parsedStr = JSON.stringify(parsed);
+  const retryResult = await callClaude(PROMPTS.DATA_EXTRACTOR, `Tu respuesta anterior tuvo errores. Corrige:\n${errorDetails}\n\nRespuesta anterior:\n${parsedStr}\n\nCorrige y responde SOLO con JSON valido.`, { temperature: 0.1, max_tokens: 2000 });
+  const retryParsed = parseClaudeJSON(retryResult.text);
   const rv = ExtractionSchema.safeParse(retryParsed);
   return { extraction: rv.success ? rv.data : retryParsed, valid: rv.success, errors: rv.success ? null : rv.error.issues };
 }
@@ -292,8 +292,7 @@ Return a JSON array with one object per article:
   const userPrompt = `Evaluate the following ${batch.length} articles for inclusion in a systematic review.${criteriaText}${picotText}\n${articlesText}\n\nReturn JSON array with ${batch.length} objects.`;
 
   const result = await callClaude(systemPrompt, userPrompt, { max_tokens: 2048 });
-  const cleaned = result.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  const results = JSON.parse(cleaned);
+  const results = parseClaudeJSON(result.text);
   return { results: Array.isArray(results) ? results : [results] };
 }
 
@@ -334,8 +333,7 @@ Responde SOLO en JSON con este formato exacto:
   const userPrompt = `Analiza el siguiente correo de la ${entityName} sobre el proyecto "${projectTitle || 'sin titulo'}":\n\n---\n${emailText.slice(0, 3000)}\n---\n\nResponde en JSON.`;
 
   const result = await callClaude(systemPrompt, userPrompt, { max_tokens: 1024 });
-  const cleaned = result.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  return JSON.parse(cleaned);
+  return parseClaudeJSON(result.text);
 }
 
 // ═══════════════════════════════════════════════════════════════
