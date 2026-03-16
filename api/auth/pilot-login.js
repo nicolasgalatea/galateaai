@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   }
 
   // Validate against known pilot users (FSFB emails)
-  const PILOT_DOMAINS = ['fsfb.org.co'];
+  const PILOT_DOMAINS = ['fsfb.org.co', 'bayer.com'];
   const emailDomain = email.split('@')[1];
   if (!PILOT_DOMAINS.includes(emailDomain)) {
     return res.status(401).json({ success: false, error: 'Email no autorizado para piloto' });

@@ -131,7 +131,51 @@
 <!-- ╔══════════════════════════════════════════════════════════════╗ -->
 <!-- ║  LOGIN PAGE                                                 ║ -->
 <!-- ╚══════════════════════════════════════════════════════════════╝ -->
-<div id="loginPage" class="page-transition page-visible">
+<div id="tenantSelectorPage" class="page-transition page-visible">
+  <div class="landing-bg min-h-screen flex flex-col relative z-10">
+    <header class="relative z-20 px-6 sm:px-10 pt-6 flex items-center justify-center">
+      <div class="flex items-center gap-3">
+        <img src="/public/galatea-logo.png" alt="GalateaAI" class="w-12 h-12 rounded" />
+        <span class="text-white/40 text-xs font-medium tracking-widest uppercase">Galatea AI</span>
+      </div>
+    </header>
+    <div class="flex-1 flex items-center justify-center px-6 sm:px-10 pb-16 relative z-20">
+      <div class="w-full max-w-2xl">
+        <div class="text-center mb-10">
+          <h1 class="text-3xl sm:text-4xl font-black text-white mb-3">Selecciona tu Institucion</h1>
+          <p class="text-white/50 text-sm">Elige la organizacion a la que perteneces para continuar</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <!-- Santa Fe card -->
+          <button onclick="selectTenant('fsfb')" class="group bg-white/10 backdrop-blur-xl border-2 border-white/20 rounded-3xl p-8 text-center hover:border-galatea/60 hover:bg-white/15 transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]">
+            <div class="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-5 group-hover:bg-galatea/20 transition-all">
+              <svg viewBox="0 0 24 24" class="w-10 h-10 text-galatea" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z"/></svg>
+            </div>
+            <h3 class="text-xl font-black text-white mb-2">Fundacion Santa Fe</h3>
+            <p class="text-white/40 text-xs">Fundacion Santa Fe de Bogota</p>
+            <div class="mt-4 px-4 py-2 rounded-xl bg-galatea/10 text-galatea text-xs font-bold">Departamento de Cirugia</div>
+          </button>
+          <!-- Bayer card -->
+          <button onclick="selectTenant('bayer')" class="group bg-white/10 backdrop-blur-xl border-2 border-white/20 rounded-3xl p-8 text-center hover:border-[#10857F]/60 hover:bg-white/15 transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]">
+            <div class="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-5 group-hover:bg-[#10857F]/20 transition-all">
+              <svg viewBox="0 0 100 100" class="w-12 h-12">
+                <circle cx="50" cy="50" r="46" fill="none" stroke="#10857F" stroke-width="3"/>
+                <line x1="50" y1="4" x2="50" y2="96" stroke="#10857F" stroke-width="2.5"/>
+                <line x1="4" y1="50" x2="96" y2="50" stroke="#10857F" stroke-width="2.5"/>
+                <text x="50" y="38" text-anchor="middle" fill="#10857F" font-size="12" font-weight="700" font-family="Inter,sans-serif">BAY</text>
+                <text x="50" y="50" text-anchor="middle" fill="#10857F" font-size="12" font-weight="700" font-family="Inter,sans-serif">ER</text>
+              </svg>
+            </div>
+            <h3 class="text-xl font-black text-white mb-2">Bayer</h3>
+            <p class="text-white/40 text-xs">Drug Medical Affairs</p>
+            <div class="mt-4 px-4 py-2 rounded-xl bg-[#66BE00]/10 text-[#66BE00] text-xs font-bold">Clinical Research</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="loginPage" class="page-transition page-hidden">
   <div class="landing-bg min-h-screen flex flex-col relative z-10">
     <!-- Top bar -->
     <header class="relative z-20 px-6 sm:px-10 pt-6 flex items-center justify-between">
@@ -1112,6 +1156,46 @@ var FSFB_USERS = {
   'uci@fsfb.org.co': { department_id: 'cuidado_intensivo', role: 'investigador' },
   'jefe@fsfb.org.co': { department_id: null, role: 'jefe_investigacion' },
 };
+
+// ═══ MULTI-TENANT CONFIG ═══
+var currentTenant = null; // 'fsfb' or 'bayer'
+
+var BAYER_DEPARTMENTS = [
+  { id: 'oncologia', name: 'Oncologia', sub: 'Oncologia Medica, Hemato-Oncologia', icon: '\uD83C\uDFAF', color: '#DC2626' },
+  { id: 'cardiologia', name: 'Cardiologia', sub: 'Cardiologia Clinica, Intervencionismo', icon: '\uD83E\uDEC0', color: '#7C3AED' },
+  { id: 'hematologia', name: 'Hematologia', sub: 'Hematologia Clinica, Hemostasia', icon: '\uD83E\uDE78', color: '#D97706' },
+  { id: 'radiologia', name: 'Radiologia', sub: 'Imagenes Diagnosticas, Contraste', icon: '\uD83D\uDCE1', color: '#0891B2' },
+  { id: 'oftalmologia', name: 'Oftalmologia', sub: 'Retina, Segmento Anterior', icon: '\uD83D\uDC41\uFE0F', color: '#059669' },
+  { id: 'ginecologia', name: 'Ginecologia', sub: 'Ginecologia, Salud Femenina', icon: '\uD83C\uDFE5', color: '#BE185D' },
+];
+
+var BAYER_USERS = {
+  'oncologia@bayer.com': { department_id: 'oncologia', role: 'investigador' },
+  'cardio@bayer.com': { department_id: 'cardiologia', role: 'investigador' },
+  'hemato@bayer.com': { department_id: 'hematologia', role: 'investigador' },
+  'radio@bayer.com': { department_id: 'radiologia', role: 'investigador' },
+  'oftalmo@bayer.com': { department_id: 'oftalmologia', role: 'investigador' },
+  'gineco@bayer.com': { department_id: 'ginecologia', role: 'investigador' },
+  'dma@bayer.com': { department_id: null, role: 'jefe_investigacion' },
+};
+
+function getTenantConfig() {
+  if (currentTenant === 'bayer') return { departments: BAYER_DEPARTMENTS, users: BAYER_USERS, name: 'Bayer', domain: 'bayer.com' };
+  return { departments: FSFB_DEPARTMENTS, users: FSFB_USERS, name: 'Fundacion Santa Fe de Bogota', domain: 'fsfb.org.co' };
+}
+
+function selectTenant(tenantId) {
+  currentTenant = tenantId;
+  sessionStorage.setItem('galatea_tenant', tenantId);
+  // Update login page branding
+  var subtitle = document.querySelector('#loginPage .text-white\\/50');
+  if (subtitle) subtitle.textContent = getTenantConfig().name;
+  var emailInput = document.getElementById('loginEmail');
+  if (emailInput) emailInput.placeholder = 'usuario@' + getTenantConfig().domain;
+  // Transition pages
+  document.getElementById('tenantSelectorPage').classList.replace('page-visible','page-hidden');
+  document.getElementById('loginPage').classList.replace('page-hidden','page-visible');
+}
 
 var AGENTS = [
   { id:1, name:'Arquitecto', phases:[0,3], color:'#4DA8A1', desc:'Mentalidad, idea, tipo de estudio, PICOT/PICOS/ECLIPSE', activeMsg:'Analizando contexto clinico y seleccionando framework...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75a48.36 48.36 0 0 0-7.5.582V21"/></svg>', check: function(p) { var d=p.phase_data||{}; return d.picot || p.current_phase >= 3; } },
@@ -2408,8 +2492,9 @@ function transitionToDashboard() {
 // ═══════════════════════════════════════════════════════════════
 
 function getDeptById(id) {
-  for (var i = 0; i < FSFB_DEPARTMENTS.length; i++) {
-    if (FSFB_DEPARTMENTS[i].id === id) return FSFB_DEPARTMENTS[i];
+  var depts = getTenantConfig().departments;
+  for (var i = 0; i < depts.length; i++) {
+    if (depts[i].id === id) return depts[i];
   }
   return null;
 }
@@ -2438,7 +2523,7 @@ async function handleLogin() {
   if (!email || !password) { errEl.textContent = 'Ingresa email y contrasena'; errEl.classList.remove('hidden'); return; }
   btn.disabled = true; btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg> Ingresando...';
 
-  var userInfo = FSFB_USERS[email];
+  var userInfo = getTenantConfig().users[email];
 
   // Pilot login: validate password server-side, never expose in client code
   if (userInfo) {
@@ -2491,6 +2576,8 @@ async function handleLogin() {
 
 async function handleLogout() {
   sessionStorage.removeItem('galatea_pilot_user');
+  sessionStorage.removeItem('galatea_tenant');
+  currentTenant = null;
   try { await sb.auth.signOut(); } catch(e) {}
   currentUser = null;
   userProjects = [];
@@ -2500,15 +2587,15 @@ async function handleLogout() {
   document.getElementById('loginError').classList.add('hidden');
   document.getElementById('loginBtn').disabled = false;
   document.getElementById('loginBtn').innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg> Ingresar';
-  // Transition to login
-  var pages = ['projectListPage', 'landingPage', 'dashboardPage'];
+  // Transition to tenant selector
+  var pages = ['projectListPage', 'loginPage', 'landingPage', 'dashboardPage'];
   pages.forEach(function(p) { var el = document.getElementById(p); if (el) { el.classList.remove('page-visible'); el.classList.add('page-hidden'); } });
-  var lp = document.getElementById('loginPage');
-  lp.classList.remove('page-hidden'); lp.classList.add('page-visible');
+  var tp = document.getElementById('tenantSelectorPage');
+  tp.classList.remove('page-hidden'); tp.classList.add('page-visible');
 }
 
 function showProjectListPage() {
-  var pages = ['loginPage', 'landingPage', 'dashboardPage'];
+  var pages = ['tenantSelectorPage', 'loginPage', 'landingPage', 'dashboardPage'];
   pages.forEach(function(p) { var el = document.getElementById(p); if (el) { el.classList.remove('page-visible'); el.classList.add('page-hidden'); } });
   var pl = document.getElementById('projectListPage');
   pl.classList.remove('page-hidden'); pl.classList.add('page-visible');
@@ -2611,8 +2698,9 @@ function renderJefeView() {
 
   // Department summary grid
   h += '<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">';
-  for (var d = 0; d < FSFB_DEPARTMENTS.length; d++) {
-    var dept = FSFB_DEPARTMENTS[d];
+  var _tenantDepts = getTenantConfig().departments;
+  for (var d = 0; d < _tenantDepts.length; d++) {
+    var dept = _tenantDepts[d];
     var count = 0;
     for (var j = 0; j < userProjects.length; j++) {
       if (userProjects[j].department_id === dept.id) count++;
@@ -2630,8 +2718,9 @@ function renderJefeView() {
   h += '<div class="flex flex-wrap items-center gap-2 mb-4">';
   h += '<span class="text-xs font-semibold text-gray-500">Filtrar:</span>';
   h += '<button onclick="filterByDept(null)" class="text-xs px-3 py-1 rounded-full bg-galatea/10 text-galatea font-semibold hover:bg-galatea/20 transition-colors">Todos</button>';
-  for (var d = 0; d < FSFB_DEPARTMENTS.length; d++) {
-    h += '<button onclick="filterByDept(\'' + FSFB_DEPARTMENTS[d].id + '\')" class="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">' + FSFB_DEPARTMENTS[d].icon + ' ' + FSFB_DEPARTMENTS[d].name + '</button>';
+  var _filterDepts = getTenantConfig().departments;
+  for (var d = 0; d < _filterDepts.length; d++) {
+    h += '<button onclick="filterByDept(\'' + _filterDepts[d].id + '\')" class="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">' + _filterDepts[d].icon + ' ' + _filterDepts[d].name + '</button>';
   }
   h += '</div>';
 
@@ -2746,7 +2835,7 @@ function deleteProject(projectId) {
 }
 
 function goToNewProject() {
-  var pages = ['loginPage', 'projectListPage', 'dashboardPage'];
+  var pages = ['tenantSelectorPage', 'loginPage', 'projectListPage', 'dashboardPage'];
   pages.forEach(function(p) { var el = document.getElementById(p); if (el) { el.classList.remove('page-visible'); el.classList.add('page-hidden'); } });
   var lp = document.getElementById('landingPage');
   lp.classList.remove('page-hidden'); lp.classList.add('page-visible');
@@ -5025,12 +5114,15 @@ function updateDebug() {
 // INIT
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
+  // Restore tenant selection
+  var savedTenant = sessionStorage.getItem('galatea_tenant');
+  if (savedTenant) { currentTenant = savedTenant; }
   // Check demo session in localStorage
   var savedDemo = sessionStorage.getItem('galatea_pilot_user');
   if (savedDemo) {
     try {
       var parsed = JSON.parse(savedDemo);
-      var userInfo = FSFB_USERS[parsed.email];
+      var userInfo = getTenantConfig().users[parsed.email];
       if (userInfo) {
         setCurrentUser({ id: parsed.id, email: parsed.email }, userInfo);
         showProjectListPage();
@@ -5042,7 +5134,7 @@ document.addEventListener('DOMContentLoaded', function() {
   sb.auth.getSession().then(function(res) {
     if (res.data && res.data.session) {
       var email = res.data.session.user.email;
-      var userInfo = FSFB_USERS[email];
+      var userInfo = getTenantConfig().users[email];
       if (userInfo) {
         setCurrentUser(res.data.session.user, userInfo);
         showProjectListPage();
@@ -5526,13 +5618,41 @@ var STAGE3_INST_AGENTS = [
   { id:11, name:'Etica', phases:[5,6], color:'#059669', desc:'Comite de Etica, REDCap y registro en GrupLAC', activeMsg:'Preparando documentacion para Comite de Etica...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>', check: function() { return stage3InstStep > 6; } },
 ];
 
+var STAGE3_BAYER_AGENTS = [
+  { id:9, name:'DMA Review', phases:[1,2], color:'#10857F', desc:'Drug Medical Affairs — revision del protocolo clinico', activeMsg:'DMA revisando protocolo clinico...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.3 24.3 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-1.34 4.024A2.25 2.25 0 0 1 15.5 20.25H8.5a2.25 2.25 0 0 1-2.16-1.726L5 14.5m14 0H5"/></svg>', check: function() { return stage3InstStep > 2; } },
+  { id:10, name:'Compliance', phases:[3,4], color:'#7C3AED', desc:'Medical Compliance — verificacion regulatoria global', activeMsg:'Verificando compliance medico y regulatorio...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>', check: function() { return stage3InstStep > 4; } },
+  { id:11, name:'Pharmacovigilance', phases:[5,6], color:'#059669', desc:'Global Pharmacovigilance — seguridad y aprobacion final', activeMsg:'Procesando revision de farmacovigilancia global...', icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>', check: function() { return stage3InstStep > 6; } },
+];
+
+var STAGE2_BAYER_REASONING = {
+  transition: 'Excelente. La Etapa 1 ha finalizado. Ahora debemos preparar toda la documentacion siguiendo los lineamientos de <strong>Bayer Drug Medical Affairs (DMA)</strong>.',
+  tipo_proyecto_pre: 'Primero necesito clasificar tu estudio clinico. Segun el tipo de intervencion y molecula, puede ser un ensayo clinico fase I-IV, un estudio observacional post-autorizacion (PAES/PASS), un registro de pacientes o un estudio de efectividad en mundo real (RWE).',
+  tipo_proyecto_done: function(tipo) { return 'Estudio clasificado como <strong>' + tipo + '</strong>. Antes de continuar, revisa que el Clinical Development Plan (CDP) este alineado con la estrategia global de la molecula.'; },
+  ruta_pre: 'Ahora debo determinar si tu protocolo requiere revision por el equipo de <strong>DMA (Drug Medical Affairs)</strong> antes de pasar a Medical Compliance.',
+  ruta_subdireccion: 'Tu protocolo <strong>requiere revision DMA</strong>. El equipo de Drug Medical Affairs evaluara el diseno, endpoints y alineamiento con la estrategia global de la molecula.',
+  ruta_directa: 'Tu protocolo puede avanzar <strong>directamente a Medical Compliance</strong> sin revision DMA previa.',
+  ruta_external_warning: 'He detectado <strong>investigadores externos al grupo Bayer</strong>. Esto requiere un <strong>Clinical Trial Agreement (CTA)</strong> firmado antes de proceder.',
+  guias_pre: function(tipo, ruta) { return 'Segun tu tipo de estudio (<strong>' + tipo + '</strong>) y ruta (<strong>' + (ruta === 'subdireccion' ? 'Via DMA' : 'Directo a Compliance') + '</strong>), estas son las guias corporativas aplicables. Incluyen SOPs internos, guias ICH-GCP y requerimientos regulatorios locales.'; },
+  documentacion_pre: 'Ahora debes preparar toda la documentacion regulatoria. El Trial Master File (TMF) debe incluir todos los documentos esenciales segun ICH-GCP E6(R2).',
+  documentacion_external: 'Recuerda: como hay investigadores externos, el <strong>Clinical Trial Agreement (CTA)</strong> debe estar ejecutado. Incluye clausulas de propiedad intelectual, publicacion y confidencialidad.',
+  revision_pre: 'Tu documentacion esta lista. Ahora enviaremos todo al equipo de DMA (<strong>dma.review@bayer.com</strong>) para revision cientifica y estrategica del protocolo.',
+  revision_feedback: 'DMA sugiere: <strong>1)</strong> Alinear el endpoint primario con el Clinical Development Plan global; <strong>2)</strong> Incluir biomarcadores exploratorios segun la estrategia de la molecula; <strong>3)</strong> Verificar que el plan de farmacovigilancia incluya eventos adversos de interes especial (AESI).',
+  subdireccion_pre: 'Tu protocolo ha sido sometido a <strong>Medical Compliance</strong> para verificacion regulatoria. El equipo revisara adherencia a SOPs corporativos, ICH-GCP y regulaciones locales (INVIMA).',
+  subdireccion_done: 'Medical Compliance ha completado su revision. Tu protocolo ha sido <strong>aprobado con observaciones menores</strong>. Se solicita actualizar la seccion de farmacovigilancia y confirmar el seguro de investigacion.',
+  etica_pre: 'Ahora debemos someter a <strong>Global Pharmacovigilance</strong>. Esta unidad evalua el perfil de seguridad de la molecula, el plan de manejo de riesgos (RMP) y los reportes de seguridad requeridos.',
+  etica_docs: 'Documentos de farmacovigilancia identificados: DSUR, IB actualizado, Reference Safety Information (RSI), Plan de farmacovigilancia del estudio.',
+  final_pre: 'Estamos en los ultimos pasos. Global Pharmacovigilance ha revisado la documentacion. Ahora procesaremos la aprobacion final del Country Medical Director.',
+  final_redcap: 'Procesando aprobacion final del <strong>Country Medical Director</strong> y registro en el sistema global de estudios clinicos de Bayer...',
+  final_done: 'Proceso completado. Tu protocolo ha recorrido toda la ruta institucional de Bayer: <strong>DMA Review → Medical Compliance → Global Pharmacovigilance → Aprobacion Final</strong>. El estudio esta autorizado para iniciar.',
+};
+
 function startStage3Institutional() {
   currentStage = 3;
   maxStageReached = Math.max(maxStageReached, 3);
   stage3InstStep = 0;
   simulationRunning = true;
   simulationAborted = false;
-  $('projectTitle').textContent = 'Ruta Institucional — FSFB';
+  $('projectTitle').textContent = currentTenant === 'bayer' ? 'Ruta Institucional — Bayer' : 'Ruta Institucional — FSFB';
   $('projectMeta').textContent = 'Etapa 3: Ruta Institucional | Paso 0 / 8';
   showBubble();
   renderStage3InstAgentGrid();
@@ -5559,7 +5679,8 @@ function renderStage3InstAgentGrid() {
   var grid = $('agentGrid'); if (!grid) return;
   var step = stage3InstStep || 0;
   var html = '';
-  STAGE3_INST_AGENTS.forEach(function(a) {
+  var instAgents = currentTenant === 'bayer' ? STAGE3_BAYER_AGENTS : STAGE3_INST_AGENTS;
+  instAgents.forEach(function(a) {
     var done = a.check(), active = simulationRunning && step >= a.phases[0] && step <= a.phases[1] && !done;
     var bc = done ? 'border-verde/40 bg-verde/5' : active ? 'border-galatea/60 bg-galatea/5' : 'border-gray-200 bg-white/60';
     var sd = done ? '<span class="w-2.5 h-2.5 rounded-full bg-verde inline-block"></span>' : active ? '<span class="w-2.5 h-2.5 rounded-full bg-galatea animate-ping inline-block"></span>' : '<span class="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block"></span>';
@@ -5571,6 +5692,7 @@ function renderStage3InstAgentGrid() {
 
 function renderStage3InstDetailedViews() {
   var v = $('detailedViews'); if (!v) return;
+  if (currentTenant === 'bayer') { renderStage3BayerDetailedViews(v); return; }
   var html = '';
 
   if (stage3InstStep >= 1) html += renderPreliminaryReview();
@@ -5622,8 +5744,8 @@ function selectStage3Route(route) {
   stage2Route = route;
   renderStage3InstDetailedViews();
   if (route === 'subdireccion') {
-    // Open mailto for investigation section
-    window.open('mailto:investigacion.cirugia@fsfb.org.co?subject=Solicitud%20de%20revision%20exhaustiva%20-%20' + encodeURIComponent(project.project_code || project.research_question || 'Proyecto') + '&body=Estimado%20equipo%20de%20investigacion%2C%0A%0ASolicito%20revision%20exhaustiva%20del%20proyecto.%0A%0ACordialmente.', '_blank');
+    var mailTo = currentTenant === 'bayer' ? 'dma.review@bayer.com' : 'investigacion.cirugia@fsfb.org.co';
+    window.open('mailto:' + mailTo + '?subject=Solicitud%20de%20revision%20-%20' + encodeURIComponent(project.project_code || project.research_question || 'Proyecto') + '&body=Estimado%20equipo%2C%0A%0ASolicito%20revision%20del%20proyecto.%0A%0ACordialmente.', '_blank');
   }
 }
 
@@ -5631,8 +5753,159 @@ function confirmStage3Route() {
   _stage3RouteConfirmed = true;
 }
 
+function renderBayerRouteWizard() {
+  var h = '<div class="bg-gradient-to-br from-white to-teal-50/30 border-2 border-teal-200 rounded-2xl p-8 mb-6 fade-up">';
+  h += '<div class="text-center mb-6"><div class="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><svg viewBox="0 0 100 100" class="w-8 h-8"><circle cx="50" cy="50" r="46" fill="none" stroke="#10857F" stroke-width="4"/><line x1="50" y1="4" x2="50" y2="96" stroke="#10857F" stroke-width="3"/><line x1="4" y1="50" x2="96" y2="50" stroke="#10857F" stroke-width="3"/><text x="50" y="38" text-anchor="middle" fill="#10857F" font-size="13" font-weight="700" font-family="Inter,sans-serif">BAY</text><text x="50" y="52" text-anchor="middle" fill="#10857F" font-size="13" font-weight="700" font-family="Inter,sans-serif">ER</text></svg></div>';
+  h += '<h2 class="text-xl font-black text-gray-900">Ruta Institucional Bayer</h2>';
+  h += '<p class="text-sm text-gray-500 mt-1">Drug Medical Affairs — Clinical Research Pathway</p></div>';
+  h += '<div class="max-w-md mx-auto space-y-4">';
+  h += '<div class="p-4 border-2 border-gray-200 rounded-xl bg-teal-50/30">';
+  h += '<p class="text-sm font-bold text-gray-800 mb-3">Selecciona el tipo de revision requerida:</p>';
+  h += '<div class="space-y-3">';
+  // DMA Review option
+  h += '<button onclick="selectStage3Route(\'subdireccion\')" class="w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all ' + (stage2Route === 'subdireccion' ? 'border-teal-500 bg-teal-50 shadow-md' : 'border-gray-200 hover:border-teal-300 hover:bg-teal-50/50') + '">';
+  h += '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ' + (stage2Route === 'subdireccion' ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-500') + '"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg></div>';
+  h += '<div class="text-left flex-1"><div class="font-bold text-sm ' + (stage2Route === 'subdireccion' ? 'text-teal-700' : 'text-gray-800') + '">DMA Full Review</div>';
+  h += '<div class="text-[11px] text-gray-500 mt-0.5">Revision completa por <strong>Drug Medical Affairs</strong> → Medical Compliance → Pharmacovigilance</div></div></button>';
+  // Direct to Compliance option
+  h += '<button onclick="selectStage3Route(\'directo_etica\')" class="w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all ' + (stage2Route === 'directo_etica' ? 'border-[#66BE00]/60 bg-[#66BE00]/5 shadow-md' : 'border-gray-200 hover:border-[#66BE00]/40 hover:bg-[#66BE00]/5') + '">';
+  h += '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ' + (stage2Route === 'directo_etica' ? 'bg-[#66BE00] text-white' : 'bg-gray-100 text-gray-500') + '"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.062a1.125 1.125 0 0 1 0 1.953l-7.108 4.062A1.125 1.125 0 0 1 3 16.811V8.689ZM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.062a1.125 1.125 0 0 1 0 1.953l-7.108 4.062a1.125 1.125 0 0 1-1.683-.977V8.689Z"/></svg></div>';
+  h += '<div class="text-left flex-1"><div class="font-bold text-sm ' + (stage2Route === 'directo_etica' ? 'text-[#66BE00]' : 'text-gray-800') + '">Fast Track — Compliance Directo</div>';
+  h += '<div class="text-[11px] text-gray-500 mt-0.5">Estudios observacionales — directo a <strong>Medical Compliance</strong> sin revision DMA</div></div></button>';
+  h += '</div></div>';
+  if (stage2Route) {
+    h += '<button onclick="confirmStage3Route()" class="w-full mt-4 confirm-btn bg-gradient-to-r from-[#10857F] to-[#66BE00] hover:shadow-lg text-white px-6 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center justify-center gap-2">';
+    h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>Continuar</button>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
+function renderStage3BayerDetailedViews(v) {
+  if (!v) v = $('detailedViews'); if (!v) return;
+  var html = '';
+  if (stage3InstStep === 0) { html = renderBayerRouteWizard(); }
+  else {
+    if (stage3InstStep >= 1) html += renderBayerDMAReview();
+    if (stage3InstStep >= 3) html += renderBayerComplianceReview();
+    if (stage3InstStep >= 5) html += renderBayerPharmacovigilance();
+    if (stage3InstStep >= 6) html += renderBayerFinalApproval();
+  }
+  if (!html.trim()) html = '<div class="text-center py-16 text-gray-400"><div class="text-4xl mb-4">\uD83D\uDC8A</div><p class="text-lg font-semibold">Iniciando Ruta Institucional Bayer...</p></div>';
+  v.innerHTML = html;
+}
+
+function renderBayerDMAReview() {
+  var h = '<div class="phase-divider"><span>Paso 1-2: DMA Review</span></div>';
+  h += '<div class="email-card mb-6 s2-appear">';
+  h += '<div class="email-header">';
+  h += '<div class="email-field"><span class="email-label">Para:</span><span class="email-value font-semibold">dma.review@bayer.com</span></div>';
+  h += '<div class="email-field"><span class="email-label">De:</span><span class="email-value">investigador@bayer.com</span></div>';
+  h += '<div class="email-field"><span class="email-label">Asunto:</span><span class="email-value font-semibold">Protocol Submission — DMA Review — ' + esc(stage2ProjectType || 'Clinical Study') + '</span></div>';
+  h += '</div>';
+  h += '<div class="email-body">';
+  h += '<p class="text-sm text-gray-700 mb-3">Dear DMA Team,</p>';
+  h += '<p class="text-sm text-gray-700 mb-3">Please find attached the clinical study protocol for scientific and strategic review, along with the following documents:</p>';
+  h += '<ul class="text-sm text-gray-600 space-y-1 mb-3">';
+  h += '<li>&#x2022; Clinical Study Protocol (CSP)</li>';
+  h += '<li>&#x2022; Investigator\'s Brochure (IB) — latest version</li>';
+  h += '<li>&#x2022; Statistical Analysis Plan (SAP) — draft</li>';
+  h += '<li>&#x2022; Clinical Development Plan alignment memo</li>';
+  h += '</ul>';
+  h += '<p class="text-sm text-gray-500 italic">DMA will evaluate alignment with the global molecule strategy and CDP.</p>';
+  h += '</div></div>';
+  // DMA feedback
+  if (stage3InstStep >= 2) {
+    h += '<div class="bg-teal-50 border-2 border-teal-200 rounded-2xl p-6 mb-6 s2-appear">';
+    h += '<div class="flex items-center gap-3 mb-3"><div class="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center"><svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg></div>';
+    h += '<div><h4 class="font-bold text-teal-800">DMA Feedback</h4><p class="text-[10px] text-teal-600">Scientific and strategic review completed</p></div></div>';
+    h += '<div class="space-y-2">';
+    h += '<div class="flex items-start gap-2 text-sm text-teal-900"><span class="text-teal-500 mt-0.5">&#x25B6;</span><span>Align primary endpoint with Global CDP milestones</span></div>';
+    h += '<div class="flex items-start gap-2 text-sm text-teal-900"><span class="text-teal-500 mt-0.5">&#x25B6;</span><span>Include exploratory biomarkers per molecule strategy</span></div>';
+    h += '<div class="flex items-start gap-2 text-sm text-teal-900"><span class="text-teal-500 mt-0.5">&#x25B6;</span><span>Update pharmacovigilance plan to include AESIs</span></div>';
+    h += '</div></div>';
+  }
+  return h;
+}
+
+function renderBayerComplianceReview() {
+  var h = '<div class="phase-divider"><span>Paso 3-4: Medical Compliance</span></div>';
+  h += '<div class="bg-white border-2 border-purple-200 rounded-2xl p-6 shadow-sm mb-6 s2-appear">';
+  h += '<div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center"><svg class="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg></div>';
+  h += '<div><h4 class="font-bold text-gray-900">Medical Compliance Review</h4><p class="text-xs text-gray-500">Verificacion regulatoria — ICH-GCP, SOPs corporativos, INVIMA</p></div></div>';
+  h += '<div class="grid grid-cols-2 gap-3 mb-4">';
+  var checks = [
+    { label: 'ICH-GCP E6(R2)', done: stage3InstStep >= 4 },
+    { label: 'SOPs Corporativos', done: stage3InstStep >= 4 },
+    { label: 'Regulacion Local (INVIMA)', done: stage3InstStep >= 4 },
+    { label: 'Seguro de Investigacion', done: stage3InstStep >= 4 },
+    { label: 'Informed Consent Review', done: stage3InstStep >= 4 },
+    { label: 'Data Privacy (GDPR/Habeas Data)', done: stage3InstStep >= 4 },
+  ];
+  checks.forEach(function(c) {
+    h += '<div class="flex items-center gap-2 p-2 rounded-lg ' + (c.done ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200') + '">';
+    h += '<span class="text-sm">' + (c.done ? '&#x2705;' : '&#x23F3;') + '</span>';
+    h += '<span class="text-xs font-medium ' + (c.done ? 'text-green-700' : 'text-gray-600') + '">' + c.label + '</span></div>';
+  });
+  h += '</div>';
+  if (stage3InstStep >= 4) {
+    h += '<div class="p-3 rounded-xl bg-green-50 border border-green-200 text-xs text-green-700"><strong>Compliance aprobado</strong> — Observaciones menores: actualizar seccion de farmacovigilancia y confirmar seguro de investigacion.</div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+function renderBayerPharmacovigilance() {
+  var h = '<div class="phase-divider"><span>Paso 5: Global Pharmacovigilance</span></div>';
+  h += '<div class="bg-white border-2 border-green-200 rounded-2xl p-6 shadow-sm mb-6 s2-appear">';
+  h += '<div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center"><svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></div>';
+  h += '<div><h4 class="font-bold text-gray-900">Global Pharmacovigilance</h4><p class="text-xs text-gray-500">Safety profile review and risk management</p></div></div>';
+  h += '<div class="space-y-3 mb-4">';
+  var pvDocs = [
+    { name: 'Development Safety Update Report (DSUR)', status: 'Reviewed' },
+    { name: 'Investigator Brochure (IB) — Safety Section', status: 'Updated' },
+    { name: 'Reference Safety Information (RSI)', status: 'Current' },
+    { name: 'Risk Management Plan (RMP)', status: 'Approved' },
+    { name: 'AESI Monitoring Protocol', status: 'Defined' },
+  ];
+  pvDocs.forEach(function(d) {
+    h += '<div class="flex items-center justify-between p-3 rounded-lg bg-green-50/50 border border-green-100">';
+    h += '<span class="text-xs font-medium text-gray-700">' + d.name + '</span>';
+    h += '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 border border-green-200">' + d.status + '</span></div>';
+  });
+  h += '</div>';
+  h += '<div class="p-3 rounded-xl bg-green-50 border border-green-200 text-xs text-green-700"><strong>Pharmacovigilance clearance obtained</strong> — Safety monitoring plan approved for study initiation.</div>';
+  h += '</div>';
+  return h;
+}
+
+function renderBayerFinalApproval() {
+  var h = '<div class="phase-divider"><span>Paso 6: Aprobacion Final</span></div>';
+  h += '<div class="bg-gradient-to-br from-teal-50 to-[#66BE00]/10 border-2 border-teal-300 rounded-2xl p-8 text-center mb-6 s2-appear">';
+  h += '<div class="text-4xl mb-3">&#x1F3C6;</div>';
+  h += '<h3 class="text-xl font-black text-gray-900 mb-2">Ruta Bayer Completada</h3>';
+  h += '<p class="text-sm text-gray-600 max-w-md mx-auto mb-4">Tu protocolo ha sido aprobado por DMA, Medical Compliance y Global Pharmacovigilance. El Country Medical Director ha dado aprobacion final.</p>';
+  h += '<div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-100 text-teal-700 text-xs font-bold">&#x2705; Study Authorized — Ready to Initiate</div>';
+  h += '</div>';
+  // Global Trial Registry
+  h += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">';
+  h += '<div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm s2-appear">';
+  h += '<div class="flex items-center gap-2 mb-3"><div class="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center"><svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg></div>';
+  h += '<h4 class="font-bold text-sm text-gray-900">Clinical Trial Registry</h4></div>';
+  h += '<p class="text-xs text-gray-600 mb-2">El estudio debe registrarse en ClinicalTrials.gov y en el Bayer Global Trial Registry antes del primer paciente.</p>';
+  h += '<div class="px-3 py-2 rounded-lg bg-teal-50 text-xs text-teal-700 font-semibold">&#x1F4CB; Registro pendiente</div></div>';
+  h += '<div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm s2-appear">';
+  h += '<div class="flex items-center gap-2 mb-3"><div class="w-8 h-8 rounded-lg bg-[#66BE00]/10 flex items-center justify-center"><svg class="w-4 h-4 text-[#66BE00]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"/></svg></div>';
+  h += '<h4 class="font-bold text-sm text-gray-900">Site Initiation</h4></div>';
+  h += '<p class="text-xs text-gray-600 mb-2">Coordinacion con el CRO para Site Initiation Visit (SIV) y activacion de centros de investigacion.</p>';
+  h += '<div class="px-3 py-2 rounded-lg bg-[#66BE00]/10 text-xs text-[#66BE00] font-semibold">&#x1F4DD; SIV Planning</div></div>';
+  h += '</div>';
+  return h;
+}
+
 async function runStage3InstSimulation() {
   try {
+  var reasoning = currentTenant === 'bayer' ? STAGE2_BAYER_REASONING : STAGE2_REASONING;
   // ── PASO 0: Seleccion de Ruta Institucional ──
   stage3InstStep = 0;
   currentSimPhase = 's3_ruta';
@@ -5654,11 +5927,11 @@ async function runStage3InstSimulation() {
   renderStage3InstHeader();
   renderStage3InstAgentGrid();
   await delay(2000);
-  await bubbleTypewriter(STAGE2_REASONING.revision_pre, 32);
+  await bubbleTypewriter(reasoning.revision_pre, 32);
   await delay(3000);
   renderStage3InstDetailedViews();
   await delay(2000);
-  await bubbleTypewriter(STAGE2_REASONING.revision_feedback, 28);
+  await bubbleTypewriter(reasoning.revision_feedback, 28);
   await awaitStage2Confirmation('1 — Revision Preliminar', 'revision');
   if (simulationAborted) return;
 
@@ -5677,7 +5950,7 @@ async function runStage3InstSimulation() {
     renderStage3InstHeader();
     renderStage3InstAgentGrid();
     await delay(2000);
-    await bubbleTypewriter(STAGE2_REASONING.subdireccion_pre, 32);
+    await bubbleTypewriter(reasoning.subdireccion_pre, 32);
     await delay(2000);
     renderStage3InstDetailedViews();
     await animateSubmissionProgress();
@@ -5690,7 +5963,7 @@ async function runStage3InstSimulation() {
     renderStage3InstHeader();
     renderStage3InstAgentGrid();
     await delay(3000);
-    await bubbleTypewriter(STAGE2_REASONING.subdireccion_done, 32);
+    await bubbleTypewriter(reasoning.subdireccion_done, 32);
     await delay(1500);
     renderStage3InstDetailedViews();
     await awaitStage2Confirmation('4 — Respuesta Subdireccion', 'subdireccion');
@@ -5707,11 +5980,11 @@ async function runStage3InstSimulation() {
   renderStage3InstHeader();
   renderStage3InstAgentGrid();
   await delay(2000);
-  await bubbleTypewriter(STAGE2_REASONING.etica_pre, 32);
+  await bubbleTypewriter(reasoning.etica_pre, 32);
   await delay(2000);
   renderStage3InstDetailedViews();
   await delay(1500);
-  await bubbleTypewriter(STAGE2_REASONING.etica_docs, 32);
+  await bubbleTypewriter(reasoning.etica_docs, 32);
   await delay(1500);
   renderStage3InstDetailedViews();
   await awaitStage2Confirmation('5 — Comite de Etica', 'etica');
@@ -5725,11 +5998,11 @@ async function runStage3InstSimulation() {
   renderStage3InstHeader();
   renderStage3InstAgentGrid();
   await delay(2000);
-  await bubbleTypewriter(STAGE2_REASONING.final_pre, 32);
+  await bubbleTypewriter(reasoning.final_pre, 32);
   await delay(2000);
   renderStage3InstDetailedViews();
   await delay(2000);
-  await bubbleTypewriter(STAGE2_REASONING.final_redcap, 28);
+  await bubbleTypewriter(reasoning.final_redcap, 28);
   await delay(3000);
 
   // Done
@@ -5738,7 +6011,7 @@ async function runStage3InstSimulation() {
   stage3InstStep = 7;
   setBubbleStatus('done', 'Etapa 3 Completada');
   await delay(1500);
-  await bubbleTypewriter(STAGE2_REASONING.final_done, 32);
+  await bubbleTypewriter(reasoning.final_done, 32);
   renderStage3InstHeader();
   renderStage3InstAgentGrid();
   renderStage3InstDetailedViews();
@@ -5746,7 +6019,8 @@ async function runStage3InstSimulation() {
   // Show Stage 4 transition — adapted to study type
   await delay(3000);
   var s4Cfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
-  var s4Msg = 'Excelente. La ruta institucional FSFB esta completa. ';
+  var tenantLabel = currentTenant === 'bayer' ? 'Bayer' : 'FSFB';
+  var s4Msg = 'Excelente. La ruta institucional ' + tenantLabel + ' esta completa. ';
   if (s4Cfg && s4Cfg.needsMetaAnalysis) s4Msg += 'Ahora viene el <strong>Motor de Sintesis Cuantitativa (Etapa 4)</strong>. Aqui es donde los numeros hablan — voy a ejecutar el metaanalisis completo.';
   else if (s4Cfg && s4Cfg.id === 'cualitativo') s4Msg += 'Ahora viene la <strong>Etapa 4: Plan de Analisis Tematico</strong>. Voy a preparar el esquema de codificacion y analisis cualitativo.';
   else if (s4Cfg && s4Cfg.id === 'caso_reporte') s4Msg += 'Ahora viene la <strong>Etapa 4: Analisis Descriptivo</strong>. Voy a estructurar el analisis del reporte de caso.';
