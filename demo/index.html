@@ -12753,6 +12753,8 @@ async function callAgentOrSimulate(question) {
         }
         if (aggData.articles && aggData.articles.length > 0) {
           aggArticles = aggData.articles;
+          simData._pubmed_articles = aggData.articles;
+          simData._pubmed_real = true;
           simData.extraction_table = aggData.articles.map(function(a) {
             var authorStr = (a.authors && a.authors.length > 0) ? a.authors[0] + (a.authors.length > 1 ? ' et al.' : '') : 'N/A';
             return { autor: authorStr, anio: parseInt(a.year) || 0, pais: '', diseno: '', n: '', resultado: a.title || '', sesgo: 'pendiente', pmid: a.pmid || '', doi: a.doi || '' };
