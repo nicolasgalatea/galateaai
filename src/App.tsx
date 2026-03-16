@@ -7,6 +7,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { ReferencesProvider } from "./contexts/ReferencesContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import NewHome from "./pages/NewHome";
 import Auth from "./pages/Auth";
 import Agents from "./pages/Agents";
@@ -51,6 +52,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+           <ErrorBoundary>
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<NewHome />} />
@@ -90,6 +92,7 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
             </Routes>
+           </ErrorBoundary>
           </BrowserRouter>
           </ReferencesProvider>
         </TooltipProvider>
