@@ -416,8 +416,8 @@
           <span id="statusDot" class="w-2 h-2 rounded-full bg-gray-300 transition-all"></span>
           <span id="statusText" class="text-xs font-medium text-gray-500">Conectando...</span>
         </div>
-        <!-- Bayer logo in navbar -->
-        <div class="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm">
+        <!-- Tenant logo in navbar -->
+        <div id="tenantNavLogo" class="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm">
           <svg viewBox="0 0 100 100" class="w-7 h-7">
             <circle cx="50" cy="50" r="46" fill="none" stroke="#10857F" stroke-width="3"/>
             <line x1="50" y1="4" x2="50" y2="96" stroke="#10857F" stroke-width="2.5"/>
@@ -1192,9 +1192,20 @@ function selectTenant(tenantId) {
   if (subtitle) subtitle.textContent = getTenantConfig().name;
   var emailInput = document.getElementById('loginEmail');
   if (emailInput) emailInput.placeholder = 'usuario@' + getTenantConfig().domain;
+  updateTenantNavLogo();
   // Transition pages
   document.getElementById('tenantSelectorPage').classList.replace('page-visible','page-hidden');
   document.getElementById('loginPage').classList.replace('page-hidden','page-visible');
+}
+
+function updateTenantNavLogo() {
+  var el = document.getElementById('tenantNavLogo');
+  if (!el) return;
+  if (currentTenant === 'fsfb') {
+    el.innerHTML = '<svg viewBox="0 0 100 100" class="w-7 h-7"><rect x="15" y="30" width="70" height="55" rx="6" fill="none" stroke="#10857F" stroke-width="3"/><rect x="35" y="10" width="30" height="30" rx="4" fill="none" stroke="#10857F" stroke-width="3"/><line x1="50" y1="10" x2="50" y2="25" stroke="#10857F" stroke-width="3"/><line x1="42" y1="17" x2="58" y2="17" stroke="#10857F" stroke-width="3"/><rect x="28" y="50" width="12" height="15" rx="2" fill="#10857F" opacity="0.3"/><rect x="44" y="50" width="12" height="15" rx="2" fill="#10857F" opacity="0.3"/><rect x="60" y="50" width="12" height="15" rx="2" fill="#10857F" opacity="0.3"/><rect x="42" y="70" width="16" height="15" rx="2" fill="#10857F" opacity="0.5"/></svg>';
+  } else {
+    el.innerHTML = '<svg viewBox="0 0 100 100" class="w-7 h-7"><circle cx="50" cy="50" r="46" fill="none" stroke="#10857F" stroke-width="3"/><line x1="50" y1="4" x2="50" y2="96" stroke="#10857F" stroke-width="2.5"/><line x1="4" y1="50" x2="96" y2="50" stroke="#10857F" stroke-width="2.5"/><text x="50" y="38" text-anchor="middle" fill="#10857F" font-size="12" font-weight="700" font-family="Inter,sans-serif">BAY</text><text x="50" y="50" text-anchor="middle" fill="#10857F" font-size="12" font-weight="700" font-family="Inter,sans-serif">ER</text><text x="28" y="55" text-anchor="middle" fill="#10857F" font-size="8" font-weight="600" font-family="Inter,sans-serif" transform="rotate(-90,28,55)">BAYER</text><text x="72" y="55" text-anchor="middle" fill="#10857F" font-size="8" font-weight="600" font-family="Inter,sans-serif" transform="rotate(90,72,55)">BAYER</text></svg>';
+  }
 }
 
 var AGENTS = [
@@ -2353,8 +2364,8 @@ function showStage2TransitionCard() {
   card.innerHTML =
     '<div class="relative z-10">' +
       '<div class="text-4xl mb-4">&#x1F3E5;</div>' +
-      '<h3 class="text-xl font-black text-white mb-2">Etapa 2: Documentacion FSFB</h3>' +
-      '<p class="text-sm text-white/60 mb-6 max-w-md mx-auto">Departamento de Cirugia — Fundacion Santa Fe de Bogota<br>4 pasos: clasificacion, ruta, guias y documentacion pre-poblada</p>' +
+      '<h3 class="text-xl font-black text-white mb-2">' + (currentTenant === 'bayer' ? 'Etapa 2: Documentacion — Bayer' : 'Etapa 2: Documentacion FSFB') + '</h3>' +
+      '<p class="text-sm text-white/60 mb-6 max-w-md mx-auto">' + (currentTenant === 'bayer' ? 'Drug Medical Affairs — Bayer Clinical Research' : 'Departamento de Cirugia — Fundacion Santa Fe de Bogota') + '<br>4 pasos: clasificacion, ruta, guias y documentacion pre-poblada</p>' +
       '<button onclick="startStage2()" class="confirm-btn bg-gradient-to-r from-galatea to-verde hover:shadow-lg text-white px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2 btn-attention">' +
         '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>' +
         'Iniciar Documentacion' +
@@ -2603,7 +2614,7 @@ function showProjectListPage() {
   var deptLabel = document.getElementById('projectListDept');
   var badge = document.getElementById('projectListBadge');
   if (currentUser.role === 'jefe_investigacion') {
-    deptLabel.textContent = 'Panel de Investigacion FSFB';
+    deptLabel.textContent = currentTenant === 'bayer' ? 'Panel de Investigacion Bayer' : 'Panel de Investigacion FSFB';
     badge.innerHTML = '\uD83C\uDF93 Jefe de Investigacion';
     badge.className = 'hidden sm:flex items-center gap-1.5 bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-semibold';
   } else {
@@ -5116,7 +5127,7 @@ function updateDebug() {
 document.addEventListener('DOMContentLoaded', function() {
   // Restore tenant selection
   var savedTenant = sessionStorage.getItem('galatea_tenant');
-  if (savedTenant) { currentTenant = savedTenant; }
+  if (savedTenant) { currentTenant = savedTenant; updateTenantNavLogo(); }
   // Check demo session in localStorage
   var savedDemo = sessionStorage.getItem('galatea_pilot_user');
   if (savedDemo) {
@@ -5417,7 +5428,7 @@ function startStage2() {
   simulationRunning = true;
   simulationAborted = false;
   // Update header for stage 2
-  $('projectTitle').textContent = 'Documentacion — FSFB';
+  $('projectTitle').textContent = currentTenant === 'bayer' ? 'Documentacion — Bayer' : 'Documentacion — FSFB';
   $('projectMeta').textContent = 'Etapa 2: Documentacion | Paso 0 / 5';
   showBubble(); // Ensure bubble is visible for Stage 2
   renderStage2AgentGrid();
@@ -5534,7 +5545,7 @@ async function runStage2Simulation() {
   stage2Step = 6;
   setBubbleStatus('done', 'Etapa 2 Completada');
   await delay(1500);
-  await bubbleTypewriter('Documentacion completa. Ahora pasaremos a la <strong>Etapa 3: Ruta Institucional FSFB</strong>, donde tu proyecto sera revisado, sometido a la Subdireccion y al Comite de Etica.', 32);
+  await bubbleTypewriter('Documentacion completa. Ahora pasaremos a la <strong>Etapa 3: Ruta Institucional ' + (currentTenant === 'bayer' ? 'Bayer' : 'FSFB') + '</strong>, donde tu proyecto sera revisado, sometido a la Subdireccion y al Comite de Etica.', 32);
   renderStage2Header();
   renderStage2AgentGrid();
   renderStage2DetailedViews();
@@ -5552,7 +5563,7 @@ function showStage3InstitutionalTransitionCard() {
   card.innerHTML =
     '<div class="relative z-10">' +
       '<div class="text-4xl mb-4">&#x1F3E5;</div>' +
-      '<h3 class="text-xl font-black text-white mb-2">Etapa 3: Ruta Institucional FSFB</h3>' +
+      '<h3 class="text-xl font-black text-white mb-2">Etapa 3: Ruta Institucional ' + (currentTenant === 'bayer' ? 'Bayer' : 'FSFB') + '</h3>' +
       '<p class="text-sm text-white/60 mb-6 max-w-md mx-auto">Revision preliminar, Subdireccion de Estudios Clinicos, Comite de Etica, REDCap y GrupLAC<br>6 pasos para completar la ruta institucional</p>' +
       '<button onclick="startStage3Institutional()" class="confirm-btn bg-gradient-to-r from-galatea to-verde hover:shadow-lg text-white px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2 btn-attention">' +
         '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>' +
@@ -5722,7 +5733,7 @@ function renderRouteWizard() {
   h += '<button onclick="selectStage3Route(\'subdireccion\')" class="w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all ' + (stage2Route === 'subdireccion' ? 'border-indigo-500 bg-indigo-50 shadow-md' : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50') + '">';
   h += '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ' + (stage2Route === 'subdireccion' ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-500') + '"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg></div>';
   h += '<div class="text-left flex-1"><div class="font-bold text-sm ' + (stage2Route === 'subdireccion' ? 'text-indigo-700' : 'text-gray-800') + '">SI — Revision exhaustiva</div>';
-  h += '<div class="text-[11px] text-gray-500 mt-0.5">Envia el proyecto a <strong>investigacion.cirugia@fsfb.org.co</strong> para revision por la seccion de investigacion antes de la Subdireccion.</div></div></button>';
+  h += '<div class="text-[11px] text-gray-500 mt-0.5">Envia el proyecto a <strong>' + (currentTenant === 'bayer' ? 'dma.review@bayer.com' : 'investigacion.cirugia@fsfb.org.co') + '</strong> para revision por la seccion de investigacion antes de la Subdireccion.</div></div></button>';
   // NO option
   h += '<button onclick="selectStage3Route(\'directo_etica\')" class="w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all ' + (stage2Route === 'directo_etica' ? 'border-verde/60 bg-verde/5 shadow-md' : 'border-gray-200 hover:border-verde/40 hover:bg-verde/5') + '">';
   h += '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ' + (stage2Route === 'directo_etica' ? 'bg-verde text-white' : 'bg-gray-100 text-gray-500') + '"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.062a1.125 1.125 0 0 1 0 1.953l-7.108 4.062A1.125 1.125 0 0 1 3 16.811V8.689ZM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.062a1.125 1.125 0 0 1 0 1.953l-7.108 4.062a1.125 1.125 0 0 1-1.683-.977V8.689Z"/></svg></div>';
@@ -6643,7 +6654,7 @@ function getDocTemplateSections(docName) {
       {label:'1.1. Titulo', key:'titulo', placeholder:'Escriba el titulo completo del proyecto de investigacion...'},
       {label:'1.2. Investigador principal', key:'ip', placeholder:'Nombre completo del investigador principal'},
       {label:'1.3. Co-investigadores', key:'coinv', placeholder:'Nombre, institucion, rol\nCorreo electronico de contacto:\nTelefono de contacto:'},
-      {label:'Correo electronico de contacto', key:'email', placeholder:'correo@fsfb.org.co'},
+      {label:'Correo electronico de contacto', key:'email', placeholder:'correo@' + getTenantConfig().domain},
       {label:'Telefono de contacto', key:'tel', placeholder:''},
       {label:'1.4. Nombre del Grupo de Investigacion (GrupLAC)', key:'gruplac', placeholder:''},
       {label:'1.5. Total de investigadores (numero)', key:'total_inv', placeholder:''},
@@ -6861,7 +6872,7 @@ function getDocTemplateSections(docName) {
       {label:'Investigador Principal', key:'contacto_ip', placeholder:'Nombre y telefono'},
       {label:'Investigador secundario', key:'contacto_sec', placeholder:'Nombre y telefono'},
       {label:'Coordinador de estudio', key:'contacto_coord', placeholder:'Nombre y telefono'},
-      {label:'Comite de Etica', key:'contacto_comite', placeholder:'Para cualquier aclaracion sobre sus derechos como participante o si cree que los mismos han sido vulnerados, puede comunicarse con el Comite Corporativo de Etica en Investigacion — Calle 119A No.7-49 telefono 6030303 Ext. 5402 o al correo: comiteinvestigativo@fsfb.org.co'}
+      {label:'Comite de Etica', key:'contacto_comite', placeholder:'Para cualquier aclaracion sobre sus derechos como participante o si cree que los mismos han sido vulnerados, puede comunicarse con el Comite Corporativo de Etica en Investigacion — Calle 119A No.7-49 telefono 6030303 Ext. 5402 o al correo: ' + (currentTenant === 'bayer' ? 'ethics.committee@bayer.com' : 'comiteinvestigativo@fsfb.org.co')}
     ]},
     { id:'icf1_declaracion', title:'15. Declaracion de Consentimiento Informado', fields:[
       {label:'Declaracion del participante', key:'declaracion', placeholder:'Al firmar este formulario, certifico todos los puntos siguientes:\n\n[ ] He leido (o me han leido) este formulario de consentimiento informado en su totalidad y he recibido explicaciones. He tenido la oportunidad de hacer preguntas.\n[ ] He recibido una copia de este formulario que puedo guardar como referencia.\n[ ] Acepto que mi informacion personal confidencial este disponible para el investigador, la institucion, entidad gubernamental o el Comite de Etica.\n[ ] Entiendo que tengo la libertad de retirarme del estudio en cualquier momento, sin justificar mi decision y sin afectar la atencion medica que reciba.\n[ ] Entiendo los procedimientos de este protocolo incluyendo lo relacionado al uso futuro de muestras biologicas.\n[ ] Entiendo que los resultados cualesquiera que sean seran publicados.\n[ ] Comprendo que se me informara sobre cualquier informacion nueva que pudiera afectar mi voluntad de seguir participando.\n[ ] Acepto voluntariamente participar en este estudio.', large:true}
@@ -6902,7 +6913,7 @@ function getDocTemplateSections(docName) {
       {label:'Voluntariedad', key:'v_voluntad', placeholder:'Su participacion es voluntaria, le podemos garantizar que nuestro equipo lo tratara de la misma forma si decide o no participar. En el momento en que usted lo decida puede retirarse informandole al investigador su decision. Sus derechos en la atencion en salud permaneceran sin modificacion.'}
     ]},
     { id:'icf2_confidencialidad', title:'Confidencialidad (Verbal)', fields:[
-      {label:'Confidencialidad', key:'v_confidencialidad', placeholder:'Vamos a recoger informacion sobre usted y para identificarlo se le asignara un codigo, sus datos personales no seran revelados, permaneceran anonimos. Mediante esta autorizacion usted tambien nos permite consultar datos de su historia clinica.\n\nSi considera que sus derechos han sido vulnerados, puede comunicarse con el Comite Corporativo de Etica en Investigacion al telefono 6030303 Ext 5402 o comiteinvestigativo@fsfb.org.co', large:true}
+      {label:'Confidencialidad', key:'v_confidencialidad', placeholder:'Vamos a recoger informacion sobre usted y para identificarlo se le asignara un codigo, sus datos personales no seran revelados, permaneceran anonimos. Mediante esta autorizacion usted tambien nos permite consultar datos de su historia clinica.\n\nSi considera que sus derechos han sido vulnerados, puede comunicarse con el Comite Corporativo de Etica en Investigacion al telefono 6030303 Ext 5402 o ' + (currentTenant === 'bayer' ? 'ethics.committee@bayer.com' : 'comiteinvestigativo@fsfb.org.co'), large:true}
     ]},
     { id:'icf2_publicacion', title:'Publicacion (Verbal)', fields:[
       {label:'Publicacion', key:'v_publicacion', placeholder:'Todos los resultados de esta investigacion seran publicados como lo ordenan las normas eticas en investigacion, pero usted no sera identificado.'}
@@ -6960,7 +6971,7 @@ function getDocTemplateSections(docName) {
     ]},
     { id:'icf3_contacto', title:'Con quien puedo hablar para hacer preguntas? (Menores)', fields:[
       {label:'Contactos', key:'m_contacto', placeholder:'Puedes hacerme preguntas ahora o mas tarde. Puedes preguntar a la enfermera. Mis numeros de contacto son ___________________________________________________'},
-      {label:'Comite de Etica', key:'m_comite', placeholder:'Existe un grupo de personas encargadas de revisar que tu participacion sea la mas adecuada para ti y tu salud. Ellos son el Comite Corporativo de Etica en Investigacion. Puedes contactarlos al telefono 6030303 Ext 5402 o escribir a comiteinvestigativo@fsfb.org.co'}
+      {label:'Comite de Etica', key:'m_comite', placeholder:'Existe un grupo de personas encargadas de revisar que tu participacion sea la mas adecuada para ti y tu salud. Ellos son el Comite Corporativo de Etica en Investigacion. Puedes contactarlos al telefono 6030303 Ext 5402 o escribir a ' + (currentTenant === 'bayer' ? 'ethics.committee@bayer.com' : 'comiteinvestigativo@fsfb.org.co')}
     ]},
     { id:'icf3_declaracion', title:'Declaracion del Menor', fields:[
       {label:'Preguntas de verificacion', key:'m_verificacion', placeholder:'Ya leiste o te leyeron el documento y quieres participar en el estudio? ___\nYa preguntaste y te contestaron todas tus dudas? ___\nEntendiste que tu ayuda es voluntaria y puedes retirarte cuando quieras? ___\nEntendiste que no le podemos dar dinero a tus papas por tu ayuda? ___\nEntendiste que si no quieres participar te vamos a seguir atendiendo como siempre? ___', large:true},
@@ -7457,8 +7468,8 @@ function renderPreliminaryReview() {
   var h = '<div class="phase-divider"><span>Paso 5: Revision Preliminar Interna</span></div>';
   h += '<div class="email-card mb-6 s2-appear">';
   h += '<div class="email-header">';
-  h += '<div class="email-field"><span class="email-label">Para:</span><span class="email-value font-semibold">investigacion.cirugia@fsfb.org.co</span></div>';
-  h += '<div class="email-field"><span class="email-label">De:</span><span class="email-value">investigador.principal@fsfb.org.co</span></div>';
+  h += '<div class="email-field"><span class="email-label">Para:</span><span class="email-value font-semibold">' + (currentTenant === 'bayer' ? 'dma.review@bayer.com' : 'investigacion.cirugia@fsfb.org.co') + '</span></div>';
+  h += '<div class="email-field"><span class="email-label">De:</span><span class="email-value">' + (currentTenant === 'bayer' ? 'investigador@bayer.com' : 'investigador.principal@fsfb.org.co') + '</span></div>';
   h += '<div class="email-field"><span class="email-label">Asunto:</span><span class="email-value font-semibold">Sometimiento proyecto — ' + esc(stage2ProjectType || 'Protocolo') + '</span></div>';
   h += '</div>';
   h += '<div class="email-body">';
@@ -7476,7 +7487,7 @@ function renderPreliminaryReview() {
   var emailSubject = encodeURIComponent('Sometimiento proyecto — ' + (stage2ProjectType || 'Protocolo') + (project && project.project_code ? ' [' + project.project_code + ']' : ''));
   var emailBody = encodeURIComponent('Estimado equipo de investigacion del Departamento de Cirugia,\n\nAdjunto el protocolo de investigacion para revision preliminar.\n\nDocumentos adjuntos:\n- Formato de presentacion de proyecto\n- Matriz de Variables\n- Instrumento de recoleccion\n\nCordialmente.');
   h += '<div class="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">';
-  h += '<a href="mailto:investigacion.cirugia@fsfb.org.co?subject=' + emailSubject + '&body=' + emailBody + '" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">';
+  h += '<a href="mailto:' + (currentTenant === 'bayer' ? 'dma.review@bayer.com' : 'investigacion.cirugia@fsfb.org.co') + '?subject=' + emailSubject + '&body=' + emailBody + '" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">';
   h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>';
   h += 'Enviar correo a Investigacion</a>';
   h += '<span class="text-[10px] text-gray-400">Se abrira tu cliente de correo con el borrador pre-llenado</span>';
@@ -7792,7 +7803,7 @@ function renderSubdireccionResponse() {
   h += '<li>&#x2022; <strong>Matriz de Variables:</strong> Incluir el tiempo de seguimiento PICOT definido en la Etapa 1.</li>';
   h += '<li>&#x2022; <strong>Cronograma:</strong> Detallar el periodo de reclutamiento estimado.</li>';
   h += '</ul></div>';
-  h += '<div class="p-3 rounded-xl bg-blue-50 border border-blue-100 text-xs text-blue-700">Una vez realizados los ajustes, enviar documento corregido a <strong>investigacion.cirugia@fsfb.org.co</strong></div>';
+  h += '<div class="p-3 rounded-xl bg-blue-50 border border-blue-100 text-xs text-blue-700">Una vez realizados los ajustes, enviar documento corregido a <strong>' + (currentTenant === 'bayer' ? 'dma.review@bayer.com' : 'investigacion.cirugia@fsfb.org.co') + '</strong></div>';
   // Email analysis system
   h += renderEmailAnalysisBox('subdireccion');
   h += '</div></div>';
@@ -7929,15 +7940,15 @@ function renderFinalSteps() {
   } else {
     // Not connected: show setup flow
     h += '<div class="space-y-3">';
-    h += '<div class="text-xs text-amber-700">Para conectar con REDCap necesita el <strong>URL de la API</strong> y un <strong>API Token</strong> de su proyecto REDCap. Contacte a <strong>gestion.redcap@fsfb.org.co</strong> para obtenerlos.</div>';
+    h += '<div class="text-xs text-amber-700">Para conectar con REDCap necesita el <strong>URL de la API</strong> y un <strong>API Token</strong> de su proyecto REDCap. Contacte a <strong>' + (currentTenant === 'bayer' ? 'clinical.data@bayer.com' : 'gestion.redcap@fsfb.org.co') + '</strong> para obtenerlos.</div>';
     h += '<div class="flex items-center gap-3">';
     h += '<button onclick="showREDCapConfigModal()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-orange-500 text-white text-sm font-bold hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]">Configurar REDCap</button>';
-    var rcEmail = 'mailto:gestion.redcap@fsfb.org.co?subject=' + encodeURIComponent('Solicitud API Token REDCap — ' + (project && project.project_code ? project.project_code : 'Proyecto Galatea'));
+    var rcEmail = 'mailto:' + (currentTenant === 'bayer' ? 'clinical.data@bayer.com' : 'gestion.redcap@fsfb.org.co') + '?subject=' + encodeURIComponent('Solicitud API Token REDCap — ' + (project && project.project_code ? project.project_code : 'Proyecto Galatea'));
     h += '<a href="' + rcEmail + '" class="px-4 py-2.5 rounded-xl border border-amber-300 text-amber-700 text-xs font-bold hover:bg-amber-50 transition-all">Solicitar Token por correo</a>';
     h += '</div></div>';
   }
   if (stage2ProjectType === 'multicentrico') {
-    h += '<div class="mt-3 p-3 rounded-lg bg-amber-100 text-xs text-amber-800"><strong>Proyecto multicentrico:</strong> Si ya tiene una base de datos en REDCap, envie el link a <strong>investigacion.subd@fsfb.org.co</strong> y a <strong>ciberseguridad.fsfb@fsfb.org.co</strong> para evaluacion de seguridad.</div>';
+    h += '<div class="mt-3 p-3 rounded-lg bg-amber-100 text-xs text-amber-800"><strong>Proyecto multicentrico:</strong> Si ya tiene una base de datos en REDCap, envie el link a <strong>' + (currentTenant === 'bayer' ? 'compliance.medical@bayer.com' : 'investigacion.subd@fsfb.org.co') + '</strong> y a <strong>' + (currentTenant === 'bayer' ? 'it.security@bayer.com' : 'ciberseguridad.fsfb@fsfb.org.co') + '</strong> para evaluacion de seguridad.</div>';
   }
   h += '</div>';
 
@@ -7964,7 +7975,7 @@ function renderFinalSteps() {
   if (stage2Step > 10) {
     h += '<div class="bg-gradient-to-br from-verde/10 to-galatea/10 border-2 border-verde/30 rounded-2xl p-8 text-center mb-6 s2-appear">';
     h += '<div class="text-4xl mb-3">&#x1F3C6;</div>';
-    h += '<h3 class="text-xl font-black text-gray-900 mb-2">Ruta FSFB Completada</h3>';
+    h += '<h3 class="text-xl font-black text-gray-900 mb-2">Ruta ' + (currentTenant === 'bayer' ? 'Bayer' : 'FSFB') + ' Completada</h3>';
     h += '<p class="text-sm text-gray-600 max-w-md mx-auto">Tu proyecto ha recorrido toda la ruta institucional. El manuscrito de la Etapa 1 esta listo para publicacion.</p>';
     h += '</div>';
   }
@@ -9509,7 +9520,7 @@ async function runStage3Simulation() {
   await delay(2000);
   var maCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
   var maGuide = maCfg ? maCfg.equator[0].guideline : 'PRISMA 2020';
-  await bubbleTypewriter('He formateado tu proyecto bajo estandares <strong>' + maGuide + '</strong> y <strong>GRADE</strong>. El dossier esta listo para ser enviado a <strong>investigacion.cirugia@fsfb.org.co</strong>.', 28);
+  await bubbleTypewriter('He formateado tu proyecto bajo estandares <strong>' + maGuide + '</strong> y <strong>GRADE</strong>. El dossier esta listo para ser enviado a <strong>' + (currentTenant === 'bayer' ? 'dma.review@bayer.com' : 'investigacion.cirugia@fsfb.org.co') + '</strong>.', 28);
   // Show Stage 5 transition
   await delay(3000);
   showStage5TransitionCard();
@@ -13664,7 +13675,7 @@ function renderStage5Conclusion() {
   var h = '<div class="bg-gradient-to-br from-verde/10 via-galatea/10 to-pink-50 border-2 border-verde/30 rounded-2xl p-8 text-center mb-6 fade-up">';
   h += '<div class="text-5xl mb-3">&#x1F3C6;</div>';
   h += '<h3 class="text-xl font-black text-gray-900 mb-2">Investigacion Completa — 5 Etapas</h3>';
-  h += '<p class="text-sm text-gray-600 max-w-lg mx-auto">Las 5 etapas han finalizado. Tu investigacion ha recorrido el ciclo completo: Metodologia (Etapa 1) &rarr; Documentacion (Etapa 2) &rarr; Ruta Institucional FSFB (Etapa 3) &rarr; Sintesis Cuantitativa (Etapa 4) &rarr; Articulo Cientifico (Etapa 5).</p>';
+  h += '<p class="text-sm text-gray-600 max-w-lg mx-auto">Las 5 etapas han finalizado. Tu investigacion ha recorrido el ciclo completo: Metodologia (Etapa 1) &rarr; Documentacion (Etapa 2) &rarr; Ruta Institucional ' + (currentTenant === 'bayer' ? 'Bayer' : 'FSFB') + ' (Etapa 3) &rarr; Sintesis Cuantitativa (Etapa 4) &rarr; Articulo Cientifico (Etapa 5).</p>';
   h += '<button onclick="showExportCenter()" class="mt-4 bg-gradient-to-r from-galatea to-verde text-white px-8 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2">';
   h += '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>';
   h += 'Centro de Exportacion</button>';
