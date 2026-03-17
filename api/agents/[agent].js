@@ -188,6 +188,26 @@ const agents = {
     if (projectId) await updatePhaseData(projectId, 'stats', data);
     return { data, result };
   },
+
+  'documentation-builder': async (body) => {
+    const { projectId, researchQuestion, picot, framework, studyType, projectType, tenant } = body;
+    if (!researchQuestion) throw { status: 400, message: 'Missing researchQuestion' };
+    const userPrompt = `Pregunta de investigacion:\n"${researchQuestion}"\n\nPICOT:\n${JSON.stringify(picot || {}, null, 2)}\n\nFramework: ${framework || 'No especificado'}\nTipo de estudio: ${studyType || 'No especificado'}\nTipo de proyecto: ${projectType || 'protocolo'}\nInstitucion (tenant): ${tenant || 'fsfb'}\n\nGenera el paquete de documentacion contextual.`;
+    const result = await callClaude(PROMPTS.DOCUMENTATION_BUILDER, userPrompt);
+    const data = parseClaudeJSON(result.text);
+    if (projectId) await updatePhaseData(projectId, 'documentation_package', data);
+    return { data, result };
+  },
+
+  'institutional-reviewer': async (body) => {
+    const { projectId, researchQuestion, picot, framework, studyType, projectType, documentChecklist, route, tenant } = body;
+    if (!researchQuestion) throw { status: 400, message: 'Missing researchQuestion' };
+    const userPrompt = `Pregunta de investigacion:\n"${researchQuestion}"\n\nPICOT:\n${JSON.stringify(picot || {}, null, 2)}\n\nFramework: ${framework || 'No especificado'}\nTipo de estudio: ${studyType || 'No especificado'}\nTipo de proyecto: ${projectType || 'protocolo'}\nRuta seleccionada: ${route || 'subdireccion'}\nInstitucion (tenant): ${tenant || 'fsfb'}\nDocumentos preparados: ${JSON.stringify(documentChecklist || [])}\n\nGenera la revision institucional preliminar.`;
+    const result = await callClaude(PROMPTS.INSTITUTIONAL_REVIEWER, userPrompt);
+    const data = parseClaudeJSON(result.text);
+    if (projectId) await updatePhaseData(projectId, 'institutional_review', data);
+    return { data, result };
+  },
 };
 
 // Writer agents use SSE streaming to bypass Vercel's 60s function timeout.

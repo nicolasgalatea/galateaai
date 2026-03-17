@@ -5509,6 +5509,28 @@ async function runStage2Simulation() {
   stage2Step = 4;
   currentSimPhase = 's2_guias';
   stage2SimData = generateStage2SimData(stage2ProjectType, stage2Route);
+  // ── AI enrichment: replace hardcoded feedback with real Claude analysis ──
+  try {
+    setBubbleStatus('thinking', 'Analizando documentacion con IA...');
+    var docBuilderResult = await callAgentEndpoint('/api/agents/documentation-builder', {
+      projectId: activeProjectId,
+      researchQuestion: simData.researchQuestion || project.research_question || '',
+      picot: simData.picot || {},
+      framework: simData.framework || '',
+      studyType: simData.studyType || '',
+      projectType: stage2ProjectType,
+      tenant: currentTenant || 'fsfb'
+    }, 55000);
+    if (docBuilderResult.success && docBuilderResult.data) {
+      var aiDoc = docBuilderResult.data;
+      if (aiDoc.feedbackItems && aiDoc.feedbackItems.length > 0) stage2SimData.feedbackItems = aiDoc.feedbackItems;
+      stage2SimData.aiRouteRecommendation = aiDoc.routeRecommendation || null;
+      stage2SimData.aiRiskAssessment = aiDoc.riskAssessment || null;
+      stage2SimData.aiDocumentNotes = aiDoc.documentNotes || null;
+      stage2SimData.aiApplicableGuidelines = aiDoc.applicableGuidelines || null;
+      showToast('Documentacion analizada con IA', 'success');
+    }
+  } catch (docErr) { console.warn('documentation-builder AI failed, using defaults:', docErr.message); }
   setBubbleStatus('thinking', 'Paso 4 — Guias Institucionales');
   setBubbleThinking();
   renderStage2Header();
@@ -5930,6 +5952,33 @@ async function runStage3InstSimulation() {
   setBubbleStatus('done', 'Ruta seleccionada: ' + (stage2Route === 'subdireccion' ? 'Via Subdireccion' : 'Directo'));
   await delay(1000);
 
+  // ── AI: Call institutional reviewer for real contextual feedback ──
+  var aiReviewData = null;
+  try {
+    setBubbleStatus('thinking', 'Consultando revisor institucional IA...');
+    var reviewResult = await callAgentEndpoint('/api/agents/institutional-reviewer', {
+      projectId: activeProjectId,
+      researchQuestion: simData.researchQuestion || project.research_question || '',
+      picot: simData.picot || {},
+      framework: simData.framework || '',
+      studyType: simData.studyType || '',
+      projectType: stage2ProjectType || 'protocolo',
+      documentChecklist: stage2SimData ? (stage2SimData.docsSubdireccion || []).map(function(d){ return d.name || d; }) : [],
+      route: stage2Route,
+      tenant: currentTenant || 'fsfb'
+    }, 55000);
+    if (reviewResult.success && reviewResult.data) {
+      aiReviewData = reviewResult.data;
+      // Override hardcoded feedback with AI-generated corrections
+      if (aiReviewData.corrections && aiReviewData.corrections.length > 0 && stage2SimData) {
+        stage2SimData.feedbackItems = aiReviewData.corrections.map(function(c) { return '[' + (c.severity || 'menor').toUpperCase() + '] ' + (c.area || '') + ': ' + (c.description || ''); });
+      } else if (aiReviewData.preliminaryFeedback && aiReviewData.preliminaryFeedback.length > 0 && stage2SimData) {
+        stage2SimData.feedbackItems = aiReviewData.preliminaryFeedback;
+      }
+      showToast('Revision institucional completada con IA', 'success');
+    }
+  } catch (revErr) { console.warn('institutional-reviewer AI failed, using defaults:', revErr.message); }
+
   // ── PASO 1: Revision Preliminar ──
   stage3InstStep = 1;
   currentSimPhase = 's3_revision';
@@ -5942,7 +5991,10 @@ async function runStage3InstSimulation() {
   await delay(3000);
   renderStage3InstDetailedViews();
   await delay(2000);
-  await bubbleTypewriter(reasoning.revision_feedback, 28);
+  var revFeedbackMsg = (aiReviewData && aiReviewData.preliminaryFeedback && aiReviewData.preliminaryFeedback.length > 0)
+    ? aiReviewData.preliminaryFeedback.join('<br><br>')
+    : reasoning.revision_feedback;
+  await bubbleTypewriter(revFeedbackMsg, 28);
   await awaitStage2Confirmation('1 — Revision Preliminar', 'revision');
   if (simulationAborted) return;
 
@@ -5974,7 +6026,8 @@ async function runStage3InstSimulation() {
     renderStage3InstHeader();
     renderStage3InstAgentGrid();
     await delay(3000);
-    await bubbleTypewriter(reasoning.subdireccion_done, 32);
+    var subdirDoneMsg = (aiReviewData && aiReviewData.submissionNotes) ? aiReviewData.submissionNotes : reasoning.subdireccion_done;
+    await bubbleTypewriter(subdirDoneMsg, 32);
     await delay(1500);
     renderStage3InstDetailedViews();
     await awaitStage2Confirmation('4 — Respuesta Subdireccion', 'subdireccion');
