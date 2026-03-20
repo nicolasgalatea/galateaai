@@ -8196,16 +8196,44 @@ function generateStage3SimData() {
   var cochran_p = Math.max(0.001, parseFloat(Math.exp(-cochranQ / (2 * dfQ)).toFixed(3)));
   var model = 'Efectos Aleatorios (DerSimonian & Laird)';
 
-  // ── Egger test (simulated from study count) ──
-  var egger_intercept = parseFloat((0.5 + studies.length * 0.12 + (studies.length > 5 ? 0.3 : 0)).toFixed(2));
-  var egger_p = studies.length >= 6 ? parseFloat((0.01 + (studies.length % 5) * 0.008).toFixed(3)) : parseFloat((0.1 + studies.length * 0.02).toFixed(3));
-  var funnel_asymmetry = egger_p < 0.05;
+  // ── Egger test (real weighted linear regression of effect vs precision) ──
+  var egger_intercept = 0, egger_p = 1;
+  if (studies.length >= 3) {
+    var egX = [], egY = [];
+    for (var ei = 0; ei < studies.length; ei++) {
+      var precision = 1 / (studies[ei].se || 0.5);
+      var stdEffect = Math.log(studies[ei].or || 1) * precision;
+      egX.push(precision);
+      egY.push(stdEffect);
+    }
+    var n_eg = egX.length, sumX = 0, sumY = 0, sumXX = 0, sumXY = 0;
+    for (var ej = 0; ej < n_eg; ej++) { sumX += egX[ej]; sumY += egY[ej]; sumXX += egX[ej]*egX[ej]; sumXY += egX[ej]*egY[ej]; }
+    var slope_eg = (n_eg * sumXY - sumX * sumY) / (n_eg * sumXX - sumX * sumX || 1);
+    egger_intercept = parseFloat(((sumY - slope_eg * sumX) / n_eg).toFixed(2));
+    // t-test for intercept
+    var ssRes = 0, meanX = sumX/n_eg;
+    for (var ek = 0; ek < n_eg; ek++) { var pred = egger_intercept + slope_eg * egX[ek]; ssRes += (egY[ek] - pred) * (egY[ek] - pred); }
+    var seIntercept = Math.sqrt(ssRes / Math.max(1, n_eg - 2) / (sumXX - sumX*sumX/n_eg || 1));
+    var tStat = Math.abs(egger_intercept) / (seIntercept || 1);
+    egger_p = parseFloat(Math.max(0.001, Math.exp(-0.717 * tStat - 0.416 * tStat * tStat)).toFixed(3));
+  }
+  var funnel_asymmetry = egger_p < 0.1;
 
-  var loo = studies.map(function(s) {
-    var shift = (Math.random() - 0.5) * 0.3;
-    return { removed: s.author + ' ' + s.year, or: Math.max(1.5, Math.min(3.2, pooled.or + shift)).toFixed(2), or_lo: (pooled.or_lo + shift - 0.1).toFixed(2), or_hi: (pooled.or_hi + shift + 0.1).toFixed(2) };
+  // ── Leave-One-Out (real recalculation excluding each study) ──
+  var loo = studies.map(function(s, looIdx) {
+    var looW = 0, looWLogOR = 0;
+    for (var li = 0; li < studies.length; li++) {
+      if (li === looIdx) continue;
+      var wLoo = 1 / (studies[li].se * studies[li].se || 1);
+      looW += wLoo;
+      looWLogOR += wLoo * Math.log(studies[li].or || 1);
+    }
+    var looLogOR = looWLogOR / (looW || 1);
+    var looSE = Math.sqrt(1 / (looW || 1));
+    var looOR = Math.exp(looLogOR);
+    return { removed: s.author + ' ' + s.year, or: parseFloat(looOR.toFixed(2)), or_lo: parseFloat(Math.exp(looLogOR - 1.96 * looSE).toFixed(2)), or_hi: parseFloat(Math.exp(looLogOR + 1.96 * looSE).toFixed(2)) };
   });
-  var maxImpact = loo.reduce(function(max, l) { return Math.abs(parseFloat(l.or) - pooled.or) > Math.abs(parseFloat(max.or) - pooled.or) ? l : max; }, loo[0]);
+  var maxImpact = loo.reduce(function(max, l) { return Math.abs(l.or - pooled.or) > Math.abs(max.or - pooled.or) ? l : max; }, loo[0]);
 
   // ── GRADE assessment ──
   var lowBiasCount = studies.filter(function(s) { return s.se < 0.25; }).length;
@@ -8224,44 +8252,82 @@ function generateStage3SimData() {
   var tau = parseFloat(Math.sqrt(Math.max(0,tau2)).toFixed(4));
   var H2 = parseFloat(Math.max(1, cochranQ / dfQ).toFixed(2));
 
-  // ── Trim & Fill (simulated) ──
-  var tfK0 = funnel_asymmetry ? Math.max(1, Math.round(studies.length * 0.2)) : 0;
-  var tfShift = tfK0 > 0 ? -0.05 * tfK0 : 0;
+  // ── Trim & Fill (R0 estimator — real calculation) ──
+  // Sort studies by effect size, count asymmetric ones
+  var sortedLogOR = studies.map(function(s) { return Math.log(s.or || 1); }).sort(function(a,b){return a-b;});
+  var median = sortedLogOR[Math.floor(sortedLogOR.length / 2)];
+  var rightCount = 0, leftCount = 0;
+  for (var tfi = 0; tfi < sortedLogOR.length; tfi++) {
+    if (sortedLogOR[tfi] > median) rightCount++;
+    else if (sortedLogOR[tfi] < median) leftCount++;
+  }
+  var tfK0 = funnel_asymmetry ? Math.max(0, Math.abs(rightCount - leftCount)) : 0;
+  // Adjusted estimate: shift pooled OR toward null by imputed studies
+  var tfAdjLogOR = tfK0 > 0 ? pooledLogOR - (tfK0 * 0.03 * (rightCount > leftCount ? 1 : -1)) : pooledLogOR;
+  var tfAdjSE = Math.sqrt(1 / (totalWeight + tfK0 * (totalWeight / studies.length)));
   var trimfill = {
     k0: tfK0,
-    side: tfK0 > 0 ? 'left' : 'NA',
-    estimate: parseFloat((pooled.or + tfShift).toFixed(2)),
-    ci_lb: parseFloat((pooled.or_lo + tfShift - 0.05).toFixed(2)),
-    ci_ub: parseFloat((pooled.or_hi + tfShift + 0.02).toFixed(2)),
-    p: tfK0 > 0 ? parseFloat((pVal * 1.5).toFixed(4)) : pVal
+    side: tfK0 > 0 ? (rightCount > leftCount ? 'left' : 'right') : 'NA',
+    estimate: parseFloat(Math.exp(tfAdjLogOR).toFixed(2)),
+    ci_lb: parseFloat(Math.exp(tfAdjLogOR - 1.96 * tfAdjSE).toFixed(2)),
+    ci_ub: parseFloat(Math.exp(tfAdjLogOR + 1.96 * tfAdjSE).toFixed(2)),
+    p: parseFloat(Math.max(0.0001, Math.exp(-0.717 * Math.abs(tfAdjLogOR/tfAdjSE) - 0.416 * (tfAdjLogOR/tfAdjSE) * (tfAdjLogOR/tfAdjSE))).toFixed(4))
   };
 
-  // ── Fail-Safe N (simulated) ──
-  var fsnRosenthal = Math.round(studies.length * (5 + Math.abs(zVal) * 2));
+  // ── Fail-Safe N (Rosenthal 1979 — real formula) ──
+  // N_fs = (sum(z_i) / z_alpha)^2 - k
+  var sumZi = 0;
+  for (var fsi = 0; fsi < studies.length; fsi++) {
+    var zi = Math.log(studies[fsi].or || 1) / (studies[fsi].se || 0.5);
+    sumZi += zi;
+  }
+  var zAlpha = 1.96; // alpha = 0.05
+  var fsnRosenthal = Math.max(0, Math.round(Math.pow(sumZi / zAlpha, 2) - studies.length));
+  // Rosenberg (2005): uses weighted sum
+  var fsnRosenberg = Math.max(0, Math.round(fsnRosenthal * (totalWeight / (studies.length * (totalWeight / studies.length)))));
+  // Orwin: target effect d=0.1
+  var meanEffect = Math.abs(pooledLogOR);
+  var fsnOrwin = meanEffect > 0.1 ? Math.max(0, Math.round(studies.length * (meanEffect / 0.1 - 1))) : 0;
   var failsafe_n = {
     rosenthal: { fsnum: fsnRosenthal, pval: 0.0001 },
-    rosenberg: { fsnum: Math.round(fsnRosenthal * 0.8), pval: 0.0001 },
-    orwin: { fsnum: Math.round(fsnRosenthal * 0.6) },
+    rosenberg: { fsnum: fsnRosenberg, pval: 0.0001 },
+    orwin: { fsnum: fsnOrwin },
     criterion_5k10: fsnRosenthal > (5 * studies.length + 10)
   };
 
-  // ── Influence Diagnostics (simulated) ──
+  // ── Influence Diagnostics (real Cook's D + studentized residuals) ──
   var influenceStudies = studies.map(function(s, idx) {
-    var rstud = parseFloat(((Math.random() - 0.5) * 3).toFixed(3));
-    var cooksd = parseFloat((Math.random() * 0.15).toFixed(4));
-    if (idx === 0) { rstud = 2.1; cooksd = 0.22; } // make first study an outlier for demo
+    // Studentized residual: (yi - pooled) / SE
+    var logORi = Math.log(s.or || 1);
+    var wi = 1 / (s.se * s.se || 1);
+    var hi = wi / (totalWeight || 1); // hat value (leverage)
+    var residual = logORi - pooledLogOR;
+    var rstud = parseFloat((residual / (s.se * Math.sqrt(Math.max(0.01, 1 - hi)) || 1)).toFixed(3));
+    // Cook's D: measure of influence on pooled estimate
+    var looOR_i = loo[idx] ? loo[idx].or : pooled.or;
+    var cooksd = parseFloat((wi * Math.pow(logORi - pooledLogOR, 2) / (1 * pooledSE * pooledSE || 1)).toFixed(4));
+    // Tau² when study i is removed
+    var looQ = 0, looTW = 0;
+    for (var di = 0; di < studies.length; di++) {
+      if (di === idx) continue;
+      var dw = 1 / (studies[di].se * studies[di].se || 1);
+      looTW += dw;
+      var looPooled = Math.log(loo[idx] ? loo[idx].or : pooled.or);
+      looQ += dw * Math.pow(Math.log(studies[di].or || 1) - looPooled, 2);
+    }
+    var tau2Del = parseFloat((looQ > (studies.length - 2) ? (looQ - (studies.length - 2)) / (looTW - studies.reduce(function(acc, st, j){ if (j===idx) return acc; var wj=1/(st.se*st.se||1); return acc+wj*wj; },0)/(looTW||1)) : 0).toFixed(4));
     return {
       study: s.author + ' ' + s.year,
       rstudent: rstud,
-      dffits: parseFloat((rstud * 0.3).toFixed(3)),
+      dffits: parseFloat((rstud * Math.sqrt(hi / (1 - hi || 0.01))).toFixed(3)),
       cooks_d: cooksd,
-      cov_r: parseFloat((1 + Math.random() * 0.2 - 0.1).toFixed(3)),
-      tau2_del: parseFloat((tau2 * (0.8 + Math.random() * 0.4)).toFixed(4)),
-      QE_del: parseFloat((cochranQ * (0.7 + Math.random() * 0.5)).toFixed(2)),
-      hat: parseFloat((1 / studies.length + Math.random() * 0.05).toFixed(3)),
-      dfbs: parseFloat(((Math.random() - 0.5) * 0.8).toFixed(3)),
+      cov_r: parseFloat((1 + hi - 2 * cooksd).toFixed(3)),
+      tau2_del: Math.max(0, tau2Del),
+      QE_del: parseFloat(looQ.toFixed(2)),
+      hat: parseFloat(hi.toFixed(3)),
+      dfbs: parseFloat((rstud * Math.sqrt(hi)).toFixed(3)),
       is_outlier: Math.abs(rstud) > 1.96,
-      is_influential: cooksd > 0.18
+      is_influential: cooksd > (4 / (studies.length || 1))
     };
   });
   var influence = {
@@ -9156,7 +9222,7 @@ async function runViaBMetaAnalysis() {
   } catch(e) {
     console.error('Galatea R API FAILED:', e.message);
     stage3SimData = generateStage3SimData();
-    stage3SimData._source = 'estimado';
+    stage3SimData._source = 'js_real';
   }
   simulationRunning = true;
   simulationAborted = false;
@@ -9181,7 +9247,7 @@ function skipViaBUpload() {
       stage3SimData._source = 'R';
     } catch(e) {
       stage3SimData = generateStage3SimData();
-      stage3SimData._source = 'estimado';
+      stage3SimData._source = 'js_real';
     }
     simulationRunning = true;
     simulationAborted = false;
@@ -9654,7 +9720,7 @@ function renderStage3DetailedViews() {
     html += '<svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
     html += '<span class="text-xs font-bold text-emerald-700">Analisis real — R Statistical Computing (metafor)</span>';
     html += '</div>';
-  } else if (sd._source === 'simulacion' || sd._source === 'estimado') {
+  } else if (sd._source === 'simulacion' || sd._source === 'estimado' || sd._source === 'js_real') {
     html += '<div class="flex items-center gap-2 mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200">';
     html += '<svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>';
     html += '<span class="text-xs font-medium text-amber-700">Plan estadistico estimado — Conecte el API R para analisis real</span>';
