@@ -12922,93 +12922,47 @@ async function callAgentOrSimulate(question) {
     showToast('PICOT completado (' + Math.round(picotMs/1000) + 's)', 'success');
     await bubbleTypewriter('PICOT completado. <span class="text-gray-400 text-[10px]">' + Math.round(picotMs/1000) + 's | ' + picotTokens + ' tokens</span>', 28);
 
-    // ── Step 2: Planteamiento Builder ──
-    setBubbleStatus('thinking', 'Agente 2/' + totalAgents + ' — Planteamiento');
-    await bubbleTypewriter('Redactando el planteamiento del problema...', 28);
+    // ── Steps 2-3: Planteamiento + FINER (PARALLEL — both only need PICOT) ──
+    setBubbleStatus('thinking', 'Agentes 2-3/' + totalAgents + ' — Planteamiento + FINER');
+    await bubbleTypewriter('Redactando planteamiento y evaluando FINER en paralelo...', 28);
 
-    try {
-      var planteamientoResult = await callAgentEndpoint('/api/agents/planteamiento-builder', {
+    var parallel2_3 = await Promise.allSettled([
+      callAgentEndpoint('/api/agents/planteamiento-builder', {
         projectId: activeProjectId,
         researchQuestion: question
-      });
-      if (planteamientoResult.success) {
-        planteamientoData = planteamientoResult.data;
-        var plantMs = planteamientoResult.metrics ? planteamientoResult.metrics.duration : 0;
-        showToast('Planteamiento completado (' + Math.round(plantMs/1000) + 's)', 'success');
-        await bubbleTypewriter('Planteamiento generado. <span class="text-gray-400 text-[10px]">' + Math.round(plantMs/1000) + 's</span>', 28);
-      } else {
-        showToast('Planteamiento: continuo sin planteamiento', 'error');
-      }
-    } catch (plantErr) {
-      console.warn('Planteamiento builder failed:', plantErr.message);
-      showToast('Planteamiento: ' + plantErr.message, 'error');
-    }
+      }),
+      callAgentEndpoint('/api/agents/finer-validator', {
+        projectId: activeProjectId,
+        researchQuestion: question,
+        picot: picotData.picot
+      })
+    ]);
 
-    // ── Step 3: FINER Validator ──
-    setBubbleStatus('thinking', 'Agente 3/' + totalAgents + ' — FINER');
-    await bubbleTypewriter('Evaluando viabilidad FINER de tu investigacion...', 28);
+    if (parallel2_3[0].status === 'fulfilled' && parallel2_3[0].value.success) {
+      planteamientoData = parallel2_3[0].value.data;
+      showToast('Planteamiento completado', 'success');
+    } else { showToast('Planteamiento: continuo sin planteamiento', 'error'); }
 
-    var finerResult = await callAgentEndpoint('/api/agents/finer-validator', {
-      projectId: activeProjectId,
-      researchQuestion: question,
-      picot: picotData.picot
-    });
+    if (parallel2_3[1].status === 'fulfilled' && parallel2_3[1].value.success) {
+      finerData = parallel2_3[1].value.data;
+      showToast('FINER completado', 'success');
+    } else { showToast('FINER: continuo sin validacion', 'error'); }
 
-    if (finerResult.success) {
-      finerData = finerResult.data;
-      var finerMs = finerResult.metrics ? finerResult.metrics.duration : 0;
-      var finerTokens = finerResult.metrics ? finerResult.metrics.tokensUsed : 0;
-      showToast('FINER completado (' + Math.round(finerMs/1000) + 's)', 'success');
-      await bubbleTypewriter('FINER completado. <span class="text-gray-400 text-[10px]">' + Math.round(finerMs/1000) + 's | ' + finerTokens + ' tokens</span>', 28);
-    } else {
-      showToast('FINER: continuo sin validacion', 'error');
-    }
+    await bubbleTypewriter('Planteamiento y FINER completados.', 28);
 
-    // ── Step 4: Factibilidad Operativa ──
-    setBubbleStatus('thinking', 'Agente 4/' + totalAgents + ' — Factibilidad Operativa');
-    await bubbleTypewriter('Evaluando factibilidad operativa del proyecto...', 28);
+    // ── Steps 4-6: Factibilidad + Hipotesis + Carpetas (PARALLEL — all need PICOT) ──
+    setBubbleStatus('thinking', 'Agentes 4-6/' + totalAgents + ' — Factibilidad + Hipotesis + Carpetas');
+    await bubbleTypewriter('Evaluando factibilidad, generando hipotesis y organizando carpetas en paralelo...', 28);
 
-    try {
-      var feasResult = await callAgentEndpoint('/api/agents/factibilidad-operativa', {
+    var parallel4_6 = await Promise.allSettled([
+      callAgentEndpoint('/api/agents/factibilidad-operativa', {
         projectId: activeProjectId,
         researchQuestion: question,
         picot: picotData.picot,
         framework: picotData.framework,
         studyType: picotData.studyType || '',
         finerScores: finerData ? finerData.finerScores : {}
-      });
-      if (feasResult.success) {
-        feasibilityData = feasResult.data;
-        var feasMs = feasResult.metrics ? feasResult.metrics.duration : 0;
-        showToast('Factibilidad evaluada (' + Math.round(feasMs/1000) + 's)', 'success');
-        await bubbleTypewriter('Factibilidad operativa evaluada. <span class="text-gray-400 text-[10px]">' + Math.round(feasMs/1000) + 's</span>', 28);
-
-        // Gate logic: if not viable, show modal
-        if (feasibilityData && feasibilityData.verdict === 'no_viable') {
-          var userChoice = await showFeasibilityGateModal(feasibilityData);
-          if (userChoice === 'revise') {
-            simulationRunning = false;
-            setBubbleStatus('done', 'Revisando pregunta');
-            await bubbleTypewriter('Pipeline pausado. Revisa tu pregunta de investigacion y vuelve a intentar.', 28);
-            var inputEl = document.getElementById('questionInput') || document.getElementById('researchQuestion');
-            if (inputEl) inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-          }
-          feasibilityData._overridden = true;
-        }
-      } else {
-        showToast('Factibilidad: continuo sin evaluacion', 'error');
-      }
-    } catch (feasErr) {
-      console.warn('Factibilidad operativa failed:', feasErr.message);
-      showToast('Factibilidad: ' + feasErr.message, 'error');
-    }
-
-    // ── Steps 5+6: Hypothesis Generator + Folder Organizer (parallel) ──
-    setBubbleStatus('thinking', 'Agentes 5-6/' + totalAgents + ' — Hipotesis + Carpetas');
-    await bubbleTypewriter('Generando hipotesis y organizando carpetas en paralelo...', 28);
-
-    var parallelResults4_5 = await Promise.allSettled([
+      }),
       callAgentEndpoint('/api/agents/hypothesis-generator', {
         projectId: activeProjectId,
         researchQuestion: question,
@@ -13021,23 +12975,35 @@ async function callAgentOrSimulate(question) {
       })
     ]);
 
-    if (parallelResults4_5[0].status === 'fulfilled' && parallelResults4_5[0].value.success) {
-      hypothesisData = parallelResults4_5[0].value.data;
-      var hypMs = parallelResults4_5[0].value.metrics ? parallelResults4_5[0].value.metrics.duration : 0;
-      showToast('Hipotesis completadas (' + Math.round(hypMs/1000) + 's)', 'success');
-    } else {
-      showToast('Hipotesis: usando placeholder', 'error');
-    }
+    if (parallel4_6[0].status === 'fulfilled' && parallel4_6[0].value.success) {
+      feasibilityData = parallel4_6[0].value.data;
+      showToast('Factibilidad evaluada', 'success');
+      // Gate logic: if not viable, show modal
+      if (feasibilityData && feasibilityData.verdict === 'no_viable') {
+        var userChoice = await showFeasibilityGateModal(feasibilityData);
+        if (userChoice === 'revise') {
+          simulationRunning = false;
+          setBubbleStatus('done', 'Revisando pregunta');
+          await bubbleTypewriter('Pipeline pausado. Revisa tu pregunta de investigacion y vuelve a intentar.', 28);
+          var inputEl = document.getElementById('questionInput') || document.getElementById('researchQuestion');
+          if (inputEl) inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        feasibilityData._overridden = true;
+      }
+    } else { showToast('Factibilidad: continuo sin evaluacion', 'error'); }
 
-    if (parallelResults4_5[1].status === 'fulfilled' && parallelResults4_5[1].value.success) {
-      folderData = parallelResults4_5[1].value.data;
-      var folderMs = parallelResults4_5[1].value.metrics ? parallelResults4_5[1].value.metrics.duration : 0;
-      showToast('Carpetas organizadas (' + Math.round(folderMs/1000) + 's)', 'success');
-    } else {
-      showToast('Carpetas: usando estructura por defecto', 'error');
-    }
+    if (parallel4_6[1].status === 'fulfilled' && parallel4_6[1].value.success) {
+      hypothesisData = parallel4_6[1].value.data;
+      showToast('Hipotesis completadas', 'success');
+    } else { showToast('Hipotesis: usando placeholder', 'error'); }
 
-    await bubbleTypewriter('Hipotesis y carpetas listos.', 28);
+    if (parallel4_6[2].status === 'fulfilled' && parallel4_6[2].value.success) {
+      folderData = parallel4_6[2].value.data;
+      showToast('Carpetas organizadas', 'success');
+    } else { showToast('Carpetas: usando estructura por defecto', 'error'); }
+
+    await bubbleTypewriter('Factibilidad, hipotesis y carpetas listos.', 28);
 
     // ── Step 7: Literature Scout ──
     setBubbleStatus('thinking', 'Agente 7/' + totalAgents + ' — Literature Scout');
@@ -13227,34 +13193,29 @@ async function callAgentOrSimulate(question) {
       equatorChecklist: (equatorData && equatorData.checklist) ? equatorData.checklist : []
     };
 
-    // Sequential calls to avoid Anthropic rate limiting (429/529)
-    try {
-      var protocolResult = await callAgentEndpointSSE('/api/agents/protocol-writer', Object.assign({ projectId: activeProjectId }, writerContext), 180000);
-      if (protocolResult && protocolResult.success) {
-        protocolData = protocolResult.data;
-        simData.protocol_draft = protocolData.protocol_draft;
-        var protMs = protocolResult.metrics ? protocolResult.metrics.duration : 0;
-        showToast('Protocolo redactado (' + Math.round(protMs/1000) + 's)', 'success');
-      } else {
-        showToast('Protocolo: usando plantilla por defecto', 'error');
-      }
-    } catch (protErr) {
-      console.error('Protocol writer failed:', protErr);
+    // Parallel SSE calls for Protocol + Manuscript (both use same writerContext)
+    var writerResults = await Promise.allSettled([
+      callAgentEndpointSSE('/api/agents/protocol-writer', Object.assign({ projectId: activeProjectId }, writerContext), 180000),
+      callAgentEndpointSSE('/api/agents/manuscript-writer', Object.assign({ projectId: activeProjectId }, writerContext), 180000)
+    ]);
+
+    if (writerResults[0].status === 'fulfilled' && writerResults[0].value && writerResults[0].value.success) {
+      protocolData = writerResults[0].value.data;
+      simData.protocol_draft = protocolData.protocol_draft;
+      var protMs = writerResults[0].value.metrics ? writerResults[0].value.metrics.duration : 0;
+      showToast('Protocolo redactado (' + Math.round(protMs/1000) + 's)', 'success');
+    } else {
+      console.warn('Protocol writer failed:', writerResults[0].reason || 'unknown');
       showToast('Protocolo: usando plantilla por defecto', 'error');
     }
 
-    try {
-      var manuscriptResult = await callAgentEndpointSSE('/api/agents/manuscript-writer', Object.assign({ projectId: activeProjectId }, writerContext), 180000);
-      if (manuscriptResult && manuscriptResult.success) {
-        manuscriptData = manuscriptResult.data;
-        simData.manuscript = manuscriptData.manuscript;
-        var msMs = manuscriptResult.metrics ? manuscriptResult.metrics.duration : 0;
-        showToast('Manuscrito redactado (' + Math.round(msMs/1000) + 's)', 'success');
-      } else {
-        showToast('Manuscrito: usando plantilla por defecto', 'error');
-      }
-    } catch (msErr) {
-      console.error('Manuscript writer failed:', msErr);
+    if (writerResults[1].status === 'fulfilled' && writerResults[1].value && writerResults[1].value.success) {
+      manuscriptData = writerResults[1].value.data;
+      simData.manuscript = manuscriptData.manuscript;
+      var msMs = writerResults[1].value.metrics ? writerResults[1].value.metrics.duration : 0;
+      showToast('Manuscrito redactado (' + Math.round(msMs/1000) + 's)', 'success');
+    } else {
+      console.warn('Manuscript writer failed:', writerResults[1].reason || 'unknown');
       showToast('Manuscrito: usando plantilla por defecto', 'error');
     }
 
