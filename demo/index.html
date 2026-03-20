@@ -9237,15 +9237,18 @@ function skipViaBUpload() {
   if (uploadCard) { uploadCard.style.opacity = '0'; uploadCard.style.transition = 'opacity .3s'; setTimeout(function() { uploadCard.remove(); }, 300); }
 
   var curCfg = selectedStudyTypeId ? getStudyTypeConfig(selectedStudyTypeId) : null;
-  // Use existing simulated data
   (async function() {
     try {
       var extractionData = getExtractionStudies();
       var rMeasure = curCfg ? curCfg.rMeasure : 'OR';
       var rModel = curCfg ? curCfg.rModel : 'random';
+      showToast('Ejecutando meta-analisis con R (metafor)...', 'success');
       stage3SimData = await callRAnalysis(extractionData, rMeasure, rModel);
       stage3SimData._source = 'R';
+      showToast('Meta-analisis completado con R/metafor — ' + extractionData.length + ' estudios analizados', 'success');
     } catch(e) {
+      console.warn('R-API failed, using JS calculations:', e.message);
+      showToast('R-API no disponible — usando calculo estadistico JavaScript', 'warning');
       stage3SimData = generateStage3SimData();
       stage3SimData._source = 'js_real';
     }
@@ -9679,15 +9682,17 @@ function renderStage3Header() {
   var totalSteps = needsMA ? 8 : 3;
   var titleText = needsMA ? 'Metaanalisis' : (curCfg && curCfg.id === 'cualitativo' ? 'Analisis Tematico' : curCfg && curCfg.id === 'caso_reporte' ? 'Analisis Descriptivo' : 'Plan Estadistico');
   var pct = Math.min(100, Math.round((step / totalSteps) * 100));
-  $('projectMeta').textContent = 'Etapa 4: ' + titleText + ' | Paso ' + step + ' / ' + totalSteps;
+  var engineLabel = (stage3SimData && stage3SimData._source === 'R') ? ' | R/metafor' : (stage3SimData && stage3SimData._source === 'js_real') ? ' | JS Stats' : '';
+  $('projectMeta').textContent = 'Etapa 4: ' + titleText + ' | Paso ' + step + ' / ' + totalSteps + engineLabel;
   var bar = $('progressBar'); if (bar) bar.style.width = pct + '%';
   var pl = $('progressLabel'); if (pl) pl.textContent = pct + '%';
   var pb = $('phaseBadge'); if (pb) pb.textContent = 'Paso ' + step + ' / ' + totalSteps;
   var badge = $('statusBadge');
   if (badge) {
     var done = step > totalSteps;
-    badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ' + (done ? 'bg-verde/10 text-verde' : 'bg-galatea/10 text-galatea');
-    badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full ' + (done ? 'bg-verde' : 'bg-galatea animate-pulse') + '"></span>' + (done ? 'Completado' : 'Etapa 4');
+    var isR = stage3SimData && stage3SimData._source === 'R';
+    badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ' + (done ? 'bg-verde/10 text-verde' : isR ? 'bg-blue-100 text-blue-700' : 'bg-galatea/10 text-galatea');
+    badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full ' + (done ? 'bg-verde' : isR ? 'bg-blue-500 animate-pulse' : 'bg-galatea animate-pulse') + '"></span>' + (done ? 'Completado' : isR ? 'R/metafor' : 'Etapa 4');
   }
 }
 
