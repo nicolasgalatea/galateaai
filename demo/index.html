@@ -1853,6 +1853,29 @@ function setBubbleStatus(status, phaseLabel) {
   }
 }
 
+function updateAgentProgress(current, total, agentName) {
+  var pct = Math.round((current / total) * 100);
+  var bar = document.getElementById('agentProgressBar');
+  var label = document.getElementById('agentProgressLabel');
+  if (!bar) {
+    // Create progress bar in bubble area
+    var bubble = document.getElementById('galateaBubble') || document.getElementById('bubbleContent');
+    if (bubble) {
+      var progDiv = document.createElement('div');
+      progDiv.id = 'agentProgressContainer';
+      progDiv.className = 'mt-2 mb-1';
+      progDiv.innerHTML = '<div class="flex items-center justify-between mb-1"><span id="agentProgressLabel" class="text-[10px] text-gray-400 font-medium"></span><span id="agentProgressPct" class="text-[10px] text-galatea font-bold"></span></div><div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div id="agentProgressBar" class="h-full bg-gradient-to-r from-galatea to-verde rounded-full transition-all duration-500" style="width:0%"></div></div>';
+      bubble.appendChild(progDiv);
+      bar = document.getElementById('agentProgressBar');
+      label = document.getElementById('agentProgressLabel');
+    }
+  }
+  if (bar) bar.style.width = pct + '%';
+  if (label) label.textContent = agentName || ('Agente ' + current + '/' + total);
+  var pctEl = document.getElementById('agentProgressPct');
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
 function setBubbleThinking() {
   var el = $('galateaBubbleText');
   if (el) el.innerHTML = '<div class="galatea-thinking"><span></span><span></span><span></span></div>';
@@ -12959,6 +12982,25 @@ function awaitPubMedExecution() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Friendly error message helper
+// ═══════════════════════════════════════════════════════════════
+function friendlyError(agentName, errMsg) {
+  var msg = errMsg || 'Error desconocido';
+  if (/credit.?balance|too low|purchase credits/i.test(msg)) return agentName + ': Sin creditos en Anthropic API. Recarga en console.anthropic.com';
+  if (/ANTHROPIC_API_KEY|api.?key not set/i.test(msg)) return agentName + ': API Key no configurada. Contacta al administrador.';
+  if (/401|403|unauthorized/i.test(msg)) return agentName + ': Acceso no autorizado. Verifica las credenciales.';
+  if (/429|rate.?limit/i.test(msg)) return agentName + ': Demasiadas solicitudes. Esperando...';
+  if (/529|overloaded/i.test(msg)) return agentName + ': Servidor de IA sobrecargado. Reintentando...';
+  if (/timeout|tardo mas|abort/i.test(msg)) return agentName + ': Tiempo de espera agotado. El servidor esta lento.';
+  if (/network|fetch|ECONNREFUSED|ENOTFOUND|Failed to fetch/i.test(msg)) return agentName + ': Error de conexion. Verifica tu internet.';
+  if (/JSON|parse|unexpected token|Bad control/i.test(msg)) return agentName + ': Respuesta invalida del servidor. Reintentando...';
+  if (/500|internal server/i.test(msg)) return agentName + ': Error interno del servidor.';
+  // For any other error, truncate to 80 chars max
+  if (msg.length > 80) msg = msg.substring(0, 80) + '...';
+  return agentName + ': ' + msg;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // REAL AI — Step-by-step agent flow with progress feedback
 // ═══════════════════════════════════════════════════════════════
 async function callAgentOrSimulate(question) {
@@ -12991,10 +13033,12 @@ async function callAgentOrSimulate(question) {
     var picotMs = picotResult.metrics ? picotResult.metrics.duration : 0;
     var picotTokens = picotResult.metrics ? picotResult.metrics.tokensUsed : 0;
     showToast('PICOT completado (' + Math.round(picotMs/1000) + 's)', 'success');
+    updateAgentProgress(1, 12, 'PICOT Builder');
     await bubbleTypewriter('PICOT completado. <span class="text-gray-400 text-[10px]">' + Math.round(picotMs/1000) + 's | ' + picotTokens + ' tokens</span>', 28);
 
     // ── Steps 2-3: Planteamiento + FINER (PARALLEL — both only need PICOT) ──
     setBubbleStatus('thinking', 'Agentes 2-3/' + totalAgents + ' — Planteamiento + FINER');
+    updateAgentProgress(2, 12, 'Planteamiento + FINER');
     await bubbleTypewriter('Redactando planteamiento y evaluando FINER en paralelo...', 28);
 
     var parallel2_3 = await Promise.allSettled([
@@ -13012,17 +13056,19 @@ async function callAgentOrSimulate(question) {
     if (parallel2_3[0].status === 'fulfilled' && parallel2_3[0].value.success) {
       planteamientoData = parallel2_3[0].value.data;
       showToast('Planteamiento completado', 'success');
-    } else { showToast('Planteamiento: continuo sin planteamiento', 'error'); }
+    } else { showToast(friendlyError('Planteamiento', 'continuo sin planteamiento'), 'error'); }
 
     if (parallel2_3[1].status === 'fulfilled' && parallel2_3[1].value.success) {
       finerData = parallel2_3[1].value.data;
       showToast('FINER completado', 'success');
     } else { showToast('FINER: continuo sin validacion', 'error'); }
 
+    updateAgentProgress(3, 12, 'Planteamiento + FINER');
     await bubbleTypewriter('Planteamiento y FINER completados.', 28);
 
     // ── Steps 4-6: Factibilidad + Hipotesis + Carpetas (PARALLEL — all need PICOT) ──
     setBubbleStatus('thinking', 'Agentes 4-6/' + totalAgents + ' — Factibilidad + Hipotesis + Carpetas');
+    updateAgentProgress(4, 12, 'Factibilidad + Hipotesis + Carpetas');
     await bubbleTypewriter('Evaluando factibilidad, generando hipotesis y organizando carpetas en paralelo...', 28);
 
     var parallel4_6 = await Promise.allSettled([
@@ -13062,7 +13108,7 @@ async function callAgentOrSimulate(question) {
         }
         feasibilityData._overridden = true;
       }
-    } else { showToast('Factibilidad: continuo sin evaluacion', 'error'); }
+    } else { showToast(friendlyError('Factibilidad', 'continuo sin evaluacion'), 'error'); }
 
     if (parallel4_6[1].status === 'fulfilled' && parallel4_6[1].value.success) {
       hypothesisData = parallel4_6[1].value.data;
@@ -13074,10 +13120,12 @@ async function callAgentOrSimulate(question) {
       showToast('Carpetas organizadas', 'success');
     } else { showToast('Carpetas: usando estructura por defecto', 'error'); }
 
+    updateAgentProgress(6, 12, 'Factibilidad + Hipotesis + Carpetas');
     await bubbleTypewriter('Factibilidad, hipotesis y carpetas listos.', 28);
 
     // ── Step 7: Literature Scout ──
     setBubbleStatus('thinking', 'Agente 7/' + totalAgents + ' — Literature Scout');
+    updateAgentProgress(7, 12, 'Literature Scout');
     await bubbleTypewriter('Generando estrategia de busqueda y descriptores MeSH...', 28);
 
     var scoutResult = await callAgentEndpoint('/api/agents/literature-scout', {
@@ -13106,6 +13154,7 @@ async function callAgentOrSimulate(question) {
 
     // ── Step 8: Evidence Aggregator (PubMed real + Claude estimates) ──
     setBubbleStatus('thinking', 'Agente 8/' + totalAgents + ' — Evidence Aggregator');
+    updateAgentProgress(8, 12, 'Evidence Aggregator');
     var equation = (scoutData && scoutData.searchStrategy && scoutData.searchStrategy.pubmedEquation) || question;
     realSearchEquation = equation;
 
@@ -13153,11 +13202,12 @@ async function callAgentOrSimulate(question) {
       }
     } catch (aggErr) {
       console.warn('Evidence aggregator failed, continuing with scout data:', aggErr.message);
-      showToast('Agregador: ' + aggErr.message + ' — usando datos parciales', 'error');
+      showToast(friendlyError('Agregador', aggErr.message), 'error');
     }
 
     // ── Step 9: EQUATOR Checker + Quality Assessor (parallel) ──
     setBubbleStatus('thinking', 'Agente 9/' + totalAgents + ' — EQUATOR + Calidad');
+    updateAgentProgress(9, 12, 'EQUATOR + Calidad');
     await bubbleTypewriter('Verificando guias EQUATOR y evaluando calidad de articulos...', 28);
 
     var parallelPost = [
@@ -13222,6 +13272,7 @@ async function callAgentOrSimulate(question) {
     var hasExtraction = simData.extraction_table && simData.extraction_table.length > 0;
     if (hasExtraction) {
       setBubbleStatus('thinking', 'Agente 10/' + totalAgents + ' — Estadisticas');
+      updateAgentProgress(10, 12, 'Estadisticas');
       await bubbleTypewriter('Calculando estadisticas pooled y heterogeneidad...', 28);
 
       try {
@@ -13242,12 +13293,13 @@ async function callAgentOrSimulate(question) {
         }
       } catch (statsErr) {
         console.warn('Stats agent failed:', statsErr.message);
-        showToast('Stats: ' + statsErr.message, 'error');
+        showToast(friendlyError('Stats', statsErr.message), 'error');
       }
     }
 
     // ── Steps 11+12: Protocol Writer + Manuscript Writer (parallel) ──
     setBubbleStatus('thinking', 'Agentes 11-12/' + totalAgents + ' — Protocolo + Manuscrito');
+    updateAgentProgress(11, 12, 'Protocolo + Manuscrito');
     await bubbleTypewriter('Redactando protocolo y manuscrito...', 28);
 
     var writerContext = {
@@ -13292,6 +13344,10 @@ async function callAgentOrSimulate(question) {
 
     await bubbleTypewriter('Protocolo y manuscrito listos. He generado la ecuacion de busqueda. <strong>Revisala y editala</strong> si necesitas, luego haz clic en "Ejecutar Busqueda en PubMed".', 28);
 
+    updateAgentProgress(12, 12, 'Completo');
+    var progContainer = document.getElementById('agentProgressContainer');
+    if (progContainer) progContainer.remove();
+
     // The simulation flow will show the search editor at the right phase
     return runFullSimulation(question);
 
@@ -13299,11 +13355,11 @@ async function callAgentOrSimulate(question) {
     console.error('Real AI error:', err);
     // Show specific error with agent name if available
     var errMsg = err.message || 'Error desconocido';
-    var isApiKey = /ANTHROPIC_API_KEY|api.?key|401|403/i.test(errMsg);
+    var isApiKey = /ANTHROPIC_API_KEY|api.?key|401|403|credit.?balance|too low|purchase credits/i.test(errMsg);
     var isNetwork = /network|fetch|ECONNREFUSED|ENOTFOUND/i.test(errMsg);
     var isTimeout = /timeout|tardo mas/i.test(errMsg);
 
-    var userFriendly = isApiKey ? 'API Key de Anthropic no configurada o invalida. Verifica ANTHROPIC_API_KEY en Vercel.'
+    var userFriendly = isApiKey ? 'Creditos de Anthropic agotados o API Key invalida. Recarga creditos en console.anthropic.com o verifica ANTHROPIC_API_KEY en Vercel.'
       : isNetwork ? 'No se pudo conectar al servidor. Verifica que el backend este desplegado.'
       : isTimeout ? 'El servidor tardo demasiado en responder. Intenta de nuevo.'
       : errMsg;
